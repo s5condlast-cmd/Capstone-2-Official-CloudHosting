@@ -1,7 +1,3 @@
-<div align="center">
-  <img width="1200" height="400" alt="STI Marikina OJT System Banner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
-
 # STI Marikina: Web-Based Practicum Management System with AI (v2.0)
 
 A comprehensive, state-of-the-art web platform designed to streamline, track, and automate the student internship/practicum program at STI College Marikina. Built with interactive components, robust security, and intelligent document validation assistance.
