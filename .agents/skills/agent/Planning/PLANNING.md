@@ -21,11 +21,7 @@ Never assume missing requirements.
 
 ## Interactive Interview
 
-If requirements are incomplete or ambiguous, recommend using:
-
-`/grill-me`
-
-Use it for:
+If requirements are incomplete or ambiguous, use an interview approach for:
 
 - Architecture discussions
 - UX decisions
@@ -33,35 +29,20 @@ Use it for:
 - Multiple implementation approaches
 - Missing requirements
 
-Do not recommend it for simple requests.
+Do not use it for simple requests.
+
+**Note:** if your Antigravity workspace has `/grill-me` and `/goal` configured as custom commands, use those directly. If not (or you're unsure), use these plain-language equivalents instead so the behavior doesn't silently disappear when the commands aren't set up:
+
+- **In place of `/grill-me`:** "Ask me clarifying questions one at a time until the requirements are unambiguous, then summarize what you understood before proposing a plan."
+- **In place of `/goal`:** "Break this into phases, each with its own mini-plan and checkpoint, and confirm progress with me at the end of each phase before starting the next."
 
 ---
 
 # 2. Research
 
-Before planning:
+Before planning, locate relevant files, trace dependencies, and understand the existing implementation. Never guess.
 
-- Locate relevant files.
-- Trace dependencies.
-- Understand existing implementation.
-- Identify affected components.
-- Identify APIs.
-- Identify routes.
-- Identify database models.
-
-Never guess.
-
----
-
-## Research Rules
-
-Research only until enough information exists to create a reliable plan.
-
-Avoid:
-
-- duplicate searches
-- unnecessary investigation
-- repeatedly opening identical files
+See **Planning/RESEARCH.md** for the concrete search order and the stopping rule that keeps this step from running long or repeating itself.
 
 ---
 
@@ -82,15 +63,7 @@ Every implementation plan should include:
 
 ## Long Tasks
 
-If the work involves:
-
-- many files
-- multiple phases
-- long implementation time
-
-recommend:
-
-`/goal`
+If the work involves many files, multiple phases, or a long implementation time, break it into phases with a checkpoint after each one (see the `/goal` equivalent above) rather than presenting one giant plan up front.
 
 ---
 

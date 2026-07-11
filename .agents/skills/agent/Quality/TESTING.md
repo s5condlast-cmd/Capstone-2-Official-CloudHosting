@@ -1,26 +1,27 @@
 # Testing Guidelines
 
 ## Purpose
-Ensure code quality and layout stability using the current project setup.
+
+Ensure changes are actually verified before being marked done. Project-specific details -- which commands to run, whether an automated framework exists -- live in **project-profile/PROJECT_PROFILE.md**.
 
 ---
 
-# 1. Type Checking
-Always run TypeScript compilation checks before finalizing an implementation to ensure no type errors have been introduced.
-Run: `npm run lint` (which executes `tsc --noEmit`).
+# 1. Automated Checks
+
+Before finishing, run whatever automated checks the project has (type-checking, lint, unit tests). Check the project profile for the actual commands -- don't assume a framework exists, and don't assume one doesn't.
 
 ---
 
 # 2. Manual Verification
-As there is currently no automated testing framework (like Vitest or Jest) installed, you must rely on manual verification:
-- Test functionality directly in the browser preview.
-- Ensure that form inputs, buttons, and routing work as expected.
-- Check both light and dark modes to ensure visual consistency.
+
+Where no automated test covers the change, verify manually:
+
+- Exercise the actual user flow, not just the code path you touched.
+- Check both success and failure/edge cases.
+- If the project supports multiple themes or viewports (e.g. light/dark mode, mobile/desktop), check the change in each.
 
 ---
 
-# 3. Print Layout Testing
-When modifying document layouts or PDF generation features:
-- Ensure `.doc-preview-paper` margins and paddings are not pushing content into extra blank pages.
-- Verify that `box-sizing: border-box` is respected.
-- Ensure that the browser's native `window.print()` handles interactive elements properly (e.g., hiding edit buttons, removing backgrounds for ink-saving).
+# 3. Regression Check
+
+Confirm existing functionality adjacent to your change still works -- don't just verify the new behavior in isolation.

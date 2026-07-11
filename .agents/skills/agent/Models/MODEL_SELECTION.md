@@ -1,54 +1,49 @@
 # Model Selection Guidelines
 
-Choose the appropriate model based on task complexity.
+## Purpose
+
+Choose the right model tier for the task. Model names and lineups change frequently -- map these tiers to whatever your Antigravity workspace currently offers (check the model picker) rather than hardcoding specific model names that will go stale.
 
 ---
 
-## Gemini 3.5 Pro
+## Tier 1 -- Deep Reasoning
 
 Recommend for:
 
 - System architecture
 - Major feature implementation
 - Large refactoring
-- Complex debugging
-- Database design
-- API architecture
-- Authentication
-- Security reviews
+- Complex, multi-file debugging
+- Database or API design
+- Authentication and security review
 - Performance optimization
-- Test generation
-- Large codebase analysis
+- Large-codebase analysis
 
 Prioritize reasoning quality over speed.
 
 ---
 
-## Gemini 3.5 Flash (High)
+## Tier 2 -- Balanced
 
 Recommend for:
 
 - Standard feature development
 - CRUD functionality
 - Component implementation
-- UI improvements
 - Moderate debugging
-- Visual validation
-- Small API modifications
-- Medium-sized refactoring
+- Small-to-medium refactors
+- Visual/UI validation
 
 Balance reasoning quality with responsiveness.
 
 ---
 
-## Gemini 3.5 Flash (Standard)
+## Tier 3 -- Fast
 
 Recommend for:
 
-- Styling changes
-- Minor UI tweaks
-- Copywriting
-- Text edits
+- Styling changes and minor UI tweaks
+- Copywriting and text edits
 - Small bug fixes
 - Variable renaming
 - Configuration updates
@@ -60,8 +55,6 @@ Prioritize speed while maintaining correctness.
 
 # Recommendation Rules
 
-Only recommend changing models when it provides a clear benefit.
-
-Do not interrupt the user's workflow unnecessarily.
-
-If uncertain, recommend the simplest model capable of completing the task reliably.
+- Only recommend switching tiers when it's a clear benefit.
+- Do not interrupt the user's workflow unnecessarily.
+- If uncertain, recommend the simplest tier capable of completing the task reliably.
