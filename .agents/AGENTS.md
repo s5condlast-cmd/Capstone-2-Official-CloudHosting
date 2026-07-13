@@ -89,3 +89,9 @@ When performing refactoring or file renaming operations (such as renaming legacy
 When implementing or modifying the `@embedpdf/react-pdf-viewer` SDK (e.g., `<PDFViewer>`):
 - **Explicit Sizing Required**: The viewer component does not have intrinsic dimensions. You MUST always apply explicit sizing (e.g., `className="w-full h-full"` and `style={{ width: '100%', height: '100%' }}`) directly to the `<PDFViewer>` component. Failure to do so will cause the canvas to collapse to 0px, resulting in a blank or black document area.
 
+## Vercel Deployment & Redeploy Gotchas
+
+When configuring Vercel deployment for this Vite + Express full-stack project:
+1. **Explicit Output Directory**: Always ensure `"outputDirectory": "dist"` is explicitly set in `vercel.json` to prevent Vercel from searching for a `public/` directory if the user accidentally alters the framework preset.
+2. **Serverless Backend Compatibility**: Express backends must export the `app` instance by default, and `app.listen()` must be wrapped in `if (!process.env.VERCEL)` to prevent port collisions in Vercel's serverless runtime. Place a proxy entrypoint at `api/server.ts` that re-exports the backend app.
+3. **The "Redeploy" Trap**: If the user pushes a fix but Vercel still fails on the old commit, it is because clicking "Redeploy" in the Vercel dashboard re-runs the exact same commit hash. Do NOT assume the fix failed. Instead, instruct the user to force a fresh webhook trigger by pushing an empty commit: `git commit --allow-empty -m "force vercel update" && git push`.

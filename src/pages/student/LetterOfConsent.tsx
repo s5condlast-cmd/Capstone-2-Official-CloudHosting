@@ -6,13 +6,43 @@ export const LetterOfConsent = () => {
 
   const templates: DocumentTemplate[] = [
     {
-      title: "Letter of Consent",
+      title: "Parent Consent (Without Fee)",
       pdfUrl: "/templates/FT-CRD-131-00 OJT Parent Consent Form without Training Fee Template.pdf",
       docUrl: "/templates/FT-CRD-131-00 OJT Parent Consent Form without Training Fee Template.docx",
-      id: "h2",
+      id: "parent-no-fee",
       instructionsModal: {
-        title: "Letter of Consent Requirements",
-        description: "Please fill out the unified Letter of Consent. If you are a minor or have training fees, ensure the appropriate sections are completed and notarized as required by the APO."
+        title: "Parent Consent Form Requirements",
+        description: "Please fill out this form if you do not have any training fees required for your OJT. Ensure all sections are completed and signed by your parent or guardian."
+      }
+    },
+    {
+      title: "Parent Consent (With Fee)",
+      pdfUrl: "/templates/FT-CRD-130-00 OJT Parent Consent Form with Training Fee Template.pdf",
+      docUrl: "/templates/FT-CRD-130-00 OJT Parent Consent Form with Training Fee Template.docx",
+      id: "parent-with-fee",
+      instructionsModal: {
+        title: "Parent Consent Form Requirements",
+        description: "Please fill out this form if your OJT involves a training fee. Ensure all sections are completed and signed by your parent or guardian."
+      }
+    },
+    {
+      title: "Student Consent (Without Fee)",
+      pdfUrl: "/templates/FT-CRD-139-01 Student Consent Form without Training Fee Template.pdf",
+      docUrl: "/templates/FT-CRD-139-01 Student Consent Form without Training Fee Template.docx",
+      id: "student-no-fee",
+      instructionsModal: {
+        title: "Student Consent Form Requirements",
+        description: "Please fill out this form if you do not have any training fees required for your OJT and are of legal age to sign for yourself."
+      }
+    },
+    {
+      title: "Student Consent (With Fee)",
+      pdfUrl: "/templates/FT-CRD-138-01 Student Consent Form with Training Fee Template.pdf",
+      docUrl: "/templates/FT-CRD-138-01 Student Consent Form with Training Fee Template.docx",
+      id: "student-with-fee",
+      instructionsModal: {
+        title: "Student Consent Form Requirements",
+        description: "Please fill out this form if your OJT involves a training fee and you are of legal age to sign for yourself."
       }
     }
   ];
