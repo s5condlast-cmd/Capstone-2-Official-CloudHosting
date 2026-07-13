@@ -95,3 +95,9 @@ When configuring Vercel deployment for this Vite + Express full-stack project:
 1. **Explicit Output Directory**: Always ensure `"outputDirectory": "dist"` is explicitly set in `vercel.json` to prevent Vercel from searching for a `public/` directory if the user accidentally alters the framework preset.
 2. **Serverless Backend Compatibility**: Express backends must export the `app` instance by default, and `app.listen()` must be wrapped in `if (!process.env.VERCEL)` to prevent port collisions in Vercel's serverless runtime. Place a proxy entrypoint at `api/server.ts` that re-exports the backend app.
 3. **The "Redeploy" Trap**: If the user pushes a fix but Vercel still fails on the old commit, it is because clicking "Redeploy" in the Vercel dashboard re-runs the exact same commit hash. Do NOT assume the fix failed. Instead, instruct the user to force a fresh webhook trigger by pushing an empty commit: `git commit --allow-empty -m "force vercel update" && git push`.
+
+## Git Push Authorization Protocol
+- **NEVER** run `git push` autonomously.
+- **NEVER** assume the user wants their code pushed to the remote repository, even if a task is fully complete and verified.
+- You must stage and commit the code locally (if appropriate), but you must then **STOP** and inform the user that the code is ready to be pushed.
+- You are strictly forbidden from executing a `git push` command until the user explicitly types the authorization code: `/push`.

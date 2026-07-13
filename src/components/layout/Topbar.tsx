@@ -279,6 +279,38 @@ export const Topbar: React.FC<TopbarProps> = ({ title, subtitle, user, onMenuCli
                       Settings
                     </Link>
                   )}
+
+                  <div className="px-3 py-2 mt-1">
+                    <p className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-2">Accent Color</p>
+                    <div className="flex items-center gap-2">
+                      {[
+                        { id: 'default', color: 'bg-zinc-900 dark:bg-zinc-100', name: 'Monochrome' },
+                        { id: 'theme-blue', color: 'bg-[#2563eb]', name: 'Modern Blue' },
+                        { id: 'theme-indigo', color: 'bg-[#4f46e5]', name: 'Indigo' },
+                        { id: 'theme-sti', color: 'bg-[#1d4ed8]', name: 'STI Inspired' },
+                        { id: 'theme-cyan', color: 'bg-[#06b6d4]', name: 'Cyan' }
+                      ].map(t => {
+                        const currentTheme = localStorage.getItem('app-theme') || 'default';
+                        return (
+                          <button
+                            key={t.id}
+                            title={t.name}
+                            onClick={() => {
+                              ['theme-blue', 'theme-indigo', 'theme-sti', 'theme-cyan'].forEach(cls => document.documentElement.classList.remove(cls));
+                              if (t.id !== 'default') document.documentElement.classList.add(t.id);
+                              localStorage.setItem('app-theme', t.id);
+                              setIsProfileOpen(false);
+                            }}
+                            className={cn(
+                              "w-6 h-6 rounded-full transition-transform hover:scale-110 shadow-sm",
+                              t.color,
+                              currentTheme === t.id && "ring-2 ring-offset-2 ring-zinc-400 dark:ring-zinc-500 dark:ring-offset-zinc-950"
+                            )}
+                          />
+                        );
+                      })}
+                    </div>
+                  </div>
                   
                   {onToggleTheme && (
                     <button 

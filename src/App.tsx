@@ -65,6 +65,12 @@ export default function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Initialize Theme
+    const savedTheme = localStorage.getItem('app-theme');
+    if (savedTheme && savedTheme !== 'default') {
+      document.documentElement.classList.add(savedTheme);
+    }
+
     try {
       const saved = localStorage.getItem('practicum_session');
       if (saved) {
