@@ -31,56 +31,68 @@ export const AdminDashboard: React.FC = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  if (loading) {
-    return (
-      <div className="space-y-8 pb-12 animate-in fade-in duration-500">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="p-5 bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl">
-              <Skeleton className="h-4 w-24 mb-4" />
-              <Skeleton className="h-8 w-16" />
-            </div>
-          ))}
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2">
-            <div className="p-6 bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl space-y-8">
-              <Skeleton className="h-6 w-48 mb-8" />
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className="space-y-3">
-                  <Skeleton className="h-4 w-1/3" />
-                  <Skeleton className="h-2 w-full" />
-                </div>
-              ))}
-              <Skeleton className="h-16 w-full mt-8" />
-            </div>
-          </div>
-          <div className="space-y-8">
-            <div className="p-6 bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl space-y-4">
-              <Skeleton className="h-6 w-40 mb-6" />
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className="flex gap-3">
-                  <Skeleton className="h-8 w-8 rounded-lg shrink-0" />
-                  <div className="space-y-2 flex-1">
-                    <Skeleton className="h-4 w-3/4" />
-                    <Skeleton className="h-3 w-full" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-8 pb-12">
-      {/* Hero Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <AnimatePresence mode="wait">
+      {loading ? (
+        <motion.div
+          key="loading"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.3 }}
+          className="space-y-8 pb-12"
+        >
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="p-5 bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl">
+                <Skeleton className="h-4 w-24 mb-4" />
+                <Skeleton className="h-8 w-16" />
+              </div>
+            ))}
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2">
+              <div className="p-6 bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl space-y-8">
+                <Skeleton className="h-6 w-48 mb-8" />
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="space-y-3">
+                    <Skeleton className="h-4 w-1/3" />
+                    <Skeleton className="h-2 w-full" />
+                  </div>
+                ))}
+                <Skeleton className="h-16 w-full mt-8" />
+              </div>
+            </div>
+            <div className="space-y-8">
+              <div className="p-6 bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl space-y-4">
+                <Skeleton className="h-6 w-40 mb-6" />
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="flex gap-3">
+                    <Skeleton className="h-8 w-8 rounded-lg shrink-0" />
+                    <div className="space-y-2 flex-1">
+                      <Skeleton className="h-4 w-3/4" />
+                      <Skeleton className="h-3 w-full" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      ) : (
+        <motion.div
+          key="content"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="space-y-8 pb-12"
+        >
+          {/* Hero Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
         <StatCard label="Students Deployed" value="142" icon={<Briefcase size={18} />} trend="↑ 12%" />
         <StatCard label="Seeking Company" value="38" icon={<GraduationCap size={18} />} />
         <StatCard label="Active Advisers" value="8" icon={<Users size={18} />} />
+        <StatCard label="Company Supervisors" value="12" icon={<Building size={18} />} />
         <StatCard label="Pending Legal Docs" value="14" icon={<FileText size={18} />} />
       </div>
 
@@ -217,7 +229,9 @@ export const AdminDashboard: React.FC = () => {
             </div>
           </Card>
         </div>
-      </div>
-    </div>
+        </div>
+      </motion.div>
+      )}
+    </AnimatePresence>
   );
 };

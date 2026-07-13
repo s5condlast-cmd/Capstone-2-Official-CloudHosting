@@ -82,6 +82,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
     if (lowerUsername === 'admin' && password === '123') matchedRole = 'admin';
     else if (lowerUsername === 'adviser' && password === '123') matchedRole = 'adviser';
     else if (lowerUsername === 'student' && password === '123') matchedRole = 'student';
+    else if (lowerUsername === 'supervisor' && password === '123') matchedRole = 'supervisor';
 
     if (matchedRole) {
       setPendingRole(matchedRole);
@@ -89,7 +90,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
       setStep('otp');
       setResendCooldown(RESEND_COOLDOWN);
     } else {
-      setCredError('Invalid credentials. Use: admin/123, adviser/123, or student/123');
+      setCredError('Invalid credentials. Use: admin/123, adviser/123, student/123, or supervisor/123');
     }
   };
 

@@ -21,6 +21,8 @@ import {
 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
+import { submissionStorage, StudentDocument } from '@/src/lib/submissionStorage';
+import { toast } from 'sonner';
 
 interface AICheck {
   status: 'passed' | 'warning' | 'failed';
@@ -46,7 +48,37 @@ interface PendingDoc {
 }
 
 export const ReviewDocs: React.FC = () => {
+  const [liveDocs, setLiveDocs] = useState<StudentDocument[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  React.useEffect(() => {
+    async function loadDocs() {
+      try {
+        const docs = await submissionStorage.getPendingDocuments();
+        setLiveDocs(docs);
+      } catch (err) {
+        console.error("Failed to load documents", err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadDocs();
+  }, []);
+
+  // Map the live Supabase documents into the format expected by the table
+  const mappedLiveDocs: PendingDoc[] = liveDocs.map(doc => ({
+    id: doc.id,
+    student: doc.student_name,
+    type: doc.doc_type,
+    time: new Date(doc.created_at).toLocaleDateString(),
+    course: doc.course,
+    urgency: doc.urgency,
+    aiCheck: { status: 'passed' as const, issues: [], confidence: 100 },
+    contentInsight: { totalChecks: 15, issues: 0, score: 100 }
+  }));
+
   const pendingDocs: PendingDoc[] = [
+    ...mappedLiveDocs,
     { 
       id: '1', student: 'Alice Brown', type: 'Prelim Journal', time: '2 hours ago', course: '__BSIT 402_401__', urgency: 'high',
       aiCheck: { status: 'failed', issues: ['Word count below 500-word minimum (327 words)', 'No technical stack references detected'], confidence: 91 },
@@ -58,21 +90,24 @@ export const ReviewDocs: React.FC = () => {
       contentInsight: { totalChecks: 9, issues: 2, score: 79 }
     },
     { 
-      id: '3', student: 'Eva Green', type: 'MOA Revised', time: '1 day ago', course: '__BSIT 402_401__', urgency: 'low',
-      aiCheck: { status: 'passed', issues: [], confidence: 96 },
-      contentInsight: { totalChecks: 10, issues: 0, score: 94 }
+      id: '3', student: 'Eva Green', type: 'MOA Document', time: '1 day ago', course: '__BSIT 402_401__', urgency: 'high',
+      aiCheck: { status: 'warning', issues: ['Missing student signature'], confidence: 99 },
+      contentInsight: { totalChecks: 12, issues: 1, score: 82 }
     },
     { 
-      id: '4', student: 'John Smith', type: 'Attendance Report', time: '2 days ago', course: 'BSIT 402', urgency: 'low',
-      aiCheck: { status: 'warning', issues: ['Date format inconsistency on rows 3, 7'], confidence: 84 },
-      contentInsight: { totalChecks: 6, issues: 1, score: 85 }
-    },
+      id: '4', student: 'John Smith', type: 'Endorsement Letter', time: '2 days ago', course: 'BSIT 402', urgency: 'low',
+      aiCheck: { status: 'passed', issues: [], confidence: 98 },
+      contentInsight: { totalChecks: 8, issues: 0, score: 95 }
+    }
   ];
 
   const navigate = useNavigate();
   const [selectedDocs, setSelectedDocs] = useState<Set<string>>(new Set());
   const [expandedAI, setExpandedAI] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'needs_review' | 'history'>('needs_review');
+  const [hiddenDocIds, setHiddenDocIds] = useState<Set<string>>(new Set());
+
+  const visibleDocs = pendingDocs.filter(d => !hiddenDocIds.has(d.id));
 
   const toggleSelect = (id: string) => {
     setSelectedDocs(prev => {
@@ -83,14 +118,128 @@ export const ReviewDocs: React.FC = () => {
   };
 
   const toggleSelectAll = () => {
-    if (selectedDocs.size === pendingDocs.length) {
+    if (selectedDocs.size === visibleDocs.length) {
       setSelectedDocs(new Set());
     } else {
-      setSelectedDocs(new Set(pendingDocs.map(d => d.id)));
+      setSelectedDocs(new Set(visibleDocs.map(d => d.id)));
     }
   };
 
-  const flaggedCount = pendingDocs.filter(d => d.aiCheck.status !== 'passed').length;
+  const flaggedCount = visibleDocs.filter(d => d.aiCheck.status !== 'passed').length;
+
+  const handleSendToAdmin = async (id: string) => {
+    try {
+      if (id.length > 10) {
+        await submissionStorage.updateDocumentStatus(id, 'Pending Final Approval');
+      }
+      setHiddenDocIds(prev => {
+        const next = new Set(prev);
+        next.add(id);
+        return next;
+      });
+      toast.success("Document sent to admin for final approval.");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to forward document.");
+    }
+  };
+
+  const handleApprove = async (id: string) => {
+    try {
+      if (id.length > 10) {
+        await submissionStorage.updateDocumentStatus(id, 'Approved');
+      }
+      setHiddenDocIds(prev => {
+        const next = new Set(prev);
+        next.add(id);
+        return next;
+      });
+      toast.success("Document approved successfully.");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to approve document.");
+    }
+  };
+
+  const handleReject = async (id: string) => {
+    try {
+      if (id.length > 10) {
+        await submissionStorage.updateDocumentStatus(id, 'Revision Required');
+      }
+      setHiddenDocIds(prev => {
+        const next = new Set(prev);
+        next.add(id);
+        return next;
+      });
+      toast.success("Document rejected and returned to student.");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to reject document.");
+    }
+  };
+
+  const handleBatchSendToAdmin = async () => {
+    try {
+      const ids = Array.from(selectedDocs) as string[];
+      for (const id of ids) {
+        if (id.length > 10) {
+          await submissionStorage.updateDocumentStatus(id, 'Pending Final Approval');
+        }
+      }
+      setHiddenDocIds(prev => {
+        const next = new Set(prev);
+        ids.forEach(id => next.add(id));
+        return next;
+      });
+      setSelectedDocs(new Set());
+      toast.success(`${ids.length} documents sent to admin for final approval.`);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to forward batch.");
+    }
+  };
+
+  const handleBatchApprove = async () => {
+    try {
+      const ids = Array.from(selectedDocs) as string[];
+      for (const id of ids) {
+        if (id.length > 10) {
+          await submissionStorage.updateDocumentStatus(id, 'Approved');
+        }
+      }
+      setHiddenDocIds(prev => {
+        const next = new Set(prev);
+        ids.forEach(id => next.add(id));
+        return next;
+      });
+      setSelectedDocs(new Set());
+      toast.success(`${ids.length} documents approved successfully.`);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to process batch approval.");
+    }
+  };
+
+  const handleBatchReject = async () => {
+    try {
+      const ids = Array.from(selectedDocs) as string[];
+      for (const id of ids) {
+        if (id.length > 10) {
+          await submissionStorage.updateDocumentStatus(id, 'Revision Required');
+        }
+      }
+      setHiddenDocIds(prev => {
+        const next = new Set(prev);
+        ids.forEach(id => next.add(id));
+        return next;
+      });
+      setSelectedDocs(new Set());
+      toast.success(`${ids.length} documents rejected and returned to student.`);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to process batch rejection.");
+    }
+  };
 
   const getAIIcon = (status: string) => {
     switch (status) {
@@ -135,11 +284,12 @@ export const ReviewDocs: React.FC = () => {
         className="w-full"
         action={activeTab === 'needs_review' ? (
           <div className="flex items-center gap-2">
-           <span className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wide mr-2">{pendingDocs.length} Requests</span>
+           <span className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wide mr-2">{visibleDocs.length} Requests</span>
            {selectedDocs.size > 0 && (
              <>
                <Badge variant="outline" className="mr-1">{selectedDocs.size} selected</Badge>
-               <Button size="sm" variant="danger" icon={<X size={14} />}>Batch Reject</Button>
+               <Button size="sm" variant="danger" icon={<X size={14} />} onClick={handleBatchReject}>Batch Reject</Button>
+               <Button size="sm" variant="secondary" icon={<Check size={14} />} onClick={handleBatchApprove}>Batch Approve</Button>
              </>
            )}
            <Button 
@@ -147,8 +297,9 @@ export const ReviewDocs: React.FC = () => {
              variant="outline" 
              disabled={selectedDocs.size === 0}
              className={cn(selectedDocs.size === 0 && "opacity-50 cursor-not-allowed")}
+             onClick={handleBatchSendToAdmin}
            >
-             Batch Approve
+             Batch Send to Admin
            </Button>
         </div>
         ) : undefined}
@@ -160,7 +311,7 @@ export const ReviewDocs: React.FC = () => {
                 <th className="px-6 py-3 w-10">
                   <input 
                     type="checkbox" 
-                    checked={selectedDocs.size === pendingDocs.length}
+                    checked={selectedDocs.size === visibleDocs.length && visibleDocs.length > 0}
                     onChange={toggleSelectAll}
                     className="w-4 h-4 rounded border-zinc-300 dark:border-zinc-600 accent-zinc-900 dark:accent-zinc-100 cursor-pointer"
                   />
@@ -174,7 +325,7 @@ export const ReviewDocs: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-50 dark:divide-zinc-800/30">
-              {pendingDocs.map((doc) => (
+              {visibleDocs.map((doc) => (
                 <React.Fragment key={doc.id}>
                   <tr className={cn(
                     "hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30 transition-colors group",
@@ -261,10 +412,42 @@ export const ReviewDocs: React.FC = () => {
                       </Badge>
                     </td>
                     <td className="px-6 py-5 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                         <Button size="sm" variant="outline" onClick={() => navigate(`/adviser/review/${doc.id}`)} className="p-2 border-zinc-300 dark:border-zinc-700 group-hover:border-zinc-900 dark:group-hover:border-zinc-100 shadow-none"><MessageSquare size={14} /></Button>
-                         <Button size="sm" variant="danger" icon={<X size={14} />}>Reject</Button>
-                         <Button size="sm" variant="primary" icon={<Check size={14} />}>Approve</Button>
+                      <div className="flex items-center justify-end gap-1.5 flex-nowrap">
+                         <Button 
+                           size="sm" 
+                           variant="outline" 
+                           onClick={() => navigate(`/adviser/review/${doc.id}`)} 
+                           className="p-2 border-zinc-300 dark:border-zinc-700 group-hover:border-zinc-900 dark:group-hover:border-zinc-100 shadow-none"
+                         >
+                           <MessageSquare size={14} />
+                         </Button>
+                         <Button 
+                           size="sm" 
+                           variant="danger" 
+                           icon={<X size={14} />} 
+                           onClick={() => handleReject(doc.id)}
+                           className="px-2 py-1 text-[10px] h-7"
+                         >
+                           Reject
+                         </Button>
+                         <Button 
+                           size="sm" 
+                           variant="secondary" 
+                           icon={<Check size={14} />} 
+                           onClick={() => handleApprove(doc.id)}
+                           className="px-2 py-1 text-[10px] h-7 border-zinc-300 hover:bg-zinc-50"
+                         >
+                           Approve
+                         </Button>
+                         <Button 
+                           size="sm" 
+                           variant="primary" 
+                           icon={<ShieldCheck size={14} />} 
+                           onClick={() => handleSendToAdmin(doc.id)}
+                           className="px-2 py-1 text-[10px] h-7 whitespace-nowrap shrink-0"
+                         >
+                           Send to Admin
+                         </Button>
                       </div>
                     </td>
                   </tr>

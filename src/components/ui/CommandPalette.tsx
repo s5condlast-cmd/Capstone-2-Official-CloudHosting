@@ -52,7 +52,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, setIsOpe
     { id: 'mystudents', label: 'My Students', icon: Users, role: 'adviser', action: () => navigate('/adviser/students') },
     { id: 'review', label: 'Consolidate Reviews', icon: FileText, role: 'adviser', action: () => navigate('/adviser/review') },
     
-    { id: 'resume', label: 'Submit Resume', icon: FileText, role: 'student', action: () => navigate('/student/resume') },
+    { id: 'application-letter', label: 'Submit Application Letter', icon: FileText, role: 'student', action: () => navigate('/student/application-letter') },
     { id: 'journal', label: 'Weekly Journal', icon: FileText, role: 'student', action: () => navigate('/student/journal') },
     { id: 'dtr', label: 'DTR Submissions', icon: FileText, role: 'student', action: () => navigate('/student/dtr') },
     { id: 'eval', label: 'Final Evaluation', icon: FileText, role: 'student', action: () => navigate('/student/evaluation') },

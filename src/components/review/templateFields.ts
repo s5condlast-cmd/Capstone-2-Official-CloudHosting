@@ -164,15 +164,6 @@ export const templateFields: Record<string, FormField[]> = {
     { key: 'totalHours', label: 'Total Hours', type: 'text' },
     { key: 'cumulativeHours', label: 'Cumulative Hours', type: 'text' },
   ],
-  'Resume': [
-    { key: 'fullName', label: 'Full Name', type: 'text' },
-    { key: 'address', label: 'Address', type: 'text' },
-    { key: 'contactNumber', label: 'Contact Number', type: 'text' },
-    { key: 'email', label: 'Email Address', type: 'email' },
-    { key: 'program', label: 'Program', type: 'text' },
-    { key: 'section', label: 'Section', type: 'text' },
-    { key: 'technicalSkills', label: 'Technical Skills', type: 'textarea' },
-  ]
 };
 
 // Helper to get the filename from a full path URL

@@ -1,4 +1,4 @@
-export type Role = 'admin' | 'adviser' | 'student';
+export type Role = 'admin' | 'adviser' | 'student' | 'supervisor';
 
 export interface User {
   id: string;
@@ -10,6 +10,9 @@ export interface User {
   studentId?: string;
   course?: string;
   adviserId?: string;
+  companyName?: string;
+  companyId?: string;
+  supervisorId?: string;
 }
 
 export interface Document {
@@ -18,7 +21,7 @@ export interface Document {
   studentId: string;
   studentName: string;
   submittedAt: string;
-  status: 'Pending' | 'Approved' | 'Returned' | 'Under Review';
+  status: 'Pending Adviser Review' | 'Pending Final Approval' | 'Revision Required' | 'Approved';
   fileUrl?: string;
   comment?: string;
   weeks?: number;
@@ -62,4 +65,33 @@ export interface InsightReport {
   categories: InsightCategory[];
   manualChecks: string[];
   analyzedAt: string;
+}
+
+export interface Company {
+  id: string;
+  name: string;
+  address: string;
+  contactNumber: string;
+  industry: string;
+  status: 'Active' | 'Inactive' | 'Pending MOA';
+  moaExpiry?: string;
+  supervisors: string[]; // supervisor user names/IDs
+  studentIds: string[];  // student user names/IDs
+}
+
+export interface TimelineEvent {
+  id: string;
+  title: string;
+  description: string;
+  date: string;
+  status: 'completed' | 'in_progress' | 'pending';
+}
+
+export interface AiFindings {
+  overallAssessment: 'Good' | 'Needs Attention' | 'Critical Issues';
+  grammarIssues: number;
+  missingInformation: string[];
+  consistencyIssues: string[];
+  recommendations: string[];
+  confidence: 'High' | 'Medium' | 'Low';
 }

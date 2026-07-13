@@ -16,23 +16,25 @@ import { Templates } from './pages/admin/Templates';
 import { Reports } from './pages/admin/Reports';
 import { Settings } from './pages/admin/Settings';
 import { Announcements } from './pages/admin/Announcements';
+import { CompanyManagement } from './pages/admin/CompanyManagement';
 import { AdviserDashboard } from './pages/adviser/AdviserDashboard';
 import { StudentDashboard } from './pages/student/StudentDashboard';
-import { Requirements } from './pages/student/Requirements';
+
 import { DTR } from './pages/student/DTR';
-import { Journal } from './pages/student/Journal';
-import { Resume } from './pages/student/Resume';
-import { MOA } from './pages/student/MOA';
-import { Endorsement } from './pages/student/Endorsement';
+import { WeeklyJournal } from './pages/student/WeeklyJournal';
+import { StudentApplicationLetter } from './pages/student/StudentApplicationLetter';
+import { MemorandumOfAgreement } from './pages/student/MemorandumOfAgreement';
+import { STIOJTEndorsementLetter } from './pages/student/STIOJTEndorsementLetter';
 import { LetterOfConsent } from './pages/student/LetterOfConsent';
-import { Evaluation } from './pages/student/Evaluation';
-import { TrainingPlan } from './pages/student/TrainingPlan';
-import { Completion } from './pages/student/Completion';
-import { Proposal } from './pages/student/Proposal';
+import { PerformanceAppraisal } from './pages/student/PerformanceAppraisal';
+import { OJTTrainingPlan } from './pages/student/OJTTrainingPlan';
+import { IntegrationPaper } from './pages/student/IntegrationPaper';
+import { ProposalLetterToTheIndustry } from './pages/student/ProposalLetterToTheIndustry';
 import { ReviewDocs } from './pages/adviser/ReviewDocs';
 import { Endorsements } from './pages/adviser/Endorsements';
 import { ClassReports } from './pages/adviser/ClassReports';
 import { CompanyEvaluations } from './pages/adviser/CompanyEvaluations';
+import { AdviserComparison } from './pages/adviser/AdviserComparison';
 import { MOAReview } from './pages/adviser/MOAReview';
 import { DocumentReviewSession } from './pages/adviser/DocumentReviewSession';
 import { AdviserDocumentEditor } from './pages/adviser/AdviserDocumentEditor';
@@ -40,7 +42,13 @@ import { AdminReviewSession } from './pages/admin/AdminReviewSession';
 import { AdminDocumentEditor } from './pages/admin/AdminDocumentEditor';
 import { MyStudents } from './pages/adviser/MyStudents';
 import { Notifications } from './pages/Notifications';
-import { DocumentSubmission } from './pages/student/DocumentSubmission';
+
+import { SupervisorDashboard } from './pages/supervisor/SupervisorDashboard';
+import { MyInterns } from './pages/supervisor/MyInterns';
+import { DTRApproval } from './pages/supervisor/DTRApproval';
+import { EvaluateIntern } from './pages/supervisor/EvaluateIntern';
+import { InternshipCompletion } from './pages/supervisor/InternshipCompletion';
+
 import { Profile } from './pages/Profile';
 import { User, Role } from './types';
 
@@ -135,6 +143,7 @@ export default function App() {
           <Route index element={<AdminDashboard />} />
           <Route path="monitoring" element={<Monitoring />} />
           <Route path="users" element={<UserManagement />} />
+          <Route path="companies" element={<CompanyManagement />} />
           <Route path="documents" element={<DocumentVerification />} />
           <Route path="documents/:id" element={<AdminReviewSession />} />
           <Route path="documents/:id/edit" element={<AdminDocumentEditor />} />
@@ -159,6 +168,7 @@ export default function App() {
           <Route path="review/:id" element={<DocumentReviewSession />} />
           <Route path="review/:id/edit" element={<AdviserDocumentEditor />} />
           <Route path="evaluations" element={<CompanyEvaluations />} />
+          <Route path="comparison" element={<AdviserComparison />} />
           <Route path="class-reports" element={<ClassReports />} />
           <Route path="notifications" element={<Notifications user={user} />} />
           <Route path="profile" element={<Profile user={user} />} />
@@ -171,17 +181,32 @@ export default function App() {
           </ProtectedRoute>
         }>
           <Route index element={<StudentDashboard />} />
-          <Route path="resume" element={<PhaseGuard phase="beforeOjt"><Resume /></PhaseGuard>} />
+          <Route path="application-letter" element={<PhaseGuard phase="beforeOjt"><StudentApplicationLetter /></PhaseGuard>} />
           <Route path="consent" element={<PhaseGuard phase="beforeOjt"><LetterOfConsent /></PhaseGuard>} />
-          <Route path="moa" element={<PhaseGuard phase="beforeOjt"><MOA /></PhaseGuard>} />
-          <Route path="endorsement" element={<PhaseGuard phase="beforeOjt"><Endorsement /></PhaseGuard>} />
-          <Route path="proposal" element={<PhaseGuard phase="beforeOjt"><Proposal /></PhaseGuard>} />
+          <Route path="moa" element={<PhaseGuard phase="beforeOjt"><MemorandumOfAgreement /></PhaseGuard>} />
+          <Route path="endorsement" element={<PhaseGuard phase="beforeOjt"><STIOJTEndorsementLetter /></PhaseGuard>} />
+          <Route path="proposal" element={<PhaseGuard phase="beforeOjt"><ProposalLetterToTheIndustry /></PhaseGuard>} />
           <Route path="dtr" element={<PhaseGuard phase="inOjt"><DTR /></PhaseGuard>} />
-          <Route path="journal" element={<PhaseGuard phase="inOjt"><Journal /></PhaseGuard>} />
-          <Route path="training-plan" element={<PhaseGuard phase="inOjt"><TrainingPlan /></PhaseGuard>} />
-          <Route path="evaluation" element={<PhaseGuard phase="finals"><Evaluation /></PhaseGuard>} />
-          <Route path="completion" element={<PhaseGuard phase="finals"><Completion /></PhaseGuard>} />
+          <Route path="journal" element={<PhaseGuard phase="inOjt"><WeeklyJournal /></PhaseGuard>} />
+          <Route path="training-plan" element={<PhaseGuard phase="inOjt"><OJTTrainingPlan /></PhaseGuard>} />
+          <Route path="evaluation" element={<PhaseGuard phase="finals"><PerformanceAppraisal /></PhaseGuard>} />
+          <Route path="completion" element={<PhaseGuard phase="finals"><IntegrationPaper /></PhaseGuard>} />
           <Route path="progress" element={<Placeholder name="Progress Tracker" />} />
+          <Route path="notifications" element={<Notifications user={user} />} />
+          <Route path="profile" element={<Profile user={user} />} />
+        </Route>
+
+        {/* Supervisor Routes */}
+        <Route path="/supervisor" element={
+          <ProtectedRoute user={user} allowedRole="supervisor">
+            <MainLayout user={user} onLogout={handleLogout} />
+          </ProtectedRoute>
+        }>
+          <Route index element={<SupervisorDashboard />} />
+          <Route path="interns" element={<MyInterns />} />
+          <Route path="dtr" element={<DTRApproval />} />
+          <Route path="evaluate" element={<EvaluateIntern />} />
+          <Route path="completion" element={<InternshipCompletion />} />
           <Route path="notifications" element={<Notifications user={user} />} />
           <Route path="profile" element={<Profile user={user} />} />
         </Route>

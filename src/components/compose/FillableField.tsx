@@ -16,6 +16,8 @@ interface FillableFieldProps {
   widthClass?: string;
   /** Whether this field is currently active in the workflow drawer */
   isActive?: boolean;
+  /** Optional class override for the text inside the field */
+  textClass?: string;
 }
 
 /**
@@ -29,7 +31,8 @@ export const FillableField: React.FC<FillableFieldProps> = ({
   onClick,
   inline = false,
   widthClass,
-  isActive = false
+  isActive = false,
+  textClass
 }) => {
   if (inline) {
     return (
@@ -51,7 +54,7 @@ export const FillableField: React.FC<FillableFieldProps> = ({
         title={value ? `Edit: ${label}` : `Fill in: ${label}`}
       >
         <PenLine size={10} className="shrink-0 opacity-60 group-hover:opacity-100" />
-        <span className="text-[11px] font-medium">
+        <span className={cn("text-[11px] font-medium", textClass)}>
           {value || label}
         </span>
       </motion.button>
@@ -78,7 +81,7 @@ export const FillableField: React.FC<FillableFieldProps> = ({
       title={value ? `Edit: ${label}` : `Fill in: ${label}`}
     >
       <PenLine size={10} className="shrink-0 opacity-50 group-hover:opacity-100" />
-      <span className="text-[11px] font-medium">
+      <span className={cn("text-[11px] font-medium", textClass)}>
         {value || label}
       </span>
     </motion.button>

@@ -24,7 +24,8 @@ import {
   ClipboardList as ClipboardListIcon,
   FilePlus2 as FilePlus2Icon,
   UserCheck as UserCheckIcon,
-  Lock as LockIcon
+  Lock as LockIcon,
+  Building2 as BuildingIcon
 } from 'lucide-react';
 import { Role } from '@/src/types';
 import { usePhaseLock } from '@/src/hooks/usePhaseLock';
@@ -56,8 +57,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ role, onLogout, isOpen, onTogg
 
   React.useEffect(() => {
     const handleResize = () => setIsDesktop(window.innerWidth >= 768);
+    
+    const handleSetCollapsed = (e: Event) => {
+      const customEvent = e as CustomEvent<{ collapsed: boolean }>;
+      setIsCollapsed(customEvent.detail.collapsed);
+    };
+
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener('set-sidebar-collapsed', handleSetCollapsed);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('set-sidebar-collapsed', handleSetCollapsed);
+    };
   }, []);
 
   const getLinks = (): LinkGroup[] => {
@@ -73,6 +84,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ role, onLogout, isOpen, onTogg
           {
             group: 'Management', items: [
               { to: '/admin/users', icon: UsersIcon, label: 'Accounts', badge: 3 },
+              { to: '/admin/companies', icon: BuildingIcon, label: 'Companies' },
               { to: '/admin/documents', icon: FileTextIcon, label: 'Documents', badge: 38 },
               { to: '/admin/templates', icon: ClipboardListIcon, label: 'Templates' },
               { to: '/admin/announcements', icon: BellIcon, label: 'Announcements' },
@@ -103,6 +115,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ role, onLogout, isOpen, onTogg
             group: 'Review Hub', items: [
               { to: '/adviser/review', icon: SearchIcon, label: 'Document Review', badge: 4 },
               { to: '/adviser/evaluations', icon: CheckCircleIcon, label: 'Company Evaluations' },
+              { to: '/adviser/comparison', icon: ClipboardListIcon, label: 'Rating Comparison' },
             ]
           },
           {
@@ -120,7 +133,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ role, onLogout, isOpen, onTogg
           },
           {
             group: 'Before OJT', items: [
-              { to: '/student/resume', icon: FileTextIcon, label: 'Student Application Letter', locked: locks.beforeOjt },
+              { to: '/student/application-letter', icon: FileTextIcon, label: 'Student Application Letter', locked: locks.beforeOjt },
               { to: '/student/consent', icon: UserCheckIcon, label: 'Consent Form', locked: locks.beforeOjt },
               { to: '/student/proposal', icon: FilePlus2Icon, label: 'Proposal Letter', locked: locks.beforeOjt },
               { to: '/student/moa', icon: UsersIcon, label: 'Memorandum of Agreement', locked: locks.beforeOjt },
@@ -141,6 +154,30 @@ export const Sidebar: React.FC<SidebarProps> = ({ role, onLogout, isOpen, onTogg
             ]
           },
         ];
+      case 'supervisor':
+        return [
+          {
+            group: 'Overview', items: [
+              { to: '/supervisor', icon: LayoutDashboardIcon, label: 'Dashboard' },
+            ]
+          },
+          {
+            group: 'My Interns', items: [
+              { to: '/supervisor/interns', icon: GraduationCapIcon, label: 'Assigned Interns' },
+            ]
+          },
+          {
+            group: 'Reviews', items: [
+              { to: '/supervisor/dtr', icon: CalendarIcon, label: 'DTR Approval', badge: 5 },
+              { to: '/supervisor/evaluate', icon: ClipboardListIcon, label: 'Performance Appraisal', badge: 1 },
+            ]
+          },
+          {
+            group: 'Completion', items: [
+              { to: '/supervisor/completion', icon: AwardIcon, label: 'Intern Clearance' },
+            ]
+          },
+        ];
     }
   };
 
@@ -156,7 +193,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ role, onLogout, isOpen, onTogg
       }}
       transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
       className={cn(
-        "bg-white dark:bg-zinc-950 border-r border-zinc-200 dark:border-zinc-800 flex flex-col h-screen z-30 shrink-0 transition-[transform] duration-300",
+        "bg-white dark:bg-zinc-950 border-r border-zinc-200 dark:border-zinc-800 flex flex-col h-screen z-40 shrink-0 transition-[transform] duration-300",
         isDesktop ? "sticky top-0" : "fixed top-0 left-0"
       )}
     >
@@ -187,7 +224,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ role, onLogout, isOpen, onTogg
 
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="absolute -right-4 top-8 w-8 h-8 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-full flex items-center justify-center text-zinc-400 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 shadow-sm z-30 transition-colors hidden md:flex"
+          className="absolute -right-4 top-8 w-8 h-8 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-full flex items-center justify-center text-zinc-400 dark:text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 shadow-sm z-40 transition-colors hidden md:flex"
         >
           {isCollapsed ? <ChevronRightIcon size={16} /> : <ChevronLeftIcon size={16} />}
         </button>

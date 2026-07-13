@@ -1,4 +1,4 @@
-import { get, set, del, keys } from 'idb-keyval';
+import { supabase } from './supabase';
 
 export interface TemplateMetadata {
   id: string;
@@ -11,33 +11,98 @@ export interface TemplateMetadata {
 }
 
 export const templateStorage = {
-  // Save the raw file buffer to IndexedDB
+  // Save the raw file to Supabase Storage
   async saveTemplateFile(id: string, file: File): Promise<void> {
-    const arrayBuffer = await file.arrayBuffer();
-    await set(`template_file_${id}`, arrayBuffer);
+    const { error } = await supabase.storage
+      .from('templates')
+      .upload(id, file, {
+        upsert: true,
+      });
+
+    if (error) {
+      console.error('Error uploading template file:', error);
+      throw error;
+    }
   },
 
-  // Retrieve the raw file buffer from IndexedDB
+  // Retrieve the raw file buffer from Supabase Storage
   async getTemplateFile(id: string): Promise<ArrayBuffer | undefined> {
-    return await get<ArrayBuffer>(`template_file_${id}`);
+    const { data, error } = await supabase.storage
+      .from('templates')
+      .download(id);
+
+    if (error) {
+      console.error('Error downloading template file:', error);
+      return undefined;
+    }
+
+    return await data?.arrayBuffer();
   },
 
-  // Save metadata to IndexedDB
+  // Retrieve the PDF backup for a template
+  async getTemplatePdfBackup(id: string): Promise<ArrayBuffer | undefined> {
+    const { data, error } = await supabase.storage
+      .from('templates')
+      .download(`${id}_pdf_backup`);
+
+    if (error) {
+      return undefined;
+    }
+
+    return await data?.arrayBuffer();
+  },
+
+  // Save metadata to Supabase DB
   async saveMetadata(metadata: TemplateMetadata[]): Promise<void> {
-    await set('template_metadata', metadata);
+    // The previous implementation saved the entire array.
+    // We can upsert all items.
+    const { error } = await supabase
+      .from('template_metadata')
+      .upsert(metadata);
+
+    if (error) {
+      console.error('Error saving template metadata:', error);
+      throw error;
+    }
   },
 
-  // Retrieve metadata
+  // Retrieve metadata from Supabase DB
   async getMetadata(): Promise<TemplateMetadata[] | undefined> {
-    return await get<TemplateMetadata[]>('template_metadata');
+    const { data, error } = await supabase
+      .from('template_metadata')
+      .select('*');
+
+    if (error) {
+      console.error('Error fetching template metadata:', error);
+      return undefined;
+    }
+
+    return data as TemplateMetadata[];
   },
   
-  // Delete a template and its metadata
+  // Delete a template and its metadata from Supabase
   async deleteTemplate(id: string): Promise<void> {
-    await del(`template_file_${id}`);
-    const meta = await this.getMetadata();
-    if (meta) {
-      await this.saveMetadata(meta.filter(m => m.id !== id));
+    // Delete file
+    const { error: storageError } = await supabase.storage
+      .from('templates')
+      .remove([id]);
+
+    if (storageError) {
+      console.error('Error deleting template file:', storageError);
+    }
+
+    // Delete metadata
+    const { error: dbError } = await supabase
+      .from('template_metadata')
+      .delete()
+      .eq('id', id);
+
+    // Also try to delete PDF backup just in case
+    await supabase.storage.from('templates').remove([`${id}_pdf_backup`]);
+
+    if (dbError) {
+      console.error('Error deleting template metadata:', dbError);
+      throw dbError;
     }
   }
 };

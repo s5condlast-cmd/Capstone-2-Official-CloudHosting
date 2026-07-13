@@ -2,14 +2,12 @@ import React, { useState } from 'react';
 import { Card } from '@/src/components/ui/Card';
 import { Badge } from '@/src/components/ui/Badge';
 import { Button } from '@/src/components/ui/Button';
-import { Upload, Send, Clock, AlertCircle, MessageSquare, FileUp } from 'lucide-react';
+import { Upload, Send, Clock, AlertCircle, MessageSquare, FileUp, Info } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import { DocumentWorkflow } from '@/src/components/compose/DocumentWorkflow';
 import { templateFields, getTemplateFilename } from '@/src/components/review/templateFields';
-import { DTRPreview } from '@/src/components/templates/DTRPreview';
+
 export const DTR: React.FC = () => {
-
-
   const history = [
     { period: 'October 2024', date: 'Nov 1, 2024', status: 'Pending', feedback: 'Awaiting adviser review.' },
     { period: 'September 2024', date: 'Oct 15, 2024', status: 'Approved', feedback: 'Signatures verified.' },
@@ -24,12 +22,19 @@ export const DTR: React.FC = () => {
             title="Daily Time Record (DTR)" 
             docUrl="/sample-dtr.docx"
             fields={templateFields[getTemplateFilename("/sample-dtr.pdf")] || []}
-            previewComponent={DTRPreview}
+            useDocxPreview={true}
           />
         </div>
         <div className="space-y-6">
           <Card title="Upload Daily Time Record">
             <div className="space-y-5">
+              <div className="bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-800 rounded-lg p-2.5 flex items-start gap-2">
+                <Info className="text-zinc-500 dark:text-zinc-400 mt-0.5 shrink-0" size={13} />
+                <p className="text-[11px] text-zinc-600 dark:text-zinc-400 leading-normal">
+                  <strong>Reminder:</strong> We recommend uploading a scanned PDF. Please ensure all signatures are clearly visible and scanned correctly.
+                </p>
+              </div>
+
               <div className="border border-dashed border-zinc-200 dark:border-zinc-700 rounded-xl p-6 text-center hover:border-zinc-400 dark:hover:border-zinc-600 transition-colors cursor-pointer group">
                 <div className="w-12 h-12 bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-105 transition-transform">
                   <Upload size={22} className="text-zinc-500 dark:text-zinc-400" />

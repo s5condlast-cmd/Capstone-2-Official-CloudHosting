@@ -21,8 +21,8 @@ import { cn } from '@/src/lib/utils';
 import { motion } from 'motion/react';
 import { toast } from 'sonner';
 
-type UserRole = 'Student' | 'Adviser' | 'Admin';
-type TabKey = 'all' | 'students' | 'advisers' | 'admins';
+type UserRole = 'Student' | 'Adviser' | 'Admin' | 'Supervisor';
+type TabKey = 'all' | 'students' | 'advisers' | 'supervisors' | 'admins';
 
 interface UserRecord {
   id: string;
@@ -47,12 +47,15 @@ const allUsers: UserRecord[] = [
   { id: '10', name: 'Admin User', role: 'Admin', email: 'admin@edu.ph', status: 'Active', dept: 'System' },
   { id: '11', name: 'Robert Cruz', role: 'Student', email: 'r.cruz@edu.ph', status: 'Active', dept: 'BSIT 402', resetRequested: true },
   { id: '12', name: 'James Tan', role: 'Student', email: 'j.tan@edu.ph', status: 'Suspended', dept: '__BSIT 402_401__' },
+  { id: '13', name: 'Engr. Paolo Reyes', role: 'Supervisor', email: 'p.reyes@innotech.com', status: 'Active', dept: 'InnoTech Labs' },
+  { id: '14', name: 'Mr. James Tan', role: 'Supervisor', email: 'j.tan@techcorp.com', status: 'Active', dept: 'TechCorp Solutions' }
 ];
 
 const tabs: { key: TabKey; label: string; icon: React.ElementType; roleFilter?: UserRole }[] = [
   { key: 'all', label: 'All Users', icon: Users },
   { key: 'students', label: 'Students', icon: GraduationCap, roleFilter: 'Student' },
   { key: 'advisers', label: 'Advisers', icon: Briefcase, roleFilter: 'Adviser' },
+  { key: 'supervisors', label: 'Supervisors', icon: Briefcase, roleFilter: 'Supervisor' },
   { key: 'admins', label: 'Admins', icon: Shield, roleFilter: 'Admin' },
 ];
 

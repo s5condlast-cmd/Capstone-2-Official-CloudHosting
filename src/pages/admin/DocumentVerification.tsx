@@ -17,10 +17,39 @@ import {
 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import { Input } from '@/src/components/ui/Input';
+import { submissionStorage, StudentDocument } from '@/src/lib/submissionStorage';
 
 export const DocumentVerification: React.FC = () => {
   const navigate = useNavigate();
+  const [liveDocs, setLiveDocs] = React.useState<StudentDocument[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    async function loadDocs() {
+      try {
+        const docs = await submissionStorage.getPendingAdminDocuments();
+        setLiveDocs(docs);
+      } catch (err) {
+        console.error("Failed to load documents", err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadDocs();
+  }, []);
+
+  const mappedLiveDocs = liveDocs.map(doc => ({
+    id: doc.id,
+    student: doc.student_name,
+    adviser: 'Dr. Smith',
+    type: doc.doc_type,
+    time: new Date(doc.created_at).toLocaleDateString(),
+    course: doc.course,
+    status: 'pending_admin'
+  }));
+
   const pendingDocs = [
+    ...mappedLiveDocs,
     { id: '1', student: 'Alice Brown', adviser: 'Dr. Smith', type: 'Journal #4', time: '2 hours ago', course: '__BSIT 402_401__', status: 'escalated' },
     { id: '2', student: 'Charlie Davis', adviser: 'Prof. Johnson', type: 'MOA Document', time: '5 hours ago', course: 'BSIT 402', status: 'pending_legal' },
     { id: '3', student: 'Eva Green', adviser: 'Dr. Smith', type: 'MOA Revised', time: '1 day ago', course: '__BSIT 402_401__', status: 'escalated' },

@@ -81,7 +81,7 @@ export const Topbar: React.FC<TopbarProps> = ({ title, subtitle, user, onMenuCli
   const showBreadcrumbs = breadcrumbs.length > 0;
 
   return (
-    <header className="min-h-[72px] bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800 px-4 md:px-6 flex items-center justify-between sticky top-0 z-10 shrink-0 transition-colors duration-300">
+    <header className="min-h-[72px] bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800 px-4 md:px-6 flex items-center justify-between sticky top-0 z-20 shrink-0 transition-colors duration-300">
       {/* Left: Menu + Title + Role Badge */}
       <div className="flex items-center gap-3 min-w-0 flex-1">
         <button 

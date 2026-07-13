@@ -28,7 +28,8 @@ const evaluations = [
     },
     overallScore: 4.4,
     remarks: 'Excellent initiative. Contributed to 3 major sprint deliverables.',
-    submittedDate: 'May 5, 2026'
+    submittedDate: 'May 5, 2026',
+    source: 'portal'
   },
   {
     id: '2', student: 'Alice Brown', program: 'BSIT 402-401',
@@ -41,7 +42,8 @@ const evaluations = [
     },
     overallScore: 4.2,
     remarks: 'Demonstrates strong problem-solving ability. Needs improvement in documentation.',
-    submittedDate: 'May 3, 2026'
+    submittedDate: 'May 3, 2026',
+    source: 'manual'
   },
   {
     id: '3', student: 'Sarah Lee', program: 'BSIT 402',
@@ -51,7 +53,8 @@ const evaluations = [
     scores: null,
     overallScore: null,
     remarks: null,
-    submittedDate: null
+    submittedDate: null,
+    source: 'manual'
   },
   {
     id: '4', student: 'John Smith', program: 'BSIT 402',
@@ -64,7 +67,8 @@ const evaluations = [
     },
     overallScore: 2.8,
     remarks: 'Struggles with attendance and communication. Needs intervention.',
-    submittedDate: 'Apr 28, 2026'
+    submittedDate: 'Apr 28, 2026',
+    source: 'portal'
   },
 ];
 
@@ -271,7 +275,13 @@ export const CompanyEvaluations: React.FC = () => {
                                 <h4 className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-2">Evaluation Details</h4>
                                 <div className="grid grid-cols-2 gap-y-3 text-xs">
                                   <span className="text-zinc-500 font-medium">Supervisor:</span>
-                                  <span className="font-semibold text-zinc-900 dark:text-zinc-100">{e.supervisor}</span>
+                                  <span className="font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                                    {e.supervisor}
+                                    {/* @ts-ignore */}
+                                    {e.source === 'portal' && (
+                                      <Badge variant="success" className="text-[9px] py-0 px-1.5 uppercase font-bold leading-none h-4">Portal</Badge>
+                                    )}
+                                  </span>
                                   
                                   <span className="text-zinc-500 font-medium">Submitted Date:</span>
                                   <span className="font-semibold text-zinc-900 dark:text-zinc-100">{e.submittedDate}</span>
