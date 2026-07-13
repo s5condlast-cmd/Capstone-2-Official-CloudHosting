@@ -255,7 +255,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ role, onLogout, isOpen, onTogg
                 className={({ isActive }) => cn(
                   'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all group relative',
                   isActive && !link.locked
-                    ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-950 shadow-sm'
+                    ? 'bg-primary text-primary-fg shadow-sm'
                     : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800',
                   link.locked && 'opacity-60 cursor-not-allowed hover:bg-transparent hover:text-zinc-500 dark:hover:text-zinc-400',
                   isCollapsed && 'justify-center'
@@ -263,7 +263,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ role, onLogout, isOpen, onTogg
               >
                 {({ isActive }) => (
                   <>
-                    <link.icon size={18} className={cn("transition-colors shrink-0", isActive && !link.locked ? "text-white dark:text-zinc-950" : "text-zinc-400 dark:text-zinc-500", !link.locked && "group-hover:text-zinc-900 dark:group-hover:text-zinc-100")} />
+                    <link.icon size={18} className={cn("transition-colors shrink-0", isActive && !link.locked ? "text-primary-fg" : "text-zinc-400 dark:text-zinc-500", !link.locked && "group-hover:text-zinc-900 dark:group-hover:text-zinc-100")} />
                     {!isCollapsed && (
                       <motion.span
                         initial={{ opacity: 0, x: -10 }}

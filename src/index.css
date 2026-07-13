@@ -9,9 +9,58 @@
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --radius-xl: 1rem;
   --radius-2xl: 1.5rem;
+  
+  /* Theme Variables */
+  --color-primary: var(--theme-primary);
+  --color-primary-hover: var(--theme-primary-hover);
+  --color-primary-fg: var(--theme-primary-fg);
 }
 
 @layer base {
+  :root {
+    /* Monochrome (Default) */
+    --theme-primary: #09090b;
+    --theme-primary-hover: #27272a;
+    --theme-primary-fg: #ffffff;
+  }
+
+  .dark {
+    /* Dark Mode Monochrome Fallback */
+    --theme-primary: #f4f4f5;
+    --theme-primary-hover: #e4e4e7;
+    --theme-primary-fg: #09090b;
+  }
+
+  /* Shared Text Color for Colored Themes (always white foreground) */
+  :root.theme-blue, :root.theme-indigo, :root.theme-sti, :root.theme-cyan,
+  .dark.theme-blue, .dark.theme-indigo, .dark.theme-sti, .dark.theme-cyan {
+    --theme-primary-fg: #ffffff;
+  }
+
+  /* Modern Blue */
+  .theme-blue {
+    --theme-primary: #2563eb;
+    --theme-primary-hover: #1d4ed8;
+  }
+
+  /* Indigo Professional */
+  .theme-indigo {
+    --theme-primary: #4f46e5;
+    --theme-primary-hover: #4338ca;
+  }
+
+  /* STI Inspired */
+  .theme-sti {
+    --theme-primary: #1d4ed8;
+    --theme-primary-hover: #1e3a8a;
+  }
+
+  /* Slate + Cyan */
+  .theme-cyan {
+    --theme-primary: #06b6d4;
+    --theme-primary-hover: #0891b2;
+  }
+
   body {
     @apply font-sans text-zinc-900 antialiased bg-zinc-50;
   }
