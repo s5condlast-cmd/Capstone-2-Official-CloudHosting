@@ -38,6 +38,7 @@ When adding new document requirement workflows to the student portal (e.g., MOA,
 - **Never duplicate the layout UI:** Always use the generic `StudentDocumentPage` layout component located at `src/components/compose/StudentDocumentPage.tsx`. 
 - Pass all required configuration to the component, including the `templates` array, `status`, `submissionInfo`, and `adviserFeedback`. 
 - If a document requires dynamic instructions before uploading (e.g., explaining fees), use the `instructionsModal` property on the template object rather than building a custom modal. 
+- **Dynamic Database State Syncing:** Always query the database (`submissionStorage`) on mount/change to fetch the latest submission record for the active student and selected template. Merge the database status, adviser feedback remarks, and comments history array dynamically to override the default hardcoded props. 
 
 ## Template Document Organization
 
@@ -69,11 +70,17 @@ When creating or referencing React components and filenames for student document
 When building document preview workflows (e.g. `DocumentWorkflow.tsx`), handle "Print / Save PDF" logic dynamically to avoid broken HTML-rendered prints:
 1. **Native PDF Documents:** If a template is natively a PDF (e.g. `useDocxPreview === false`), clicking "Download PDF" MUST trigger a direct file download of the raw PDF buffer using `window.URL.createObjectURL(new Blob([docBuffer]))`. Never call `window.print()` for native PDFs as the browser dialogue will distort the canvas rendering.
 2. **DOCX Documents with PDF Backups:** If a template is natively a DOCX, check Supabase Storage for a `${templateId}_pdf_backup` file. If the admin has uploaded this backup, download it directly for the student as a fallback. Only call `window.print()` if no PDF backup exists.
-3. **Admin Uploads:** In the Admin Templates page, provide an option to upload a "PDF Backup" exclusively for `.docx` templates.
+3. **Explicit Admin Template Actions:** In the Admin Templates page, DO NOT hide file management actions behind dropdown menus. **Every** template card must consistently expose an explicit 4-button action grid at the bottom:
+   - **Upload DOCX** (primary style)
+   - **Upload PDF** (primary style, acting as the backup/reference)
+   - **Download DOCX** (secondary/outline style)
+   - **Download PDF** (secondary/outline style)
+   Maintain identical spacing, alignment, and sizing across all template cards for a consistent admin experience.
 
 ## Utility and Styling Conventions
 
 - **Dynamic Class Helper (`cn`)**: When writing or updating React components that dynamically apply styles using the class helper, always verify that `import { cn } from '@/src/lib/utils';` is included at the top of the file to prevent compiler lookup errors (`Cannot find name 'cn'`).
+- **Theme-Aware UI Styling**: When styling active states, primary actions, or highlighting icons, DO NOT hardcode specific colors (e.g., `bg-blue-600`, `text-blue-500`). Instead, use theme-aware Tailwind classes like `text-primary`, `bg-primary`, or utilize the `variant='primary'` prop on custom components (`Button`, `Badge`). This ensures the UI respects the dynamic CSS variables (`--theme-primary`) and can correctly default to monochrome black/white or apply custom colored themes.
 
 ## Refactoring and File Renaming Cleanups
 
@@ -101,3 +108,21 @@ When configuring Vercel deployment for this Vite + Express full-stack project:
 - **NEVER** assume the user wants their code pushed to the remote repository, even if a task is fully complete and verified.
 - You must stage and commit the code locally (if appropriate), but you must then **STOP** and inform the user that the code is ready to be pushed.
 - You are strictly forbidden from executing a `git push` command until the user explicitly types the authorization code: `/push`.
+
+## Review Scope Protocol (/review)
+
+When the user invokes `/review`, the review scope must be determined in the following priority order:
+
+1. **User Prompt (Highest Priority)**  
+   If the user specifies what to review (e.g., `/review UI`, `/review authentication`, `/review dashboard`, `/review accessibility`), the review must focus exclusively on that request.
+
+2. **Recent Changes**  
+   If no specific scope is provided, review the files, features, or code that were most recently created, modified, or discussed during the current session.
+
+3. **Conversation Context**  
+   If there are no recent code changes, infer the review target from the current conversation and review the implementation, ideas, architecture, or designs that were being discussed.
+
+4. **Entire Workspace (Fallback)**  
+   Only if no review target can be determined from the prompt, recent changes, or conversation context should the agent perform a broader review of the relevant project or workspace.
+
+The agent must never review unrelated parts of the project unless explicitly requested by the user.

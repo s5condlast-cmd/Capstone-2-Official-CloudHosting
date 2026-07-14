@@ -113,18 +113,18 @@ export const AdminReviewSession: React.FC = () => {
         initialAiStatus={doc?.ai_status}
         initialAiFindings={doc?.ai_findings}
         onBack={() => navigate('/admin/documents')}
-        onApprove={async () => {
-          if (doc) await submissionStorage.updateDocumentStatus(doc.id, 'Approved');
+        onApprove={async (remarks) => {
+          if (doc) await submissionStorage.updateDocumentStatus(doc.id, 'Approved', remarks);
           setQueueStatus('Completed');
           setTimeout(() => navigate('/admin/documents'), 1500);
         }}
-        onRequestRevision={async () => {
-          if (doc) await submissionStorage.updateDocumentStatus(doc.id, 'Revision Required');
+        onRequestRevision={async (remarks) => {
+          if (doc) await submissionStorage.updateDocumentStatus(doc.id, 'Revision Required', remarks);
           setQueueStatus('Completed');
           setTimeout(() => navigate('/admin/documents'), 1500);
         }}
-        onReject={async () => {
-          if (doc) await submissionStorage.updateDocumentStatus(doc.id, 'Revision Required'); // Or another status if Reject exists
+        onReject={async (remarks) => {
+          if (doc) await submissionStorage.updateDocumentStatus(doc.id, 'Revision Required', remarks); // Or another status if Reject exists
           setQueueStatus('Completed');
           setTimeout(() => navigate('/admin/documents'), 1500);
         }}

@@ -64,6 +64,44 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
   const [isUploading, setIsUploading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
+  const selectedTemplate = templates[selectedTemplateIndex];
+
+  // Dynamic status/feedback state from Supabase
+  const [dbDoc, setDbDoc] = useState<any>(null);
+  const [currentStatus, setCurrentStatus] = useState<'Pending' | 'Approved' | 'Returned'>(status);
+  const [currentFeedback, setCurrentFeedback] = useState<string>(adviserFeedback);
+  const [currentLastUpdated, setCurrentLastUpdated] = useState<string | undefined>(lastUpdated);
+
+  React.useEffect(() => {
+    async function loadLatest() {
+      try {
+        const doc = await submissionStorage.getLatestDocumentByType('John Dwayne B. Guaniso', selectedTemplate.title);
+        if (doc) {
+          setDbDoc(doc);
+          if (doc.status === 'Approved') {
+            setCurrentStatus('Approved');
+            setCurrentFeedback('Document successfully verified and approved.');
+          } else if (doc.status === 'Revision Required') {
+            setCurrentStatus('Returned');
+            setCurrentFeedback('Revision Required. Please re-upload your document.');
+          } else {
+            setCurrentStatus('Pending');
+            setCurrentFeedback('Waiting for adviser to verify your submission.');
+          }
+          setCurrentLastUpdated(new Date(doc.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }));
+        } else {
+          setDbDoc(null);
+          setCurrentStatus(status);
+          setCurrentFeedback(adviserFeedback);
+          setCurrentLastUpdated(lastUpdated);
+        }
+      } catch (err) {
+        console.error("Failed to load latest submission", err);
+      }
+    }
+    loadLatest();
+  }, [selectedTemplate.title, status, adviserFeedback, lastUpdated, isSubmitted]);
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -123,8 +161,6 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
       setIsUploading(false);
     }
   };
-
-  const selectedTemplate = templates[selectedTemplateIndex];
 
   return (
     <div className="space-y-6 pb-12">
@@ -198,7 +234,7 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
                   {isSubmitted ? 'File Successfully Submitted' : isUploading ? 'Uploading to Database...' : uploadedFileName ? 'File Selected' : uploadDescription}
                 </p>
                 <p className="text-xs text-zinc-400 dark:text-zinc-500 mb-4">
-                  {isSubmitted ? 'Your document is now pending review.' : isUploading ? 'Please wait...' : uploadedFileName ? uploadedFileName : 'PDF only · Max 10MB'}
+                  {isSubmitted ? 'Your document is now pending review.' : isUploading ? 'Please wait...' : uploadedFileName ? uploadedFileName : 'PDF or DOCX only · Max 10MB'}
                 </p>
                 <Button 
                   variant={uploadedFileName && !isSubmitted ? "primary" : "secondary"} 
@@ -212,7 +248,7 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
                   type="file" 
                   ref={fileInputRef} 
                   className="hidden" 
-                  accept=".pdf,application/pdf"
+                  accept=".pdf,application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                   onChange={handleFileSelect}
                 />
               </div>
@@ -231,31 +267,31 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
                   {isUrgent ? "High Priority Enabled" : "Mark as Urgent"}
                 </button>
                 <Button 
-                  icon={status === 'Pending' ? undefined : <ShieldCheck size={14} />}
+                  icon={currentStatus === 'Pending' ? undefined : <ShieldCheck size={14} />}
                   onClick={handleSubmit}
                   disabled={!selectedFile || isUploading || isSubmitted}
                 >
-                  {isSubmitted ? 'Submitted' : isUploading ? 'Processing...' : status === 'Pending' ? 'Submit for Review' : 'Submit for Processing'}
+                  {isSubmitted ? 'Submitted' : isUploading ? 'Processing...' : currentStatus === 'Pending' ? 'Submit for Review' : 'Submit for Processing'}
                 </Button>
               </div>
             </div>
           </Card>
 
-          <Card title={status === 'Pending' ? "Status" : "Review Status"}>
+          <Card title={currentStatus === 'Pending' ? "Status" : "Review Status"}>
             <div className="space-y-5">
               <div className={cn(
                 "flex items-start gap-3 p-3 rounded-lg border",
-                status === 'Returned' ? "bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700" :
+                currentStatus === 'Returned' ? "bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700" :
                   "bg-zinc-50 dark:bg-zinc-800/50 border-zinc-100 dark:border-zinc-800"
               )}>
                 <div className={cn(
                   "w-9 h-9 rounded-lg flex items-center justify-center shrink-0",
-                  status !== 'Pending' ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-950" :
+                  currentStatus !== 'Pending' ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-950" :
                     "bg-zinc-200 dark:bg-zinc-700 text-zinc-500 dark:text-zinc-400"
                 )}>
-                  {status === 'Approved' ? (
+                  {currentStatus === 'Approved' ? (
                     <ShieldCheck size={18} />
-                  ) : status === 'Returned' ? (
+                  ) : currentStatus === 'Returned' ? (
                     <AlertCircle size={18} />
                   ) : (
                     <Clock size={18} />
@@ -263,10 +299,10 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                    {status === 'Approved' ? 'Approved' : status === 'Returned' ? 'Returned' : 'Pending Review'}
+                    {currentStatus === 'Approved' ? 'Approved' : currentStatus === 'Returned' ? 'Returned' : 'Pending Review'}
                   </p>
                   <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">
-                    {lastUpdated ? `Updated ${lastUpdated}` : 'No submission yet'}
+                    {currentLastUpdated ? `Updated ${currentLastUpdated}` : 'No submission yet'}
                   </p>
                 </div>
               </div>
@@ -278,15 +314,15 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
                 </div>
                 <div className={cn(
                   "p-3 rounded-lg text-sm leading-relaxed",
-                  status === 'Returned'
+                  currentStatus === 'Returned'
                     ? "bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 border-l-2 border-l-zinc-900 dark:border-l-zinc-100"
                     : "bg-zinc-50 dark:bg-zinc-800/50 text-zinc-600 dark:text-zinc-400"
                 )}>
-                  {adviserFeedback}
+                  {currentFeedback}
                 </div>
               </div>
 
-              {status === 'Returned' && (
+              {currentStatus === 'Returned' && (
                 <Button variant="primary" className="w-full" icon={<FileUp size={16} />}>
                   Upload Revised File
                 </Button>
@@ -294,13 +330,13 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
             </div>
           </Card>
 
-          {adviserComments && adviserComments.length > 0 && (
+          {((dbDoc && dbDoc.comments && dbDoc.comments.length > 0) || (adviserComments && adviserComments.length > 0)) && (
             <Card title="Adviser Comments">
               <div className="space-y-3">
-                {adviserComments.map((comment, i) => (
+                {((dbDoc && dbDoc.comments) || adviserComments || []).map((comment: any, i: number, arr: any[]) => (
                   <div key={i} className={cn(
                     "p-3 rounded-lg border text-sm space-y-1.5",
-                    i === adviserComments.length - 1
+                    i === arr.length - 1
                       ? "bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 border-l-2 border-l-zinc-900 dark:border-l-zinc-100"
                       : "bg-zinc-50 dark:bg-zinc-800/50 border-zinc-100 dark:border-zinc-800"
                   )}>

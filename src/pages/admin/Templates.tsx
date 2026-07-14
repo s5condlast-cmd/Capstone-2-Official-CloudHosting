@@ -126,38 +126,55 @@ export const Templates: React.FC = () => {
     }
   };
 
-  const handleDownload = async (item: any) => {
+  const handleDownloadSpecific = async (item: any, format: 'DOCX' | 'PDF') => {
     try {
       const uploadedIdsList = new Set(templates.map(t => t.id));
-      if (uploadedIdsList.has(item.id)) {
-        const buffer = await templateStorage.getTemplateFile(item.id);
-        if (buffer) {
-          const blob = new Blob([buffer]);
-          const url = URL.createObjectURL(blob);
+      let buffer: ArrayBuffer | undefined;
+
+      if (format === 'PDF') {
+        buffer = await templateStorage.getTemplatePdfBackup(item.id);
+        if (!buffer && item.type === 'PDF' && uploadedIdsList.has(item.id)) {
+          buffer = await templateStorage.getTemplateFile(item.id);
+        }
+      } else {
+        if (item.type === 'DOCX' && uploadedIdsList.has(item.id)) {
+          buffer = await templateStorage.getTemplateFile(item.id);
+        }
+      }
+
+      if (buffer) {
+        const blob = new Blob([buffer]);
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${item.name}.${format.toLowerCase()}`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        return;
+      }
+
+      if (item.filename) {
+        const ext = item.filename.split('.').pop()?.toUpperCase();
+        if (ext === format) {
           const a = document.createElement('a');
-          a.href = url;
-          a.download = item.name + (item.type === 'DOCX' ? '.docx' : item.type === 'PDF' ? '.pdf' : '.xlsx');
+          a.href = `/templates/${item.filename}`;
+          a.download = item.filename;
           document.body.appendChild(a);
           a.click();
           document.body.removeChild(a);
-          URL.revokeObjectURL(url);
+          return;
+        } else if (format === 'PDF' && ext === 'DOCX') {
+          alert(`No PDF version available for this template. Please upload a PDF backup first.`);
           return;
         }
       }
 
-      if (item.filename) {
-        const a = document.createElement('a');
-        a.href = `/templates/${item.filename}`;
-        a.download = item.filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-      } else {
-        alert("No default file available for download.");
-      }
+      alert(`No ${format} file available for download.`);
     } catch (err) {
-      console.error("Download failed", err);
-      alert("Failed to download file.");
+      console.error(`Download ${format} failed`, err);
+      alert(`Failed to download ${format} file.`);
     }
   };
 
@@ -270,45 +287,15 @@ export const Templates: React.FC = () => {
                       {item.type === 'DOCX' ? <FileText size={20} /> : item.type === 'XLSX' ? <ClipboardList size={20} /> : <FileCheck size={20} />}
                     </div>
                     <div className="flex gap-1">
-                      <div className="relative group/dropdown">
-                        <Button variant="ghost" size="sm" icon={<RefreshCw size={14} />} className="opacity-0 group-hover:opacity-100 transition-opacity">
-                          Manage
-                        </Button>
-                        <div className="absolute right-0 mt-1 w-48 bg-white dark:bg-zinc-900 rounded-lg shadow-lg border border-zinc-200 dark:border-zinc-800 opacity-0 invisible group-hover/dropdown:opacity-100 group-hover/dropdown:visible transition-all z-20 overflow-hidden">
-                          <button
-                            onClick={() => {
-                              setReplacingId(item.id);
-                              setUploadTargetGroup(section.group);
-                              setUploadTargetType('main');
-                              fileInputRef.current?.click();
-                            }}
-                            className="w-full text-left px-4 py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 flex items-center gap-2"
-                          >
-                            <Upload size={14} /> Replace File
-                          </button>
-                          
-                          {item.type !== 'PDF' && (
-                            <button
-                              onClick={() => {
-                                setReplacingId(item.id);
-                                setUploadTargetGroup(section.group);
-                                setUploadTargetType('pdf_backup');
-                                fileInputRef.current?.click();
-                              }}
-                              className="w-full text-left px-4 py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 flex items-center gap-2 border-t border-zinc-100 dark:border-zinc-800"
-                            >
-                              <FileText size={14} /> Upload PDF Backup
-                            </button>
-                          )}
-
-                          <button
-                            onClick={() => handleDelete(item.id)}
-                            className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2 border-t border-zinc-100 dark:border-zinc-800"
-                          >
-                            <Trash2 size={14} /> Delete
-                          </button>
-                        </div>
-                      </div>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        icon={<Trash2 size={14} className="text-red-500" />} 
+                        className="opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50 hover:text-red-600"
+                        onClick={() => handleDelete(item.id)}
+                      >
+                        Delete
+                      </Button>
                     </div>
                   </div>
 
@@ -337,8 +324,53 @@ export const Templates: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="mt-6 pt-4 border-t border-zinc-100 dark:border-zinc-800/50">
-                    <Button variant="outline" size="sm" icon={<Download size={14} />} className="w-full justify-center" onClick={() => handleDownload(item)}>Download</Button>
+                  <div className="mt-6 pt-4 border-t border-zinc-100 dark:border-zinc-800/50 grid grid-cols-2 gap-2">
+                    <Button 
+                      variant="primary" 
+                      size="sm" 
+                      icon={<Upload size={14} />} 
+                      className="w-full justify-center"
+                      onClick={() => {
+                        setReplacingId(item.id);
+                        setUploadTargetGroup(section.group);
+                        setUploadTargetType('main');
+                        fileInputRef.current?.click();
+                      }}
+                    >
+                      Upload DOCX
+                    </Button>
+                    <Button 
+                      variant="primary" 
+                      size="sm" 
+                      icon={<Upload size={14} />} 
+                      className="w-full justify-center"
+                      onClick={() => {
+                        setReplacingId(item.id);
+                        setUploadTargetGroup(section.group);
+                        setUploadTargetType('pdf_backup');
+                        fileInputRef.current?.click();
+                      }}
+                    >
+                      Upload PDF
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      icon={<Download size={14} />} 
+                      className="w-full justify-center"
+                      onClick={() => handleDownloadSpecific(item, 'DOCX')}
+                    >
+                      Download DOCX
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      icon={<Download size={14} />} 
+                      className="w-full justify-center"
+                      onClick={() => handleDownloadSpecific(item, 'PDF')}
+                    >
+                      Download PDF
+                    </Button>
                   </div>
                 </Card>
               ))}

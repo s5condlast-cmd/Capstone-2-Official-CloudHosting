@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '@/src/components/ui/Card';
 import { Badge } from '@/src/components/ui/Badge';
 import { Button } from '@/src/components/ui/Button';
@@ -55,9 +55,9 @@ export interface UnifiedReviewSessionProps {
   versions: DocumentVersion[];
   auditLogs: ReviewAuditLog[];
   onBack: () => void;
-  onApprove: () => void;
-  onRequestRevision: () => void;
-  onReject: () => void;
+  onApprove: (remarks?: string) => void;
+  onRequestRevision: (remarks?: string) => void;
+  onReject: (remarks?: string) => void;
   readOnly?: boolean;
   docId?: string;
   initialAiStatus?: 'Pending' | 'Processing' | 'Completed' | 'Failed';
@@ -88,6 +88,51 @@ export const UnifiedReviewSession: React.FC<UnifiedReviewSessionProps> = ({
   const [showAiPanel, setShowAiPanel] = useState(true);
   const [aiStatus, setAiStatus] = useState<'Pending' | 'Processing' | 'Completed' | 'Failed'>(initialAiStatus);
   const [aiFindings, setAiFindings] = useState<any>(initialAiFindings);
+
+  // Dynamic comments list & decision remarks
+  const [commentsList, setCommentsList] = useState<{ author: string; msg: string; time: string }[]>([]);
+  const [newCommentText, setNewCommentText] = useState('');
+  const [isPostingComment, setIsPostingComment] = useState(false);
+  const [decisionRemarks, setDecisionRemarks] = useState('');
+
+  useEffect(() => {
+    async function loadComments() {
+      if (!docId || docId.length <= 10) return;
+      try {
+        const doc = await submissionStorage.getDocumentById(docId);
+        if (doc && doc.comments) {
+          setCommentsList(doc.comments);
+        }
+      } catch (err) {
+        console.error("Failed to load comments:", err);
+      }
+    }
+    loadComments();
+  }, [docId]);
+
+  const handlePostComment = async () => {
+    if (!newCommentText.trim() || !docId) return;
+    setIsPostingComment(true);
+    try {
+      const author = 'Admin';
+      if (docId.length > 10) {
+        await submissionStorage.postComment(docId, author, newCommentText);
+      }
+      
+      const newComment = {
+        author,
+        msg: newCommentText,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' · ' + new Date().toLocaleDateString([], { month: 'short', day: 'numeric' })
+      };
+      setCommentsList(prev => [...prev, newComment]);
+      setNewCommentText('');
+    } catch (err) {
+      console.error("Failed to post comment:", err);
+      alert("Failed to post comment");
+    } finally {
+      setIsPostingComment(false);
+    }
+  };
 
   const handleRunAiAnalysis = async () => {
     if (!docId || !pdfUrl) return;
@@ -136,11 +181,12 @@ export const UnifiedReviewSession: React.FC<UnifiedReviewSessionProps> = ({
   };
 
   const confirmAction = () => {
-    if (completionAction === 'approve') onApprove();
+    if (completionAction === 'approve') onApprove(decisionRemarks);
     else if (completionAction === 'sendToAdmin' && onSendToAdmin) onSendToAdmin();
-    else if (completionAction === 'revise') onRequestRevision();
-    else if (completionAction === 'reject') onReject();
+    else if (completionAction === 'revise') onRequestRevision(decisionRemarks);
+    else if (completionAction === 'reject') onReject(decisionRemarks);
     setShowCompletionModal(false);
+    setDecisionRemarks('');
   };
 
   return (
@@ -313,6 +359,48 @@ export const UnifiedReviewSession: React.FC<UnifiedReviewSessionProps> = ({
              </div>
            </div>
 
+            {/* Adviser/Admin Comments History */}
+            {commentsList.length > 0 && (
+              <div className="p-5 border-t border-zinc-200 dark:border-zinc-800 max-h-56 overflow-y-auto bg-white dark:bg-zinc-950">
+                <h3 className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                  <Brain size={12} /> Comments History
+                </h3>
+                <div className="space-y-3">
+                  {commentsList.map((comment, i) => (
+                    <div key={i} className="p-2.5 rounded-lg border border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30 text-xs">
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="font-bold text-zinc-800 dark:text-zinc-200">{comment.author}</span>
+                        <span className="text-[9px] text-zinc-400 dark:text-zinc-500">{comment.time}</span>
+                      </div>
+                      <p className="text-zinc-600 dark:text-zinc-400 leading-normal">{comment.msg}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Add Comment */}
+            <div className="p-5 border-t border-zinc-200 dark:border-zinc-800 mt-auto bg-white dark:bg-zinc-950">
+              <h3 className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-3">Add Comment</h3>
+              <div className="space-y-3">
+                <textarea 
+                  placeholder="Type your comment..." 
+                  value={newCommentText}
+                  onChange={(e) => setNewCommentText(e.target.value)}
+                  className="w-full text-xs p-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none h-24 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 text-zinc-900 dark:text-zinc-100"
+                />
+                <Button 
+                  variant="primary" 
+                  className="w-full h-8 text-[10px] uppercase tracking-wider font-semibold" 
+                  icon={<Send size={12} />}
+                  onClick={handlePostComment}
+                  disabled={isPostingComment || !newCommentText.trim()}
+                >
+                  {isPostingComment ? 'Posting...' : 'Post Comment'}
+                </Button>
+              </div>
+            </div>
+
         </div>
 
         {/* Center/Right: EmbedPDF Workspace + AI Assistant */}
@@ -394,16 +482,19 @@ export const UnifiedReviewSession: React.FC<UnifiedReviewSessionProps> = ({
                    <span className="text-zinc-900 dark:text-zinc-100 font-bold">{student.name}</span>
                  </div>
                  <div className="flex justify-between items-center text-xs">
-                   <span className="text-zinc-500 font-medium">Comments Added</span>
-                   <span className="text-zinc-900 dark:text-zinc-100 font-bold">3</span>
-                 </div>
-                 <div className="flex justify-between items-center text-xs">
-                   <span className="text-zinc-500 font-medium">Highlights</span>
-                   <span className="text-zinc-900 dark:text-zinc-100 font-bold">5</span>
-                 </div>
-                 <div className="flex justify-between items-center text-xs">
                    <span className="text-zinc-500 font-medium">Reviewed On</span>
                    <span className="text-zinc-900 dark:text-zinc-100 font-bold">{new Date().toLocaleDateString()}</span>
+                 </div>
+                 
+                 {/* Decision Remarks/Feedback Input */}
+                 <div className="space-y-1.5 pt-2 border-t border-zinc-200 dark:border-zinc-800">
+                   <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block">Adviser Feedback / Remarks</label>
+                   <textarea
+                     placeholder="Provide feedback details (e.g. explain why revision is required or stamp signature confirmation)..."
+                     value={decisionRemarks}
+                     onChange={(e) => setDecisionRemarks(e.target.value)}
+                     className="w-full text-xs p-2.5 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none h-20 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 text-zinc-900 dark:text-zinc-100"
+                   />
                  </div>
               </div>
 

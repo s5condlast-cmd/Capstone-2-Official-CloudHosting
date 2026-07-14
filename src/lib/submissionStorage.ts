@@ -13,6 +13,8 @@ export interface StudentDocument {
   created_at: string;
   ai_status?: 'Pending' | 'Processing' | 'Completed' | 'Failed';
   ai_findings?: any;
+  adviser_feedback?: string;
+  comments?: { author: string; msg: string; time: string }[];
 }
 
 export const submissionStorage = {
@@ -133,15 +135,39 @@ export const submissionStorage = {
   },
 
   // Update document status
-  async updateDocumentStatus(id: string, status: DocumentStatus): Promise<void> {
+  async updateDocumentStatus(id: string, status: DocumentStatus, feedback?: string): Promise<void> {
+    const updateData: any = { status };
+    if (feedback !== undefined) {
+      updateData.adviser_feedback = feedback;
+    }
     const { error } = await supabase
       .from('student_documents')
-      .update({ status })
+      .update(updateData)
       .eq('id', id);
 
     if (error) {
       console.error('Update Error:', error);
       throw new Error(`Failed to update status: ${error.message}`);
+    }
+  },
+
+  // Post a comment to a document
+  async postComment(id: string, author: string, msg: string): Promise<void> {
+    const doc = await this.getDocumentById(id);
+    const existingComments = doc.comments || [];
+    const newComment = {
+      author,
+      msg,
+      time: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+    };
+    const { error } = await supabase
+      .from('student_documents')
+      .update({ comments: [...existingComments, newComment] })
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error posting comment:', error);
+      throw error;
     }
   },
 

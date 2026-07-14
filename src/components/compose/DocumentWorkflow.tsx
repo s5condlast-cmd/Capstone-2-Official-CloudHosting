@@ -256,7 +256,6 @@ export const DocumentWorkflow: React.FC<DocumentWorkflowProps> = ({
                 detail: { collapsed: newEditableState } 
               }));
             }}
-            className={cn(isEditable ? "bg-blue-600 text-white hover:bg-blue-700" : "")}
           >
             {isEditable ? 'Stop Editing' : 'Edit Document'}
           </Button>
@@ -335,7 +334,7 @@ export const DocumentWorkflow: React.FC<DocumentWorkflowProps> = ({
             >
               <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 shrink-0">
                 <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-                  <Pencil size={16} className="text-blue-500" />
+                  <Pencil size={16} className="text-primary" />
                   Live Editor
                 </h3>
                 <p className="text-xs text-zinc-500 mt-1">Changes sync instantly to the document.</p>
