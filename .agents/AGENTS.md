@@ -171,3 +171,12 @@ The objective of `/scan` is to help the user fully understand the current implem
 - **Main Repository:** The primary remote repository (origin) for the project must always be set to `https://github.com/s5condlast-cmd/Capstone-2-Official-CloudHosting.git`.
 - **Branching Workflow:** When adding new code or features, always create and work on a dedicated branch. This ensures that multiple collaborators can safely add code and submit pull requests without directly altering the main branch.
 
+## Rendering State & Loading Lifecycles
+When implementing UI that fetches data from the backend (Supabase), strictly adhere to the following rules to prevent UI stuttering, Layout Shifts, and data hallucinations:
+1. **Single Source of Truth:** Each page must derive its displayed data from exactly one source: the backend database. Never mix arrays of hardcoded/mock data with live database records.
+2. **Strict Loading Lifecycle:**
+   - **Initial Load:** Component Mounts -> `loading = true` -> Fetch Database -> `loading = false` -> Render Database Data OR Empty State. (Never simulate loading with artificial `setTimeout` delays).
+   - **User Actions:** For subsequent data refreshes (e.g., approve, reject), use localized loading indicators and update only the affected data rather than triggering a full-page loading skeleton.
+3. **No Silent Fallbacks:** If a requested database record cannot be found, aggressively fail and render the project's standard `EmptyState` component. Do not silently substitute mock data or placeholders.
+4. **Placeholder Constraints:** Do not render placeholder or hardcoded statistics if a backend data source exists for that metric. However, for dashboard metrics or UI components where no backend endpoint exists yet, it is acceptable to render placeholders to preserve the dashboard layout, provided they are clearly identifiable as static data.
+5. **Shared EmptyState UI:** Always use the generic `src/components/ui/EmptyState.tsx` component when rendering zero-state scenarios (e.g., empty queues, no pending documents, 404s).
