@@ -102,6 +102,10 @@ export const AdminDashboard: React.FC = () => {
         >
           {/* Hero Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
+        <StatCard label="Students Deployed" value="142" icon={<Briefcase size={18} />} trend="↑ 12%" />
+        <StatCard label="Seeking Company" value="38" icon={<GraduationCap size={18} />} />
+        <StatCard label="Active Advisers" value="8" icon={<Users size={18} />} />
+        <StatCard label="Company Supervisors" value="12" icon={<Building size={18} />} />
         <StatCard label="Pending Legal Docs" value={pendingDocs.length.toString()} icon={<FileText size={18} />} />
       </div>
 
