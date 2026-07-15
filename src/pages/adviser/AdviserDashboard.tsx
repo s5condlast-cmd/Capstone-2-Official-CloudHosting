@@ -4,7 +4,9 @@ import { Card } from '@/src/components/ui/Card';
 import { Button } from '@/src/components/ui/Button';
 import { Badge } from '@/src/components/ui/Badge';
 import { Skeleton } from '@/src/components/ui/Skeleton';
+import { EmptyState } from '@/src/components/ui/EmptyState';
 import { motion, AnimatePresence } from 'motion/react';
+import { submissionStorage, StudentDocument } from '@/src/lib/submissionStorage';
 import { 
   GraduationCap, 
   Clock, 
@@ -19,12 +21,21 @@ import { cn } from '@/src/lib/utils';
 
 export const AdviserDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
+  const [pendingDocs, setPendingDocs] = useState<StudentDocument[]>([]);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 1200); // Simulate network latency
-    return () => clearTimeout(timer);
+    async function loadData() {
+      try {
+        setLoading(true);
+        const docs = await submissionStorage.getPendingDocuments();
+        setPendingDocs(docs);
+      } catch (err) {
+        console.error("Failed to load dashboard data", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
   }, []);
 
   return (
@@ -101,36 +112,41 @@ export const AdviserDashboard: React.FC = () => {
           action={<Button variant="secondary" size="sm" icon={<Search size={14} />}>Review All</Button>}
         >
           <div className="space-y-2">
-            {[
-              { name: 'Alice Brown', type: 'MOA Submission', status: 'Urgent', time: '2h ago' },
-              { name: 'Charlie Davis', type: 'DTR - Week 5', status: 'Pending', time: '5h ago' },
-              { name: 'Eva Green', type: 'Journal #4', status: 'In Review', time: 'Yesterday' },
-              { name: 'John Smith', type: 'Final Evaluation', status: 'Pending', time: '2 days ago' },
-            ].map((item, i) => (
-              <div 
-                key={i}
-                className="flex flex-col xs:flex-row xs:items-center justify-between p-3 hover:bg-zinc-50 dark:bg-zinc-900 rounded-xl transition-all group cursor-pointer border border-transparent hover:border-zinc-100 dark:border-zinc-800/50 gap-3 xs:gap-0"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center font-bold text-xs text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-800 shrink-0">
-                    {item.name.split(' ').map(n => n[0]).join('')}
+            {pendingDocs.length === 0 ? (
+              <EmptyState 
+                title="No Priority Items" 
+                description="Your queue is clear." 
+                className="min-h-[200px]"
+              />
+            ) : (
+              pendingDocs.slice(0, 4).map((item, i) => (
+                <div 
+                  key={item.id}
+                  className="flex flex-col xs:flex-row xs:items-center justify-between p-3 hover:bg-zinc-50 dark:bg-zinc-900 rounded-xl transition-all group cursor-pointer border border-transparent hover:border-zinc-100 dark:border-zinc-800/50 gap-3 xs:gap-0"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center font-bold text-xs text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-800 shrink-0">
+                      {item.student_name.split(' ').map(n => n[0]).join('').substring(0, 2)}
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 tracking-tight">{item.student_name}</span>
+                      <span className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wide">{item.doc_type}</span>
+                    </div>
                   </div>
-                  <div className="flex flex-col">
-                    <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 tracking-tight">{item.name}</span>
-                    <span className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wide">{item.type}</span>
+                  <div className="flex items-center justify-between xs:justify-end gap-4 border-t border-zinc-50 pt-2 xs:border-0 xs:pt-0">
+                    <Badge variant={item.urgency === 'high' ? 'error' : item.urgency === 'medium' ? 'warning' : 'neutral'}>
+                      {item.urgency.toUpperCase()}
+                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-bold text-zinc-300 uppercase shrink-0">
+                        {new Date(item.created_at).toLocaleDateString()}
+                      </span>
+                      <ArrowRight size={14} className="text-zinc-300 group-hover:text-zinc-900 dark:text-zinc-100 transition-all group-hover:translate-x-1" />
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-center justify-between xs:justify-end gap-4 border-t border-zinc-50 pt-2 xs:border-0 xs:pt-0">
-                  <Badge variant={item.status === 'Urgent' ? 'error' : item.status === 'In Review' ? 'neutral' : 'warning'}>
-                    {item.status}
-                  </Badge>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-bold text-zinc-300 uppercase shrink-0">{item.time}</span>
-                    <ArrowRight size={14} className="text-zinc-300 group-hover:text-zinc-900 dark:text-zinc-100 transition-all group-hover:translate-x-1" />
-                  </div>
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </Card>
 

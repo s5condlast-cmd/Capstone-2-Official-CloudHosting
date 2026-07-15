@@ -3,6 +3,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { UnifiedReviewSession, StudentInfo, DocumentVersion, ReviewAuditLog } from '@/src/components/review/UnifiedReviewSession';
 import { submissionStorage, StudentDocument } from '@/src/lib/submissionStorage';
 import { motion } from 'motion/react';
+import { EmptyState } from '@/src/components/ui/EmptyState';
+import { Button } from '@/src/components/ui/Button';
+import { FileQuestion } from 'lucide-react';
 
 export const DocumentReviewSession: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -17,26 +20,10 @@ export const DocumentReviewSession: React.FC = () => {
     async function load() {
       if (!id) return;
       try {
-        // Only fetch from Supabase if it looks like a real UUID
-        if (id.length > 10) {
-          const fetchedDoc = await submissionStorage.getDocumentById(id);
-          setDoc(fetchedDoc);
+        const fetchedDoc = await submissionStorage.getDocumentById(id);
+        setDoc(fetchedDoc);
+        if (fetchedDoc) {
           setPdfUrl(submissionStorage.getFileUrl(fetchedDoc.file_path));
-        } else {
-          // Fallback for hardcoded mock docs in the table (id: '1', '2', etc)
-          setDoc({
-            id: id,
-            student_name: 'Alice Brown',
-            course: 'BSIT 402-401',
-            doc_type: 'Prelim Journal',
-            status: 'Pending Adviser Review',
-            urgency: 'high',
-            file_path: 'sample-journal.pdf',
-            created_at: new Date().toISOString(),
-            ai_status: 'Pending',
-            ai_findings: null
-          });
-          setPdfUrl("/sample-journal.pdf");
         }
       } catch (err) {
         console.error("Failed to load document", err);
@@ -47,20 +34,14 @@ export const DocumentReviewSession: React.FC = () => {
     load();
   }, [id]);
 
-  // Map student data from fetched document or fallback to mock
-  const student: StudentInfo = doc ? {
+  // If no document is found, student is null but we handle that below
+  const student: StudentInfo | null = doc ? {
     name: doc.student_name,
     course: doc.course,
     docType: doc.doc_type,
     submissionId: `DOC-${doc.id.substring(0, 4).toUpperCase()}`,
-    company: 'Host Company'
-  } : {
-    name: 'Alice Brown',
-    course: 'BSIT 402-401',
-    docType: 'Prelim Journal',
-    submissionId: 'DOC-9021',
-    company: 'Tech Solutions Inc.'
-  };
+    company: 'Host Company' // In real app, fetch company name based on doc.student_id
+  } : null;
 
   const versions: DocumentVersion[] = [
     {
@@ -92,6 +73,23 @@ export const DocumentReviewSession: React.FC = () => {
           <div className="w-8 h-8 border-4 border-zinc-900 border-t-transparent dark:border-white rounded-full animate-spin" />
           <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider animate-pulse">Loading Session...</p>
         </div>
+      </div>
+    );
+  }
+
+  if (!doc || !student) {
+    return (
+      <div className="h-screen w-full flex items-center justify-center bg-zinc-50 dark:bg-zinc-950">
+        <EmptyState 
+          icon={<FileQuestion size={32} />}
+          title="Document Not Found"
+          description="The requested document could not be found or has been removed."
+          action={
+            <Button onClick={() => navigate('/adviser/review')}>
+              Back to Reviews
+            </Button>
+          }
+        />
       </div>
     );
   }

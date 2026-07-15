@@ -3,6 +3,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { UnifiedReviewSession, StudentInfo, DocumentVersion, ReviewAuditLog } from '@/src/components/review/UnifiedReviewSession';
 import { submissionStorage, StudentDocument } from '@/src/lib/submissionStorage';
 import { motion } from 'motion/react';
+import { EmptyState } from '@/src/components/ui/EmptyState';
+import { Button } from '@/src/components/ui/Button';
+import { FileQuestion } from 'lucide-react';
 
 export const AdminReviewSession: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -17,26 +20,10 @@ export const AdminReviewSession: React.FC = () => {
     async function load() {
       if (!id) return;
       try {
-        // Only fetch from Supabase if it looks like a real UUID
-        if (id.length > 10) {
-          const fetchedDoc = await submissionStorage.getDocumentById(id);
-          setDoc(fetchedDoc);
+        const fetchedDoc = await submissionStorage.getDocumentById(id);
+        setDoc(fetchedDoc);
+        if (fetchedDoc) {
           setPdfUrl(submissionStorage.getFileUrl(fetchedDoc.file_path));
-        } else {
-          // Fallback for hardcoded mock docs in the table
-          setDoc({
-            id: id,
-            student_name: 'Alice Brown',
-            course: 'BSIT 402-401',
-            doc_type: 'Prelim Journal',
-            status: 'Pending Adviser Review',
-            urgency: 'high',
-            file_path: 'sample-journal.pdf',
-            created_at: new Date().toISOString(),
-            ai_status: 'Pending',
-            ai_findings: null
-          });
-          setPdfUrl("/sample-journal.pdf");
         }
       } catch (err) {
         console.error("Failed to load document", err);
@@ -47,20 +34,14 @@ export const AdminReviewSession: React.FC = () => {
     load();
   }, [id]);
 
-  // Map student data from fetched document or fallback to mock
-  const student: StudentInfo = doc ? {
+  // If no document is found, student is null but we handle that below
+  const student: StudentInfo | null = doc ? {
     name: doc.student_name,
     course: doc.course,
     docType: doc.doc_type,
     submissionId: `DOC-${doc.id.substring(0, 4).toUpperCase()}`,
-    company: 'Host Company'
-  } : {
-    name: 'Alice Brown',
-    course: 'BSIT 402-401',
-    docType: 'Prelim Journal',
-    submissionId: 'DOC-9021',
-    company: 'TechCorp Solutions Inc.'
-  };
+    company: 'Host Company' // In real app, fetch company name based on doc.student_id
+  } : null;
 
   const versions: DocumentVersion[] = [
     {
@@ -96,6 +77,23 @@ export const AdminReviewSession: React.FC = () => {
     );
   }
 
+  if (!doc || !student) {
+    return (
+      <div className="h-screen w-full flex items-center justify-center bg-zinc-50 dark:bg-zinc-950">
+        <EmptyState 
+          icon={<FileQuestion size={32} />}
+          title="Document Not Found"
+          description="The requested document could not be found or has been removed."
+          action={
+            <Button onClick={() => navigate('/admin/documents')}>
+              Back to Documents
+            </Button>
+          }
+        />
+      </div>
+    );
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.98 }}
@@ -113,18 +111,18 @@ export const AdminReviewSession: React.FC = () => {
         initialAiStatus={doc?.ai_status}
         initialAiFindings={doc?.ai_findings}
         onBack={() => navigate('/admin/documents')}
-        onApprove={async (remarks) => {
-          if (doc) await submissionStorage.updateDocumentStatus(doc.id, 'Approved', remarks);
+        onApprove={async () => {
+          if (doc) await submissionStorage.updateDocumentStatus(doc.id, 'Approved');
           setQueueStatus('Completed');
           setTimeout(() => navigate('/admin/documents'), 1500);
         }}
-        onRequestRevision={async (remarks) => {
-          if (doc) await submissionStorage.updateDocumentStatus(doc.id, 'Revision Required', remarks);
+        onRequestRevision={async () => {
+          if (doc) await submissionStorage.updateDocumentStatus(doc.id, 'Revision Required');
           setQueueStatus('Completed');
           setTimeout(() => navigate('/admin/documents'), 1500);
         }}
-        onReject={async (remarks) => {
-          if (doc) await submissionStorage.updateDocumentStatus(doc.id, 'Revision Required', remarks); // Or another status if Reject exists
+        onReject={async () => {
+          if (doc) await submissionStorage.updateDocumentStatus(doc.id, 'Revision Required'); // Or another status if Reject exists
           setQueueStatus('Completed');
           setTimeout(() => navigate('/admin/documents'), 1500);
         }}

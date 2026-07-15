@@ -126,3 +126,48 @@ When the user invokes `/review`, the review scope must be determined in the foll
    Only if no review target can be determined from the prompt, recent changes, or conversation context should the agent perform a broader review of the relevant project or workspace.
 
 The agent must never review unrelated parts of the project unless explicitly requested by the user.
+
+## Scan Protocol (`/scan`)
+
+When the user invokes `/scan`, the agent must perform a comprehensive analysis of the most relevant files, features, or topics based on the current context.
+
+### Scope Resolution
+
+Determine what to scan using the following priority:
+
+1. **User Prompt (Highest Priority)**  
+   If the user specifies what to scan (e.g., `/scan authentication`, `/scan dashboard`, `/scan API`), focus only on that target.
+
+2. **Context References (`@`)**  
+   If the user provides one or more context references (e.g., `/scan @Dashboard.tsx`, `/scan @StudentPortal`), scan only those referenced items.
+
+3. **Recent Changes**  
+   If no specific target is provided, scan the files, features, or code most recently created, modified, or discussed.
+
+4. **Conversation Context**  
+   If there are no recent code changes, infer the scan target from the current conversation and analyze the implementation, architecture, or design being discussed.
+
+5. **Entire Feature (Fallback)**  
+   If no clear target can be determined, scan the most relevant feature or module related to the conversation. Do not scan the entire workspace unless explicitly requested.
+
+### Scan Output
+
+The scan should explain:
+
+- What the target is
+- Why it exists
+- How it works
+- How it fits into the overall architecture
+- Data flow and execution
+- Key components, functions, and dependencies
+- Important logic and business rules
+- Potential risks or areas that require caution
+- Related files or modules
+- A concise summary of the target's purpose and responsibilities
+
+The objective of `/scan` is to help the user fully understand the current implementation before making changes. The explanation should be clear, structured, and based on the actual codebase and conversation context.
+
+## GitHub Repository Configuration
+- **Main Repository:** The primary remote repository (origin) for the project must always be set to `https://github.com/s5condlast-cmd/Capstone-2-Official-CloudHosting.git`.
+- **Branching Workflow:** When adding new code or features, always create and work on a dedicated branch. This ensures that multiple collaborators can safely add code and submit pull requests without directly altering the main branch.
+
