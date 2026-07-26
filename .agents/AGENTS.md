@@ -1,0 +1,190 @@
+# Project Rules
+
+## Alignment and Formatting Clarification
+- **Identify Render Channels**: When the user reports layout or styling discrepancies in documents, clarify immediately whether the issue is visible on the **web application's React preview** or within the **downloaded/exported DOCX or PDF files**.
+- **Interactive Alignment**: Suggest the `/grill-me` slash command if there is layout ambiguity or if multiple attempts to resolve a visual bug have failed. This helps align on design specs through an interactive interview.
+- **Goal Mode**: Suggest the `/goal` slash command when the user wants to initiate a complex, long-running task that requires the agent to be extra thorough and not stop until the goal is fully achieved.
+
+## DOCX Template Editing Pattern
+
+When implementing or modifying browser-based DOCX editing and generation in this repository (e.g., using `docx-preview` and `easy-template-x`), follow this established pipeline for handling non-standard templates (such as `_________` and `<PLACEHOLDER>`):
+
+1. **Preview & Wrapping (`DocxViewer.tsx`)**:
+   - **Layout Constraints**: The `docx-preview` library injects hardcoded widths and paddings (e.g., 816px) which will overflow responsive web containers. Always apply strict CSS overrides (e.g. `[&_section]:!w-full [&_section]:!max-w-full [&_section]:!box-border`) to the parent container to force the document to fit. Do not use `!p-0` as it destroys the document's native margins. Add `overflow-hidden` to the parent wrapper as a fallback.
+   - Immediately after `renderAsync` resolves, query and remove all `<header>` elements from the container, as they should not be visible in the preview.
+   - Use a `TreeWalker` to find and wrap non-standard text nodes in `.editable-placeholder` spans.
+   - Use the regex `/(\[.*?\]|_{3,}|<.*?>|^\s*Date\s*:?\s*$)/g` to capture square brackets, literal blanks (3+ underscores), angle brackets, and standalone 'Date' paragraphs.
+   - For `_{3,}`, increment and assign a `data-blank-index` attribute to track its exact sequential position in the document.
+   - For standalone 'Date' paragraphs, increment and assign a `data-date-index`.
+   - For bracketed placeholders, assign a `data-original` attribute storing the original text.
+   - CRITICAL: Do NOT add any visual styling (e.g., backgrounds, borders, hover effects) to `.editable-placeholder` spans, and ensure they are NOT clickable or editable (`contentEditable="false"`, `pointer-events-none`). The preview must remain strictly read-only and look exactly like the native document.
+
+2. **Data Extraction (`DocumentWorkflow.tsx`)**:
+   - Query `.editable-placeholder` elements.
+   - Store inputs for `data-blank-index` items in a sequential `blankEdits` array.
+   - Store inputs for `data-date-index` items in a sequential `dateEdits` array.
+   - Store inputs for `<...>` angle brackets in an `angleData` dictionary, stripping the `<` and `>` from the key.
+
+3. **Document Generation (`documentGenerator.ts`)**:
+   - **Static JSZip**: Always `import JSZip from 'jszip'` statically at the top of the file. Do NOT use dynamic imports `await import('jszip')` as Vite dev servers may fail silently on resolution.
+   - **Inject Blanks**: Use JSZip to open the `.docx` array buffer, read `word/document.xml`, and sequentially replace `/_{3,}/g` matches with the corresponding values from `blankEdits`.
+   - **Inject Dates**: Use JSZip to sequentially replace `/>(\s*Date\s*:?\s*)</g` with the corresponding values from `dateEdits`.
+   - **Inject Angle Tags**: Pass the resulting buffer to `easy-template-x` configured with custom delimiters: `new TemplateHandler({ delimiters: { tagStart: "<", tagEnd: ">" } })`. Pass the `angleData` to gracefully replace `<SCHOOL NAME>` tags even when split across underlying XML elements.
+   - **Programmatic Signature Blocks (`documentGenerator.ts`)**: Always wrap left-aligned signature blocks (line, name, title) inside a `Table` with `borders` set at the **Table level** (`top`, `bottom`, `left`, `right`, `insideHorizontal`, `insideVertical` set to `BorderStyle.NONE`). Set table and cell width to tightly match the line length (e.g. `2800 DXA` for 24 underscores), and explicitly clear cell margins (`margins: { left: 0, right: 0 }`). Center text (`AlignmentType.CENTER`) inside the cell. This keeps the signature block flush-left against the page margin under "Respectfully yours," while keeping student names centered under the line.
+
+## Printable Form Field Patterns (`AutoWidthInput`)
+
+- **Print Strategy (`@media print`)**: In print stylesheets (`index.css`), hide raw `<input>` elements (`display: none !important`) and display the offscreen measurement `<span>` (`[data-print-text]`) as visible inline text. Chrome's print engine truncates `<input size={1}>` to 1 character width (~15px) if rendered directly.
+- **Placeholder Suppression**: For optional print fields (such as `<Signature>`), use `hidePlaceholderInPrint` on `AutoWidthInput` so `data-print-text` is omitted when empty, preventing raw placeholder strings like `<Signature>` from appearing on printed or saved PDF documents.
+- **State Independence**: Always assign unique state keys to separate document placeholders (e.g., `companyName` vs `salutationName`). Never reuse state keys across distinct fields.
+- **Word Count Restrictions**: Enforce a strict **30-word limit** in `handleInputChange` for fill-in-the-blank document inputs to preserve letter layout structure.
+
+
+## Student Document Workflows
+ 
+When adding new document requirement workflows to the student portal (e.g., MOA, Consent Forms, Application Letters): 
+- **Never duplicate the layout UI:** Always use the generic `StudentDocumentPage` layout component located at `src/components/compose/StudentDocumentPage.tsx`. 
+- Pass all required configuration to the component, including the `templates` array, `status`, `submissionInfo`, and `adviserFeedback`. 
+- If a document requires dynamic instructions before uploading (e.g., explaining fees), use the `instructionsModal` property on the template object rather than building a custom modal. 
+- **Dynamic Database State Syncing:** Always query the database (`submissionStorage`) on mount/change to fetch the latest submission record for the active student and selected template. Merge the database status, adviser feedback remarks, and comments history array dynamically to override the default hardcoded props. 
+
+## Template Document Organization
+
+When referencing or creating UI for templates, always adhere to the three official template phases and their required documents. Never hardcode generic placeholders like "Resume"; use the exact template names corresponding to the actual system architecture:
+
+1. **Before OJT Templates**:
+   - Student Application Letter
+   - Parent Consent Form (With Fee)
+   - Parent Consent Form (Without Fee)
+   - Student Consent Form (With Fee)
+   - Student Consent Form (Without Fee)
+   - MOA Template
+   - Endorsement Letter
+   - Proposal Letter
+2. **In OJT Templates**:
+   - Journal Template
+   - DTR Form
+   - Training Plan Form
+3. **Final Templates**:
+   - Integration Paper Template
+   - Performance Appraisal Template
+
+## Student Page Naming Conventions
+
+When creating or referencing React components and filenames for student document pages, ALWAYS use their explicit, descriptive names matching their template (e.g., use `ProposalLetterToTheIndustry.tsx` instead of `Proposal.tsx`). Avoid generic mockups like `DocumentSubmission.tsx` or `Requirements.tsx`; instead, use the `DocumentWorkflow` architecture for each specific document page.
+
+## Template Fallback and Download Patterns
+
+When building document preview workflows (e.g. `DocumentWorkflow.tsx`), handle "Print / Save PDF" logic dynamically to avoid broken HTML-rendered prints:
+1. **Native PDF Documents:** If a template is natively a PDF (e.g. `useDocxPreview === false`), clicking "Download PDF" MUST trigger a direct file download of the raw PDF buffer using `window.URL.createObjectURL(new Blob([docBuffer]))`. Never call `window.print()` for native PDFs as the browser dialogue will distort the canvas rendering.
+2. **DOCX Documents with PDF Backups:** If a template is natively a DOCX, check Supabase Storage for a `${templateId}_pdf_backup` file. If the admin has uploaded this backup, download it directly for the student as a fallback. Only call `window.print()` if no PDF backup exists.
+3. **Explicit Admin Template Actions:** In the Admin Templates page, DO NOT hide file management actions behind dropdown menus. **Every** template card must consistently expose an explicit 4-button action grid at the bottom:
+   - **Upload DOCX** (primary style)
+   - **Upload PDF** (primary style, acting as the backup/reference)
+   - **Download DOCX** (secondary/outline style)
+   - **Download PDF** (secondary/outline style)
+   Maintain identical spacing, alignment, and sizing across all template cards for a consistent admin experience.
+
+## Utility and Styling Conventions
+
+- **Dynamic Class Helper (`cn`)**: When writing or updating React components that dynamically apply styles using the class helper, always verify that `import { cn } from '@/src/lib/utils';` is included at the top of the file to prevent compiler lookup errors (`Cannot find name 'cn'`).
+- **Theme-Aware UI Styling**: When styling active states, primary actions, or highlighting icons, DO NOT hardcode specific colors (e.g., `bg-blue-600`, `text-blue-500`). Instead, use theme-aware Tailwind classes like `text-primary`, `bg-primary`, or utilize the `variant='primary'` prop on custom components (`Button`, `Badge`). This ensures the UI respects the dynamic CSS variables (`--theme-primary`) and can correctly default to monochrome black/white or apply custom colored themes.
+
+## Refactoring and File Renaming Cleanups
+
+When performing refactoring or file renaming operations (such as renaming legacy page files to descriptive names):
+- **Delete Legacy Files**: Ensure old files are completely deleted from the disk and their corresponding exports are removed.
+- **Git State Care**: If a file is marked as deleted or renamed in `git status`, do not run `git checkout` on the legacy file path as it will restore outdated versions and cause build conflicts.
+- **Verification**: Run `npm run lint` (`tsc --noEmit`) immediately after any file renaming or refactoring to ensure no legacy imports, missing components, or duplicate exports exist.
+## Backend Preference
+- **Always use Supabase**: For any backend features involving databases, authentication, or file storage, always use the configured Supabase client instead of creating mock stores or local state.
+
+## EmbedPDF Viewer Pattern
+
+When implementing or modifying the `@embedpdf/react-pdf-viewer` SDK (e.g., `<PDFViewer>`):
+- **Explicit Sizing Required**: The viewer component does not have intrinsic dimensions. You MUST always apply explicit sizing (e.g., `className="w-full h-full"` and `style={{ width: '100%', height: '100%' }}`) directly to the `<PDFViewer>` component. Failure to do so will cause the canvas to collapse to 0px, resulting in a blank or black document area.
+
+## Vercel Deployment & Redeploy Gotchas
+
+When configuring Vercel deployment for this Vite + Express full-stack project:
+1. **Explicit Output Directory**: Always ensure `"outputDirectory": "dist"` is explicitly set in `vercel.json` to prevent Vercel from searching for a `public/` directory if the user accidentally alters the framework preset.
+2. **Serverless Backend Compatibility**: Express backends must export the `app` instance by default, and `app.listen()` must be wrapped in `if (!process.env.VERCEL)` to prevent port collisions in Vercel's serverless runtime. Place a proxy entrypoint at `api/server.ts` that re-exports the backend app.
+3. **The "Redeploy" Trap**: If the user pushes a fix but Vercel still fails on the old commit, it is because clicking "Redeploy" in the Vercel dashboard re-runs the exact same commit hash. Do NOT assume the fix failed. Instead, instruct the user to force a fresh webhook trigger by pushing an empty commit: `git commit --allow-empty -m "force vercel update" && git push`.
+
+## Git Push Authorization Protocol
+- **NEVER** run `git push` autonomously.
+- **NEVER** assume the user wants their code pushed to the remote repository, even if a task is fully complete and verified.
+- You must stage and commit the code locally (if appropriate), but you must then **STOP** and inform the user that the code is ready to be pushed.
+- You are strictly forbidden from executing a `git push` command until the user explicitly types the authorization code: `/push`.
+
+## Review Scope Protocol (/review)
+
+When the user invokes `/review`, the review scope must be determined in the following priority order:
+
+1. **User Prompt (Highest Priority)**  
+   If the user specifies what to review (e.g., `/review UI`, `/review authentication`, `/review dashboard`, `/review accessibility`), the review must focus exclusively on that request.
+
+2. **Recent Changes**  
+   If no specific scope is provided, review the files, features, or code that were most recently created, modified, or discussed during the current session.
+
+3. **Conversation Context**  
+   If there are no recent code changes, infer the review target from the current conversation and review the implementation, ideas, architecture, or designs that were being discussed.
+
+4. **Entire Workspace (Fallback)**  
+   Only if no review target can be determined from the prompt, recent changes, or conversation context should the agent perform a broader review of the relevant project or workspace.
+
+The agent must never review unrelated parts of the project unless explicitly requested by the user.
+
+## Scan Protocol (`/scan`)
+
+When the user invokes `/scan`, the agent must perform a comprehensive analysis of the most relevant files, features, or topics based on the current context.
+
+### Scope Resolution
+
+Determine what to scan using the following priority:
+
+1. **User Prompt (Highest Priority)**  
+   If the user specifies what to scan (e.g., `/scan authentication`, `/scan dashboard`, `/scan API`), focus only on that target.
+
+2. **Context References (`@`)**  
+   If the user provides one or more context references (e.g., `/scan @Dashboard.tsx`, `/scan @StudentPortal`), scan only those referenced items.
+
+3. **Recent Changes**  
+   If no specific target is provided, scan the files, features, or code most recently created, modified, or discussed.
+
+4. **Conversation Context**  
+   If there are no recent code changes, infer the scan target from the current conversation and analyze the implementation, architecture, or design being discussed.
+
+5. **Entire Feature (Fallback)**  
+   If no clear target can be determined, scan the most relevant feature or module related to the conversation. Do not scan the entire workspace unless explicitly requested.
+
+### Scan Output
+
+The scan should explain:
+
+- What the target is
+- Why it exists
+- How it works
+- How it fits into the overall architecture
+- Data flow and execution
+- Key components, functions, and dependencies
+- Important logic and business rules
+- Potential risks or areas that require caution
+- Related files or modules
+- A concise summary of the target's purpose and responsibilities
+
+The objective of `/scan` is to help the user fully understand the current implementation before making changes. The explanation should be clear, structured, and based on the actual codebase and conversation context.
+
+## GitHub Repository Configuration
+- **Main Repository:** The primary remote repository (origin) for the project must always be set to `https://github.com/s5condlast-cmd/Capstone-2-Official-CloudHosting.git`.
+- **Branching Workflow:** When adding new code or features, always create and work on a dedicated branch. This ensures that multiple collaborators can safely add code and submit pull requests without directly altering the main branch.
+
+## Rendering State & Loading Lifecycles
+When implementing UI that fetches data from the backend (Supabase), strictly adhere to the following rules to prevent UI stuttering, Layout Shifts, and data hallucinations:
+1. **Single Source of Truth:** Each page must derive its displayed data from exactly one source: the backend database. Never mix arrays of hardcoded/mock data with live database records.
+2. **Strict Loading Lifecycle:**
+   - **Initial Load:** Component Mounts -> `loading = true` -> Fetch Database -> `loading = false` -> Render Database Data OR Empty State. (Never simulate loading with artificial `setTimeout` delays).
+   - **User Actions:** For subsequent data refreshes (e.g., approve, reject), use localized loading indicators and update only the affected data rather than triggering a full-page loading skeleton.
+3. **No Silent Fallbacks:** If a requested database record cannot be found, aggressively fail and render the project's standard `EmptyState` component. Do not silently substitute mock data or placeholders.
+4. **Placeholder Constraints:** Do not render placeholder or hardcoded statistics if a backend data source exists for that metric. However, for dashboard metrics or UI components where no backend endpoint exists yet, it is acceptable to render placeholders to preserve the dashboard layout, provided they are clearly identifiable as static data.
+5. **Shared EmptyState UI:** Always use the generic `src/components/ui/EmptyState.tsx` component when rendering zero-state scenarios (e.g., empty queues, no pending documents, 404s).

@@ -1,0 +1,324 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+@import "tailwindcss";
+
+@plugin "@tailwindcss/typography";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+
+  /* Theme Variables */
+  --color-primary: var(--theme-primary);
+  --color-primary-hover: var(--theme-primary-hover);
+  --color-primary-fg: var(--theme-primary-fg);
+}
+
+@layer base {
+  :root {
+    /* Monochrome (Default) */
+    --theme-primary: #09090b;
+    --theme-primary-hover: #27272a;
+    --theme-primary-fg: #ffffff;
+  }
+
+  .dark {
+    /* Dark Mode Monochrome Fallback */
+    --theme-primary: #f4f4f5;
+    --theme-primary-hover: #e4e4e7;
+    --theme-primary-fg: #09090b;
+  }
+
+  /* Shared Text Color for Colored Themes (always white foreground) */
+  :root.theme-blue,
+  :root.theme-indigo,
+  :root.theme-sti,
+  :root.theme-cyan,
+  .dark.theme-blue,
+  .dark.theme-indigo,
+  .dark.theme-sti,
+  .dark.theme-cyan {
+    --theme-primary-fg: #ffffff;
+  }
+
+  /* Modern Blue */
+  .theme-blue {
+    --theme-primary: #2563eb;
+    --theme-primary-hover: #1d4ed8;
+  }
+
+  /* Indigo Professional */
+  .theme-indigo {
+    --theme-primary: #4f46e5;
+    --theme-primary-hover: #4338ca;
+  }
+
+  /* STI Inspired */
+  .theme-sti {
+    --theme-primary: #1d4ed8;
+    --theme-primary-hover: #1e3a8a;
+  }
+
+  /* Slate + Cyan */
+  .theme-cyan {
+    --theme-primary: #06b6d4;
+    --theme-primary-hover: #0891b2;
+  }
+
+  body {
+    @apply font-sans text-zinc-900 antialiased bg-zinc-50;
+  }
+
+  /* Global Modern Custom Scrollbar (removes Windows arrow buttons & chunky scrollbars) */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: rgba(161, 161, 170, 0.35);
+    border-radius: 9999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(113, 113, 122, 0.6);
+  }
+
+  ::-webkit-scrollbar-button {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(161, 161, 170, 0.35) transparent;
+  }
+
+  .dark * {
+    scrollbar-color: rgba(113, 113, 122, 0.4) transparent;
+  }
+
+  .dark ::-webkit-scrollbar-thumb {
+    background-color: rgba(113, 113, 122, 0.4);
+  }
+
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(161, 161, 170, 0.6);
+  }
+
+  /* Force MDXEditor to always render in light mode */
+  .mdxeditor {
+    --accentBase: #3b82f6;
+    --basePageBg: #ffffff;
+    --baseBg: #f9fafb;
+    --baseText: #111827;
+    color-scheme: light;
+    background-color: #ffffff;
+    color: #111827;
+  }
+
+  .mdxeditor-popup-container,
+  ._editorRoot_uazmk_53 {
+    background: #ffffff;
+    color: #111827;
+  }
+}
+
+@layer utilities {
+  .soft-shadow {
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05), 0 1px 3px 0 rgba(0, 0, 0, 0.03);
+  }
+
+  .soft-shadow-md {
+    box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.06), 0 2px 6px -2px rgba(0, 0, 0, 0.04);
+  }
+
+  .soft-shadow-lg {
+    box-shadow: 0 12px 24px -4px rgba(0, 0, 0, 0.08), 0 8px 16px -4px rgba(0, 0, 0, 0.04);
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-zinc-200 rounded-full;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    @apply bg-zinc-300;
+  }
+
+  .h-13 {
+    height: 3.25rem;
+  }
+
+  .animate-shake {
+    animation: shake 0.4s ease-in-out;
+  }
+
+  .animate-marquee {
+    animation: marquee 25s linear infinite;
+  }
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes shake {
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  20% {
+    transform: translateX(-4px);
+  }
+
+  40% {
+    transform: translateX(4px);
+  }
+
+  60% {
+    transform: translateX(-3px);
+  }
+
+  80% {
+    transform: translateX(3px);
+  }
+}
+
+@media print {
+  @page {
+    margin: 0 !important;
+  }
+
+  /* Hide everything by default */
+  body * {
+    visibility: hidden;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100% !important;
+    max-height: 100% !important;
+    overflow: hidden !important;
+    /* Clips the viewport height to exactly 1 page */
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Only show the document preview paper and its children */
+  .doc-preview-paper,
+  .doc-preview-paper * {
+    visibility: visible;
+    color: #000000 !important;
+    text-shadow: none !important;
+  }
+
+  .doc-preview-paper * {
+    background-color: transparent !important;
+    background: transparent !important;
+    word-spacing: normal !important;
+    letter-spacing: normal !important;
+  }
+
+  /* Reset layout constraints for printing */
+  .doc-preview-paper {
+    position: fixed !important;
+    /* Centered relative to viewport */
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    margin: 0 !important;
+    padding: 2.5cm 2cm !important;
+    box-sizing: border-box !important;
+    box-shadow: none !important;
+    border: none !important;
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    z-index: 99999 !important;
+    page-break-inside: avoid !important;
+    page-break-after: avoid !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+  }
+
+  /* Hide interactive artifacts when printing and allow text to wrap */
+  .doc-preview-paper button {
+    display: inline !important;
+    font-weight: bold !important;
+  }
+
+  .doc-preview-paper button,
+  .doc-preview-paper button * {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+    padding: 0 !important;
+    color: inherit !important;
+  }
+
+  .doc-preview-paper button svg {
+    display: none !important;
+  }
+
+  /* Print strategy: hide inputs, show the measurement text span instead.
+     The [data-print-text] span already contains the exact displayed text. */
+  .doc-preview-paper span.inline-block {
+    width: auto !important;
+    display: inline !important;
+  }
+
+  /* Show the offscreen measurement span as visible inline text */
+  .doc-preview-paper [data-print-text] {
+    position: static !important;
+    top: auto !important;
+    left: auto !important;
+    visibility: visible !important;
+    color: #000000 !important;
+    white-space: pre-wrap !important;
+    pointer-events: auto !important;
+  }
+
+  /* Hide ALL input elements when printing */
+  .doc-preview-paper input {
+    display: none !important;
+  }
+
+  /* Force clean colors */
+  body {
+    background: white;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Disable page margins usually added by browsers */
+  @page {
+    margin: 1cm;
+  }
+}
