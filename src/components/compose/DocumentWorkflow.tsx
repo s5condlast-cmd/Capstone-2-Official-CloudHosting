@@ -38,12 +38,12 @@ interface AutoWidthInputProps extends React.InputHTMLAttributes<HTMLInputElement
   hidePlaceholderInPrint?: boolean;
 }
 
-const AutoWidthInput: React.FC<AutoWidthInputProps> = ({ 
-  value, 
-  placeholder, 
-  hidePlaceholderInPrint, 
-  className, 
-  ...props 
+const AutoWidthInput: React.FC<AutoWidthInputProps> = ({
+  value,
+  placeholder,
+  hidePlaceholderInPrint,
+  className,
+  ...props
 }) => {
   const [inputWidth, setInputWidth] = useState<number | undefined>(undefined);
   const measureRef = useRef<HTMLSpanElement>(null);
@@ -53,18 +53,18 @@ const AutoWidthInput: React.FC<AutoWidthInputProps> = ({
   useLayoutEffect(() => {
     if (measureRef.current) {
       const textWidth = measureRef.current.getBoundingClientRect().width;
-      setInputWidth(Math.ceil(textWidth) + 24);
+      setInputWidth(Math.ceil(textWidth) + 18);
     }
   }, [activeText, className]);
 
   const shouldPrint = hasValue || !hidePlaceholderInPrint;
 
   return (
-    <span 
+    <span
       style={{ width: inputWidth ? `${inputWidth}px` : 'auto' }}
       className="inline-block align-middle max-w-full relative"
     >
-      <span 
+      <span
         ref={measureRef}
         {...(shouldPrint ? { 'data-print-text': 'true' } : {})}
         className={cn(
@@ -134,48 +134,48 @@ export const DocumentWorkflow: React.FC<DocumentWorkflowProps> = ({
   // Form State for inline document placeholders matching <TAGS>, Date, and ____
   const [formData, setFormData] = useState<Record<string, string>>(initialFormData);
 
-const TITLE_TO_TEMPLATE_ID: Record<string, string> = {
-  'student application letter': 'h11',
-  'application letter': 'h11',
-  'parent consent form (with fee)': 'h2_1',
-  'parent consent (with fee)': 'h2_1',
-  'parent consent form (without fee)': 'h2_2',
-  'parent consent (without fee)': 'h2_2',
-  'student consent form (with fee)': 'h2_3',
-  'student consent (with fee)': 'h2_3',
-  'student consent form (without fee)': 'h2_4',
-  'student consent (without fee)': 'h2_4',
-  'moa template': 'h3',
-  'memorandum of agreement': 'h3',
-  'endorsement letter': 'h4',
-  'sti ojt endorsement letter': 'h4',
-  'proposal letter': 'h12',
-  'proposal letter to the industry': 'h12',
-  'journal template': 'h5',
-  'weekly journal': 'h5',
-  'dtr form': 'h6',
-  'daily time record (dtr)': 'h6',
-  'daily time record': 'h6',
-  'training plan form': 'h7',
-  'ojt training plan': 'h7',
-  'ojt training plan (bsit/bscs/bsis/act/itp)': 'h7',
-  'ojt training plan (bscpe)': 'h7',
-  'integration paper': 'h8',
-  'integration paper template': 'h8',
-  'performance appraisal': 'h10',
-  'performance appraisal template': 'h10'
-};
+  const TITLE_TO_TEMPLATE_ID: Record<string, string> = {
+    'student application letter': 'h11',
+    'application letter': 'h11',
+    'parent consent form (with fee)': 'h2_1',
+    'parent consent (with fee)': 'h2_1',
+    'parent consent form (without fee)': 'h2_2',
+    'parent consent (without fee)': 'h2_2',
+    'student consent form (with fee)': 'h2_3',
+    'student consent (with fee)': 'h2_3',
+    'student consent form (without fee)': 'h2_4',
+    'student consent (without fee)': 'h2_4',
+    'moa template': 'h3',
+    'memorandum of agreement': 'h3',
+    'endorsement letter': 'h4',
+    'sti ojt endorsement letter': 'h4',
+    'proposal letter': 'h12',
+    'proposal letter to the industry': 'h12',
+    'journal template': 'h5',
+    'weekly journal': 'h5',
+    'dtr form': 'h6',
+    'daily time record (dtr)': 'h6',
+    'daily time record': 'h6',
+    'training plan form': 'h7',
+    'ojt training plan': 'h7',
+    'ojt training plan (bsit/bscs/bsis/act/itp)': 'h7',
+    'ojt training plan (bscpe)': 'h7',
+    'integration paper': 'h8',
+    'integration paper template': 'h8',
+    'performance appraisal': 'h10',
+    'performance appraisal template': 'h10'
+  };
 
   useEffect(() => {
     const fetchDoc = async () => {
       let targetId = templateId || TITLE_TO_TEMPLATE_ID[title.toLowerCase().trim()] || '';
-      
+
       if (!targetId) {
         try {
           const metadata = await templateStorage.getMetadata();
           const match = metadata?.find(t => t.name.toLowerCase().trim() === title.toLowerCase().trim());
           if (match) targetId = match.id;
-        } catch (e) {}
+        } catch (e) { }
       }
 
       let buffer: ArrayBuffer | undefined;
@@ -183,7 +183,7 @@ const TITLE_TO_TEMPLATE_ID: Record<string, string> = {
       if (targetId) {
         buffer = await templateStorage.getTemplateFile(targetId);
         pdfBuf = await templateStorage.getTemplatePdfBackup(targetId);
-        
+
       }
 
       // Fallback to fetching public docUrl if no custom upload exists in storage
@@ -275,8 +275,9 @@ const TITLE_TO_TEMPLATE_ID: Record<string, string> = {
     setGenerationError(null);
     setIsGeneratingDocx(true);
     try {
-      // Step 2: Data Extraction per AGENTS.md rules
-      const placeholders = document.querySelectorAll('.editable-placeholder');
+      // Step 2: Data Extraction per AGENTS.md rules - scoped to preview container
+      const container = previewRef.current || document;
+      const placeholders = container.querySelectorAll('.editable-placeholder');
       const blankEdits: string[] = [];
       const dateEdits: string[] = [];
       const angleData: Record<string, string> = { ...formData };
@@ -314,9 +315,9 @@ const TITLE_TO_TEMPLATE_ID: Record<string, string> = {
         title
       );
       documentGenerator.downloadBlob(blob, `${title.replace(/\s+/g, '_')}_Filled.docx`);
-    } catch (err) {
-      console.error(err);
-      setGenerationError('Failed to generate DOCX. Please try again.');
+    } catch (err: any) {
+      console.error('Error generating DOCX:', err);
+      setGenerationError(err?.message || 'Failed to generate DOCX. Please try again.');
     } finally {
       setIsGeneratingDocx(false);
     }
@@ -360,96 +361,100 @@ const TITLE_TO_TEMPLATE_ID: Record<string, string> = {
           </Badge>
         </div>
         <p className="text-xs text-zinc-500 dark:text-zinc-400">
-          {viewMode === 'form' 
+          {viewMode === 'form'
             ? 'Fill in the boxed fields directly on the document layout below to generate your customized letter.'
             : 'Preview how your finalized document layout will appear once populated.'}
         </p>
       </div>
 
       {/* Action Toolbar Row */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0 bg-zinc-50 dark:bg-zinc-900/60 p-2.5 rounded-xl border border-zinc-200/80 dark:border-zinc-800">
+      <div className="relative flex flex-wrap items-center justify-between gap-3 shrink-0 bg-zinc-50 dark:bg-zinc-900/60 p-2.5 rounded-xl border border-zinc-200/80 dark:border-zinc-800">
         {/* Left: View Mode Switcher (Only available for Student Application Letter) */}
-        {isApplicationLetter ? (
-          <div className="bg-white dark:bg-zinc-950 p-1 rounded-lg border border-zinc-200/80 dark:border-zinc-800 flex items-center gap-1 text-xs shadow-2xs">
-            <button
-              onClick={() => setViewMode('preview')}
-              className={cn(
-                "px-3 py-1.5 rounded-md font-semibold transition-all flex items-center gap-1.5 cursor-pointer text-xs",
-                viewMode === 'preview'
-                  ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-950 shadow-2xs"
-                  : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200"
-              )}
-            >
+        <div className="flex items-center z-10">
+          {isApplicationLetter ? (
+            <div className="bg-white dark:bg-zinc-950 p-1 rounded-lg border border-zinc-200/80 dark:border-zinc-800 flex items-center gap-1 text-xs shadow-2xs">
+              <button
+                onClick={() => setViewMode('preview')}
+                className={cn(
+                  "px-3 py-1.5 rounded-md font-semibold transition-all flex items-center gap-1.5 cursor-pointer text-xs whitespace-nowrap",
+                  viewMode === 'preview'
+                    ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-950 shadow-2xs"
+                    : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200"
+                )}
+              >
+                <Eye size={13} />
+                <span>PDF Preview</span>
+              </button>
+              <button
+                onClick={() => setViewMode('form')}
+                className={cn(
+                  "px-3 py-1.5 rounded-md font-semibold transition-all flex items-center gap-1.5 cursor-pointer text-xs whitespace-nowrap",
+                  viewMode === 'form'
+                    ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-950 shadow-2xs"
+                    : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200"
+                )}
+              >
+                <Pencil size={13} />
+                <span>Interactive Form</span>
+              </button>
+            </div>
+          ) : (
+            <div className="bg-white dark:bg-zinc-950 px-3 py-1.5 rounded-lg border border-zinc-200/80 dark:border-zinc-800 flex items-center gap-1.5 text-xs font-semibold text-zinc-800 dark:text-zinc-200 shadow-2xs whitespace-nowrap">
               <Eye size={13} />
               <span>PDF Preview</span>
-            </button>
-            <button
-              onClick={() => setViewMode('form')}
-              className={cn(
-                "px-3 py-1.5 rounded-md font-semibold transition-all flex items-center gap-1.5 cursor-pointer text-xs",
-                viewMode === 'form'
-                  ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-950 shadow-2xs"
-                  : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200"
-              )}
-            >
-              <Pencil size={13} />
-              <span>Interactive Form</span>
-            </button>
-          </div>
-        ) : (
-          <div className="bg-white dark:bg-zinc-950 px-3 py-1.5 rounded-lg border border-zinc-200/80 dark:border-zinc-800 flex items-center gap-1.5 text-xs font-semibold text-zinc-800 dark:text-zinc-200 shadow-2xs">
-            <Eye size={13} />
-            <span>PDF Preview</span>
-          </div>
-        )}
+            </div>
+          )}
+        </div>
 
         {/* Center: Zoom Controls */}
-        <div className="bg-white dark:bg-zinc-950 px-2 py-1 rounded-lg border border-zinc-200/80 dark:border-zinc-800 flex items-center gap-1 text-xs shadow-2xs self-start sm:self-auto">
-          <button
-            onClick={() => setZoomScale(prev => Math.max(0.65, parseFloat((prev - 0.05).toFixed(2))))}
-            className="p-1.5 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 transition-colors cursor-pointer"
-            title="Zoom Out"
-          >
-            <ZoomOut size={13} />
-          </button>
-          <span className="text-[11px] font-bold text-zinc-700 dark:text-zinc-300 min-w-[36px] text-center select-none">
-            {Math.round(zoomScale * 100)}%
-          </span>
-          <button
-            onClick={() => setZoomScale(prev => Math.min(1.2, parseFloat((prev + 0.05).toFixed(2))))}
-            className="p-1.5 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 transition-colors cursor-pointer"
-            title="Zoom In"
-          >
-            <ZoomIn size={13} />
-          </button>
+        <div className="sm:absolute sm:left-1/2 sm:-translate-x-1/2 flex items-center justify-center">
+          <div className="bg-white dark:bg-zinc-950 px-2 py-1 rounded-lg border border-zinc-200/80 dark:border-zinc-800 flex items-center gap-1 text-xs shadow-2xs">
+            <button
+              onClick={() => setZoomScale(prev => Math.max(0.65, parseFloat((prev - 0.05).toFixed(2))))}
+              className="p-1.5 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 transition-colors cursor-pointer"
+              title="Zoom Out"
+            >
+              <ZoomOut size={13} />
+            </button>
+            <span className="text-[11px] font-bold text-zinc-700 dark:text-zinc-300 min-w-[36px] text-center select-none">
+              {Math.round(zoomScale * 100)}%
+            </span>
+            <button
+              onClick={() => setZoomScale(prev => Math.min(1.2, parseFloat((prev + 0.05).toFixed(2))))}
+              className="p-1.5 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 transition-colors cursor-pointer"
+              title="Zoom In"
+            >
+              <ZoomIn size={13} />
+            </button>
+          </div>
         </div>
 
         {/* Right: Form Actions (Only shown for Application Letter in Form Mode) */}
-        {isApplicationLetter && viewMode === 'form' ? (
-          <div className="flex items-center gap-2">
-            <Button
-              variant="secondary"
-              size="sm"
-              icon={<Sparkles size={14} className="text-zinc-700 dark:text-zinc-300" />}
-              onClick={handleAutoFill}
-              className="shadow-2xs"
-            >
-              Auto-Fill Profile
-            </Button>
+        <div className="flex items-center gap-2 z-10 ml-auto sm:ml-0">
+          {isApplicationLetter && viewMode === 'form' && (
+            <>
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={<Sparkles size={14} className="text-zinc-700 dark:text-zinc-300" />}
+                onClick={handleAutoFill}
+                className="shadow-2xs whitespace-nowrap"
+              >
+                Auto-Fill Profile
+              </Button>
 
-            <Button
-              variant="outline"
-              size="sm"
-              icon={<RotateCcw size={14} />}
-              onClick={handleResetForm}
-              className="shadow-2xs"
-            >
-              Reset
-            </Button>
-          </div>
-        ) : (
-          <div />
-        )}
+              <Button
+                variant="outline"
+                size="sm"
+                icon={<RotateCcw size={14} />}
+                onClick={handleResetForm}
+                className="shadow-2xs whitespace-nowrap"
+              >
+                Reset
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Main Container: Document Paper Canvas */}
@@ -465,12 +470,12 @@ const TITLE_TO_TEMPLATE_ID: Record<string, string> = {
           >
             {viewMode === 'preview' ? (
               pdfBlobUrl ? (
-                <div 
+                <div
                   style={zoomScale !== 1 ? { transform: `scale(${zoomScale})`, transformOrigin: 'center center' } : undefined}
                   className="w-full max-w-[680px] h-[760px] transition-transform duration-150 my-auto"
                 >
-                  <iframe 
-                    src={`${pdfBlobUrl}#toolbar=0&navpanes=0`} 
+                  <iframe
+                    src={`${pdfBlobUrl}#toolbar=0&navpanes=0`}
                     className="w-full h-full rounded-sm border border-zinc-200 shadow-md bg-white"
                     title={`${title} PDF Preview`}
                   />
@@ -484,7 +489,7 @@ const TITLE_TO_TEMPLATE_ID: Record<string, string> = {
               )
             ) : !isApplicationLetter ? (
               /* Non-Application Letter Interactive Form Card */
-              <div 
+              <div
                 style={zoomScale !== 1 ? { transform: `scale(${zoomScale})`, transformOrigin: 'center center' } : undefined}
                 className="bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 shadow-md border border-zinc-200 dark:border-zinc-800 w-full max-w-[680px] p-6 sm:p-8 rounded-xl my-auto space-y-6"
               >
@@ -546,205 +551,204 @@ const TITLE_TO_TEMPLATE_ID: Record<string, string> = {
                 </div>
               </div>
             ) : (
-              <div 
+              <div
+                ref={previewRef}
                 style={zoomScale !== 1 ? { transform: `scale(${zoomScale})`, transformOrigin: 'center center' } : undefined}
                 className="doc-preview-paper bg-white text-black shadow-md border border-zinc-200 dark:border-zinc-700 w-full max-w-[680px] min-h-[760px] p-6 sm:p-10 font-sans text-[11pt] leading-relaxed space-y-5 rounded-sm select-text flex flex-col justify-between transition-transform duration-150 my-auto"
               >
                 <div className="space-y-5">
-                {/* Date */}
-                <div>
-                  {viewMode === 'form' ? (
-                    <AutoWidthInput
-                      type="text"
-                      value={formData.date || ''}
-                      onChange={(e) => handleInputChange('date', e.target.value)}
-                      placeholder="Date (e.g. July 26, 2026)"
-                      className="[&::-webkit-calendar-picker-indicator]:hidden"
-                    />
-                  ) : (
-                    <span className="font-normal text-black text-[11pt]">
-                      {formData.date || new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-                    </span>
-                  )}
-                </div>
-
-                {/* Recipient details */}
-                <div className="space-y-1 text-black font-normal text-[11pt]">
+                  {/* Date */}
                   <div>
                     {viewMode === 'form' ? (
                       <AutoWidthInput
                         type="text"
-                        value={formData.contactPerson || ''}
-                        onChange={(e) => handleInputChange('contactPerson', e.target.value)}
-                        placeholder="<Name of Host Training Establishment Representative>"
+                        value={formData.date || ''}
+                        onChange={(e) => handleInputChange('date', e.target.value)}
+                        placeholder="Date (e.g. July 26, 2026)"
+                        className="[&::-webkit-calendar-picker-indicator]:hidden"
                       />
                     ) : (
-                      <span className="font-normal">{formData.contactPerson || '<Name of Host Training Establishment Representative>'}</span>
-                    )}
-                  </div>
-                  <div>
-                    {viewMode === 'form' ? (
-                      <AutoWidthInput
-                        type="text"
-                        value={formData.contactTitle || ''}
-                        onChange={(e) => handleInputChange('contactTitle', e.target.value)}
-                        placeholder="<Designation>"
-                      />
-                    ) : (
-                      <span className="font-normal text-zinc-800">{formData.contactTitle || '<Designation>'}</span>
-                    )}
-                  </div>
-                  <div>
-                    {viewMode === 'form' ? (
-                      <AutoWidthInput
-                        type="text"
-                        value={formData.companyName || ''}
-                        onChange={(e) => handleInputChange('companyName', e.target.value)}
-                        placeholder="<Name of Host Company>"
-                      />
-                    ) : (
-                      <span className="font-normal">{formData.companyName || '<Name of Host Company>'}</span>
-                    )}
-                  </div>
-                  <div>
-                    {viewMode === 'form' ? (
-                      <AutoWidthInput
-                        type="text"
-                        value={formData.companyAddress || ''}
-                        onChange={(e) => handleInputChange('companyAddress', e.target.value)}
-                        placeholder="<Address>"
-                      />
-                    ) : (
-                      <span className="font-normal text-zinc-800">{formData.companyAddress || '<Address>'}</span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Salutation */}
-                <div className="pt-1 text-[11pt]">
-                  <p className="font-normal text-black leading-relaxed">
-                    <span>Dear Mr./Ms. </span>
-                    {viewMode === 'form' ? (
-                      <AutoWidthInput
-                        type="text"
-                        value={formData.salutationName || ''}
-                        onChange={(e) => handleInputChange('salutationName', e.target.value)}
-                        placeholder="<Name of Host Training Establishment>"
-                      />
-                    ) : (
-                      <span className="font-normal text-black">
-                        {formData.salutationName || '<Name of Host Training Establishment>'}
+                      <span className="font-normal text-black text-[11pt]">
+                        {formData.date || new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
                       </span>
                     )}
-                    <span>:</span>
+                  </div>
+
+                  {/* Recipient details */}
+                  <div className="space-y-1 text-black font-normal text-[11pt]">
+                    <div>
+                      {viewMode === 'form' ? (
+                        <AutoWidthInput
+                          type="text"
+                          value={formData.contactPerson || ''}
+                          onChange={(e) => handleInputChange('contactPerson', e.target.value)}
+                          placeholder="<Name of Host Training Establishment Representative>"
+                        />
+                      ) : (
+                        <span className="font-normal">{formData.contactPerson || '<Name of Host Training Establishment Representative>'}</span>
+                      )}
+                    </div>
+                    <div>
+                      {viewMode === 'form' ? (
+                        <AutoWidthInput
+                          type="text"
+                          value={formData.contactTitle || ''}
+                          onChange={(e) => handleInputChange('contactTitle', e.target.value)}
+                          placeholder="<Designation>"
+                        />
+                      ) : (
+                        <span className="font-normal text-zinc-800">{formData.contactTitle || '<Designation>'}</span>
+                      )}
+                    </div>
+                    <div>
+                      {viewMode === 'form' ? (
+                        <AutoWidthInput
+                          type="text"
+                          value={formData.companyName || ''}
+                          onChange={(e) => handleInputChange('companyName', e.target.value)}
+                          placeholder="<Name of Host Company>"
+                        />
+                      ) : (
+                        <span className="font-normal">{formData.companyName || '<Name of Host Company>'}</span>
+                      )}
+                    </div>
+                    <div>
+                      {viewMode === 'form' ? (
+                        <AutoWidthInput
+                          type="text"
+                          value={formData.companyAddress || ''}
+                          onChange={(e) => handleInputChange('companyAddress', e.target.value)}
+                          placeholder="<Address>"
+                        />
+                      ) : (
+                        <span className="font-normal text-zinc-800">{formData.companyAddress || '<Address>'}</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Salutation */}
+                  <div className="pt-1 text-[11pt]">
+                    <p className="font-normal text-black leading-relaxed">
+                      Dear Mr./Ms.{' '}
+                      {viewMode === 'form' ? (
+                        <AutoWidthInput
+                          type="text"
+                          value={formData.salutationName || ''}
+                          onChange={(e) => handleInputChange('salutationName', e.target.value)}
+                          placeholder="<Name of Host Training Establishment>"
+                        />
+                      ) : (
+                        <span className="font-normal text-black">
+                          {formData.salutationName || '<Name of Host Training Establishment>'}
+                        </span>
+                      )}:
+                    </p>
+                  </div>
+
+                  {/* Paragraph 1 */}
+                  <p className="text-left leading-relaxed text-black text-[11pt]">
+                    I, a student of STI{' '}
+                    {viewMode === 'form' ? (
+                      <AutoWidthInput
+                        type="text"
+                        value={formData.campusName || ''}
+                        onChange={(e) => handleInputChange('campusName', e.target.value)}
+                        placeholder="<name of campus>"
+                      />
+                    ) : (
+                      <span className="font-normal border-b border-black px-1">{formData.campusName || '<name of campus>'}</span>
+                    )}, am required to undergo{' '}
+                    {viewMode === 'form' ? (
+                      <AutoWidthInput
+                        type="text"
+                        value={formData.hoursRequired || ''}
+                        onChange={(e) => handleInputChange('hoursRequired', e.target.value)}
+                        placeholder="<no. of training hours>"
+                      />
+                    ) : (
+                      <span className="font-normal border-b border-black px-1">{formData.hoursRequired || '<no. of training hours>'}</span>
+                    )}{' '}
+                    hours of On-the-Job Training (OJT) in partial fulfillment of the requirements for my{' '}
+                    {viewMode === 'form' ? (
+                      <AutoWidthInput
+                        type="text"
+                        value={formData.programName || ''}
+                        onChange={(e) => handleInputChange('programName', e.target.value)}
+                        placeholder="<Name of Program>"
+                      />
+                    ) : (
+                      <span className="font-normal border-b border-black px-1">{formData.programName || '<Name of Program>'}</span>
+                    )}{' '}
+                    program.
                   </p>
-                </div>
 
-                {/* Paragraph 1 */}
-                <p className="text-left leading-relaxed text-black text-[11pt]">
-                  I, a student of STI{' '}
-                  {viewMode === 'form' ? (
-                    <AutoWidthInput
-                      type="text"
-                      value={formData.campusName || ''}
-                      onChange={(e) => handleInputChange('campusName', e.target.value)}
-                      placeholder="<name of campus>"
-                    />
-                  ) : (
-                    <span className="font-normal border-b border-black px-1">{formData.campusName || '<name of campus>'}</span>
-                  )}
-                  , am required to undergo{' '}
-                  {viewMode === 'form' ? (
-                    <AutoWidthInput
-                      type="text"
-                      value={formData.hoursRequired || ''}
-                      onChange={(e) => handleInputChange('hoursRequired', e.target.value)}
-                      placeholder="<no. of training hours>"
-                    />
-                  ) : (
-                    <span className="font-normal border-b border-black px-1">{formData.hoursRequired || '<no. of training hours>'}</span>
-                  )}{' '}
-                  hours of On-the-Job Training (OJT) in partial fulfillment of the requirements for my{' '}
-                  {viewMode === 'form' ? (
-                    <AutoWidthInput
-                      type="text"
-                      value={formData.programName || ''}
-                      onChange={(e) => handleInputChange('programName', e.target.value)}
-                      placeholder="<Name of Program>"
-                    />
-                  ) : (
-                    <span className="font-normal border-b border-black px-1">{formData.programName || '<Name of Program>'}</span>
-                  )}{' '}
-                  program.
-                </p>
+                  {/* Paragraph 2 */}
+                  <p className="text-left leading-relaxed text-black text-[11pt]">
+                    I can acquire valuable knowledge and skills to complement those I have learned from school with your company. In return, I offer my services and determination to be an asset to your company throughout my training period.
+                  </p>
 
-                {/* Paragraph 2 */}
-                <p className="text-left leading-relaxed text-black text-[11pt]">
-                  I can acquire valuable knowledge and skills to complement those I have learned from school with your company. In return, I offer my services and determination to be an asset to your company throughout my training period.
-                </p>
+                  {/* Paragraph 3 */}
+                  <p className="text-left leading-relaxed text-black text-[11pt]">
+                    Enclosed is an endorsement letter from my Program Head and my resume.
+                  </p>
 
-                {/* Paragraph 3 */}
-                <p className="text-left leading-relaxed text-black text-[11pt]">
-                  Enclosed is an endorsement letter from my Program Head and my resume.
-                </p>
+                  {/* Paragraph 4 */}
+                  <p className="text-left leading-relaxed text-black text-[11pt]">
+                    I am hoping for your kind consideration.
+                  </p>
 
-                {/* Paragraph 4 */}
-                <p className="text-left leading-relaxed text-black text-[11pt]">
-                  I am hoping for your kind consideration.
-                </p>
+                  {/* Closing */}
+                  <p className="text-black font-normal text-[11pt]">Thank you.</p>
 
-                {/* Closing */}
-                <p className="text-black font-normal text-[11pt]">Thank you.</p>
-
-                <div className="pt-1 text-[11pt]">
-                  <p className="text-black font-normal">Respectfully yours,</p>
-                </div>
-
-                {/* Signature & Student Name Block */}
-                <div className="pt-4 w-64 text-center flex flex-col items-center">
-                  {/* Signature input area above line */}
-                  <div className="w-full flex items-end justify-center min-h-[26px] mb-0.5">
-                    {viewMode === 'form' ? (
-                      <AutoWidthInput
-                        type="text"
-                        value={formData.signature || ''}
-                        onChange={(e) => handleInputChange('signature', e.target.value)}
-                        placeholder="<Signature>"
-                        hidePlaceholderInPrint
-                        className="text-center font-serif italic text-[11pt] py-0.5 px-2"
-                      />
-                    ) : formData.signature ? (
-                      <span className="font-serif italic text-[12pt] text-zinc-900 select-none">
-                        {formData.signature}
-                      </span>
-                    ) : (
-                      <div className="h-5" />
-                    )}
+                  <div className="pt-1 text-[11pt]">
+                    <p className="text-black font-normal">Respectfully yours,</p>
                   </div>
 
-                  {/* Horizontal Line */}
-                  <div className="border-b border-black w-full my-0.5" />
+                  {/* Signature & Student Name Block */}
+                  <div className="pt-4 w-64 text-center flex flex-col items-center">
+                    {/* Signature input area above line */}
+                    <div className="w-full flex items-end justify-center min-h-[26px] mb-0.5">
+                      {viewMode === 'form' ? (
+                        <AutoWidthInput
+                          type="text"
+                          value={formData.signature || ''}
+                          onChange={(e) => handleInputChange('signature', e.target.value)}
+                          placeholder="<Signature>"
+                          hidePlaceholderInPrint
+                          className="text-center font-serif italic text-[11pt] py-0.5 px-2"
+                        />
+                      ) : formData.signature ? (
+                        <span className="font-serif italic text-[12pt] text-zinc-900 select-none">
+                          {formData.signature}
+                        </span>
+                      ) : (
+                        <div className="h-5" />
+                      )}
+                    </div>
 
-                  {/* Student Name */}
-                  <div className="flex justify-center w-full mt-0.5">
-                    {viewMode === 'form' ? (
-                      <AutoWidthInput
-                        type="text"
-                        value={formData.studentName || ''}
-                        onChange={(e) => handleInputChange('studentName', e.target.value)}
-                        placeholder="<Name of Student Trainee>"
-                        className="text-center font-normal text-[11pt]"
-                      />
-                    ) : (
-                      <span className="font-normal uppercase tracking-wide text-black text-[11pt]">
-                        {formData.studentName || '<Name of Student Trainee>'}
-                      </span>
-                    )}
+                    {/* Horizontal Line */}
+                    <div className="border-b border-black w-full my-0.5" />
+
+                    {/* Student Name */}
+                    <div className="flex justify-center w-full mt-0.5">
+                      {viewMode === 'form' ? (
+                        <AutoWidthInput
+                          type="text"
+                          value={formData.studentName || ''}
+                          onChange={(e) => handleInputChange('studentName', e.target.value)}
+                          placeholder="<Name of Student Trainee>"
+                          className="text-center font-normal text-[11pt]"
+                        />
+                      ) : (
+                        <span className="font-normal uppercase tracking-wide text-black text-[11pt]">
+                          {formData.studentName || '<Name of Student Trainee>'}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-black font-normal text-[11pt] text-center mt-0.5">OJT Applicant</p>
                   </div>
-                  <p className="text-black font-normal text-[11pt] text-center mt-0.5">OJT Applicant</p>
                 </div>
               </div>
-            </div>
             )}
           </motion.div>
         </AnimatePresence>

@@ -215,12 +215,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
       transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
       onMouseLeave={() => setActiveFlyout(null)}
       className={cn(
-        'bg-white dark:bg-zinc-900 border-r-0 flex flex-col h-screen z-40 shrink-0 overflow-hidden transition-[transform] duration-300 select-none rounded-none',
+        'bg-zinc-100 dark:bg-zinc-900 border-r-0 flex flex-col h-screen z-40 shrink-0 overflow-hidden transition-[transform] duration-300 select-none rounded-none',
         isDesktop ? 'sticky top-0' : 'fixed top-0 left-0'
       )}
     >
       {/* ── Header / Logo & Menu Toggle ── */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-100 dark:border-zinc-800/60 shrink-0 min-h-[64px]">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200/60 dark:border-zinc-800/60 shrink-0 min-h-[64px]">
         <div className="flex items-center gap-3 overflow-hidden">
           <button
             onClick={() => setIsPinnedCollapsed(!isPinnedCollapsed)}

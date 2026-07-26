@@ -14,6 +14,13 @@
   --color-primary: var(--theme-primary);
   --color-primary-hover: var(--theme-primary-hover);
   --color-primary-fg: var(--theme-primary-fg);
+
+  /* Deep Sky & Warm Amber Palette */
+  --color-sky-blue: #3B82C4;
+  --color-sky-blue-hover: #2C6CA8;
+  --color-warm-amber: #E8A33D;
+  --color-warm-amber-hover: #D4902A;
+  --color-soft-slate: #4B5563;
 }
 
 @layer base {
@@ -36,11 +43,22 @@
   :root.theme-indigo,
   :root.theme-sti,
   :root.theme-cyan,
+  :root.theme-deep-sky,
   .dark.theme-blue,
   .dark.theme-indigo,
   .dark.theme-sti,
-  .dark.theme-cyan {
+  .dark.theme-cyan,
+  .dark.theme-deep-sky {
     --theme-primary-fg: #ffffff;
+  }
+
+  /* Deep Sky Blue (Primary + Warm Amber Accent + Soft Slate) */
+  .theme-deep-sky {
+    --theme-primary: #3B82C4;
+    --theme-primary-hover: #2C6CA8;
+    --theme-accent: #E8A33D;
+    --theme-accent-hover: #D4902A;
+    --theme-slate: #4B5563;
   }
 
   /* Modern Blue */
@@ -178,6 +196,7 @@
   0% {
     transform: translateX(0%);
   }
+
   100% {
     transform: translateX(-50%);
   }

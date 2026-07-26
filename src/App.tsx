@@ -82,7 +82,7 @@ export default function App() {
           localStorage.removeItem(key);
         }
       });
-    } catch (e) {}
+    } catch (e) { }
 
     try {
       const saved = localStorage.getItem('practicum_session');
@@ -147,12 +147,12 @@ export default function App() {
       }} />
       <Routes>
         <Route path="/" element={<LandingPage userRole={user?.role} />} />
-        <Route 
-          path="/login" 
-          element={!user ? <Login onLogin={handleLogin} /> : <Navigate to={`/${user.role}`} replace />} 
+        <Route
+          path="/login"
+          element={!user ? <Login onLogin={handleLogin} /> : <Navigate to={`/${user.role}`} replace />}
         />
         <Route path="/forgot-password" element={<ForgotPassword />} />
-        
+
         {/* Admin Routes */}
         <Route path="/admin" element={
           <ProtectedRoute user={user} allowedRole="admin">

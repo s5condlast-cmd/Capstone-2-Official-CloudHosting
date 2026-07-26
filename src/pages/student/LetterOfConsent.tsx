@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { StudentDocumentPage, DocumentTemplate } from '@/src/components/compose/StudentDocumentPage';
 
 export const LetterOfConsent = () => {
-  const [status] = useState<'Pending' | 'Approved' | 'Returned'>('Pending');
 
   const templates: DocumentTemplate[] = [
     {
@@ -59,7 +58,7 @@ export const LetterOfConsent = () => {
       uploadTitle="Upload Consent Form"
       uploadDescription="Upload Signed Letter of Consent"
       templates={templates}
-      status={status}
+      status="Pending"
       submissionInfo={submissionInfo}
       adviserFeedback="Awaiting your submission."
     />

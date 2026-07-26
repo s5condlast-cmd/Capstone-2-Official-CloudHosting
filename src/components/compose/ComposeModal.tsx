@@ -131,6 +131,7 @@ export const ComposeModal: React.FC<ComposeModalProps> = ({
             </div>
             <button
               onClick={onClose}
+              aria-label="Close modal"
               className="p-2 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
             >
               <X size={18} />
