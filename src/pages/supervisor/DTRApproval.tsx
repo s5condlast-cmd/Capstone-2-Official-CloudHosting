@@ -1,8 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card } from '@/src/components/ui/Card';
 import { Badge } from '@/src/components/ui/Badge';
 import { Button } from '@/src/components/ui/Button';
-import { StatCard } from '@/src/components/ui/StatCard';
 import { toast } from 'sonner';
 import { 
   Check, 
@@ -12,19 +11,7 @@ import {
   AlertCircle,
   MessageSquare,
   ChevronDown,
-  UserCheck,
-  FileSignature,
-  RotateCcw,
-  PenTool,
-  Sparkles,
-  Edit3,
-  Coffee,
-  Trash2,
-  ArrowLeft,
-  Eye,
-  FileText,
-  Search,
-  CheckCircle2
+  UserCheck
 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 
@@ -35,8 +22,6 @@ interface LogEntry {
   timeOut: string;
   hours: number;
   activities: string;
-  isDayOff?: boolean;
-  signatureUrl?: string;
 }
 
 interface RemarkEntry {
@@ -48,38 +33,29 @@ interface RemarkEntry {
 interface WeeklyDTR {
   id: string;
   studentName: string;
-  studentId: string;
-  course: string;
   weekNumber: number;
   dateRange: string;
   totalHours: number;
-  submittedDate: string;
   status: 'Pending' | 'Approved' | 'Returned';
   logs: LogEntry[];
   remarks?: string;
   remarksHistory?: RemarkEntry[];
-  signatureDataUrl?: string;
 }
 
 const mockWeeklyDTRs: WeeklyDTR[] = [
   {
     id: 'dtr-1',
     studentName: 'Maria Santos',
-    studentId: '2023-01042',
-    course: 'BSIT 402',
     weekNumber: 8,
-    dateRange: 'May 4 - May 10, 2026',
+    dateRange: 'May 4 - May 8, 2026',
     totalHours: 40,
-    submittedDate: 'May 10, 2026',
     status: 'Pending',
     logs: [
-      { day: 'Monday', date: 'May 4, 2026', timeIn: '08:00 AM', timeOut: '05:00 PM', hours: 8, activities: 'Implemented adviser cohort dashboard charts.', isDayOff: false },
-      { day: 'Tuesday', date: 'May 5, 2026', timeIn: '08:00 AM', timeOut: '05:00 PM', hours: 8, activities: 'Integrated Google Gemini AI API in document reviewer.', isDayOff: false },
-      { day: 'Wednesday', date: 'May 6, 2026', timeIn: '08:00 AM', timeOut: '05:00 PM', hours: 8, activities: 'Debugged responsiveness issues on mobile viewports.', isDayOff: false },
-      { day: 'Thursday', date: 'May 7, 2026', timeIn: '08:00 AM', timeOut: '05:00 PM', hours: 8, activities: 'Wrote unit tests for student template parsing helper.', isDayOff: false },
-      { day: 'Friday', date: 'May 8, 2026', timeIn: '08:00 AM', timeOut: '05:00 PM', hours: 8, activities: 'Weekly review meeting and code synchronization.', isDayOff: false },
-      { day: 'Saturday', date: 'May 9, 2026', timeIn: 'OFF', timeOut: 'OFF', hours: 0, activities: 'Weekend Day Off', isDayOff: true },
-      { day: 'Sunday', date: 'May 10, 2026', timeIn: 'OFF', timeOut: 'OFF', hours: 0, activities: 'Weekend Day Off', isDayOff: true }
+      { day: 'Monday', date: 'May 4, 2026', timeIn: '08:00 AM', timeOut: '05:00 PM', hours: 8, activities: 'Implemented adviser cohort dashboard charts.' },
+      { day: 'Tuesday', date: 'May 5, 2026', timeIn: '08:00 AM', timeOut: '05:00 PM', hours: 8, activities: 'Integrated Google Gemini AI API in document reviewer.' },
+      { day: 'Wednesday', date: 'May 6, 2026', timeIn: '08:00 AM', timeOut: '05:00 PM', hours: 8, activities: 'Debugged responsiveness issues on mobile viewports.' },
+      { day: 'Thursday', date: 'May 7, 2026', timeIn: '08:00 AM', timeOut: '05:00 PM', hours: 8, activities: 'Wrote unit tests for student template parsing helper.' },
+      { day: 'Friday', date: 'May 8, 2026', timeIn: '08:00 AM', timeOut: '05:00 PM', hours: 8, activities: 'Weekly review meeting and code synchronization.' }
     ],
     remarksHistory: [
       { date: 'May 1, 2026', text: 'Week 7 logs approved. Good efficiency on frontend sprint deliverables.', role: 'Supervisor' }
@@ -88,21 +64,16 @@ const mockWeeklyDTRs: WeeklyDTR[] = [
   {
     id: 'dtr-2',
     studentName: 'Alice Brown',
-    studentId: '2023-01089',
-    course: 'BSIT 401',
     weekNumber: 7,
-    dateRange: 'April 27 - May 3, 2026',
+    dateRange: 'April 27 - May 1, 2026',
     totalHours: 35,
-    submittedDate: 'May 3, 2026',
     status: 'Pending',
     logs: [
-      { day: 'Monday', date: 'Apr 27, 2026', timeIn: '08:30 AM', timeOut: '05:00 PM', hours: 7.5, activities: 'Created test cases for user profile validations.', isDayOff: false },
-      { day: 'Tuesday', date: 'Apr 28, 2026', timeIn: '08:00 AM', timeOut: '05:00 PM', hours: 8, activities: 'Verified bug fixes on document status badges.', isDayOff: false },
-      { day: 'Wednesday', date: 'Apr 29, 2026', timeIn: '08:00 AM', timeOut: '05:00 PM', hours: 8, activities: 'Assisted in styling the onboarding workflows.', isDayOff: false },
-      { day: 'Thursday', date: 'Apr 30, 2026', timeIn: '09:00 AM', timeOut: '04:30 PM', hours: 6.5, activities: 'Refactored helper classes and optimized imports.', isDayOff: false },
-      { day: 'Friday', date: 'May 1, 2026', timeIn: '08:00 AM', timeOut: '01:00 PM', hours: 5, activities: 'Half day, compiled DTR records for submission.', isDayOff: false },
-      { day: 'Saturday', date: 'May 2, 2026', timeIn: 'OFF', timeOut: 'OFF', hours: 0, activities: 'Weekend Day Off', isDayOff: true },
-      { day: 'Sunday', date: 'May 3, 2026', timeIn: 'OFF', timeOut: 'OFF', hours: 0, activities: 'Weekend Day Off', isDayOff: true }
+      { day: 'Monday', date: 'Apr 27, 2026', timeIn: '08:30 AM', timeOut: '05:00 PM', hours: 7.5, activities: 'Created test cases for user profile validations.' },
+      { day: 'Tuesday', date: 'Apr 28, 2026', timeIn: '08:00 AM', timeOut: '05:00 PM', hours: 8, activities: 'Verified bug fixes on document status badges.' },
+      { day: 'Wednesday', date: 'Apr 29, 2026', timeIn: '08:00 AM', timeOut: '05:00 PM', hours: 8, activities: 'Assisted in styling the onboarding workflows.' },
+      { day: 'Thursday', date: 'Apr 30, 2026', timeIn: '09:00 AM', timeOut: '04:30 PM', hours: 6.5, activities: 'Refactored helper classes and optimized imports.' },
+      { day: 'Friday', date: 'May 1, 2026', timeIn: '08:00 AM', timeOut: '01:00 PM', hours: 5, activities: 'Half day, compiled DTR records for submission.' }
     ],
     remarksHistory: [
       { date: 'Apr 24, 2026', text: 'Week 6 logs returned. Missing 2 hours log on Monday morning.', role: 'Supervisor' },
@@ -112,21 +83,16 @@ const mockWeeklyDTRs: WeeklyDTR[] = [
   {
     id: 'dtr-3',
     studentName: 'John Smith',
-    studentId: '2023-01125',
-    course: 'BSIT 402',
     weekNumber: 2,
-    dateRange: 'April 27 - May 3, 2026',
+    dateRange: 'April 27 - May 1, 2026',
     totalHours: 40,
-    submittedDate: 'May 3, 2026',
     status: 'Approved',
     logs: [
-      { day: 'Monday', date: 'Apr 27, 2026', timeIn: '08:00 AM', timeOut: '05:00 PM', hours: 8, activities: 'Local development setup and repository exploration.', isDayOff: false },
-      { day: 'Tuesday', date: 'Apr 28, 2026', timeIn: '08:00 AM', timeOut: '05:00 PM', hours: 8, activities: 'Read official STI OJT policy guidelines document.', isDayOff: false },
-      { day: 'Wednesday', date: 'Apr 29, 2026', timeIn: '08:00 AM', timeOut: '05:00 PM', hours: 8, activities: 'Created sample database tables in supabase instance.', isDayOff: false },
-      { day: 'Thursday', date: 'Apr 30, 2026', timeIn: '08:00 AM', timeOut: '05:00 PM', hours: 8, activities: 'Configured local environment variables and verified builds.', isDayOff: false },
-      { day: 'Friday', date: 'May 1, 2026', timeIn: '08:00 AM', timeOut: '05:00 PM', hours: 8, activities: 'Weekly synch and documentation drafting.', isDayOff: false },
-      { day: 'Saturday', date: 'May 2, 2026', timeIn: 'OFF', timeOut: 'OFF', hours: 0, activities: 'Weekend Day Off', isDayOff: true },
-      { day: 'Sunday', date: 'May 3, 2026', timeIn: 'OFF', timeOut: 'OFF', hours: 0, activities: 'Weekend Day Off', isDayOff: true }
+      { day: 'Monday', date: 'Apr 27, 2026', timeIn: '08:00 AM', timeOut: '05:00 PM', hours: 8, activities: 'Local development setup and repository exploration.' },
+      { day: 'Tuesday', date: 'Apr 28, 2026', timeIn: '08:00 AM', timeOut: '05:00 PM', hours: 8, activities: 'Read official STI OJT policy guidelines document.' },
+      { day: 'Wednesday', date: 'Apr 29, 2026', timeIn: '08:00 AM', timeOut: '05:00 PM', hours: 8, activities: 'Created sample database tables in supabase instance.' },
+      { day: 'Thursday', date: 'Apr 30, 2026', timeIn: '08:00 AM', timeOut: '05:00 PM', hours: 8, activities: 'Configured local environment variables and verified builds.' },
+      { day: 'Friday', date: 'May 1, 2026', timeIn: '08:00 AM', timeOut: '05:00 PM', hours: 8, activities: 'Weekly synch and documentation drafting.' }
     ],
     remarksHistory: [
       { date: 'Apr 28, 2026', text: 'Local workspace properly set up. Ready to proceed.', role: 'Supervisor' }
@@ -137,486 +103,99 @@ const mockWeeklyDTRs: WeeklyDTR[] = [
 export const DTRApproval: React.FC = () => {
   const [dtrs, setDtrs] = useState<WeeklyDTR[]>(mockWeeklyDTRs);
   const [selectedDtrId, setSelectedDtrId] = useState<string>('dtr-1');
-  const [viewMode, setViewMode] = useState<'table' | 'review'>('table');
-  const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'approved'>('all');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectNotes, setRejectNotes] = useState('');
-
-  // Persistent Saved Signature Store (1 master signature in localStorage)
-  const [savedSignature, setSavedSignature] = useState<string | null>(() => {
-    return localStorage.getItem('supervisor_saved_signature') || null;
-  });
-  const [showSignatureModal, setShowSignatureModal] = useState(false);
-  const [targetLogIndex, setTargetLogIndex] = useState<number | null>(null);
-  const [removeSignatureTargetIndex, setRemoveSignatureTargetIndex] = useState<number | null>(null);
-
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [isDrawing, setIsDrawing] = useState(false);
-  const [hasDrawn, setHasDrawn] = useState(false);
 
   const selectedDtr = dtrs.find(d => d.id === selectedDtrId) || dtrs[0];
 
-  // Helper to filter DTR records based on active search & tab
-  const filteredDtrs = dtrs.filter(dtr => {
-    const matchesSearch = dtr.studentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          dtr.studentId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          dtr.course.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesTab = activeTab === 'all' 
-      ? true 
-      : activeTab === 'pending' 
-        ? dtr.status === 'Pending' 
-        : dtr.status === 'Approved';
-    return matchesSearch && matchesTab;
-  });
-
-  const totalSubmissions = dtrs.length;
-  const pendingCount = dtrs.filter(d => d.status === 'Pending').length;
-  const approvedCount = dtrs.filter(d => d.status === 'Approved').length;
-
-  const handleOpenReview = (id: string) => {
-    setSelectedDtrId(id);
-    setViewMode('review');
-  };
-
-  // Comprehensive helper to parse time strings & compute exact rendered hours
-  const computeHours = (timeIn: string, timeOut: string): number => {
-    try {
-      const parseTime = (t: string): number | null => {
-        if (!t || !t.trim()) return null;
-        const str = t.trim().toUpperCase();
-        
-        const match = str.match(/^(\d{1,2})(?::(\d{2}))?\s*(AM|PM)?$/);
-        if (!match) return null;
-        
-        let [_, hStr, mStr, mod] = match;
-        let h = parseInt(hStr, 10);
-        let m = mStr ? parseInt(mStr, 10) : 0;
-        
-        if (mod === 'PM' && h < 12) h += 12;
-        if (mod === 'AM' && h === 12) h = 0;
-        
-        return h * 60 + m;
-      };
-
-      const startMin = parseTime(timeIn);
-      const endMin = parseTime(timeOut);
-
-      if (startMin === null || endMin === null) return 0;
-
-      let diffMin = endMin - startMin;
-      if (diffMin < 0) diffMin += 24 * 60; // Overnight shift handle
-
-      // Standard lunch break deduction if duration > 5 hours
-      if (diffMin >= 5 * 60) {
-        diffMin -= 60;
-      }
-
-      const totalH = Math.max(0, diffMin / 60);
-      return Math.round(totalH * 10) / 10;
-    } catch {
-      return 0;
-    }
-  };
-
-  // Canvas Drawing Logic
-  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
-    setIsDrawing(true);
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    const rect = canvas.getBoundingClientRect();
-    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
-    ctx.beginPath();
-    ctx.moveTo(clientX - rect.left, clientY - rect.top);
-  };
-
-  const draw = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
-    if (!isDrawing) return;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    const rect = canvas.getBoundingClientRect();
-    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
-    ctx.lineTo(clientX - rect.left, clientY - rect.top);
-    ctx.stroke();
-    setHasDrawn(true);
-  };
-
-  const stopDrawing = () => {
-    setIsDrawing(false);
-  };
-
-  const clearCanvas = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    setHasDrawn(false);
-  };
-
-  // Single click handler: Applies saved signature ONLY to the clicked day row
-  const handleCellClick = (index: number) => {
-    const log = selectedDtr.logs[index];
-
-    if (log.isDayOff) {
-      toast.info(`${log.day} is marked as Not Work. Switch to Work to add a signature.`);
-      return;
-    }
-
-    if (log.signatureUrl) {
-      toast.info(`Already signed for ${log.day}. Double-click if you wish to remove signature.`, { id: 'dbl-click-hint' });
-      return;
-    }
-
-    if (savedSignature) {
-      setDtrs(prev => prev.map(d => {
-        if (d.id === selectedDtrId) {
-          const updatedLogs = [...d.logs];
-          updatedLogs[index] = { ...updatedLogs[index], signatureUrl: savedSignature };
-          return { ...d, logs: updatedLogs, signatureDataUrl: savedSignature };
-        }
-        return d;
-      }));
-      toast.success(`Applied signature to ${log.day} (${log.date})!`);
-    } else {
-      setTargetLogIndex(index);
-      setShowSignatureModal(true);
-      setHasDrawn(false);
-    }
-  };
-
-  // Double click handler: Triggers confirmation modal to remove signature
-  const handleCellDoubleClick = (index: number) => {
-    const log = selectedDtr.logs[index];
-    if (log.signatureUrl) {
-      setRemoveSignatureTargetIndex(index);
-    }
-  };
-
-  // Confirmed removal handler
-  const handleConfirmRemoveSignature = () => {
-    if (removeSignatureTargetIndex === null) return;
-    const targetLog = selectedDtr.logs[removeSignatureTargetIndex];
-
-    setDtrs(prev => prev.map(d => {
-      if (d.id === selectedDtrId) {
-        const updatedLogs = [...d.logs];
-        updatedLogs[removeSignatureTargetIndex] = { 
-          ...updatedLogs[removeSignatureTargetIndex], 
-          signatureUrl: undefined 
-        };
-        return { ...d, logs: updatedLogs };
-      }
-      return d;
-    }));
-
-    toast.success(`Removed signature from ${targetLog.day} (${targetLog.date}).`);
-    setRemoveSignatureTargetIndex(null);
-  };
-
-  // Save/Update Master Signature
-  const handleConfirmSignature = () => {
-    const canvas = canvasRef.current;
-    if (!canvas || !hasDrawn) {
-      toast.error('Please draw a signature before saving.');
-      return;
-    }
-    const signatureUrl = canvas.toDataURL('image/png');
-
-    try {
-      localStorage.setItem('supervisor_saved_signature', signatureUrl);
-    } catch (err) {
-      console.warn('Could not save to localStorage:', err);
-    }
-    setSavedSignature(signatureUrl);
-
-    if (targetLogIndex !== null) {
-      setDtrs(prev => prev.map(d => {
-        if (d.id === selectedDtrId) {
-          const updatedLogs = [...d.logs];
-          updatedLogs[targetLogIndex] = { ...updatedLogs[targetLogIndex], signatureUrl };
-          return { ...d, logs: updatedLogs, signatureDataUrl: signatureUrl };
-        }
-        return d;
-      }));
-      toast.success(`Signature saved & applied to ${selectedDtr.logs[targetLogIndex].day}!`);
-    } else {
-      toast.success(`Supervisor signature saved! Click "Apply Signature" on any day row.`);
-    }
-
-    setShowSignatureModal(false);
-    setTargetLogIndex(null);
-    clearCanvas();
-  };
-
-  const handleOpenSignatureModal = (logIdx?: number) => {
-    setTargetLogIndex(logIdx !== undefined ? logIdx : null);
-    setShowSignatureModal(true);
-    setHasDrawn(false);
-  };
-
   const handleApprove = (id: string) => {
-    const activeSignature = savedSignature || selectedDtr.signatureDataUrl;
-    if (!activeSignature) {
-      toast.info('Please draw your signature once to save before approving.');
-      handleOpenSignatureModal();
-      return;
-    }
-
     setDtrs(prev => prev.map(d => {
       if (d.id === id) {
-        return { ...d, status: 'Approved', signatureDataUrl: activeSignature };
+        return { ...d, status: 'Approved' };
       }
       return d;
     }));
-    toast.success(`DTR for ${selectedDtr.studentName} (Week ${selectedDtr.weekNumber}) approved successfully!`);
+    toast.success(`DTR for ${selectedDtr.studentName} (Week ${selectedDtr.weekNumber}) has been approved successfully!`);
   };
 
   const handleRejectSubmit = () => {
     if (!rejectNotes.trim()) {
-      toast.error('Please enter revision remarks before returning the DTR.');
+      toast.error("Please enter a reason for rejecting the DTR.");
       return;
     }
-
+    const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
     setDtrs(prev => prev.map(d => {
       if (d.id === selectedDtrId) {
-        const newRemarks: RemarkEntry[] = [
-          ...(d.remarksHistory || []),
-          { date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }), text: rejectNotes, role: 'Supervisor' }
-        ];
-        return { ...d, status: 'Returned', remarks: rejectNotes, remarksHistory: newRemarks };
+        const history = d.remarksHistory || [];
+        return { 
+          ...d, 
+          status: 'Returned', 
+          remarks: rejectNotes,
+          remarksHistory: [...history, { date: today, text: rejectNotes, role: 'Supervisor' }]
+        };
       }
       return d;
     }));
-
-    toast.success(`DTR returned to ${selectedDtr.studentName} for revision.`);
+    toast.success(`DTR for ${selectedDtr.studentName} (Week ${selectedDtr.weekNumber}) has been sent back for revisions.`);
+    setShowRejectModal(false);
     setRejectNotes('');
   };
 
-  const handleDayStatusToggle = (index: number) => {
-    setDtrs(prev => prev.map(d => {
-      if (d.id === selectedDtrId) {
-        const updatedLogs = [...d.logs];
-        const current = updatedLogs[index];
-        const isNowDayOff = !current.isDayOff;
-
-        updatedLogs[index] = {
-          ...current,
-          isDayOff: isNowDayOff,
-          timeIn: isNowDayOff ? 'OFF' : '08:00 AM',
-          timeOut: isNowDayOff ? 'OFF' : '05:00 PM',
-          hours: isNowDayOff ? 0 : computeHours('08:00 AM', '05:00 PM'),
-          activities: isNowDayOff ? 'Weekend Day Off' : current.activities === 'Weekend Day Off' ? 'Daily tasks logged.' : current.activities,
-          signatureUrl: isNowDayOff ? undefined : current.signatureUrl
-        };
-
-        const newTotal = updatedLogs.reduce((acc, curr) => acc + curr.hours, 0);
-        return { ...d, logs: updatedLogs, totalHours: newTotal };
-      }
-      return d;
-    }));
-  };
-
-  const handleTimeChange = (index: number, field: 'timeIn' | 'timeOut', val: string) => {
-    setDtrs(prev => prev.map(d => {
-      if (d.id === selectedDtrId) {
-        const updatedLogs = [...d.logs];
-        const current = updatedLogs[index];
-        const updatedLog = { ...current, [field]: val };
-        
-        const newHours = computeHours(updatedLog.timeIn, updatedLog.timeOut);
-        updatedLog.hours = newHours;
-        updatedLogs[index] = updatedLog;
-
-        const newTotal = updatedLogs.reduce((acc, curr) => acc + curr.hours, 0);
-        return { ...d, logs: updatedLogs, totalHours: newTotal };
-      }
-      return d;
-    }));
-  };
-
   return (
-    <div className="space-y-6 pb-12">
-      {/* Overview Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            {viewMode === 'review' && (
-              <button
-                onClick={() => setViewMode('table')}
-                className="p-1.5 rounded-lg border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-                title="Back to Submissions Table"
-              >
-                <ArrowLeft size={16} />
-              </button>
-            )}
-            <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 tracking-tight flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-primary" />
-              Daily Time Records (DTR) Approval
-            </h1>
-          </div>
-          <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mt-1">
-            {viewMode === 'table' 
-              ? 'Select an intern from the table below to verify their submitted Daily Time Records.'
-              : `Reviewing Daily Time Record logs for ${selectedDtr.studentName} (Week ${selectedDtr.weekNumber}).`}
-          </p>
-        </div>
-
-        {/* View Mode Toggle / Filters */}
-        <div className="flex items-center gap-2">
-          {viewMode === 'review' ? (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setViewMode('table')}
-              icon={<ArrowLeft size={14} />}
-              className="text-xs font-bold"
-            >
-              Back to Student List
-            </Button>
-          ) : (
-            <div className="flex items-center gap-1.5 bg-zinc-100 dark:bg-zinc-800 p-1 rounded-xl shrink-0">
-              {(['all', 'pending', 'approved'] as const).map(tab => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={cn(
-                    "px-3 py-1.5 rounded-lg text-xs font-bold capitalize transition-all cursor-pointer",
-                    activeTab === tab
-                      ? "bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 shadow-xs"
-                      : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
-                  )}
-                >
-                  {tab === 'all' ? 'All Submissions' : tab === 'pending' ? 'Pending Approval' : 'Approved'}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+    <div className="space-y-8 pb-12">
+      <div className="flex flex-col">
+        <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">Daily Time Records (DTR) Approval</h1>
+        <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">Review and verify weekly rendered hours submitted by your interns.</p>
       </div>
 
-      {/* VIEW 1: STUDENT SUBMISSIONS TABLE OVERVIEW */}
-      {viewMode === 'table' && (
-        <div className="space-y-6">
-          {/* Summary Stat Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <StatCard label="Total DTR Submissions" value={totalSubmissions.toString()} icon={<FileText size={18} />} />
-            <StatCard label="Pending Verification" value={pendingCount.toString()} icon={<Clock size={18} />} trend={pendingCount > 0 ? "Action required" : undefined} />
-            <StatCard label="Approved DTRs" value={approvedCount.toString()} icon={<CheckCircle2 size={18} />} />
-          </div>
-
-          {/* Search & Submissions Table */}
-          <div className="bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl overflow-hidden shadow-xs">
-            <div className="p-4 border-b border-zinc-100 dark:border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="relative w-full max-w-md">
-                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 dark:text-zinc-500" />
-                <input
-                  type="text"
-                  placeholder="Search student name, ID, or course..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg text-xs outline-none focus:border-primary transition-colors text-zinc-800 dark:text-zinc-200 font-normal"
-                />
-              </div>
-
-              <div className="text-xs font-semibold text-zinc-500">
-                Showing <span className="font-bold text-zinc-900 dark:text-zinc-100">{filteredDtrs.length}</span> record(s)
-              </div>
-            </div>
-
-            {/* Table */}
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs">
-                <thead>
-                  <tr className="border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/80 dark:bg-zinc-900/60 text-[10px] uppercase font-bold tracking-wider text-zinc-400 dark:text-zinc-500">
-                    <th className="py-3 px-6">Student Name</th>
-                    <th className="py-3 px-4">Student ID / Course</th>
-                    <th className="py-3 px-4">Week Period</th>
-                    <th className="py-3 px-4">Rendered Hours</th>
-                    <th className="py-3 px-4">Date Submitted</th>
-                    <th className="py-3 px-4">Status</th>
-                    <th className="py-3 px-6 text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800/60">
-                  {filteredDtrs.map(d => (
-                    <tr
-                      key={d.id}
-                      className="hover:bg-zinc-50/50 dark:hover:bg-zinc-900/30 transition-colors"
-                    >
-                      <td className="py-3.5 px-6">
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center font-bold text-xs text-zinc-700 dark:text-zinc-300 shrink-0">
-                            {d.studentName.charAt(0)}
-                          </div>
-                          <div className="min-w-0">
-                            <p className="font-bold text-xs text-zinc-900 dark:text-zinc-100 truncate">{d.studentName}</p>
-                            <p className="text-[10px] text-zinc-400 font-normal mt-0.5 truncate">{d.course} · Week {d.weekNumber} DTR</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-3.5 px-4 text-xs text-zinc-600 dark:text-zinc-400 font-medium">
-                        <div>{d.studentId}</div>
-                        <div className="text-[10px] text-zinc-400 font-normal">{d.course}</div>
-                      </td>
-                      <td className="py-3.5 px-4 text-xs font-semibold text-zinc-800 dark:text-zinc-200">
-                        <div>Week {d.weekNumber}</div>
-                        <div className="text-[10px] text-zinc-400 font-normal">{d.dateRange}</div>
-                      </td>
-                      <td className="py-3.5 px-4 text-xs font-semibold text-zinc-800 dark:text-zinc-200">
-                        {d.totalHours} hrs
-                      </td>
-                      <td className="py-3.5 px-5 text-xs text-zinc-500 font-normal">
-                        {d.submittedDate}
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <Badge variant={d.status === 'Approved' ? 'success' : d.status === 'Returned' ? 'error' : 'warning'}>
-                          {d.status}
-                        </Badge>
-                      </td>
-                      <td className="py-3.5 px-6 text-right">
-                        <Button
-                          variant="primary"
-                          size="sm"
-                          onClick={() => handleOpenReview(d.id)}
-                          icon={<Eye size={13} />}
-                          className="text-xs px-3 py-1.5 h-8 font-bold"
-                        >
-                          Verify DTR
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-
-                  {filteredDtrs.length === 0 && (
-                    <tr>
-                      <td colSpan={7} className="py-12 text-center text-zinc-400 font-medium">
-                        No DTR submissions found matching your search.
-                      </td>
-                    </tr>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Left Side: Submissions list */}
+        <div className="space-y-4">
+          <Card title="Submitted DTR Weeks">
+            <div className="space-y-2">
+              {dtrs.map(dtr => (
+                <div 
+                  key={dtr.id}
+                  onClick={() => setSelectedDtrId(dtr.id)}
+                  className={cn(
+                    "p-4 rounded-xl border transition-all cursor-pointer flex flex-col gap-2 relative",
+                    selectedDtrId === dtr.id
+                      ? "bg-zinc-900 border-zinc-900 dark:bg-white dark:border-white text-white dark:text-zinc-950 shadow-md"
+                      : "bg-white border-zinc-200 dark:bg-zinc-950 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900"
                   )}
-                </tbody>
-              </table>
+                >
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h4 className={cn("text-sm font-bold tracking-tight", selectedDtrId === dtr.id ? "text-white dark:text-zinc-950" : "text-zinc-900 dark:text-zinc-100")}>
+                        {dtr.studentName}
+                      </h4>
+                      <p className={cn("text-[10px] font-bold uppercase tracking-wider mt-0.5", selectedDtrId === dtr.id ? "text-zinc-400 dark:text-zinc-500" : "text-zinc-400 dark:text-zinc-500")}>
+                        Week {dtr.weekNumber}
+                      </p>
+                    </div>
+                    <Badge variant={dtr.status === 'Approved' ? 'success' : dtr.status === 'Returned' ? 'error' : 'warning'}>
+                      {dtr.status}
+                    </Badge>
+                  </div>
+                  <div className="flex justify-between items-end mt-2 pt-2 border-t border-zinc-100/10 dark:border-zinc-800/30">
+                    <span className="text-[10px] uppercase font-bold tracking-wider opacity-60">Total Rendered</span>
+                    <span className="text-sm font-black">{dtr.totalHours} hrs</span>
+                  </div>
+                </div>
+              ))}
             </div>
-          </div>
+          </Card>
         </div>
-      )}
 
-      {/* VIEW 2: DETAILED DTR VERIFICATION WORKSPACE */}
-      {viewMode === 'review' && selectedDtr && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* Left Side: Log breakdown (8 cols) */}
-          <div className="lg:col-span-8 space-y-6">
+        {/* Right Side: Log breakdown & action */}
+        <div className="lg:col-span-2 space-y-6">
+          {selectedDtr && (
             <Card 
-              title={`${selectedDtr.studentName} - Week ${selectedDtr.weekNumber} Logs`}
+              title={`Week ${selectedDtr.weekNumber} Time Logs`}
               subtitle={selectedDtr.dateRange}
               action={
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Status:</span>
                   <Badge variant={selectedDtr.status === 'Approved' ? 'success' : selectedDtr.status === 'Returned' ? 'error' : 'warning'}>
                     {selectedDtr.status}
                   </Badge>
@@ -624,285 +203,59 @@ export const DTRApproval: React.FC = () => {
               }
             >
               <div className="space-y-6">
-                {/* Saved Signature Active Banner */}
-                {savedSignature ? (
-                  <div className="p-3.5 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 rounded-xl flex items-center justify-between gap-4 transition-all">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-9 h-9 rounded-lg bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 p-1 flex items-center justify-center shrink-0 shadow-xs">
-                        <img src={savedSignature} alt="Saved Signature Preview" className="h-6 max-w-full object-contain dark:invert" />
-                      </div>
-                      <div className="space-y-0.5 truncate">
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-xs text-zinc-900 dark:text-zinc-100">Saved Signature Active</span>
-                          <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-900/40 flex items-center gap-1">
-                            <Sparkles size={10} /> 1-Click Active
-                          </span>
-                        </div>
-                        <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
-                          Click "Apply Signature" on any work row to sign. Double-click an applied signature to remove it.
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 shrink-0">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="text-xs h-8 px-3 font-semibold text-zinc-600 dark:text-zinc-300"
-                        icon={<RotateCcw size={12} />}
-                        onClick={() => handleOpenSignatureModal()}
-                      >
-                        Redraw Signature
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="p-3.5 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 rounded-xl flex items-center justify-between gap-4 transition-all">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-8 h-8 rounded-lg bg-zinc-900 dark:bg-white text-white dark:text-zinc-950 flex items-center justify-center shrink-0 font-bold">
-                        <PenTool size={14} />
-                      </div>
-                      <div>
-                        <p className="font-bold text-xs text-zinc-900 dark:text-zinc-100">No Signature Created Yet</p>
-                        <p className="text-[11px] text-zinc-500 dark:text-zinc-400">Draw your signature once to save and use for 1-click day verification.</p>
-                      </div>
-                    </div>
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      className="text-xs h-8 px-3 font-bold shrink-0"
-                      onClick={() => handleOpenSignatureModal()}
-                    >
-                      Create Saved Signature
-                    </Button>
-                  </div>
-                )}
-
-                {/* Table of Daily Logs (7 Days: Mon-Sun with Work / Not Work Toggle) */}
-                <div className="overflow-x-auto rounded-xl border border-zinc-200/80 dark:border-zinc-800/80">
+                {/* Table of Daily Logs */}
+                <div className="overflow-x-auto -mx-6">
                   <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr className="bg-zinc-50 dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80">
-                        <th className="px-3 py-2.5 text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wide">Day / Date</th>
-                        <th className="px-2 py-2.5 text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wide text-center">Day Status</th>
-                        <th className="px-2 py-2.5 text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wide text-center">
-                          <div className="inline-flex items-center gap-1">
-                            <span>Time In</span>
-                            <Edit3 size={10} className="text-zinc-400" />
-                          </div>
-                        </th>
-                        <th className="px-2 py-2.5 text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wide text-center">
-                          <div className="inline-flex items-center gap-1">
-                            <span>Time Out</span>
-                            <Edit3 size={10} className="text-zinc-400" />
-                          </div>
-                        </th>
-                        <th className="px-2 py-2.5 text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wide text-center">Hours</th>
-                        <th className="px-3 py-2.5 text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wide">Tasks / Deliverables</th>
-                        <th className="px-3 py-2.5 text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wide text-center">Supervisor Signature</th>
+                      <tr className="bg-zinc-50 dark:bg-zinc-900 border-y border-zinc-100 dark:border-zinc-800/50">
+                        <th className="px-6 py-2.5 text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wide">Day / Date</th>
+                        <th className="px-6 py-2.5 text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wide text-center">Time In</th>
+                        <th className="px-6 py-2.5 text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wide text-center">Time Out</th>
+                        <th className="px-6 py-2.5 text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wide text-center">Hours</th>
+                        <th className="px-6 py-2.5 text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wide">Activities / Output</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800/50">
-                      {selectedDtr.logs.map((log, idx) => (
-                        <tr 
-                          key={idx} 
-                          className={cn(
-                            "transition-colors",
-                            log.isDayOff ? "bg-zinc-50/50 dark:bg-zinc-900/30 opacity-75" : "hover:bg-zinc-50/50 dark:hover:bg-zinc-900/30"
-                          )}
-                        >
-                          <td className="px-3 py-3 whitespace-nowrap">
-                            <div className="text-xs font-bold text-zinc-900 dark:text-zinc-100">{log.day}</div>
-                            <div className="text-[10px] text-zinc-400">{log.date}</div>
+                    <tbody className="divide-y divide-zinc-50 dark:divide-zinc-800/30">
+                      {selectedDtr.logs.map((log, index) => (
+                        <tr key={index} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30 transition-colors">
+                          <td className="px-6 py-3.5">
+                            <div className="flex flex-col">
+                              <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100">{log.day}</span>
+                              <span className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 mt-0.5">{log.date}</span>
+                            </div>
                           </td>
-
-                          {/* Work / Not Work Toggle Button */}
-                          <td className="px-2 py-3 text-center whitespace-nowrap">
-                            <button
-                              type="button"
-                              onClick={() => handleDayStatusToggle(idx)}
-                              title="Click to toggle Work / Not Work status"
-                              className={cn(
-                                "px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer border inline-flex items-center gap-1 select-none",
-                                !log.isDayOff
-                                  ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 border-zinc-900 dark:border-white shadow-2xs"
-                                  : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-700"
-                              )}
-                            >
-                              {!log.isDayOff ? (
-                                <>
-                                  <span className="w-1.5 h-1.5 rounded-full bg-white dark:bg-zinc-950" />
-                                  <span>Work</span>
-                                </>
-                              ) : (
-                                <>
-                                  <Coffee size={11} className="text-zinc-400" />
-                                  <span>Not Work</span>
-                                </>
-                              )}
-                            </button>
-                          </td>
-
-                          {/* Editable Time In */}
-                          <td className="px-2 py-3 text-center whitespace-nowrap">
-                            {!log.isDayOff ? (
-                              <input
-                                type="text"
-                                value={log.timeIn}
-                                onChange={(e) => handleTimeChange(idx, 'timeIn', e.target.value)}
-                                className="w-20 text-center px-1.5 py-0.5 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg text-xs font-semibold text-zinc-900 dark:text-zinc-100 outline-none focus:border-primary transition-colors"
-                              />
-                            ) : (
-                              <span className="text-xs text-zinc-400 italic">OFF</span>
-                            )}
-                          </td>
-
-                          {/* Editable Time Out */}
-                          <td className="px-2 py-3 text-center whitespace-nowrap">
-                            {!log.isDayOff ? (
-                              <input
-                                type="text"
-                                value={log.timeOut}
-                                onChange={(e) => handleTimeChange(idx, 'timeOut', e.target.value)}
-                                className="w-20 text-center px-1.5 py-0.5 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg text-xs font-semibold text-zinc-900 dark:text-zinc-100 outline-none focus:border-primary transition-colors"
-                              />
-                            ) : (
-                              <span className="text-xs text-zinc-400 italic">OFF</span>
-                            )}
-                          </td>
-
-                          {/* Computed Hours */}
-                          <td className="px-2 py-3 text-center whitespace-nowrap font-bold text-xs text-zinc-900 dark:text-zinc-100">
-                            {log.hours} hrs
-                          </td>
-
-                          {/* Activities Description */}
-                          <td className="px-3 py-3 text-xs text-zinc-600 dark:text-zinc-400 leading-snug max-w-[180px]">
-                            <p className="line-clamp-2" title={log.activities}>{log.activities}</p>
-                          </td>
-
-                          {/* Supervisor Signature Cell (Click to Apply / Double-Click to Remove) */}
-                          <td 
-                            className="px-3 py-3 text-center whitespace-nowrap cursor-pointer select-none"
-                            onClick={() => handleCellClick(idx)}
-                            onDoubleClick={() => handleCellDoubleClick(idx)}
-                            title={log.signatureUrl ? "Double-click to remove signature" : "Click to apply supervisor signature"}
-                          >
-                            {log.signatureUrl ? (
-                              <div className="inline-flex flex-col items-center p-1 px-2 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 rounded-lg shadow-2xs group relative">
-                                <img 
-                                  src={log.signatureUrl} 
-                                  alt="Supervisor Signature" 
-                                  className="h-6 max-w-[80px] object-contain dark:invert" 
-                                />
-                                <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5 mt-0.5">
-                                  <Check size={9} /> Signed
-                                </span>
-                              </div>
-                            ) : log.isDayOff ? (
-                              <span className="text-[10px] text-zinc-400 italic">N/A (Day Off)</span>
-                            ) : (
-                              <button
-                                type="button"
-                                className="px-2 py-1 rounded-lg text-[10px] font-bold bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 transition-colors inline-flex items-center gap-1"
-                              >
-                                <PenTool size={10} /> Click to Apply
-                              </button>
-                            )}
-                          </td>
+                          <td className="px-6 py-3.5 text-center text-xs font-medium text-zinc-700 dark:text-zinc-300">{log.timeIn}</td>
+                          <td className="px-6 py-3.5 text-center text-xs font-medium text-zinc-700 dark:text-zinc-300">{log.timeOut}</td>
+                          <td className="px-6 py-3.5 text-center text-xs font-bold text-zinc-900 dark:text-zinc-100">{log.hours}</td>
+                          <td className="px-6 py-3.5 text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed max-w-[200px] truncate" title={log.activities}>{log.activities}</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
 
-                {/* Footer Total Summary Bar */}
-                <div className="flex items-center justify-between p-4 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-950 rounded-xl">
-                  <div className="flex items-center gap-2">
-                    <Clock size={16} />
-                    <span className="text-xs font-bold uppercase tracking-wider">Weekly Total Hours Rendered:</span>
-                  </div>
-                  <span className="text-lg font-black tracking-tight">{selectedDtr.totalHours} Hours</span>
-                </div>
-              </div>
-            </Card>
-          </div>
-
-          {/* Right Side: Verification Sidebar (4 cols) */}
-          <div className="lg:col-span-4 space-y-6">
-            {/* Student Switcher Card */}
-            <Card title="Student DTR Select">
-              <div className="space-y-2">
-                {dtrs.map(dtr => (
-                  <button
-                    key={dtr.id}
-                    onClick={() => setSelectedDtrId(dtr.id)}
-                    className={cn(
-                      "w-full flex items-center justify-between p-3 rounded-xl border text-left transition-all cursor-pointer",
-                      selectedDtrId === dtr.id
-                        ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 border-zinc-900 dark:border-white shadow-xs"
-                        : "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 border-zinc-200/80 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
-                    )}
-                  >
-                    <div className="space-y-0.5 min-w-0">
-                      <p className="text-xs font-bold truncate">{dtr.studentName}</p>
-                      <p className={cn("text-[10px] truncate", selectedDtrId === dtr.id ? "text-zinc-300 dark:text-zinc-600" : "text-zinc-400")}>
-                        {dtr.course} · Week {dtr.weekNumber}
-                      </p>
+                {/* Show Rejection Remarks if Returned */}
+                {selectedDtr.status === 'Returned' && selectedDtr.remarks && (
+                  <div className="p-4 bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/30 rounded-xl space-y-1.5">
+                    <div className="flex items-center gap-2 text-red-800 dark:text-red-400 text-xs font-bold">
+                      <AlertCircle size={14} />
+                      <span>Returned with Remarks</span>
                     </div>
-                    <Badge variant={dtr.status === 'Approved' ? 'success' : dtr.status === 'Returned' ? 'error' : 'warning'}>
-                      {dtr.status}
-                    </Badge>
-                  </button>
-                ))}
-              </div>
-            </Card>
+                    <p className="text-xs text-red-700 dark:text-red-300 leading-relaxed font-medium italic">
+                      "{selectedDtr.remarks}"
+                    </p>
+                  </div>
+                )}
 
-            {/* Supervisor Remarks Card */}
-            <Card title="Supervisor Verification Remarks">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300">
-                    Return / Revision Remarks (Required for Return)
-                  </label>
-                  <textarea
-                    rows={3}
-                    placeholder="Provide specific feedback if requesting time log corrections..."
-                    value={rejectNotes}
-                    onChange={(e) => setRejectNotes(e.target.value)}
-                    className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-3 text-xs outline-none focus:border-primary transition-colors text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400"
-                  />
-                </div>
-
-                {/* Action Toolbar */}
-                <div className="flex gap-2">
-                  <Button 
-                    variant="outline" 
-                    className="w-1/2 text-red-600 border-red-200 hover:bg-red-50 dark:text-red-400 dark:border-red-950 dark:hover:bg-red-950/20 text-xs h-8 justify-center"
-                    icon={<X size={13} />}
-                    onClick={handleRejectSubmit}
-                  >
-                    Return DTR
-                  </Button>
-                  <Button 
-                    variant="primary"
-                    className="w-1/2 text-xs h-8 justify-center font-bold"
-                    icon={<Check size={13} />}
-                    onClick={() => handleApprove(selectedDtr.id)}
-                  >
-                    Approve DTR
-                  </Button>
-                </div>
-
-                {/* Remarks History */}
-                {selectedDtr?.remarksHistory && selectedDtr.remarksHistory.length > 0 && (
-                  <div className="space-y-1.5 pt-2.5 border-t border-zinc-100 dark:border-zinc-800">
+                {/* Remarks / Comments History */}
+                {selectedDtr.remarksHistory && selectedDtr.remarksHistory.length > 0 && (
+                  <div className="space-y-3 pt-4 border-t border-zinc-100 dark:border-zinc-800">
                     <h4 className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider flex items-center gap-1.5">
-                      <MessageSquare size={11} /> Remarks History
+                      <MessageSquare size={12} /> Remarks History
                     </h4>
-                    <div className="space-y-1.5">
+                    <div className="space-y-2">
                       {selectedDtr.remarksHistory.map((rem, idx) => (
-                        <div key={idx} className="p-2.5 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/40 dark:border-zinc-800/40 rounded-xl space-y-0.5">
+                        <div key={idx} className="p-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/40 dark:border-zinc-800/40 rounded-xl space-y-1">
                           <div className="flex justify-between items-center text-[10px] font-bold text-zinc-400">
                             <span>{rem.role} Comment</span>
                             <span>{rem.date}</span>
@@ -913,127 +266,67 @@ export const DTRApproval: React.FC = () => {
                     </div>
                   </div>
                 )}
-              </div>
-            </Card>
-          </div>
-        </div>
-      )}
 
-      {/* Interactive Signature Canvas Modal */}
-      {showSignatureModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/60 backdrop-blur-xs">
-          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-900 dark:text-zinc-100 font-bold">
-                  <FileSignature size={18} />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">
-                    {savedSignature ? 'Update Saved Signature' : 'Create Saved Supervisor Signature'}
-                  </h3>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-                    Draw your signature once to use for 1-click verification.
-                  </p>
-                </div>
-              </div>
-              <button 
-                onClick={() => { setShowSignatureModal(false); setTargetLogIndex(null); }}
-                className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 p-1 rounded-lg transition-colors cursor-pointer"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            {/* Canvas Box */}
-            <div className="space-y-2">
-              <div className="flex justify-between items-center text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
-                <span>Draw signature on pad below</span>
-                <button
-                  type="button"
-                  onClick={clearCanvas}
-                  className="flex items-center gap-1 text-zinc-500 hover:text-primary transition-colors cursor-pointer"
-                >
-                  <RotateCcw size={10} /> Clear Pad
-                </button>
-              </div>
-
-              <div className="relative bg-zinc-50 dark:bg-zinc-950 border border-dashed border-zinc-300 dark:border-zinc-700 rounded-xl overflow-hidden shadow-inner">
-                <canvas
-                  ref={canvasRef}
-                  width={400}
-                  height={160}
-                  className="w-full h-40 touch-none cursor-crosshair"
-                  onMouseDown={startDrawing}
-                  onMouseMove={draw}
-                  onMouseUp={stopDrawing}
-                  onMouseLeave={stopDrawing}
-                  onTouchStart={startDrawing}
-                  onTouchMove={draw}
-                  onTouchEnd={stopDrawing}
-                />
-                {!hasDrawn && (
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none text-zinc-300 dark:text-zinc-700 text-xs font-semibold italic">
-                    Use mouse or touch to draw signature...
+                {/* Approvals Action Toolbar */}
+                {selectedDtr.status === 'Pending' && (
+                  <div className="flex items-center justify-between pt-4 border-t border-zinc-100 dark:border-zinc-800">
+                    <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">Please audit carefully. Once approved, rendered hours are finalized.</span>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="outline" 
+                        className="text-red-600 border-red-200 hover:bg-red-50 dark:text-red-400 dark:border-red-950 dark:hover:bg-red-950/20"
+                        icon={<X size={14} />}
+                        onClick={() => setShowRejectModal(true)}
+                      >
+                        Return to Intern
+                      </Button>
+                      <Button 
+                        variant="primary"
+                        icon={<Check size={14} />}
+                        onClick={() => handleApprove(selectedDtr.id)}
+                      >
+                        Approve DTR
+                      </Button>
+                    </div>
                   </div>
                 )}
               </div>
-            </div>
-
-            {/* Buttons: Cancel & Confirm */}
-            <div className="flex justify-end gap-2 pt-2 border-t border-zinc-100 dark:border-zinc-800">
-              <Button 
-                variant="outline" 
-                onClick={() => { setShowSignatureModal(false); setTargetLogIndex(null); }}
-              >
-                Cancel
-              </Button>
-              <Button 
-                variant="primary" 
-                onClick={handleConfirmSignature}
-                icon={<Check size={14} />}
-              >
-                Save Signature
-              </Button>
-            </div>
-          </div>
+            </Card>
+          )}
         </div>
-      )}
+      </div>
 
-      {/* Confirmation Modal to Remove Signature on Double-Click */}
-      {removeSignatureTargetIndex !== null && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/60 backdrop-blur-xs">
-          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-4">
+      {/* Reject/Return Modal */}
+      {showRejectModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/50 backdrop-blur-sm">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 flex items-center justify-center font-bold shrink-0">
+              <div className="w-10 h-10 rounded-full bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 flex items-center justify-center">
                 <AlertCircle size={20} />
               </div>
               <div>
-                <h3 className="text-base font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">
-                  Remove Signature?
-                </h3>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 leading-relaxed">
-                  Are you sure you want to remove the supervisor signature for <span className="font-bold text-zinc-800 dark:text-zinc-200">{selectedDtr.logs[removeSignatureTargetIndex]?.day}</span> ({selectedDtr.logs[removeSignatureTargetIndex]?.date})?
-                </p>
+                <h3 className="text-base font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">Return DTR for Revision</h3>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">Maria Santos · Week {selectedDtr?.weekNumber}</p>
               </div>
             </div>
-
-            <div className="flex justify-end gap-2 pt-2 border-t border-zinc-100 dark:border-zinc-800">
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => setRemoveSignatureTargetIndex(null)}
-              >
-                Cancel
-              </Button>
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wide">Reason / Feedback</label>
+              <textarea 
+                rows={4}
+                className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-3 text-xs outline-none focus:border-zinc-400 dark:focus:border-zinc-600 transition-colors text-zinc-700 dark:text-zinc-300 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 resize-none font-medium"
+                placeholder="Explain what needs to be fixed (e.g., incorrect logged hours, missing output descriptions)..."
+                value={rejectNotes}
+                onChange={e => setRejectNotes(e.target.value)}
+              />
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="secondary" onClick={() => { setShowRejectModal(false); setRejectNotes(''); }}>Cancel</Button>
               <Button 
                 variant="primary" 
-                size="sm"
-                className="bg-red-600 hover:bg-red-700 text-white border-none font-bold"
-                onClick={handleConfirmRemoveSignature}
-                icon={<Trash2 size={13} />}
+                className="bg-red-600 hover:bg-red-700 text-white border-none"
+                onClick={handleRejectSubmit}
               >
-                Remove Signature
+                Send Feedback
               </Button>
             </div>
           </div>
