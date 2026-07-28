@@ -187,7 +187,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
           accentGradient: 'from-zinc-900 via-zinc-700 to-zinc-900 dark:from-white dark:via-zinc-300 dark:to-white',
           pillBg: 'bg-zinc-100 dark:bg-zinc-800 border-2 border-zinc-900 dark:border-zinc-100 text-zinc-900 dark:text-white',
           buttonPrimary: 'bg-zinc-900 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-200 text-white dark:text-zinc-900 border-2 border-zinc-900 dark:border-white',
-          heroBackground: 'bg-[linear-gradient(to_bottom,rgba(228,228,231,0.7)_1px,transparent_1px),linear-gradient(to_right,rgba(228,228,231,0.7)_1px,transparent_1px)] dark:bg-[linear-gradient(to_bottom,rgba(255,255,255,0.12)_1px,transparent_1px),linear-gradient(to_right,rgba(255,255,255,0.12)_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_75%_65%_at_50%_45%,#000_25%,transparent_90%)]'
+          heroBackground: 'bg-[linear-gradient(to_bottom,rgba(228,228,231,0.4)_1px,transparent_1px),linear-gradient(to_right,rgba(228,228,231,0.4)_1px,transparent_1px)] dark:bg-[linear-gradient(to_bottom,rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(to_right,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_70%_60%_at_50%_45%,#000_20%,transparent_90%)]'
         };
     }
   };
@@ -257,7 +257,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
       {/* FIRST VIEW OF THE USER ONLY (100% VIEWPORT HEIGHT & WIDTH POV) */}
       <section className={cn("relative w-full h-[calc(100vh-4rem)] flex flex-col justify-between items-center px-4 sm:px-6 lg:px-8 py-6 sm:py-8 text-center transition-all duration-500 border-b border-zinc-200 dark:border-zinc-800 overflow-hidden", currentTheme.heroBackground)}>
         {/* Radial Glow & Shadowy Vignette Overlay */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,transparent_35%,rgba(9,9,11,0.85)_95%)] pointer-events-none" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,transparent_20%,rgba(9,9,11,0.9)_85%)] pointer-events-none" />
         
         <div className="max-w-5xl mx-auto w-full h-full flex flex-col justify-between items-center relative z-10">
           
