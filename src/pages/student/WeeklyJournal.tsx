@@ -113,11 +113,18 @@ export const WeeklyJournal: React.FC = () => {
             </div>
           </Card>
 
-          <Card className="bg-zinc-50 dark:bg-zinc-800/50 border-zinc-100 dark:border-zinc-800" title="Adviser Note">
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
+          {/* Adviser Note Alert Box */}
+          <div className="p-4 bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800 rounded-xl space-y-2 shadow-xs">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-lg bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-950 flex items-center justify-center font-bold shrink-0">
+                <MessageSquare size={12} />
+              </div>
+              <h4 className="text-xs font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">Adviser Note</h4>
+            </div>
+            <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed pl-8">
               Journals are locked until you reach the required hour milestones for each entry period.
             </p>
-          </Card>
+          </div>
         </div>
       </div>
     </div>

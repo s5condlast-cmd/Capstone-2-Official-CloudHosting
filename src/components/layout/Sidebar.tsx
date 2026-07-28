@@ -136,8 +136,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
             group: 'Review Hub',
             items: [
               { to: '/adviser/review', icon: SearchIcon, label: 'Document Review', badge: 4 },
-              { to: '/adviser/evaluations', icon: CheckCircleIcon, label: 'Company Evaluations' },
-              { to: '/adviser/comparison', icon: ClipboardListIcon, label: 'Rating Comparison' },
             ],
           },
           {
@@ -191,14 +189,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
             group: 'Reviews',
             items: [
               { to: '/supervisor/dtr', icon: CalendarIcon, label: 'DTR Approval', badge: 5 },
-              { to: '/supervisor/evaluate', icon: ClipboardListIcon, label: 'Performance Appraisal', badge: 1 },
+              { to: '/supervisor/journal', icon: BookOpenIcon, label: 'Weekly Journal Review', badge: 2 },
             ],
           },
-          {
-            group: 'Completion',
-            items: [{ to: '/supervisor/completion', icon: AwardIcon, label: 'Intern Clearance' }],
-          },
         ];
+    }
+  };
+
+  const getDashboardRoute = () => {
+    switch (role) {
+      case 'admin': return '/admin';
+      case 'supervisor': return '/supervisor';
+      case 'adviser': return '/adviser';
+      case 'student': default: return '/student';
     }
   };
 
@@ -215,19 +218,53 @@ export const Sidebar: React.FC<SidebarProps> = ({
       transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
       onMouseLeave={() => setActiveFlyout(null)}
       className={cn(
-        'bg-zinc-100 dark:bg-zinc-900 border-r-0 flex flex-col h-screen z-40 shrink-0 overflow-hidden transition-[transform] duration-300 select-none rounded-none',
+        'bg-zinc-100 dark:bg-zinc-900 border-r-0 flex flex-col h-screen z-40 shrink-0 overflow-hidden transition-[transform] duration-300 select-text rounded-none',
         isDesktop ? 'sticky top-0' : 'fixed top-0 left-0'
       )}
     >
-      {/* ── Header / Logo & Menu Toggle ── */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200/60 dark:border-zinc-800/60 shrink-0 min-h-[64px]">
-        <div className="flex items-center gap-3 overflow-hidden">
+      {/* ── Header ── */}
+      <div className={cn(
+        "h-16 flex items-center border-b border-zinc-200/80 dark:border-zinc-800/80 shrink-0 transition-all",
+        isExpanded ? "px-3.5 justify-between" : "justify-center"
+      )}>
+        {isExpanded ? (
+          /* OPEN SIDEBAR: Logo & Title clickable to Dashboard; Arrow button collapses */
+          <div className="flex items-center justify-between w-full min-w-0 gap-2">
+            <NavLink 
+              to={getDashboardRoute()} 
+              className="flex items-center gap-2.5 min-w-0 group cursor-pointer py-1"
+              title="Go to Dashboard"
+            >
+              <div className="w-9 h-9 rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-950 flex items-center justify-center shrink-0 shadow-xs font-bold transition-transform group-hover:scale-105">
+                <GraduationCapIcon size={20} />
+              </div>
+              <div className="flex flex-col leading-tight overflow-hidden whitespace-nowrap min-w-0">
+                <span className="text-xs font-bold tracking-tight text-zinc-900 dark:text-zinc-100 group-hover:text-primary transition-colors truncate">
+                  Web Practicum
+                </span>
+                <span className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 tracking-wide truncate">
+                  STI Marikina
+                </span>
+              </div>
+            </NavLink>
+
+            {/* Collapse Arrow Button */}
+            <button
+              onClick={() => setIsPinnedCollapsed(true)}
+              title="Collapse Sidebar"
+              className="w-7 h-7 rounded-lg border border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center justify-center transition-all cursor-pointer shrink-0"
+            >
+              <ChevronRightIcon size={15} className="rotate-180 transition-transform" />
+            </button>
+          </div>
+        ) : (
+          /* COLLAPSED SIDEBAR: Hovering/clicking logo expands sidebar */
           <button
-            onClick={() => setIsPinnedCollapsed(!isPinnedCollapsed)}
+            onClick={() => setIsPinnedCollapsed(false)}
             onMouseEnter={() => setIsLogoHovered(true)}
             onMouseLeave={() => setIsLogoHovered(false)}
-            title={isPinnedCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
-            className="w-10 h-10 rounded-2xl bg-primary text-primary-fg flex items-center justify-center shrink-0 shadow-xs font-bold transition-all relative overflow-hidden group cursor-pointer hover:opacity-90"
+            title="Expand Sidebar"
+            className="w-10 h-10 rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-950 flex items-center justify-center shrink-0 shadow-xs font-bold transition-all relative overflow-hidden group cursor-pointer hover:scale-105"
           >
             <AnimatePresence mode="wait" initial={false}>
               {isLogoHovered ? (
@@ -238,7 +275,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   exit={{ opacity: 0, scale: 0.8, rotate: 90 }}
                   transition={{ duration: 0.15 }}
                 >
-                  <MenuIcon size={20} />
+                  <MenuIcon size={18} />
                 </motion.div>
               ) : (
                 <motion.div
@@ -248,31 +285,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   exit={{ opacity: 0, scale: 0.8, rotate: -90 }}
                   transition={{ duration: 0.15 }}
                 >
-                  <GraduationCapIcon size={22} />
+                  <GraduationCapIcon size={20} />
                 </motion.div>
               )}
             </AnimatePresence>
           </button>
-
-          <AnimatePresence initial={false}>
-            {isExpanded && (
-              <motion.div
-                initial={{ opacity: 0, x: -8 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -8 }}
-                transition={{ duration: 0.15 }}
-                className="flex flex-col leading-tight overflow-hidden whitespace-nowrap"
-              >
-                <span className="text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-100 truncate">
-                  Web Practicum
-                </span>
-                <span className="text-[11px] font-medium text-zinc-400 dark:text-zinc-500 tracking-wide truncate">
-                  STI Marikina
-                </span>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+        )}
       </div>
       {/* ── Body (Search, Navigation, Profile) ── */}
       <div className="flex-1 flex flex-col min-h-0 border-r border-zinc-200/80 dark:border-zinc-800/80">

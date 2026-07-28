@@ -15,7 +15,7 @@ export const EmbedPdfWorkspace: React.FC<EmbedPdfWorkspaceProps> = ({
   docTitle,
 }) => {
   return (
-    <div className="flex flex-col h-full w-full bg-white dark:bg-zinc-950 overflow-hidden relative">
+    <div className="flex flex-col h-full w-full min-h-0 bg-zinc-900 dark:bg-zinc-950 overflow-hidden relative">
       {pdfUrl ? (
         <ErrorBoundary fallback={
           <div className="flex-1 flex flex-col items-center justify-center text-zinc-400 bg-[#F3F4F6] dark:bg-zinc-900 h-full w-full p-6 text-center space-y-4">
