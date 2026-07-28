@@ -1000,25 +1000,26 @@ export const DTRApproval: React.FC = () => {
       {/* Confirmation Modal to Remove Signature on Double-Click */}
       {removeSignatureTargetIndex !== null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/60 backdrop-blur-xs">
-          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 flex items-center justify-center font-bold shrink-0">
-                <AlertCircle size={20} />
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl max-w-sm w-full p-5 shadow-2xl space-y-4">
+            <div className="flex items-start gap-3">
+              <div className="w-9 h-9 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 flex items-center justify-center font-bold shrink-0 mt-0.5 border border-zinc-200 dark:border-zinc-700">
+                <Trash2 size={16} />
               </div>
-              <div>
-                <h3 className="text-base font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">
+              <div className="space-y-1">
+                <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">
                   Remove Signature?
                 </h3>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 leading-relaxed">
-                  Are you sure you want to remove the supervisor signature for <span className="font-bold text-zinc-800 dark:text-zinc-200">{selectedDtr.logs[removeSignatureTargetIndex]?.day}</span> ({selectedDtr.logs[removeSignatureTargetIndex]?.date})?
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
+                  Are you sure you want to remove the supervisor signature for <span className="font-bold text-zinc-900 dark:text-zinc-100">{selectedDtr.logs[removeSignatureTargetIndex]?.day}</span> ({selectedDtr.logs[removeSignatureTargetIndex]?.date})?
                 </p>
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-zinc-100 dark:border-zinc-800">
               <Button 
                 variant="outline" 
                 size="sm"
+                className="text-xs font-semibold h-8 px-3 text-zinc-600 dark:text-zinc-400"
                 onClick={() => setRemoveSignatureTargetIndex(null)}
               >
                 Cancel
@@ -1026,9 +1027,9 @@ export const DTRApproval: React.FC = () => {
               <Button 
                 variant="primary" 
                 size="sm"
-                className="bg-red-600 hover:bg-red-700 text-white border-none font-bold"
+                className="text-xs h-8 px-3 font-bold bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 border-none shadow-xs hover:opacity-90"
                 onClick={handleConfirmRemoveSignature}
-                icon={<Trash2 size={13} />}
+                icon={<Trash2 size={12} />}
               >
                 Remove Signature
               </Button>
