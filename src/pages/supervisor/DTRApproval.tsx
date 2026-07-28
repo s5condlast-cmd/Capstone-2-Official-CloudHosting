@@ -779,7 +779,7 @@ export const DTRApproval: React.FC = () => {
                             {log.hours}
                           </td>
 
-                          {/* 6. Supervisor Signature (Right Sized w-28 h-8) */}
+                          {/* 6. Supervisor Signature (Right Sized w-32 h-9, Crisp & Visible) */}
                           <td 
                             className="px-3.5 py-2.5 text-center whitespace-nowrap cursor-pointer select-none"
                             onClick={() => handleCellClick(idx)}
@@ -788,30 +788,30 @@ export const DTRApproval: React.FC = () => {
                           >
                             <div className="flex justify-center items-center">
                               {log.signatureUrl ? (
-                                <div className="w-28 h-8 inline-flex flex-col items-center justify-center p-0.5 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 rounded-lg shadow-2xs group relative">
+                                <div className="w-32 h-9 inline-flex flex-col items-center justify-center p-0.5 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 rounded-lg shadow-2xs group relative">
                                   <img 
                                     src={log.signatureUrl} 
                                     alt="Supervisor Signature" 
-                                    className="h-4 max-w-[80px] object-contain dark:invert" 
+                                    className="h-4 max-w-[85px] object-contain dark:invert" 
                                   />
-                                  <span className="text-[8px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5 leading-none">
+                                  <span className="text-[8px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5 leading-none mt-0.5">
                                     <Check size={8} /> Verified {log.day}
                                   </span>
                                 </div>
                               ) : log.isDayOff ? (
-                                <div className="w-28 h-8 flex items-center justify-center">
+                                <div className="w-32 h-9 flex items-center justify-center">
                                   <span className="text-[10px] text-zinc-400 italic">N/A (Not Work)</span>
                                 </div>
                               ) : (
                                 <button
                                   type="button"
-                                  className="w-28 h-8 rounded-lg text-[9px] font-semibold bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 border border-dashed border-zinc-300 dark:border-zinc-700 transition-colors inline-flex flex-col items-center justify-center leading-tight shadow-2xs cursor-pointer"
+                                  className="w-32 h-9 rounded-lg text-[10px] font-semibold bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-zinc-800 dark:text-zinc-200 border border-dashed border-zinc-300 dark:border-zinc-700 transition-colors inline-flex flex-col items-center justify-center leading-tight shadow-2xs cursor-pointer"
                                 >
-                                  <div className="flex items-center gap-0.5 font-bold text-[9px]">
-                                    <Sparkles size={9} className="text-zinc-400" />
+                                  <div className="flex items-center gap-1 font-bold text-[10px] text-zinc-800 dark:text-zinc-200">
+                                    <Sparkles size={10} className="text-zinc-500" />
                                     <span>Click to Apply</span>
                                   </div>
-                                  <span className="text-[8px] text-zinc-400 font-normal">Signature</span>
+                                  <span className="text-[9px] text-zinc-500 dark:text-zinc-400 font-medium">Signature</span>
                                 </button>
                               )}
                             </div>
@@ -825,9 +825,38 @@ export const DTRApproval: React.FC = () => {
             </Card>
           </div>
 
-          {/* Right Side: Verification Remarks Sidebar (4 cols) */}
+          {/* Right Side: Verification Sidebar (4 cols) */}
           <div className="lg:col-span-4 space-y-4">
-            <Card title="Supervisor Verification Remarks" subtitle={`Rendered Total: ${selectedDtr.totalHours} Hours`}>
+            {/* Student Switcher Card (Restored) */}
+            <Card title="Student DTR Select">
+              <div className="space-y-2">
+                {dtrs.map(dtr => (
+                  <button
+                    key={dtr.id}
+                    onClick={() => setSelectedDtrId(dtr.id)}
+                    className={cn(
+                      "w-full flex items-center justify-between p-2.5 rounded-xl border text-left transition-all cursor-pointer",
+                      selectedDtrId === dtr.id
+                        ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 border-zinc-900 dark:border-white shadow-xs"
+                        : "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 border-zinc-200/80 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+                    )}
+                  >
+                    <div className="space-y-0.5 min-w-0">
+                      <p className="text-xs font-bold truncate">{dtr.studentName}</p>
+                      <p className={cn("text-[10px] truncate", selectedDtrId === dtr.id ? "text-zinc-300 dark:text-zinc-600" : "text-zinc-400")}>
+                        {dtr.course} · Week {dtr.weekNumber}
+                      </p>
+                    </div>
+                    <Badge variant={dtr.status === 'Approved' ? 'success' : dtr.status === 'Returned' ? 'error' : 'warning'}>
+                      {dtr.status}
+                    </Badge>
+                  </button>
+                ))}
+              </div>
+            </Card>
+
+            {/* Supervisor Remarks Card */}
+            <Card title="Supervisor Verification Remarks">
               <div className="space-y-3.5">
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-bold text-zinc-700 dark:text-zinc-300">
