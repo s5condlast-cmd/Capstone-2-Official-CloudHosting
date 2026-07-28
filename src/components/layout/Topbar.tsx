@@ -16,7 +16,7 @@ import {
   CheckCheck,
   CheckCircle2
 } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { User as UserType } from '@/src/types';
 import { cn } from '@/src/lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
@@ -33,10 +33,11 @@ interface TopbarProps {
 }
 
 export const Topbar: React.FC<TopbarProps> = ({ title, subtitle, user, onMenuClick, theme, onToggleTheme, onSearchClick, onLogout }) => {
+  const navigate = useNavigate();
   const location = useLocation();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
-  const [activeNotifTab, setActiveNotifTab] = useState<'all' | 'verified' | 'mentions'>('mentions');
+  const [activeNotifTab, setActiveNotifTab] = useState<'all' | 'verified' | 'revisions'>('all');
 
   const profileRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
@@ -186,8 +187,14 @@ export const Topbar: React.FC<TopbarProps> = ({ title, subtitle, user, onMenuCli
           {/* Notifications */}
           <div className="relative" ref={notifRef}>
             <button
-              onClick={() => setIsNotifOpen(!isNotifOpen)}
-              className="relative flex items-center gap-2 p-2 rounded-lg text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-all"
+              onClick={() => {
+                if (!isNotifOpen) {
+                  setActiveNotifTab('all');
+                }
+                setIsNotifOpen(!isNotifOpen);
+              }}
+              className="relative flex items-center gap-2 p-2 rounded-lg text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-all cursor-pointer"
+              title="Notifications"
             >
               <div className="relative">
                 <BellIcon size={18} />
@@ -219,7 +226,7 @@ export const Topbar: React.FC<TopbarProps> = ({ title, subtitle, user, onMenuCli
                     </div>
                   </div>
 
-                  {/* Filter Pills Bar */}
+                  {/* Filter Pills Bar (View all default active) */}
                   <div className="bg-zinc-100 dark:bg-zinc-900/80 border border-zinc-200/80 dark:border-zinc-800 rounded-xl p-1 flex items-center gap-1 text-xs">
                     <button
                       onClick={() => setActiveNotifTab('all')}
@@ -276,8 +283,8 @@ export const Topbar: React.FC<TopbarProps> = ({ title, subtitle, user, onMenuCli
                     </button>
                   </div>
 
-                  {/* Notification Items (Limited to 2 items height ~ 215px before scrolling) */}
-                  <div className="max-h-[215px] overflow-y-auto space-y-4 pt-1 pr-1.5 scrollbar-thin">
+                  {/* Notification Items */}
+                  <div className="max-h-[230px] overflow-y-auto space-y-3 pt-1 pr-1.5 scrollbar-thin">
                     {(activeNotifTab === 'revisions' || activeNotifTab === 'all') && (
                       <div className="space-y-2">
                         <div className="flex items-center gap-2.5 text-xs">
@@ -343,6 +350,19 @@ export const Topbar: React.FC<TopbarProps> = ({ title, subtitle, user, onMenuCli
                         </div>
                       </div>
                     )}
+                  </div>
+
+                  {/* View All Page Footer Button */}
+                  <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800/60">
+                    <button
+                      onClick={() => {
+                        setIsNotifOpen(false);
+                        navigate(`/${user.role}/notifications`);
+                      }}
+                      className="w-full py-2 text-center text-xs font-bold text-zinc-900 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-900 bg-zinc-50 dark:bg-zinc-900/60 rounded-xl border border-zinc-200/60 dark:border-zinc-800/60 transition-colors cursor-pointer"
+                    >
+                      View All Notifications →
+                    </button>
                   </div>
                 </motion.div>
               )}

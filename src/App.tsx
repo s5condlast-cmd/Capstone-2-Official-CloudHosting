@@ -46,7 +46,7 @@ import { Notifications } from './pages/Notifications';
 import { SupervisorDashboard } from './pages/supervisor/SupervisorDashboard';
 import { MyInterns } from './pages/supervisor/MyInterns';
 import { DTRApproval } from './pages/supervisor/DTRApproval';
-import { EvaluateIntern } from './pages/supervisor/EvaluateIntern';
+import { WeeklyJournalReview } from './pages/supervisor/WeeklyJournalReview';
 import { InternshipCompletion } from './pages/supervisor/InternshipCompletion';
 
 import { Profile } from './pages/Profile';
@@ -224,7 +224,7 @@ export default function App() {
           <Route index element={<SupervisorDashboard />} />
           <Route path="interns" element={<MyInterns />} />
           <Route path="dtr" element={<DTRApproval />} />
-          <Route path="evaluate" element={<EvaluateIntern />} />
+          <Route path="journal" element={<WeeklyJournalReview />} />
           <Route path="completion" element={<InternshipCompletion />} />
           <Route path="notifications" element={<Notifications user={user} />} />
           <Route path="profile" element={<Profile user={user} />} />
