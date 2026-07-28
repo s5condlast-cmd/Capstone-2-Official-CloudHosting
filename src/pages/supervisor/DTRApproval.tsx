@@ -617,29 +617,32 @@ export const DTRApproval: React.FC = () => {
               subtitle={selectedDtr.dateRange}
               action={
                 <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-bold px-2.5 py-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-lg border border-zinc-200 dark:border-zinc-700">
+                    Total: {selectedDtr.totalHours} hrs
+                  </span>
                   <Badge variant={selectedDtr.status === 'Approved' ? 'success' : selectedDtr.status === 'Returned' ? 'error' : 'warning'}>
                     {selectedDtr.status}
                   </Badge>
                 </div>
               }
             >
-              <div className="space-y-6">
+              <div className="space-y-4">
                 {/* Saved Signature Active Banner */}
                 {savedSignature ? (
-                  <div className="p-3.5 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 rounded-xl flex items-center justify-between gap-4 transition-all">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-9 h-9 rounded-lg bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 p-1 flex items-center justify-center shrink-0 shadow-xs">
-                        <img src={savedSignature} alt="Saved Signature Preview" className="h-6 max-w-full object-contain dark:invert" />
+                  <div className="p-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 rounded-xl flex items-center justify-between gap-4 transition-all">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-8 h-8 rounded-lg bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 p-1 flex items-center justify-center shrink-0 shadow-xs">
+                        <img src={savedSignature} alt="Saved Signature Preview" className="h-5 max-w-full object-contain dark:invert" />
                       </div>
                       <div className="space-y-0.5 truncate">
                         <div className="flex items-center gap-2">
                           <span className="font-bold text-xs text-zinc-900 dark:text-zinc-100">Saved Signature Active</span>
-                          <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-900/40 flex items-center gap-1">
-                            <Sparkles size={10} /> 1-Click Active
+                          <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-900/40 flex items-center gap-1">
+                            <Sparkles size={9} /> 1-Click Active
                           </span>
                         </div>
-                        <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
-                          Click "Apply Signature" on any work row to sign. Double-click an applied signature to remove it.
+                        <p className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate">
+                          Click "Apply Signature" on any work row to sign. Double-click to remove signature.
                         </p>
                       </div>
                     </div>
@@ -648,57 +651,57 @@ export const DTRApproval: React.FC = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="text-xs h-8 px-3 font-semibold text-zinc-600 dark:text-zinc-300"
-                        icon={<RotateCcw size={12} />}
+                        className="text-xs h-7 px-2.5 font-semibold text-zinc-600 dark:text-zinc-300"
+                        icon={<RotateCcw size={11} />}
                         onClick={() => handleOpenSignatureModal()}
                       >
-                        Redraw Signature
+                        Redraw
                       </Button>
                     </div>
                   </div>
                 ) : (
-                  <div className="p-3.5 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 rounded-xl flex items-center justify-between gap-4 transition-all">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-8 h-8 rounded-lg bg-zinc-900 dark:bg-white text-white dark:text-zinc-950 flex items-center justify-center shrink-0 font-bold">
-                        <PenTool size={14} />
+                  <div className="p-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 rounded-xl flex items-center justify-between gap-4 transition-all">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-7 h-7 rounded-lg bg-zinc-900 dark:bg-white text-white dark:text-zinc-950 flex items-center justify-center shrink-0 font-bold">
+                        <PenTool size={13} />
                       </div>
                       <div>
                         <p className="font-bold text-xs text-zinc-900 dark:text-zinc-100">No Signature Created Yet</p>
-                        <p className="text-[11px] text-zinc-500 dark:text-zinc-400">Draw your signature once to save and use for 1-click day verification.</p>
+                        <p className="text-[10px] text-zinc-500 dark:text-zinc-400">Draw your signature once to save and use for 1-click day verification.</p>
                       </div>
                     </div>
                     <Button
                       variant="primary"
                       size="sm"
-                      className="text-xs h-8 px-3 font-bold shrink-0"
+                      className="text-xs h-7 px-2.5 font-bold shrink-0"
                       onClick={() => handleOpenSignatureModal()}
                     >
-                      Create Saved Signature
+                      Create Signature
                     </Button>
                   </div>
                 )}
 
-                {/* Table of Daily Logs (7 Days: Mon-Sun with Work / Not Work Toggle) */}
+                {/* Right-Sized Table of Daily Logs */}
                 <div className="overflow-x-auto rounded-xl border border-zinc-200/80 dark:border-zinc-800/80">
                   <table className="w-full text-left border-collapse text-xs">
                     <thead>
                       <tr className="bg-zinc-50 dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80 text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wide">
-                        <th className="px-4 py-3">Day / Date</th>
-                        <th className="px-3 py-3 text-center">Day Status</th>
-                        <th className="px-3 py-3 text-center">
+                        <th className="px-3.5 py-2.5">Day / Date</th>
+                        <th className="px-2.5 py-2.5 text-center">Day Status</th>
+                        <th className="px-2.5 py-2.5 text-center">
                           <div className="inline-flex items-center gap-1 justify-center">
                             <span>Time In</span>
                             <Edit3 size={10} className="text-zinc-400" />
                           </div>
                         </th>
-                        <th className="px-3 py-3 text-center">
+                        <th className="px-2.5 py-2.5 text-center">
                           <div className="inline-flex items-center gap-1 justify-center">
                             <span>Time Out</span>
                             <Edit3 size={10} className="text-zinc-400" />
                           </div>
                         </th>
-                        <th className="px-3 py-3 text-center">Hours</th>
-                        <th className="px-4 py-3 text-center">Supervisor Signature</th>
+                        <th className="px-2.5 py-2.5 text-center">Hours</th>
+                        <th className="px-3.5 py-2.5 text-center">Supervisor Signature</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800/50">
@@ -706,24 +709,24 @@ export const DTRApproval: React.FC = () => {
                         <tr 
                           key={idx} 
                           className={cn(
-                            "h-16 transition-colors",
+                            "h-13 transition-colors",
                             log.isDayOff ? "bg-zinc-50/50 dark:bg-zinc-900/30 opacity-75" : "hover:bg-zinc-50/50 dark:hover:bg-zinc-900/30"
                           )}
                         >
                           {/* 1. Day / Date */}
-                          <td className="px-4 py-3 whitespace-nowrap">
+                          <td className="px-3.5 py-2.5 whitespace-nowrap">
                             <div className="text-xs font-bold text-zinc-900 dark:text-zinc-100">{log.day}</div>
-                            <div className="text-[10px] text-zinc-400 font-medium">{log.date}</div>
+                            <div className="text-[10px] text-zinc-400 font-normal">{log.date}</div>
                           </td>
 
-                          {/* 2. Day Status Toggle Pill (Fixed Width & Height, No layout shift) */}
-                          <td className="px-3 py-3 text-center whitespace-nowrap">
+                          {/* 2. Day Status Toggle Pill (Right Sized w-24 h-7) */}
+                          <td className="px-2.5 py-2.5 text-center whitespace-nowrap">
                             <button
                               type="button"
                               onClick={() => handleDayStatusToggle(idx)}
                               title="Click to toggle Work / Not Work status"
                               className={cn(
-                                "w-28 h-8 rounded-xl text-xs font-bold transition-all cursor-pointer border inline-flex items-center justify-center gap-1.5 select-none shrink-0",
+                                "w-24 h-7 rounded-lg text-[11px] font-bold transition-all cursor-pointer border inline-flex items-center justify-center gap-1 select-none shrink-0",
                                 !log.isDayOff
                                   ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 border-zinc-900 dark:border-white shadow-2xs"
                                   : "bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-700"
@@ -731,12 +734,12 @@ export const DTRApproval: React.FC = () => {
                             >
                               {!log.isDayOff ? (
                                 <>
-                                  <Check size={12} />
+                                  <Check size={11} />
                                   <span>Work Day</span>
                                 </>
                               ) : (
                                 <>
-                                  <Coffee size={12} className="text-zinc-400" />
+                                  <Coffee size={11} className="text-zinc-400" />
                                   <span>Not Work</span>
                                 </>
                               )}
@@ -744,71 +747,71 @@ export const DTRApproval: React.FC = () => {
                           </td>
 
                           {/* 3. Time In */}
-                          <td className="px-3 py-3 text-center whitespace-nowrap">
+                          <td className="px-2.5 py-2.5 text-center whitespace-nowrap">
                             {!log.isDayOff ? (
                               <input
                                 type="text"
                                 value={log.timeIn}
                                 onChange={(e) => handleTimeChange(idx, 'timeIn', e.target.value)}
-                                className="w-24 text-center px-2 py-1.5 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-semibold text-zinc-900 dark:text-zinc-100 outline-none focus:border-primary transition-colors"
+                                className="w-20 text-center px-1.5 py-1 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg text-xs font-semibold text-zinc-900 dark:text-zinc-100 outline-none focus:border-primary transition-colors"
                               />
                             ) : (
-                              <span className="text-xs text-zinc-400 italic font-medium">OFF</span>
+                              <span className="text-[11px] text-zinc-400 italic font-medium">OFF</span>
                             )}
                           </td>
 
                           {/* 4. Time Out */}
-                          <td className="px-3 py-3 text-center whitespace-nowrap">
+                          <td className="px-2.5 py-2.5 text-center whitespace-nowrap">
                             {!log.isDayOff ? (
                               <input
                                 type="text"
                                 value={log.timeOut}
                                 onChange={(e) => handleTimeChange(idx, 'timeOut', e.target.value)}
-                                className="w-24 text-center px-2 py-1.5 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-semibold text-zinc-900 dark:text-zinc-100 outline-none focus:border-primary transition-colors"
+                                className="w-20 text-center px-1.5 py-1 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg text-xs font-semibold text-zinc-900 dark:text-zinc-100 outline-none focus:border-primary transition-colors"
                               />
                             ) : (
-                              <span className="text-xs text-zinc-400 italic font-medium">OFF</span>
+                              <span className="text-[11px] text-zinc-400 italic font-medium">OFF</span>
                             )}
                           </td>
 
                           {/* 5. Hours */}
-                          <td className="px-3 py-3 text-center whitespace-nowrap font-bold text-xs text-zinc-900 dark:text-zinc-100">
+                          <td className="px-2.5 py-2.5 text-center whitespace-nowrap font-bold text-xs text-zinc-900 dark:text-zinc-100">
                             {log.hours}
                           </td>
 
-                          {/* 6. Supervisor Signature (Fixed w-32 h-10 box, No layout shift) */}
+                          {/* 6. Supervisor Signature (Right Sized w-28 h-8) */}
                           <td 
-                            className="px-4 py-3 text-center whitespace-nowrap cursor-pointer select-none"
+                            className="px-3.5 py-2.5 text-center whitespace-nowrap cursor-pointer select-none"
                             onClick={() => handleCellClick(idx)}
                             onDoubleClick={() => handleCellDoubleClick(idx)}
                             title={log.signatureUrl ? "Double-click to remove signature" : "Click to apply supervisor signature"}
                           >
                             <div className="flex justify-center items-center">
                               {log.signatureUrl ? (
-                                <div className="w-32 h-10 inline-flex flex-col items-center justify-center p-1 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 rounded-xl shadow-2xs group relative">
+                                <div className="w-28 h-8 inline-flex flex-col items-center justify-center p-0.5 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 rounded-lg shadow-2xs group relative">
                                   <img 
                                     src={log.signatureUrl} 
                                     alt="Supervisor Signature" 
-                                    className="h-5 max-w-[90px] object-contain dark:invert" 
+                                    className="h-4 max-w-[80px] object-contain dark:invert" 
                                   />
-                                  <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5 mt-0.5">
-                                    <Check size={9} /> Verified {log.day}
+                                  <span className="text-[8px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5 leading-none">
+                                    <Check size={8} /> Verified {log.day}
                                   </span>
                                 </div>
                               ) : log.isDayOff ? (
-                                <div className="w-32 h-10 flex items-center justify-center">
+                                <div className="w-28 h-8 flex items-center justify-center">
                                   <span className="text-[10px] text-zinc-400 italic">N/A (Not Work)</span>
                                 </div>
                               ) : (
                                 <button
                                   type="button"
-                                  className="w-32 h-10 rounded-xl text-[10px] font-semibold bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 border border-dashed border-zinc-300 dark:border-zinc-700 transition-colors inline-flex flex-col items-center justify-center gap-0.5 shadow-2xs cursor-pointer"
+                                  className="w-28 h-8 rounded-lg text-[9px] font-semibold bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 border border-dashed border-zinc-300 dark:border-zinc-700 transition-colors inline-flex flex-col items-center justify-center leading-tight shadow-2xs cursor-pointer"
                                 >
-                                  <div className="flex items-center gap-1 font-bold text-[10px]">
-                                    <Sparkles size={10} className="text-zinc-400" />
+                                  <div className="flex items-center gap-0.5 font-bold text-[9px]">
+                                    <Sparkles size={9} className="text-zinc-400" />
                                     <span>Click to Apply</span>
                                   </div>
-                                  <span className="text-[9px] text-zinc-400 font-normal">Signature</span>
+                                  <span className="text-[8px] text-zinc-400 font-normal">Signature</span>
                                 </button>
                               )}
                             </div>
@@ -818,54 +821,16 @@ export const DTRApproval: React.FC = () => {
                     </tbody>
                   </table>
                 </div>
-
-                {/* Footer Total Summary Bar */}
-                <div className="flex items-center justify-between p-4 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-950 rounded-xl">
-                  <div className="flex items-center gap-2">
-                    <Clock size={16} />
-                    <span className="text-xs font-bold uppercase tracking-wider">Weekly Total Hours Rendered:</span>
-                  </div>
-                  <span className="text-lg font-black tracking-tight">{selectedDtr.totalHours} Hours</span>
-                </div>
               </div>
             </Card>
           </div>
 
-          {/* Right Side: Verification Sidebar (4 cols) */}
-          <div className="lg:col-span-4 space-y-6">
-            {/* Student Switcher Card */}
-            <Card title="Student DTR Select">
-              <div className="space-y-2">
-                {dtrs.map(dtr => (
-                  <button
-                    key={dtr.id}
-                    onClick={() => setSelectedDtrId(dtr.id)}
-                    className={cn(
-                      "w-full flex items-center justify-between p-3 rounded-xl border text-left transition-all cursor-pointer",
-                      selectedDtrId === dtr.id
-                        ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 border-zinc-900 dark:border-white shadow-xs"
-                        : "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 border-zinc-200/80 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
-                    )}
-                  >
-                    <div className="space-y-0.5 min-w-0">
-                      <p className="text-xs font-bold truncate">{dtr.studentName}</p>
-                      <p className={cn("text-[10px] truncate", selectedDtrId === dtr.id ? "text-zinc-300 dark:text-zinc-600" : "text-zinc-400")}>
-                        {dtr.course} · Week {dtr.weekNumber}
-                      </p>
-                    </div>
-                    <Badge variant={dtr.status === 'Approved' ? 'success' : dtr.status === 'Returned' ? 'error' : 'warning'}>
-                      {dtr.status}
-                    </Badge>
-                  </button>
-                ))}
-              </div>
-            </Card>
-
-            {/* Supervisor Remarks Card */}
-            <Card title="Supervisor Verification Remarks">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300">
+          {/* Right Side: Verification Remarks Sidebar (4 cols) */}
+          <div className="lg:col-span-4 space-y-4">
+            <Card title="Supervisor Verification Remarks" subtitle={`Rendered Total: ${selectedDtr.totalHours} Hours`}>
+              <div className="space-y-3.5">
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-zinc-700 dark:text-zinc-300">
                     Return / Revision Remarks (Required for Return)
                   </label>
                   <textarea
@@ -873,7 +838,7 @@ export const DTRApproval: React.FC = () => {
                     placeholder="Provide specific feedback if requesting time log corrections..."
                     value={rejectNotes}
                     onChange={(e) => setRejectNotes(e.target.value)}
-                    className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-3 text-xs outline-none focus:border-primary transition-colors text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400"
+                    className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-2.5 text-xs outline-none focus:border-primary transition-colors text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400"
                   />
                 </div>
 
@@ -881,7 +846,7 @@ export const DTRApproval: React.FC = () => {
                 <div className="flex gap-2">
                   <Button 
                     variant="outline" 
-                    className="w-1/2 text-red-600 border-red-200 hover:bg-red-50 dark:text-red-400 dark:border-red-950 dark:hover:bg-red-950/20 text-xs h-8 justify-center"
+                    className="w-1/2 text-red-600 border-red-200 hover:bg-red-50 dark:text-red-400 dark:border-red-950 dark:hover:bg-red-950/20 text-xs h-8 justify-center font-semibold"
                     icon={<X size={13} />}
                     onClick={handleRejectSubmit}
                   >
