@@ -1001,19 +1001,26 @@ export const DTRApproval: React.FC = () => {
       {removeSignatureTargetIndex !== null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/60 backdrop-blur-xs">
           <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl max-w-sm w-full p-5 shadow-2xl space-y-4">
-            <div className="flex items-start gap-3">
-              <div className="w-9 h-9 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 flex items-center justify-center font-bold shrink-0 mt-0.5 border border-zinc-200 dark:border-zinc-700">
-                <Trash2 size={16} />
-              </div>
-              <div className="space-y-1">
+            <div className="flex items-center justify-between pb-3 border-b border-zinc-100 dark:border-zinc-800">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 flex items-center justify-center font-bold shrink-0">
+                  <Trash2 size={15} />
+                </div>
                 <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">
                   Remove Signature?
                 </h3>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
-                  Are you sure you want to remove the supervisor signature for <span className="font-bold text-zinc-900 dark:text-zinc-100">{selectedDtr.logs[removeSignatureTargetIndex]?.day}</span> ({selectedDtr.logs[removeSignatureTargetIndex]?.date})?
-                </p>
               </div>
+              <button 
+                onClick={() => setRemoveSignatureTargetIndex(null)}
+                className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 p-1 rounded-lg transition-colors cursor-pointer"
+              >
+                <X size={16} />
+              </button>
             </div>
+
+            <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
+              Are you sure you want to remove the supervisor signature for <span className="font-bold text-zinc-900 dark:text-zinc-100">{selectedDtr.logs[removeSignatureTargetIndex]?.day}</span> ({selectedDtr.logs[removeSignatureTargetIndex]?.date})?
+            </p>
 
             <div className="flex items-center justify-end gap-2 pt-3 border-t border-zinc-100 dark:border-zinc-800">
               <Button 
