@@ -10,10 +10,15 @@ import {
   Pencil,
   Printer,
   ZoomIn,
-  ZoomOut
+  ZoomOut,
+  FileSpreadsheet,
+  CheckCircle2
 } from 'lucide-react';
 import { FormField } from '@/src/components/review/templateFields';
 import { documentGenerator } from '@/src/lib/documentGenerator';
+import { generateCSV, generateXlsxBlob, generateFileName, generateDTRXlsxBlob, WeeklyJournalEntry, DTREntry } from '@/src/lib/excelGenerator';
+import { submissionStorage } from '@/src/lib/submissionStorage';
+import { toast } from 'sonner';
 import { cn } from '@/src/lib/utils';
 import { templateStorage } from '@/src/lib/templateStorage';
 
@@ -183,7 +188,6 @@ export const DocumentWorkflow: React.FC<DocumentWorkflowProps> = ({
       if (targetId) {
         buffer = await templateStorage.getTemplateFile(targetId);
         pdfBuf = await templateStorage.getTemplatePdfBackup(targetId);
-
       }
 
       // Fallback to fetching public docUrl if no custom upload exists in storage

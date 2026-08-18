@@ -10,15 +10,11 @@ import { submissionStorage, StudentDocument } from '@/src/lib/submissionStorage'
 import { 
   GraduationCap, 
   FileText, 
-  TrendingUp, 
   UserPlus, 
   ChevronRight, 
   ShieldCheck, 
-  History,
   Building,
   Users,
-  Clock,
-  AlertCircle,
   Briefcase,
   Search,
   ArrowRight

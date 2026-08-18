@@ -6,7 +6,6 @@ import {
   ArrowLeft,
   User,
   Clock,
-  History,
   CheckCircle2,
   X,
   AlertTriangle,
@@ -53,7 +52,7 @@ export interface UnifiedReviewSessionProps {
   pdfUrl: string;
   queueStatus: 'Pending' | 'Assigned' | 'In Review' | 'Completed';
   versions: DocumentVersion[];
-  auditLogs: ReviewAuditLog[];
+  auditLogs?: ReviewAuditLog[];
   onBack: () => void;
   onApprove: (remarks?: string) => void;
   onRequestRevision: (remarks?: string) => void;
@@ -190,239 +189,227 @@ export const UnifiedReviewSession: React.FC<UnifiedReviewSessionProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-screen max-h-screen bg-zinc-50 dark:bg-zinc-950 pb-4 overflow-hidden absolute inset-0 z-50">
+    <div className="space-y-6 pb-12">
       
-      {/* Top Header */}
-      <div className="flex-none px-6 py-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between shadow-sm z-10">
-        <div className="flex items-center gap-4">
-          <button 
+      {/* Overview Header (Matching WeeklyJournalReview.tsx) */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={onBack}
+              className="p-1.5 rounded-lg border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              title="Back to Review Hub"
+            >
+              <ArrowLeft size={16} />
+            </button>
+            <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 tracking-tight flex items-center gap-2">
+              <FileText className="w-5 h-5 text-primary" />
+              Document Review Session
+            </h1>
+            <Badge variant="neutral" className="text-[10px] px-2 py-0.5 ml-2">
+              {student.docType}
+            </Badge>
+          </div>
+          <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mt-1">
+            Reviewing document submission for <span className="font-bold text-zinc-900 dark:text-zinc-100">{student.name}</span> ({student.course} · ID: {student.submissionId}).
+          </p>
+        </div>
+
+        {/* Top Header Action Buttons */}
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
             onClick={onBack}
-            className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 hover:text-black dark:hover:text-white transition-colors"
+            icon={<ArrowLeft size={14} />}
+            className="text-xs font-semibold"
           >
-            <ArrowLeft size={18} />
-          </button>
-          
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <h1 className="text-lg font-bold text-black dark:text-white tracking-tight leading-none">
-                Review Session
-              </h1>
-              <Badge variant="neutral" className="text-[10px] px-2 py-0.5 h-auto">
-                {student.docType}
-              </Badge>
-            </div>
-            
-            <div className="flex items-center gap-3 text-[11px] font-medium text-zinc-500">
-              <div className="flex items-center gap-1.5 text-zinc-900 dark:text-zinc-100 font-bold">
-                <User size={12} className="text-zinc-400" />
-                {student.name}
+            Back to List
+          </Button>
+        </div>
+      </div>
+
+      {/* Main Content Area (Matching WeeklyJournalReview 9-col / 3-col Grid) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        {/* Left Column: EmbedPDF Workspace Card (9 cols) */}
+        <div className="lg:col-span-9 flex flex-col space-y-4">
+          <div className="bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl flex flex-col shadow-xs overflow-hidden h-[720px]">
+            {/* Card Header */}
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 bg-zinc-50/50 dark:bg-zinc-900/50 px-6 py-3 border-b border-zinc-200/60 dark:border-zinc-800 shrink-0">
+              <div>
+                <h3 className="font-semibold text-[13px] text-zinc-900 dark:text-zinc-100 tracking-tight">
+                  Document Preview: {student.name} ({student.docType})
+                </h3>
+                <p className="text-[10px] text-zinc-400 dark:text-zinc-500 font-medium mt-0.5">
+                  Inspecting submitted document and attendance matrix log
+                </p>
               </div>
-              <span className="text-zinc-300 dark:text-zinc-700">•</span>
-              <span className="uppercase tracking-wider">{student.course}</span>
-              <span className="text-zinc-300 dark:text-zinc-700">•</span>
-              <span>{student.submissionId}</span>
+              <div className="flex items-center gap-2">
+                {pdfUrl && (
+                  <a
+                    href={pdfUrl}
+                    download
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 text-xs font-bold transition-colors"
+                  >
+                    <Download size={13} /> Download File
+                  </a>
+                )}
+              </div>
+            </div>
+
+            {/* EmbedPDF Workspace Canvas */}
+            <div className="flex-1 w-full min-h-0 overflow-hidden relative bg-zinc-900 flex">
+              <div className="flex-1 h-full overflow-hidden">
+                <EmbedPdfWorkspace 
+                  pdfUrl={pdfUrl} 
+                  studentName={student.name}
+                  docTitle={student.docType}
+                  readOnly={readOnly}
+                />
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Header Actions */}
-        <div className="flex items-center gap-2">
-          {docId && (
-            <Button
-              variant="outline"
-              className={cn(
-                "font-semibold uppercase text-[10px] tracking-wider h-8 transition-all border",
-                showAiPanel 
-                  ? "bg-indigo-50 border-indigo-200 text-indigo-600 dark:bg-indigo-500/10 dark:border-indigo-800 dark:text-indigo-400" 
-                  : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
-              )}
-              onClick={() => setShowAiPanel(!showAiPanel)}
-              icon={<Brain size={14} />}
-            >
-              AI Assistant
-            </Button>
-          )}
-
-          {!readOnly && (
-            <>
-              <Button 
-                variant="outline" 
-                className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 dark:border-red-900 dark:hover:bg-red-900/30 font-semibold uppercase text-[10px] tracking-wider h-8"
-                onClick={() => handleFinalDecision('reject')}
-              >
-                Reject
-              </Button>
-              <Button 
-                variant="outline" 
-                className="font-semibold uppercase text-[10px] tracking-wider h-8"
-                onClick={() => handleFinalDecision('revise')}
-                icon={<AlertTriangle size={14} />}
-              >
-                Request Revision
-              </Button>
-              {onSendToAdmin && (
-                <Button 
-                  variant="outline" 
-                  className="font-semibold uppercase text-[10px] tracking-wider h-8 border-zinc-200 text-zinc-900 dark:border-zinc-800 dark:text-white hover:bg-zinc-50"
-                  onClick={() => handleFinalDecision('sendToAdmin')}
-                  icon={<ShieldCheck size={14} />}
-                >
-                  Send to Admin
-                </Button>
-              )}
-              <Button 
-                variant="primary" 
-                className="font-semibold uppercase text-[10px] tracking-wider h-8 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900"
-                onClick={() => handleFinalDecision('approve')}
-                icon={<Check size={14} />}
-              >
-                Approve
-              </Button>
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* Main Content Area */}
-      <div className="flex-1 flex overflow-hidden">
-        
-        {/* Left Sidebar (Queue, Versions, Audit) */}
-        <div className="w-[300px] flex-none bg-white dark:bg-zinc-950 border-r border-zinc-200 dark:border-zinc-800 flex flex-col overflow-y-auto">
-           
-           {/* Queue Status */}
-           <div className="p-5 border-b border-zinc-200 dark:border-zinc-800">
-             <h3 className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-4">Review Status</h3>
-             <div className="flex items-center gap-2">
-               <div className={cn(
-                 "w-8 h-8 rounded-full flex items-center justify-center shrink-0 border-2",
-                 queueStatus === 'In Review' ? "border-amber-500 bg-amber-50 text-amber-600 dark:bg-amber-500/10" :
-                 queueStatus === 'Completed' ? "border-emerald-500 bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10" :
-                 "border-zinc-200 bg-zinc-50 text-zinc-400 dark:border-zinc-800 dark:bg-zinc-900"
-               )}>
-                 {queueStatus === 'Completed' ? <CheckCircle2 size={14} /> : <Clock size={14} />}
-               </div>
-               <div>
-                 <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100">{queueStatus}</p>
-                 <p className="text-[10px] text-zinc-500">Only 1 reviewer can actively review</p>
-               </div>
-             </div>
-           </div>
-
-           {/* Version History */}
-           <div className="p-5 border-b border-zinc-200 dark:border-zinc-800">
-             <h3 className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-4 flex items-center justify-between">
-               <span>Version History</span>
-               <span className="bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 px-1.5 py-0.5 rounded text-[9px]">{versions.length}</span>
-             </h3>
-             <div className="space-y-3">
-               {versions.map((v) => (
-                 <button 
-                   key={v.id} 
-                   className={cn(
-                     "w-full flex items-start justify-between p-3 rounded-lg border text-left transition-colors",
-                     v.isActive 
-                       ? "bg-zinc-50 dark:bg-zinc-900/50 border-zinc-300 dark:border-zinc-700 shadow-sm" 
-                       : "bg-white dark:bg-zinc-950 border-zinc-100 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 opacity-60 hover:opacity-100"
-                   )}
-                 >
-                   <div>
-                     <p className="text-xs font-bold text-zinc-900 dark:text-zinc-100 mb-1">Version {v.version}</p>
-                     <p className="text-[10px] text-zinc-500">{v.date}</p>
-                   </div>
-                   <Badge variant={
-                     v.status === 'Approved' || v.status === 'Locked' ? 'success' :
-                     v.status === 'Revision Required' ? 'warning' :
-                     v.status === 'Archived' ? 'neutral' : 'default'
-                   } className="text-[9px] px-1.5 py-0 capitalize">
-                     {v.status}
-                   </Badge>
-                 </button>
-               ))}
-             </div>
-           </div>
-
-           {/* Audit Trail */}
-           <div className="p-5">
-             <h3 className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-4 flex items-center gap-1.5">
-               <History size={12} /> Audit Trail
-             </h3>
-             <div className="relative pl-3 space-y-4 before:absolute before:inset-y-2 before:left-[15px] before:w-px before:bg-zinc-200 dark:before:bg-zinc-800">
-                {auditLogs.map((log, i) => (
-                  <div key={i} className="relative flex gap-3 text-xs">
-                    <div className="w-2 h-2 rounded-full bg-zinc-300 dark:bg-zinc-700 absolute -left-[18.5px] top-1.5 border-2 border-white dark:border-zinc-950" />
-                    <div>
-                      <p className="font-medium text-zinc-900 dark:text-zinc-100">{log.action}</p>
-                      <p className="text-[10px] text-zinc-500">{log.time} · {log.actor}</p>
-                    </div>
+        {/* Right Column: Verification & Action Cards (3 cols) */}
+        <div className="lg:col-span-3 space-y-4">
+          
+          {/* Card 1: Review Status & Version Pipeline */}
+          <Card title="Status & Version History">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between p-3 rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+                <div className="flex items-center gap-2">
+                  <div className={cn(
+                    "w-7 h-7 rounded-full flex items-center justify-center shrink-0 border-2",
+                    queueStatus === 'In Review' ? "border-amber-500 bg-amber-50 text-amber-600 dark:bg-amber-500/10" :
+                    queueStatus === 'Completed' ? "border-emerald-500 bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10" :
+                    "border-zinc-200 bg-zinc-50 text-zinc-400 dark:border-zinc-800 dark:bg-zinc-900"
+                  )}>
+                    {queueStatus === 'Completed' ? <CheckCircle2 size={13} /> : <Clock size={13} />}
                   </div>
-                ))}
-             </div>
-           </div>
+                  <div>
+                    <p className="text-xs font-bold text-zinc-900 dark:text-zinc-100">{queueStatus}</p>
+                    <p className="text-[10px] text-zinc-500">Active Review Session</p>
+                  </div>
+                </div>
+                <Badge variant={readOnly ? 'neutral' : 'warning'} className="text-[9px]">
+                  {readOnly ? 'Audit Mode' : 'In Review'}
+                </Badge>
+              </div>
 
-            {/* Adviser/Admin Comments History */}
-            {commentsList.length > 0 && (
-              <div className="p-5 border-t border-zinc-200 dark:border-zinc-800 max-h-56 overflow-y-auto bg-white dark:bg-zinc-950">
-                <h3 className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                  <Brain size={12} /> Comments History
-                </h3>
-                <div className="space-y-3">
-                  {commentsList.map((comment, i) => (
-                    <div key={i} className="p-2.5 rounded-lg border border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30 text-xs">
-                      <div className="flex justify-between items-center mb-1">
-                        <span className="font-bold text-zinc-800 dark:text-zinc-200">{comment.author}</span>
-                        <span className="text-[9px] text-zinc-400 dark:text-zinc-500">{comment.time}</span>
+              <div className="space-y-1.5">
+                <h4 className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider flex items-center justify-between">
+                  <span>Version History</span>
+                  <span className="bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 px-1.5 py-0.5 rounded text-[9px]">{versions.length}</span>
+                </h4>
+                <div className="space-y-2">
+                  {versions.map((v) => (
+                    <div 
+                      key={v.id} 
+                      className={cn(
+                        "flex items-center justify-between p-2.5 rounded-lg border text-left transition-colors text-xs",
+                        v.isActive 
+                          ? "bg-zinc-50 dark:bg-zinc-900/50 border-zinc-300 dark:border-zinc-700 font-bold" 
+                          : "bg-white dark:bg-zinc-950 border-zinc-100 dark:border-zinc-800 opacity-60"
+                      )}
+                    >
+                      <div>
+                        <p className="font-bold text-zinc-900 dark:text-zinc-100">Version {v.version}</p>
+                        <p className="text-[10px] text-zinc-500 font-normal">{v.date}</p>
                       </div>
-                      <p className="text-zinc-600 dark:text-zinc-400 leading-normal">{comment.msg}</p>
+                      <Badge variant={v.status === 'Approved' ? 'success' : 'warning'} className="text-[9px]">
+                        {v.status}
+                      </Badge>
                     </div>
                   ))}
                 </div>
               </div>
-            )}
+            </div>
+          </Card>
 
-            {/* Add Comment */}
-            <div className="p-5 border-t border-zinc-200 dark:border-zinc-800 mt-auto bg-white dark:bg-zinc-950">
-              <h3 className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-3">Add Comment</h3>
-              <div className="space-y-3">
+          {/* Card 2: Reviewer Actions & Verification Feedback */}
+          <Card title={readOnly ? "Read-Only Audit Overview" : "Verification & Feedback"}>
+            <div className="space-y-3">
+              <div>
+                <label className="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-1 block">
+                  {readOnly ? "Audit Note" : "Reviewer Instructions / Remarks"}
+                </label>
                 <textarea 
-                  placeholder="Type your comment..." 
+                  placeholder={readOnly ? "Read-only audit view..." : "Provide specific feedback or revision instructions..."} 
                   value={newCommentText}
                   onChange={(e) => setNewCommentText(e.target.value)}
-                  className="w-full text-xs p-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none h-24 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 text-zinc-900 dark:text-zinc-100"
+                  disabled={readOnly}
+                  className="w-full text-xs p-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none h-20 placeholder:text-zinc-400 text-zinc-900 dark:text-zinc-100 disabled:opacity-60"
                 />
-                <Button 
-                  variant="primary" 
-                  className="w-full h-8 text-[10px] uppercase tracking-wider font-semibold" 
-                  icon={<Send size={12} />}
-                  onClick={handlePostComment}
-                  disabled={isPostingComment || !newCommentText.trim()}
-                >
-                  {isPostingComment ? 'Posting...' : 'Post Comment'}
-                </Button>
               </div>
+
+              {!readOnly ? (
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      className="w-1/2 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 dark:border-red-900 text-xs h-8 justify-center font-bold"
+                      onClick={() => handleFinalDecision('reject')}
+                    >
+                      Reject
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="w-1/2 text-xs h-8 justify-center font-bold"
+                      onClick={() => handleFinalDecision('revise')}
+                      icon={<AlertTriangle size={13} />}
+                    >
+                      Revise
+                    </Button>
+                  </div>
+
+                  {onSendToAdmin && (
+                    <Button 
+                      variant="outline" 
+                      className="w-full text-xs h-8 justify-center font-bold border-zinc-200 text-zinc-900 dark:border-zinc-800 dark:text-white hover:bg-zinc-50"
+                      onClick={() => handleFinalDecision('sendToAdmin')}
+                      icon={<ShieldCheck size={13} />}
+                    >
+                      Send to Admin
+                    </Button>
+                  )}
+
+                  <Button 
+                    variant="primary" 
+                    className="w-full text-xs h-8 justify-center font-bold"
+                    onClick={() => handleFinalDecision('approve')}
+                    icon={<Check size={13} />}
+                  >
+                    Approve Document
+                  </Button>
+                </div>
+              ) : (
+                <div className="p-3 bg-zinc-100 dark:bg-zinc-900 rounded-xl text-center space-y-1 border border-zinc-200 dark:border-zinc-800">
+                  <span className="text-xs font-bold text-zinc-700 dark:text-zinc-300 block">Read-Only Audit Mode</span>
+                  <p className="text-[10px] text-zinc-500">Admins have read-only document inspection access.</p>
+                </div>
+              )}
             </div>
+          </Card>
 
-        </div>
-
-        {/* Center/Right: EmbedPDF Workspace + AI Assistant */}
-        <div className="flex-1 flex overflow-hidden bg-[#F3F4F6] dark:bg-zinc-900 relative">
-          <div className="flex-1 h-full overflow-hidden">
-            <EmbedPdfWorkspace 
-              pdfUrl={pdfUrl} 
-              studentName={student.name}
-              docTitle={student.docType}
-              readOnly={readOnly}
-            />
-          </div>
-
-          {docId && showAiPanel && (
-            <div className="w-[340px] shrink-0 h-full">
-              <AiAssistantPanel 
-                findings={aiFindings}
-                aiStatus={aiStatus}
-                onRunAnalysis={handleRunAiAnalysis}
-              />
-            </div>
+          {/* Card 3: Comments History (if comments exist) */}
+          {commentsList.length > 0 && (
+            <Card title="Comments History">
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {commentsList.map((comment, i) => (
+                  <div key={i} className="p-2.5 rounded-xl border border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30 text-xs space-y-1">
+                    <div className="flex justify-between items-center text-[10px] font-bold text-zinc-500">
+                      <span>{comment.author}</span>
+                      <span>{comment.time}</span>
+                    </div>
+                    <p className="text-zinc-700 dark:text-zinc-300 font-medium">"{comment.msg}"</p>
+                  </div>
+                ))}
+              </div>
+            </Card>
           )}
+
         </div>
 
       </div>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Card } from '@/src/components/ui/Card';
 import { Badge } from '@/src/components/ui/Badge';
 import { Button } from '@/src/components/ui/Button';
@@ -22,6 +22,8 @@ import { submissionStorage, StudentDocument } from '@/src/lib/submissionStorage'
 
 export const DocumentVerification: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const isDtrFilter = searchParams.get('filter') === 'dtr';
   const [liveDocs, setLiveDocs] = React.useState<StudentDocument[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
 
@@ -39,15 +41,17 @@ export const DocumentVerification: React.FC = () => {
     loadDocs();
   }, []);
 
-  const pendingDocs = liveDocs.map(doc => ({
-    id: doc.id,
-    student: doc.student_name,
-    adviser: 'Dr. Smith',
-    type: doc.doc_type,
-    time: new Date(doc.created_at).toLocaleDateString(),
-    course: doc.course,
-    status: doc.status || 'pending_admin'
-  }));
+  const pendingDocs = liveDocs
+    .filter(doc => !isDtrFilter || doc.doc_type.toLowerCase().includes('dtr'))
+    .map(doc => ({
+      id: doc.id,
+      student: doc.student_name,
+      adviser: 'Dr. Smith',
+      type: doc.doc_type,
+      time: new Date(doc.created_at).toLocaleDateString(),
+      course: doc.course,
+      status: doc.status || 'pending_admin'
+    }));
 
   return (
     <div className="space-y-8 pb-12">
@@ -109,16 +113,30 @@ export const DocumentVerification: React.FC = () => {
                       </div>
                     </td>
                     <td className="px-6 py-5">
-                      <Badge variant={doc.status === 'escalated' ? 'error' : doc.status === 'pending_legal' ? 'warning' : 'neutral'}>
-                         {doc.status.toUpperCase().replace('_', ' ')}
-                      </Badge>
+                      {doc.type.toLowerCase().includes('spreadsheet') || doc.type.toLowerCase().includes('weekly') ? (
+                        <Badge variant="neutral" className="bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 font-extrabold text-[10px] tracking-wider uppercase">
+                          VIEW ONLY (ADMIN)
+                        </Badge>
+                      ) : (
+                        <Badge variant={doc.status === 'escalated' ? 'error' : doc.status === 'pending_legal' ? 'warning' : 'neutral'}>
+                           {doc.status.toUpperCase().replace('_', ' ')}
+                        </Badge>
+                      )}
                     </td>
                     <td className="px-6 py-5 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                         <Button size="sm" variant="outline" onClick={() => navigate(`/admin/documents/${doc.id}`)} className="p-2 border-zinc-300 dark:border-zinc-700 group-hover:border-zinc-900 shadow-none"><MessageSquare size={14} /></Button>
-                         <Button size="sm" variant="danger" icon={<X size={14} />}>Reject</Button>
-                         <Button size="sm" variant="primary" icon={<Check size={14} />}>Clear</Button>
-                      </div>
+                      {doc.type.toLowerCase().includes('spreadsheet') || doc.type.toLowerCase().includes('weekly') ? (
+                        <div className="flex items-center justify-end gap-2">
+                           <Button size="sm" variant="outline" onClick={() => navigate(`/admin/documents/${doc.id}`)} className="text-xs font-bold border-zinc-300 dark:border-zinc-700">
+                             View Spreadsheet (Read-Only)
+                           </Button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-end gap-2">
+                           <Button size="sm" variant="outline" onClick={() => navigate(`/admin/documents/${doc.id}`)} className="p-2 border-zinc-300 dark:border-zinc-700 group-hover:border-zinc-900 shadow-none"><MessageSquare size={14} /></Button>
+                           <Button size="sm" variant="danger" icon={<X size={14} />}>Reject</Button>
+                           <Button size="sm" variant="primary" icon={<Check size={14} />}>Clear</Button>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))}

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { UnifiedReviewSession, StudentInfo, DocumentVersion, ReviewAuditLog } from '@/src/components/review/UnifiedReviewSession';
+import { UnifiedReviewSession, StudentInfo, DocumentVersion } from '@/src/components/review/UnifiedReviewSession';
 import { submissionStorage, StudentDocument } from '@/src/lib/submissionStorage';
 import { motion } from 'motion/react';
 import { EmptyState } from '@/src/components/ui/EmptyState';
@@ -60,12 +60,6 @@ export const AdminReviewSession: React.FC = () => {
     }
   ];
 
-  const auditLogs: ReviewAuditLog[] = [
-    { time: '2:30 PM', action: 'Status changed to In Review', actor: 'Admin' },
-    { time: '2:25 PM', action: 'Admin opened session', actor: 'Admin' },
-    { time: '10:35 AM', action: 'Student uploaded document', actor: 'Alice Brown' }
-  ];
-
   if (isLoading) {
     return (
       <div className="h-screen w-full flex items-center justify-center bg-zinc-50 dark:bg-zinc-950">
@@ -96,20 +90,20 @@ export const AdminReviewSession: React.FC = () => {
 
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.98 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.25, ease: 'easeOut' }}
-      className="fixed inset-0 z-50 bg-zinc-50 dark:bg-zinc-950"
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.2, ease: 'easeOut' }}
+      className="w-full space-y-6"
     >
       <UnifiedReviewSession 
         student={student}
         pdfUrl={pdfUrl}
         queueStatus={queueStatus}
         versions={versions}
-        auditLogs={auditLogs}
         docId={doc?.id}
         initialAiStatus={doc?.ai_status}
         initialAiFindings={doc?.ai_findings}
+        readOnly={true}
         onBack={() => navigate('/admin/documents')}
         onApprove={async () => {
           if (doc) await submissionStorage.updateDocumentStatus(doc.id, 'Approved');
@@ -122,7 +116,7 @@ export const AdminReviewSession: React.FC = () => {
           setTimeout(() => navigate('/admin/documents'), 1500);
         }}
         onReject={async () => {
-          if (doc) await submissionStorage.updateDocumentStatus(doc.id, 'Revision Required'); // Or another status if Reject exists
+          if (doc) await submissionStorage.updateDocumentStatus(doc.id, 'Revision Required');
           setQueueStatus('Completed');
           setTimeout(() => navigate('/admin/documents'), 1500);
         }}

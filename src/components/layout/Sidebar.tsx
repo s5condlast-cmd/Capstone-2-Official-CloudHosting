@@ -7,6 +7,7 @@ import {
   Settings as SettingsIcon,
   GraduationCap as GraduationCapIcon,
   FileText as FileTextIcon,
+  FileSpreadsheet as FileSpreadsheetIcon,
   BarChart as BarChartIcon,
   Activity as ActivityIcon,
   CheckCircle as CheckCircleIcon,
@@ -108,6 +109,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               { to: '/admin/users', icon: UsersIcon, label: 'Accounts', badge: 3 },
               { to: '/admin/companies', icon: BuildingIcon, label: 'Companies' },
               { to: '/admin/documents', icon: FileTextIcon, label: 'Documents', badge: 38 },
+              { to: '/admin/documents?filter=dtr', icon: FileSpreadsheetIcon, label: 'DTR Audit' },
               { to: '/admin/templates', icon: ClipboardListIcon, label: 'Templates' },
               { to: '/admin/announcements', icon: BellIcon, label: 'Announcements' },
               { to: '/admin/reports', icon: BarChartIcon, label: 'Reports' },
@@ -136,6 +138,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             group: 'Review Hub',
             items: [
               { to: '/adviser/review', icon: SearchIcon, label: 'Document Review', badge: 4 },
+              { to: '/adviser/review?type=dtr', icon: FileSpreadsheetIcon, label: 'DTR Verification' },
             ],
           },
           {

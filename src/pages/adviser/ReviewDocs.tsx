@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Card } from '@/src/components/ui/Card';
 import { Badge } from '@/src/components/ui/Badge';
 import { Button } from '@/src/components/ui/Button';
@@ -19,7 +19,8 @@ import {
   AlertTriangle,
   Info,
   CheckCircle2,
-  SpellCheck
+  SpellCheck,
+  FileSpreadsheet
 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
@@ -50,6 +51,8 @@ interface PendingDoc {
 }
 
 export const ReviewDocs: React.FC = () => {
+  const [searchParams] = useSearchParams();
+  const filterType = searchParams.get('type');
   const [liveDocs, setLiveDocs] = useState<StudentDocument[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -87,7 +90,13 @@ export const ReviewDocs: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'needs_review' | 'history'>('needs_review');
   const [hiddenDocIds, setHiddenDocIds] = useState<Set<string>>(new Set());
 
-  const visibleDocs = pendingDocs.filter(d => !hiddenDocIds.has(d.id));
+  const visibleDocs = pendingDocs.filter(d => {
+    if (hiddenDocIds.has(d.id)) return false;
+    if (filterType === 'dtr') {
+      return d.type.toLowerCase().includes('dtr');
+    }
+    return true;
+  });
 
   const toggleSelect = (id: string) => {
     setSelectedDocs(prev => {
