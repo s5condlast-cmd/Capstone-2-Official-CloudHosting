@@ -427,6 +427,7 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
                 <Button
                   variant={uploadedFileName && !isSubmitted ? "primary" : "secondary"}
                   size="sm"
+                  className="h-8 text-[11px] font-bold"
                   aria-label={`Select file for ${uploadTitle}`}
                   disabled={isUploading || isSubmitted}
                 >
@@ -441,21 +442,23 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
                 />
               </div>
 
-              <div className="flex flex-col gap-2.5 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+              <div className="flex gap-2 pt-2 border-t border-zinc-100 dark:border-zinc-800">
                 <button
                   onClick={() => setIsUrgent(!isUrgent)}
                   className={cn(
-                    "flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all border cursor-pointer",
+                    "w-1/2 flex items-center justify-center gap-1.5 px-2 h-8 rounded-lg text-[11px] font-bold transition-all border cursor-pointer shrink-0",
                     isUrgent
                       ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 border-zinc-900 dark:border-zinc-100"
                       : "bg-white dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 border-zinc-200 dark:border-zinc-800 hover:border-zinc-300"
                   )}
                 >
-                  <AlertCircle size={13} className={cn(isUrgent ? "animate-pulse" : "")} />
+                  <AlertCircle size={12} className={cn(isUrgent ? "animate-pulse" : "")} />
                   {isUrgent ? "High Priority" : "Mark Urgent"}
                 </button>
                 <Button
-                  icon={currentStatus === 'Pending' ? undefined : <ShieldCheck size={14} />}
+                  variant="primary"
+                  className="w-1/2 h-8 text-[11px] font-bold justify-center shrink-0 px-2"
+                  icon={currentStatus === 'Pending' ? undefined : <ShieldCheck size={12} />}
                   onClick={handleSubmit}
                   disabled={!selectedFile || isUploading || isSubmitted}
                 >
@@ -466,52 +469,51 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
           </Card>
 
           <Card title={currentStatus === 'Pending' ? "Status" : "Review Status"}>
-            <div className="space-y-5">
+            <div className="space-y-4">
               <div className={cn(
-                "flex items-start gap-3 p-3 rounded-lg border",
+                "flex items-center gap-3 p-2.5 rounded-lg border",
                 currentStatus === 'Returned' ? "bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700" :
                   "bg-zinc-50 dark:bg-zinc-800/50 border-zinc-100 dark:border-zinc-800"
               )}>
                 <div className={cn(
-                  "w-9 h-9 rounded-lg flex items-center justify-center shrink-0",
+                  "w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
                   currentStatus !== 'Pending' ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-950" :
                     "bg-zinc-200 dark:bg-zinc-700 text-zinc-500 dark:text-zinc-400"
                 )}>
                   {currentStatus === 'Approved' ? (
-                    <ShieldCheck size={18} />
+                    <ShieldCheck size={16} />
                   ) : currentStatus === 'Returned' ? (
-                    <AlertCircle size={18} />
+                    <AlertCircle size={16} />
                   ) : (
-                    <Clock size={18} />
+                    <Clock size={16} />
                   )}
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                  <p className="text-xs font-bold text-zinc-900 dark:text-zinc-100">
                     {currentStatus === 'Approved' ? 'Approved' : currentStatus === 'Returned' ? 'Returned' : 'Pending Review'}
                   </p>
-                  <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">
+                  <p className="text-[10px] text-zinc-400 dark:text-zinc-500 font-medium mt-0.5">
                     {currentLastUpdated ? `Updated ${currentLastUpdated}` : 'No submission yet'}
                   </p>
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <div className="flex items-center gap-1.5 text-zinc-400 dark:text-zinc-500">
-                  <MessageSquare size={13} />
-                  <span className="text-[11px] font-medium">Adviser Feedback</span>
-                </div>
+              <div className="space-y-1.5">
+                <h4 className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider flex items-center gap-1.5">
+                  <MessageSquare size={11} /> Adviser Feedback
+                </h4>
                 <div className={cn(
-                  "p-3 rounded-lg text-sm leading-relaxed",
+                  "p-2.5 rounded-lg text-xs leading-relaxed font-medium",
                   currentStatus === 'Returned'
                     ? "bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 border-l-2 border-l-zinc-900 dark:border-l-zinc-100"
-                    : "bg-zinc-50 dark:bg-zinc-800/50 text-zinc-600 dark:text-zinc-400"
+                    : "bg-zinc-50/70 dark:bg-zinc-900/60 border border-zinc-100 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400"
                 )}>
                   {currentFeedback}
                 </div>
               </div>
 
               {currentStatus === 'Returned' && (
-                <Button variant="primary" className="w-full" icon={<FileUp size={16} />}>
+                <Button variant="primary" className="w-full h-8 text-[11px] font-bold justify-center" icon={<FileUp size={14} />}>
                   Upload Revised File
                 </Button>
               )}

@@ -4,13 +4,25 @@ A comprehensive, state-of-the-art web platform designed to streamline, track, an
 
 ---
 
+## 📚 Technical Documentation & Architecture
+
+Detailed guides and specifications are organized in the [`docs/`](./docs) directory:
+
+- 🏗️ [**System Architecture**](./docs/ARCHITECTURE.md) &mdash; High-level architecture, component hierarchy, directory layout, and data flow.
+- 📐 [**Refactoring Guidelines**](./docs/REFACTORING_GUIDELINES.md) &mdash; Essential development rules, styling standards, single-source-of-truth state conventions, and file renaming rules.
+- 📄 [**Document Workflows & Templates**](./docs/DOCUMENT_WORKFLOWS.md) &mdash; Complete 3-phase template inventory (11 documents), DOCX programmatic generation, and Excel DTR signature fitting.
+- 🗄️ [**Backend, Database & AI**](./docs/BACKEND_AND_DATABASE.md) &mdash; Supabase schema, storage buckets, fallback persistence, and serverless AI review routes.
+- 🚀 [**Deployment & Vercel Guide**](./docs/DEPLOYMENT_AND_VERCEL.md) &mdash; Vercel serverless configuration, environment variables checklist, and deployment gotchas.
+
+---
+
 ## 🌟 Key Capabilities & Features
 
-*   **Intelligent Document Auditing**: Features integrated AI grammar check panels and semantic content insights to assist advisers in reviewing student submissions.
+*   **Intelligent Document Auditing**: Features integrated AI grammar check panels and semantic content insights via Groq (`llama-3.3-70b-versatile`) and Google Gemini (`gemini-1.5-flash`) to assist advisers in reviewing student submissions.
 *   **OJT Phase Guards**: Dynamically locks/unlocks system options based on student progress stages (Before OJT $\rightarrow$ In OJT $\rightarrow$ Finals).
-*   **Built-in Template Builder**: Allows students to fill and generate structured, printable internship templates (DTR, MOA, Consent forms) directly from their portal.
-*   **System Configuration Hub**: Provides administrators with fine-grained control over OJT requirements, required hours, academic terms, and data backups.
-*   **Modern Interactive UI**: Sleek styling with CSS Glassmorphism, animations powered by Framer Motion, Tailwind CSS v4, and dynamic light/dark mode toggling.
+*   **Built-in Template Engine**: Allows students to fill and generate structured, printable internship templates (DOCX, PDF, and signed Excel DTR) directly from their portal without layout corruption.
+*   **System Configuration Hub**: Provides administrators with fine-grained control over OJT requirements, required hours, academic terms, template uploads, and user assignments.
+*   **Modern Interactive UI**: Modern styling with Framer Motion animations, Tailwind CSS v4, dynamic theme switching, and full dark/light mode support.
 
 ---
 
@@ -18,66 +30,34 @@ A comprehensive, state-of-the-art web platform designed to streamline, track, an
 
 ### 1. Student Portal
 Guided by a dynamic stage progression checklist, students can:
-*   **Pre-OJT**: Create, download, and upload the Comprehensive Resume, Parent/Guardian Letter of Consent, Memorandum of Agreement (MOA), and Endorsement Letter.
-*   **Active OJT**: Log and submit Daily Time Records (DTR), write Reflective Journals, and upload the Host Company Training Plan.
-*   **Finals**: Request supervisor evaluations and submit final OJT completion documents.
+*   **Before OJT**: Fill, download, and submit the Student Application Letter, Parent Consent Forms, Student Consent Forms, MOA, Endorsement Letter, and Proposal Letter.
+*   **In OJT**: Log and submit Daily Time Records (DTR), write Reflective Journals, and upload the Host Company Training Plan.
+*   **Finals**: Complete the Integration Paper and request supervisor Performance Appraisals.
 
 ### 2. Adviser Portal
 Allows OJT Coordinators and Advisers to manage their cohort efficiency:
 *   **Class Dashboard**: Track the real-time progress of all assigned sections and students.
-*   **Document Review Room**: View and audit PDF and text submissions using side-by-side viewports and AI-assisted grammar and content analysis modules.
-*   **Evaluations & Endorsements**: Sign off on company MOAs and supervisor evaluations.
+*   **Document Review Room**: View and audit PDF, DOCX, and XLSX submissions using side-by-side viewports and AI-assisted analysis.
+*   **Evaluations & Endorsements**: Sign off on company MOAs, weekly journals, and endorsements.
 
-### 3. Administrator Console
-Gives full operational oversight over the system:
-*   **System Configurations**: Configure Academic Year details, target hour limits, active document pipeline checklists, and 2-Factor Authentication overrides.
-*   **Backup & Recovery**: Instantly create full system snapshots or restore database states to ensure high availability and disaster recovery.
-*   **Announcements & Users**: Broadcast system-wide messages and manage user accounts and OJT coordinator assignments.
+### 3. Supervisor Portal
+*   **Daily Time Record (DTR) Approval**: Review student work hours, apply digital canvas signatures, and generate signed `.xlsx` files with luminance stroke fitting.
+*   **Weekly Journal Review**: Review and sign weekly student reflection logs.
 
----
-
-## 📁 Project Structure
-
-A clean, modular structure hosting the source codebase:
-
-```bash
-Capstone 2/
-├── .agents/               # Custom workspace rules and behavior guidelines
-├── public/                # Static public assets (e.g. document samples)
-├── src/
-│   ├── components/
-│   │   ├── compose/       # Interactive document layout modal inputs
-│   │   ├── layout/        # Main layout, Sidebar, Topbar navigation, Route protection
-│   │   ├── review/        # AI Grammar and Content Insight panels, PDF viewports
-│   │   ├── templates/     # Form preview overlays (DTR, Resume, MOA templates)
-│   │   └── ui/            # Reusable UI components (Card, Button, Badge, Stats)
-│   ├── hooks/             # Custom utility hooks
-│   ├── lib/               # Utility helper libraries
-│   ├── pages/
-│   │   ├── admin/         # Admin dashboards, Settings configuration, Monitoring panels
-│   │   ├── adviser/       # Adviser dashboards, review sessions, class progress reports
-│   │   ├── public/        # Landing page and Forgot Password panels
-│   │   ├── student/       # OJT phase portals, requirement checklists, submission portals
-│   │   ├── Login.tsx      # Multi-role authentication entry point
-│   │   ├── Notifications.tsx
-│   │   └── Profile.tsx    # Personal info and profile page
-│   ├── App.tsx            # Main router and security configuration
-│   ├── main.tsx           # Virtual DOM render hook
-│   ├── types.ts           # Typescript interfaces (User, Roles, Submissions)
-│   └── index.css          # Main Tailwind styles file
-├── package.json           # Scripts and system package dependencies
-└── vite.config.ts         # Vite bundler configurations
-```
+### 4. Administrator Console
+*   **Template Management**: Upload, preview, and distribute official master DOCX/PDF templates.
+*   **Monitoring & Verification**: Real-time progress monitoring, document verification, and user management.
 
 ---
 
 ## 💻 Tech Stack
 
-*   **Framework**: [React](https://react.dev/) + [Vite](https://vite.dev/) (Vite v6)
-*   **Language**: [TypeScript](https://www.typescriptlang.org/)
+*   **Frontend**: [React 19](https://react.dev/) + [Vite 6](https://vite.dev/)
+*   **Backend**: [Express.js](https://expressjs.com/) (Vercel Serverless `/api`)
+*   **Database & Storage**: [Supabase](https://supabase.com/) (PostgreSQL & Blob Storage with IndexedDB fallbacks)
 *   **Styling**: [Tailwind CSS v4](https://tailwindcss.com/)
-*   **Animations**: [Motion (Framer)](https://motion.dev/)
-*   **Icons**: [Lucide React](https://lucide.dev/)
+*   **Document Engines**: `@embedpdf/react-pdf-viewer`, `docx-preview`, `easy-template-x`, `exceljs`, `docx`, `pdf-parse`
+*   **Animations & Icons**: `motion` (Framer Motion), `lucide-react`
 
 ---
 
@@ -85,13 +65,14 @@ Capstone 2/
 
 ### Prerequisites
 *   Node.js (v18 or higher recommended)
+*   npm or yarn
 
 ### Getting Started
 
 1.  **Clone the Repository**:
     ```bash
-    git clone https://github.com/s5condlast-cmd/Web-Based-Practicum-System-With-AI-STI-MARIKINA-2.0.git
-    cd Capstone 2
+    git clone https://github.com/s5condlast-cmd/Capstone-2-Official-CloudHosting.git
+    cd MainCode
     ```
 
 2.  **Install Dependencies**:
@@ -104,17 +85,17 @@ Capstone 2/
     ```bash
     copy .env.example .env
     ```
-    Set your `GEMINI_API_KEY` in the `.env` file to activate AI grammar and insight features.
+    Configure your `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, and `VITE_GROQ_API_KEY` / `GEMINI_API_KEY`.
 
-4.  **Run the Server**:
-    Start the Vite local development server:
+4.  **Run Development Server**:
+    Start both the Vite frontend (`http://localhost:3000`) and the Express backend (`http://localhost:3001`):
     ```bash
     npm run dev
     ```
-    Open your browser and navigate to `http://localhost:3001/` (or the port specified in terminal).
 
-5.  **Compile & Build**:
-    To create a production build output in the `/dist` directory:
+5.  **Compile & Lint**:
     ```bash
-    npm run build
+    npm run lint     # TypeScript check (tsc --noEmit)
+    npm run build    # Vite production bundle build
     ```
+

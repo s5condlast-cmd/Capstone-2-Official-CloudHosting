@@ -188,3 +188,20 @@ When implementing UI that fetches data from the backend (Supabase), strictly adh
 3. **No Silent Fallbacks:** If a requested database record cannot be found, aggressively fail and render the project's standard `EmptyState` component. Do not silently substitute mock data or placeholders.
 4. **Placeholder Constraints:** Do not render placeholder or hardcoded statistics if a backend data source exists for that metric. However, for dashboard metrics or UI components where no backend endpoint exists yet, it is acceptable to render placeholders to preserve the dashboard layout, provided they are clearly identifiable as static data.
 5. **Shared EmptyState UI:** Always use the generic `src/components/ui/EmptyState.tsx` component when rendering zero-state scenarios (e.g., empty queues, no pending documents, 404s).
+
+## Excel DTR Signature Fitting Protocol
+
+When embedding supervisor or student canvas signatures into exported Excel spreadsheets (`.xlsx`) using ExcelJS:
+1. **Dynamic Physical Cell Dimensions**: Calculate the exact physical pixel dimensions of the cell (e.g., Column G width 30 = 225px, Row height 45 = 60px -> ratio 3.75:1).
+2. **Dark Ink Stroke Luminance Filtering**: When cropping signature canvas drawings, scan RGBA pixel arrays with a luminance filter (`alpha > 30 && (r < 200 || g < 200 || b < 200)`) to ignore solid white/light background pixels and lock tightly onto dark ink strokes.
+3. **Adaptive Scale Condition**: Scale the ink stroke to fill 90% of the target canvas height (`targetH = Math.round(rowHeightPoints * 1.33 * 2)`), expanding narrow strokes/initials so they fill the cell box in full view.
+4. **1:1 Cell Border Anchoring**: Span ExcelJS two-cell anchors from `col: 6.0` to `7.0` (exact column boundaries) and `(rowIndex - 1)` to `rowIndex`. Never use fractional offsets that cause Excel to shift the image frame to the left.
+5. **Scope Scoping**: Restrict signature cropping to DTR Approval (`DTRApproval.tsx`) and spreadsheet generation (`excelGenerator.ts`); do not alter unrelated pages like Weekly Journal Review.
+
+## Landing Page Asset Organization Protocol
+- **Native Directory**: All landing page icons, logos, and vector assets must be stored in and directly referenced from `public/images/Landing Page Icons/`:
+  - Brand Logo: `/images/Landing Page Icons/Logo.svg`
+  - Post Document Icon: `/images/Landing Page Icons/Landing Page Post.svg`
+  - Key Points Icon: `/images/Landing Page Icons/Landing Page key Points.svg`
+  - Selfie Graphic: `/images/Landing Page Icons/Landing Page Selfie.svg`
+- **File Discovery & Correct Placement**: Always inspect existing folder structures before moving or duplicating assets. Put all files into their designated directory and reference them by their exact native paths to prevent broken links or Vite `ENOENT` bundling errors.

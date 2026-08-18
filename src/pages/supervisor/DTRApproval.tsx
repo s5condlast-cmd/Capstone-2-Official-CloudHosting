@@ -24,9 +24,13 @@ import {
   Eye,
   FileText,
   Search,
-  CheckCircle2
+  CheckCircle2,
+  FileSpreadsheet,
+  Send
 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
+import { generateDTRXlsxBlob, generateDTRFileName, DTREntry, cropCanvasToDataUrl, normalizeSignatureDataUrl } from '@/src/lib/excelGenerator';
+import { submissionStorage } from '@/src/lib/submissionStorage';
 
 interface LogEntry {
   day: string;
@@ -146,6 +150,22 @@ export const DTRApproval: React.FC = () => {
   const [savedSignature, setSavedSignature] = useState<string | null>(() => {
     return localStorage.getItem('supervisor_saved_signature') || null;
   });
+
+  // Auto-upgrade any pre-existing localStorage signature to centered, cropped format
+  useEffect(() => {
+    const existingSig = localStorage.getItem('supervisor_saved_signature');
+    if (existingSig && existingSig.startsWith('data:image')) {
+      normalizeSignatureDataUrl(existingSig).then(cleanSig => {
+        if (cleanSig && cleanSig !== existingSig) {
+          try {
+            localStorage.setItem('supervisor_saved_signature', cleanSig);
+          } catch (e) {}
+          setSavedSignature(cleanSig);
+        }
+      });
+    }
+  }, []);
+
   const [showSignatureModal, setShowSignatureModal] = useState(false);
   const [targetLogIndex, setTargetLogIndex] = useState<number | null>(null);
   const [removeSignatureTargetIndex, setRemoveSignatureTargetIndex] = useState<number | null>(null);
@@ -218,18 +238,44 @@ export const DTRApproval: React.FC = () => {
     }
   };
 
-  // Canvas Drawing Logic
+  // Canvas Drawing Setup & Styling
+  useEffect(() => {
+    if (showSignatureModal && canvasRef.current) {
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 3;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+      }
+    }
+  }, [showSignatureModal]);
+
+  // Canvas Drawing Logic with scaled coordinate system
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     setIsDrawing(true);
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
     const rect = canvas.getBoundingClientRect();
     const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
     const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const x = (clientX - rect.left) * scaleX;
+    const y = (clientY - rect.top) * scaleY;
+
     ctx.beginPath();
-    ctx.moveTo(clientX - rect.left, clientY - rect.top);
+    ctx.moveTo(x, y);
   };
 
   const draw = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
@@ -238,10 +284,17 @@ export const DTRApproval: React.FC = () => {
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+
     const rect = canvas.getBoundingClientRect();
     const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
     const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
-    ctx.lineTo(clientX - rect.left, clientY - rect.top);
+
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const x = (clientX - rect.left) * scaleX;
+    const y = (clientY - rect.top) * scaleY;
+
+    ctx.lineTo(x, y);
     ctx.stroke();
     setHasDrawn(true);
   };
@@ -326,7 +379,7 @@ export const DTRApproval: React.FC = () => {
       toast.error('Please draw a signature before saving.');
       return;
     }
-    const signatureUrl = canvas.toDataURL('image/png');
+    const signatureUrl = cropCanvasToDataUrl(canvas);
 
     try {
       localStorage.setItem('supervisor_saved_signature', signatureUrl);
@@ -360,7 +413,7 @@ export const DTRApproval: React.FC = () => {
     setHasDrawn(false);
   };
 
-  const handleApprove = (id: string) => {
+  const handleApprove = async (id: string) => {
     const activeSignature = savedSignature || selectedDtr.signatureDataUrl;
     if (!activeSignature) {
       toast.info('Please draw your signature once to save before approving.');
@@ -374,7 +427,34 @@ export const DTRApproval: React.FC = () => {
       }
       return d;
     }));
-    toast.success(`DTR for ${selectedDtr.studentName} (Week ${selectedDtr.weekNumber}) approved successfully!`);
+
+    try {
+      const dtrEntry: DTREntry = {
+        studentName: selectedDtr.studentName,
+        studentId: selectedDtr.studentId,
+        courseSection: selectedDtr.course,
+        companyName: 'InnoTech Solutions Inc.',
+        weekNumber: selectedDtr.weekNumber,
+        monthYear: selectedDtr.dateRange,
+        totalHours: selectedDtr.totalHours,
+        status: 'Approved',
+        supervisorName: 'Company Supervisor',
+        logs: selectedDtr.logs
+      };
+
+      const xlsxBlob = await generateDTRXlsxBlob(dtrEntry);
+      await submissionStorage.publishSignedDTR(
+        selectedDtr.studentName,
+        selectedDtr.course,
+        selectedDtr.weekNumber,
+        xlsxBlob
+      );
+
+      toast.success(`DTR Approved & Submitted to Adviser! Signed .xlsx spreadsheet published to Supabase for ${selectedDtr.studentName}.`);
+    } catch (err) {
+      console.warn('Submission notice:', err);
+      toast.success(`DTR for ${selectedDtr.studentName} (Week ${selectedDtr.weekNumber}) approved successfully!`);
+    }
   };
 
   const handleRejectSubmit = () => {
@@ -438,6 +518,39 @@ export const DTRApproval: React.FC = () => {
       }
       return d;
     }));
+  };
+
+  const handleDownloadExcel = async () => {
+    try {
+      const dtrEntry: DTREntry = {
+        studentName: selectedDtr.studentName,
+        studentId: selectedDtr.studentId,
+        courseSection: selectedDtr.course,
+        companyName: 'InnoTech Solutions Inc.',
+        weekNumber: selectedDtr.weekNumber,
+        monthYear: selectedDtr.dateRange,
+        totalHours: selectedDtr.totalHours,
+        status: selectedDtr.status,
+        supervisorName: 'Company Supervisor',
+        logs: selectedDtr.logs
+      };
+
+      const xlsxBlob = await generateDTRXlsxBlob(dtrEntry);
+
+      // Publish directly to Supabase for Adviser & Admin without downloading to supervisor's device
+      await submissionStorage.publishSignedDTR(
+        selectedDtr.studentName,
+        selectedDtr.course,
+        selectedDtr.weekNumber,
+        xlsxBlob
+      );
+
+      const signedCount = selectedDtr.logs.filter(l => l.signatureUrl).length;
+      toast.success(`DTR Excel Spreadsheet published to Adviser & Admin for verification! (${signedCount}/${selectedDtr.logs.length} dates signed)`);
+    } catch (err: any) {
+      console.error("Excel export error:", err);
+      toast.error("Failed to publish DTR Excel spreadsheet.");
+    }
   };
 
   return (
@@ -610,13 +723,21 @@ export const DTRApproval: React.FC = () => {
       {/* VIEW 2: DETAILED DTR VERIFICATION WORKSPACE */}
       {viewMode === 'review' && selectedDtr && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* Left Side: Log breakdown (8 cols) */}
-          <div className="lg:col-span-8 space-y-6">
+          {/* Left Side: Log breakdown (9 cols - matching WeeklyJournalReview) */}
+          <div className="lg:col-span-9 space-y-6">
             <Card 
               title={`${selectedDtr.studentName} - Week ${selectedDtr.weekNumber} Logs`}
               subtitle={selectedDtr.dateRange}
               action={
                 <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleDownloadExcel}
+                    title="Click to export & download DTR Excel Spreadsheet (.xlsx)"
+                    className="flex items-center gap-1.5 text-[11px] font-bold px-3 py-1 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 rounded-lg border border-emerald-300 dark:border-emerald-800 transition-all cursor-pointer shadow-2xs group"
+                  >
+                    <FileSpreadsheet size={13} className="text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform shrink-0" />
+                    <span>Export DTR Excel (.xlsx)</span>
+                  </button>
                   <span className="text-[11px] font-bold px-2.5 py-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-lg border border-zinc-200 dark:border-zinc-700">
                     Total: {selectedDtr.totalHours} hrs
                   </span>
@@ -825,9 +946,9 @@ export const DTRApproval: React.FC = () => {
             </Card>
           </div>
 
-          {/* Right Side: Verification Sidebar (4 cols) */}
-          <div className="lg:col-span-4 space-y-4">
-            {/* Student Switcher Card (Restored) */}
+          {/* Right Side: Verification Sidebar (3 cols - matching WeeklyJournalReview) */}
+          <div className="lg:col-span-3 space-y-4">
+            {/* Student Switcher Card */}
             <Card title="Student DTR Select">
               <div className="space-y-2">
                 {dtrs.map(dtr => (
@@ -835,19 +956,22 @@ export const DTRApproval: React.FC = () => {
                     key={dtr.id}
                     onClick={() => setSelectedDtrId(dtr.id)}
                     className={cn(
-                      "w-full flex items-center justify-between p-2.5 rounded-xl border text-left transition-all cursor-pointer",
+                      "w-full flex items-center justify-between p-2.5 rounded-lg border text-left transition-all cursor-pointer",
                       selectedDtrId === dtr.id
                         ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 border-zinc-900 dark:border-white shadow-xs"
                         : "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 border-zinc-200/80 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
                     )}
                   >
-                    <div className="space-y-0.5 min-w-0">
+                    <div className="space-y-0.5 min-w-0 pr-1.5">
                       <p className="text-xs font-bold truncate">{dtr.studentName}</p>
-                      <p className={cn("text-[10px] truncate", selectedDtrId === dtr.id ? "text-zinc-300 dark:text-zinc-600" : "text-zinc-400")}>
+                      <p className={cn("text-[10px] truncate font-normal", selectedDtrId === dtr.id ? "text-zinc-300 dark:text-zinc-600" : "text-zinc-400")}>
                         {dtr.course} · Week {dtr.weekNumber}
                       </p>
                     </div>
-                    <Badge variant={dtr.status === 'Approved' ? 'success' : dtr.status === 'Returned' ? 'error' : 'warning'}>
+                    <Badge 
+                      variant={dtr.status === 'Approved' ? 'success' : dtr.status === 'Returned' ? 'error' : 'warning'}
+                      className="text-[9px] px-1.5 py-0.5 font-bold uppercase tracking-wider shrink-0"
+                    >
                       {dtr.status}
                     </Badge>
                   </button>
@@ -857,54 +981,54 @@ export const DTRApproval: React.FC = () => {
 
             {/* Supervisor Remarks Card */}
             <Card title="Supervisor Verification Remarks">
-              <div className="space-y-3.5">
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-zinc-700 dark:text-zinc-300">
-                    Return / Revision Remarks (Required for Return)
+              <div className="space-y-3">
+                <div>
+                  <label className="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-1 block">
+                    Remarks / Revision Notes
                   </label>
                   <textarea
-                    rows={3}
-                    placeholder="Provide specific feedback if requesting time log corrections..."
+                    rows={2}
+                    placeholder="Provide specific feedback..."
                     value={rejectNotes}
                     onChange={(e) => setRejectNotes(e.target.value)}
-                    className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-2.5 text-xs outline-none focus:border-primary transition-colors text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400"
+                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg p-2.5 text-[11px] outline-none focus:border-primary transition-colors text-zinc-800 dark:text-zinc-200 resize-none font-medium leading-relaxed"
                   />
                 </div>
 
-                {/* Action Toolbar */}
+                {/* Action Toolbar - Compact Equal Buttons */}
                 <div className="flex gap-2">
                   <Button 
                     variant="outline" 
-                    className="w-1/2 text-red-600 border-red-200 hover:bg-red-50 dark:text-red-400 dark:border-red-950 dark:hover:bg-red-950/20 text-xs h-8 justify-center font-semibold"
-                    icon={<X size={13} />}
+                    className="w-1/2 text-red-600 border-red-200 hover:bg-red-50 dark:text-red-400 text-[11px] h-8 justify-center font-bold"
+                    icon={<X size={12} />}
                     onClick={handleRejectSubmit}
                   >
                     Return DTR
                   </Button>
                   <Button 
                     variant="primary"
-                    className="w-1/2 text-xs h-8 justify-center font-bold"
-                    icon={<Check size={13} />}
+                    className="w-1/2 text-[11px] h-8 justify-center font-bold gap-1 px-1"
+                    icon={<Send size={12} />}
                     onClick={() => handleApprove(selectedDtr.id)}
                   >
-                    Approve DTR
+                    Approve
                   </Button>
                 </div>
 
                 {/* Remarks History */}
                 {selectedDtr?.remarksHistory && selectedDtr.remarksHistory.length > 0 && (
-                  <div className="space-y-1.5 pt-2.5 border-t border-zinc-100 dark:border-zinc-800">
+                  <div className="space-y-1.5 pt-2 border-t border-zinc-100 dark:border-zinc-800">
                     <h4 className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider flex items-center gap-1.5">
                       <MessageSquare size={11} /> Remarks History
                     </h4>
                     <div className="space-y-1.5">
                       {selectedDtr.remarksHistory.map((rem, idx) => (
-                        <div key={idx} className="p-2.5 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/40 dark:border-zinc-800/40 rounded-xl space-y-0.5">
-                          <div className="flex justify-between items-center text-[10px] font-bold text-zinc-400">
+                        <div key={idx} className="p-2.5 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/50 dark:border-zinc-800/50 rounded-lg space-y-0.5">
+                          <div className="flex justify-between items-center text-[9px] font-bold text-zinc-400">
                             <span>{rem.role} Comment</span>
                             <span>{rem.date}</span>
                           </div>
-                          <p className="text-xs text-zinc-700 dark:text-zinc-300 font-medium italic">"{rem.text}"</p>
+                          <p className="text-[11px] text-zinc-700 dark:text-zinc-300 font-medium italic">"{rem.text}"</p>
                         </div>
                       ))}
                     </div>

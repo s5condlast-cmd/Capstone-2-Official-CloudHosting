@@ -256,11 +256,8 @@ export function downloadJournalTemplate() {
     <br/>
     <table style="border:none;width:100%;">
       <tr style="border:none;">
-        <td style="border:none;width:50%;text-align:center;padding-top:30px;">
+        <td style="border:none;width:100%;text-align:center;padding-top:30px;">
           <div class="sig-line" style="margin:0 auto;">Student Signature</div>
-        </td>
-        <td style="border:none;width:50%;text-align:center;padding-top:30px;">
-          <div class="sig-line" style="margin:0 auto;">Company Supervisor</div>
         </td>
       </tr>
     </table>
