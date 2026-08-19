@@ -4,7 +4,7 @@ import { Agentation } from 'agentation';
 import { Toaster } from 'sonner';
 import { LandingPage } from './pages/public/LandingPage';
 import { ForgotPassword } from './pages/public/ForgotPassword';
-import { Login } from './pages/Login';
+import { Login } from './pages/public/Login';
 import { MainLayout } from './components/layout/MainLayout';
 import { ProtectedRoute } from './components/layout/ProtectedRoute';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
@@ -41,7 +41,7 @@ import { AdviserDocumentEditor } from './pages/adviser/AdviserDocumentEditor';
 import { AdminReviewSession } from './pages/admin/AdminReviewSession';
 import { AdminDocumentEditor } from './pages/admin/AdminDocumentEditor';
 import { MyStudents } from './pages/adviser/MyStudents';
-import { Notifications } from './pages/Notifications';
+import { Notifications } from './pages/shared/Notifications';
 
 import { SupervisorDashboard } from './pages/supervisor/SupervisorDashboard';
 import { MyInterns } from './pages/supervisor/MyInterns';
@@ -49,7 +49,7 @@ import { DTRApproval } from './pages/supervisor/DTRApproval';
 import { WeeklyJournalReview } from './pages/supervisor/WeeklyJournalReview';
 import { InternshipCompletion } from './pages/supervisor/InternshipCompletion';
 
-import { Profile } from './pages/Profile';
+import { Profile } from './pages/shared/Profile';
 import { User, Role } from './types';
 
 // Mock simple sub-pages for this prototype
