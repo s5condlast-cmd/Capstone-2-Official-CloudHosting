@@ -99,8 +99,7 @@ MainCode/
 │   │   │   ├── DocumentProgressTimeline.tsx # Document status timeline tracker
 │   │   │   ├── DocumentWorkflow.tsx        # Core: Template preview + fill form + generate DOCX
 │   │   │   ├── FillableField.tsx           # Single fillable form field component
-│   │   │   └── StudentDocumentPage.tsx     # Shared layout wrapper for ALL student doc pages
-│   │   ├── composer/
+│   │   │   ├── StudentDocumentPage.tsx     # Shared layout wrapper for ALL student doc pages
 │   │   │   └── StructuredDocumentRenderer.tsx  # Structured JSON document form renderer
 │   │   ├── layout/
 │   │   │   ├── MainLayout.tsx              # App shell: sidebar + topbar + content outlet
@@ -113,7 +112,7 @@ MainCode/
 │   │   │   ├── DocxViewer.tsx              # docx-preview renderer with TreeWalker placeholder scan
 │   │   │   ├── EmbedPdfWorkspace.tsx       # @embedpdf/react-pdf-viewer wrapper
 │   │   │   ├── UnifiedReviewSession.tsx    # Combined PDF/DOCX review + AI + comments workspace
-│   │   │   └── templateFields.ts           # Template-specific fillable field definitions
+│   │   │   └── templateFields.ts           # Template field exports
 │   │   └── ui/
 │   │       ├── Badge.tsx                   # Theme-aware badge component
 │   │       ├── Button.tsx                  # Theme-aware button (variant="primary"|"outline"|etc.)
@@ -124,6 +123,8 @@ MainCode/
 │   │       ├── Input.tsx                   # Styled text input component
 │   │       ├── Skeleton.tsx               # Loading skeleton placeholder
 │   │       └── StatCard.tsx                # Dashboard metric/stat display card
+│   ├── config/
+│   │   └── templateFields.ts               # Template-specific fillable field definitions
 │   ├── hooks/
 │   │   ├── useDocumentStatus.ts            # Fetches latest submission status from Supabase
 │   │   ├── usePhaseLock.ts                 # Manages OJT phase lock/unlock state
@@ -161,9 +162,13 @@ MainCode/
 │   │   │   ├── MOAReview.tsx
 │   │   │   ├── MyStudents.tsx
 │   │   │   └── ReviewDocs.tsx
-│   │   ├── public/
+│   │   ├── public/                         # Public auth & landing pages
 │   │   │   ├── ForgotPassword.tsx
-│   │   │   └── LandingPage.tsx
+│   │   │   ├── LandingPage.tsx
+│   │   │   └── Login.tsx
+│   │   ├── shared/                         # Shared user pages (all roles)
+│   │   │   ├── Notifications.tsx
+│   │   │   └── Profile.tsx
 │   │   ├── student/                        # 11 student pages
 │   │   │   ├── DTR.tsx
 │   │   │   ├── IntegrationPaper.tsx
@@ -176,15 +181,12 @@ MainCode/
 │   │   │   ├── StudentApplicationLetter.tsx
 │   │   │   ├── StudentDashboard.tsx
 │   │   │   └── WeeklyJournal.tsx
-│   │   ├── supervisor/                     # 5 supervisor pages
-│   │   │   ├── DTRApproval.tsx
-│   │   │   ├── InternshipCompletion.tsx
-│   │   │   ├── MyInterns.tsx
-│   │   │   ├── SupervisorDashboard.tsx
-│   │   │   └── WeeklyJournalReview.tsx
-│   │   ├── Login.tsx
-│   │   ├── Notifications.tsx
-│   │   └── Profile.tsx
+│   │   └── supervisor/                     # 5 supervisor pages
+│   │       ├── DTRApproval.tsx
+│   │       ├── InternshipCompletion.tsx
+│   │       ├── MyInterns.tsx
+│   │       ├── SupervisorDashboard.tsx
+│   │       └── WeeklyJournalReview.tsx
 │   ├── services/
 │   │   ├── FieldDetectionService.ts        # Auto-detects field bindings from StructuredDocument
 │   │   ├── TemplateValidator.ts            # Validates template version schemas
@@ -194,12 +196,12 @@ MainCode/
 │   │       ├── ParserErrors.ts             # Parser error type definitions
 │   │       └── ParserManager.ts            # Parser registry and orchestrator
 │   ├── types/
+│   │   ├── core.ts                         # Core domain types: User, Role, AiFindings, Company
+│   │   ├── index.ts                        # Barrel export for all types
 │   │   └── structuredDocument.ts           # Full structured document type system
-│   ├── utils/
-│   │   └── templateGenerator.ts            # Legacy HTML-to-DOC template generator
 │   ├── App.tsx                             # Root router, session state, theme init
 │   ├── main.tsx                            # React DOM root render
-│   ├── types.ts                            # Core domain types: User, Role, AiFindings, Company
+│   ├── types.ts                            # Re-exports from types/index.ts
 │   ├── index.css                           # Tailwind CSS v4 + print styles + theme tokens
 │   └── vite-env.d.ts                       # Vite environment type declarations
 ├── Features/Students/studentfeature.md     # Student workflow design spec

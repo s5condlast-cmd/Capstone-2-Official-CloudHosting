@@ -213,8 +213,6 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-900 flex flex-col items-center justify-center p-4">
 
-
-
       {/* ── Card Container ── */}
       <Card
         className="w-full max-w-[420px] border border-zinc-200/80 dark:border-zinc-800/80 p-0 bg-white dark:bg-zinc-950 rounded-xl shadow-sm relative overflow-hidden"
