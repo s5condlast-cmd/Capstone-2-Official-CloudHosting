@@ -22,16 +22,22 @@ export const submissionStorage = {
   async uploadSubmission(file: File, studentName: string, course: string, docType: string, urgency: 'low' | 'medium' | 'high' = 'medium'): Promise<StudentDocument> {
     const fileExt = file.name.split('.').pop();
     const fileName = `${studentName.replace(/\s+/g, '_')}_${docType.replace(/\s+/g, '_')}_${Date.now()}.${fileExt}`;
-    const filePath = `submissions/${fileName}`;
+    let filePath = `submissions/${fileName}`;
 
     try {
-      // Upload file to storage
-      const { error: uploadError } = await supabase.storage
-        .from('student_submissions')
-        .upload(filePath, file);
-
-      if (uploadError) {
-        console.warn('Storage Upload Notice (proceeding with DB record):', uploadError);
+      // Upload file to Cloudinary via backend
+      const formData = new FormData();
+      formData.append('file', file);
+      const uploadRes = await fetch(`/api/cloudinary/upload?folder=practicum/submissions`, {
+        method: 'POST',
+        body: formData,
+      });
+      const uploadData = await uploadRes.json();
+      if (!uploadRes.ok) {
+        console.warn('Cloudinary Upload Notice (proceeding with DB record):', uploadData.error);
+      } else {
+        // Use the Cloudinary URL as file_path
+        filePath = uploadData.url;
       }
 
       // Insert database record
@@ -107,7 +113,7 @@ export const submissionStorage = {
   // Publish a signed DTR spreadsheet (.xlsx) from Supervisor to Supabase Storage & Database for Adviser Review
   async publishSignedDTR(studentName: string, course: string, weekNumber: number | string, xlsxBlob: Blob): Promise<StudentDocument> {
     const fileName = `Signed_DTR_Week_${weekNumber}_${studentName.replace(/\s+/g, '_')}_${Date.now()}.xlsx`;
-    const filePath = `submissions/${fileName}`;
+    let filePath = `submissions/${fileName}`;
     const docType = `DTR Form (Week ${weekNumber})`;
 
     const newDoc: StudentDocument = {
@@ -130,15 +136,19 @@ export const submissionStorage = {
     } catch (e) {}
 
     try {
-      const { error: uploadError } = await supabase.storage
-        .from('student_submissions')
-        .upload(filePath, xlsxBlob, {
-          contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-          upsert: true
-        });
-
-      if (uploadError) {
-        console.warn('Storage Upload Notice for Signed DTR (proceeding with DB record):', uploadError);
+      // Upload DTR to Cloudinary via backend
+      const formData = new FormData();
+      formData.append('file', new File([xlsxBlob], fileName, { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
+      const uploadRes = await fetch(`/api/cloudinary/upload?folder=practicum/submissions`, {
+        method: 'POST',
+        body: formData,
+      });
+      const uploadData = await uploadRes.json();
+      if (!uploadRes.ok) {
+        console.warn('Cloudinary Upload Notice for Signed DTR (proceeding with DB record):', uploadData.error);
+      } else {
+        filePath = uploadData.url;
+        newDoc.file_path = uploadData.url;
       }
 
       const { data, error: insertError } = await supabase
@@ -171,6 +181,11 @@ export const submissionStorage = {
 
   // Get a public URL for the document
   getFileUrl(filePath: string): string {
+    // If already a full URL (Cloudinary), return directly
+    if (filePath.startsWith('http')) {
+      return filePath;
+    }
+    // Legacy fallback: Supabase Storage
     const { data } = supabase.storage
       .from('student_submissions')
       .getPublicUrl(filePath);

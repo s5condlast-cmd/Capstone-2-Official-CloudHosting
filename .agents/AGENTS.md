@@ -3,6 +3,10 @@
 ## Alignment and Formatting Clarification
 - **Identify Render Channels**: When the user reports layout or styling discrepancies in documents, clarify immediately whether the issue is visible on the **web application's React preview** or within the **downloaded/exported DOCX or PDF files**.
 - **Interactive Alignment**: Suggest the `/grill-me` slash command if there is layout ambiguity or if multiple attempts to resolve a visual bug have failed. This helps align on design specs through an interactive interview.
+- **Mandatory Post-Grill /goal Interactive Prompt**: Immediately after concluding any `/grill-me` interview and finalizing the implementation plan, the agent MUST call the `ask_question` tool with an interactive choice asking the user:
+  1. *Execute using `/goal` mode* (Autonomous, extra-thorough end-to-end execution without stopping until 100% complete)
+  2. *Execute using standard step-by-step mode* (Standard execution with intermediate checkpoints)
+  The agent is strictly FORBIDDEN from beginning code changes or execution until the user explicitly responds to this `ask_question` prompt, regardless of any automated artifact approval hooks.
 - **Goal Mode**: Suggest the `/goal` slash command when the user wants to initiate a complex, long-running task that requires the agent to be extra thorough and not stop until the goal is fully achieved.
 
 ## DOCX Template Editing Pattern
@@ -96,8 +100,12 @@ When performing refactoring or file renaming operations (such as renaming legacy
 - **Delete Legacy Files**: Ensure old files are completely deleted from the disk and their corresponding exports are removed.
 - **Git State Care**: If a file is marked as deleted or renamed in `git status`, do not run `git checkout` on the legacy file path as it will restore outdated versions and cause build conflicts.
 - **Verification**: Run `npm run lint` (`tsc --noEmit`) immediately after any file renaming or refactoring to ensure no legacy imports, missing components, or duplicate exports exist.
-## Backend Preference
+## Backend Preference & Supabase Security Standards
 - **Always use Supabase**: For any backend features involving databases, authentication, or file storage, always use the configured Supabase client instead of creating mock stores or local state.
+- **RLS Authorization Security**: Never check `user_metadata` in RLS policies or trigger functions. Always use `auth.uid()` or check protected claims via `(SELECT auth.jwt() -> 'app_metadata' ->> 'role')`.
+- **Auth Query Performance (InitPlan)**: In RLS policies, always wrap auth evaluations as subqueries `(SELECT auth.uid())` and `(SELECT auth.jwt())` so Postgres calculates the user identity once per query instead of per row.
+- **Function Search Path**: All Postgres trigger functions must declare `SET search_path = public, pg_temp` and `SECURITY DEFINER` to prevent search path manipulation.
+- **Storage Policy Scoping**: Do not grant blanket public `SELECT` on `storage.objects` for user submission buckets. Provide `INSERT` for uploads and restrict `SELECT` (listing) to authenticated staff/advisers while relying on public CDN URLs for individual file access.
 
 ## EmbedPDF Viewer Pattern
 
@@ -205,3 +213,10 @@ When embedding supervisor or student canvas signatures into exported Excel sprea
   - Key Points Icon: `/images/Landing Page Icons/Landing Page key Points.svg`
   - Selfie Graphic: `/images/Landing Page Icons/Landing Page Selfie.svg`
 - **File Discovery & Correct Placement**: Always inspect existing folder structures before moving or duplicating assets. Put all files into their designated directory and reference them by their exact native paths to prevent broken links or Vite `ENOENT` bundling errors.
+
+## TypeScript & React 19 Standards
+- **Core Type Declarations**: React 19 projects must always include `@types/react@^19.0.0` and `@types/react-dom@^19.0.0` in `devDependencies`. Missing declarations cause widespread `JSX.IntrinsicElements` and callback parameter inference failures across all TSX files.
+- **Framer Motion Component Integration**: When wrapping `motion` components (`motion.button`, `motion.div`, `motion.span`), do not extend standard `React.ButtonHTMLAttributes` or `React.HTMLAttributes` directly as React 19's `onAnimationStart` signature conflicts with Framer Motion's `AnimationDefinition`. Always type props as `Omit<HTMLMotionProps<'element'>, 'ref' | 'children'>`.
+- **Component Prop & Variant Extensibility**: Foundational UI primitives (`Button`, `Badge`, `Card`, `Input`, `Skeleton`) must preserve standard variant aliases (`default`, `secondary`, `primary`, `destructive`, `outline`) and common layout props (`icon`, `subtitle`) to maintain compatibility across all admin, student, adviser, and supervisor sub-pages.
+- **Zero-Error Verification Gatekeeping**: Before concluding any code modification, always execute `npm run lint` (`tsc --noEmit`) to verify that all modules, JSX types, and interfaces compile cleanly with zero errors.
+

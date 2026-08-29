@@ -1,8 +1,8 @@
 import React from 'react';
 import { cn } from '@/src/lib/utils';
-import { motion } from 'motion/react';
+import { motion, type HTMLMotionProps } from 'motion/react';
 
-interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {
+interface SkeletonProps extends Omit<HTMLMotionProps<'div'>, 'ref'> {
   className?: string;
 }
 

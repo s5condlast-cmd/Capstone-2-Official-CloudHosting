@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 32" fill="none">
+  <!-- Pass 1: Organic wavy painterly brush stroke -->
+  <path
+    d="M 5 20 C 48 23, 98 18.5, 148 12.5 C 198 6.5, 258 7.5, 318 12.5 C 348 15, 375 18, 396 16"
+    stroke="#EF4444"
+    stroke-width="11"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+
+  <!-- Pass 1: Upper Wave Sheen -->
+  <path
+    d="M 12 17 C 52 20, 102 15.5, 152 9.5 C 202 3.5, 262 4.5, 322 9.5 C 350 12, 375 14.5, 390 13"
+    stroke="#FCA5A5"
+    stroke-width="3.5"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    opacity="0.9"
+  />
+
+  <!-- Pass 2: Organic wavy return brush stroke -->
+  <path
+    d="M 396 19 C 355 23.5, 295 18, 235 12.5 C 175 7, 115 9.5, 65 16 C 38 19.5, 18 21, 5 21"
+    stroke="#DC2626"
+    stroke-width="9.5"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+
+  <!-- Pass 2: Lower Wave Accent -->
+  <path
+    d="M 380 22 C 340 26, 285 19.5, 225 14.5 C 165 9.5, 105 11.5, 55 18 C 30 21, 15 22, 8 22"
+    stroke="#EF4444"
+    stroke-width="3"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    opacity="0.85"
+  />
+</svg>

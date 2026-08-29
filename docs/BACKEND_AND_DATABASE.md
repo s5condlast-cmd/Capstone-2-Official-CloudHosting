@@ -73,7 +73,25 @@ Stores admin-managed template catalog entries.
 | `size` | text | Human-readable size (e.g. "320 KB") |
 | `updated` | text | Last update date string |
 
-### Migration-Defined Tables (from [`supabase/migrations/20260724_template_platform.sql`](file:///c:/Users/johnd/Downloads/MainCode/supabase/migrations/20260724_template_platform.sql))
+### Database Migration Scripts
+
+The database schema and policies are organized into two sequential migration scripts located in `supabase/migrations/`:
+
+1. **[`01_initial_schema.sql`](file:///c:/Users/johnd/Downloads/MainCode/supabase/migrations/01_initial_schema.sql)** (SQL Query: `01_initial_schema`):
+   - Creates all tables: `document_templates`, `document_template_versions`, `document_instances`, `student_documents`, `template_metadata`.
+   - Creates triggers: `update_updated_at_column`, `validate_document_instance_integrity` (with secure `SET search_path = public, pg_temp`).
+   - Creates foreign keys and indexes.
+   - Sets up InitPlan-optimized Row Level Security (RLS) policies for all tables.
+
+2. **[`02_storage_security_policies.sql`](file:///c:/Users/johnd/Downloads/MainCode/supabase/migrations/02_storage_security_policies.sql)** (SQL Query: `02_storage_security_policies`):
+   - Initializes the 3 storage buckets: `templates`, `student_submissions`, `signed_dtrs`.
+   - Configures public read/management policies for `templates`.
+   - Configures upload policies (`INSERT` only) for `student_submissions` and `signed_dtrs`.
+   - Enforces scoped `SELECT` policies to prevent unauthenticated file scraping/enumeration.
+
+---
+
+### Migration-Defined Tables (from [`01_initial_schema.sql`](file:///c:/Users/johnd/Downloads/MainCode/supabase/migrations/01_initial_schema.sql))
 
 These tables support the structured document template system:
 
@@ -117,18 +135,61 @@ These tables support the structured document template system:
 - Unique index prevents duplicate active submissions: `(student_id, template_id) WHERE status NOT IN ('archived','approved')`
 - Trigger validates `template_version_id` belongs to stated `template_id`
 - Non-admin/adviser roles cannot modify `template_id`, `template_version_id`, or `student_id` on existing instances
-- Row Level Security (RLS) enabled on all three tables
+- Row Level Security (RLS) enabled on all tables
+- Security & Performance compliance (no user_metadata in RLS, (SELECT auth.uid()) optimization, immutable search_path on triggers)
 
 ---
 
-## 3. Storage Buckets
+## 3. Storage Buckets & Access Policies
 
-| Bucket | Purpose | Used By |
-|:---|:---|:---|
-| `student_submissions` | Student-uploaded PDFs, DOCXs, and supervisor-signed XLSXs | `submissionStorage.ts` |
-| `templates` | Admin-uploaded master templates + optional `${id}_pdf_backup` files | `templateStorage.ts` |
+| Bucket | Public CDN Access | Upload Permission | List & Browse Permission | Used By |
+|:---|:---|:---|:---|:---|
+| `templates` | `true` | Public/Admin (`INSERT`, `UPDATE`, `DELETE`) | Public (`SELECT`) | `templateStorage.ts` |
+| `student_submissions` | `true` | Public/Student (`INSERT`) | Authenticated staff/advisers only | `submissionStorage.ts` |
+| `signed_dtrs` | `true` | Public/Supervisor (`INSERT`) | Authenticated staff/advisers only | `submissionStorage.ts` |
+
+### Recommended Storage Security Policies
+```sql
+-- Allow public reading & listing of templates
+CREATE POLICY "templates_read_policy" ON storage.objects 
+FOR SELECT USING (bucket_id = 'templates');
+
+-- Allow managing templates
+CREATE POLICY "templates_write_policy" ON storage.objects 
+FOR INSERT WITH CHECK (bucket_id = 'templates');
+
+CREATE POLICY "templates_modify_policy" ON storage.objects 
+FOR UPDATE USING (bucket_id = 'templates') WITH CHECK (bucket_id = 'templates');
+
+CREATE POLICY "templates_delete_policy" ON storage.objects 
+FOR DELETE USING (bucket_id = 'templates');
+
+-- Allow file uploads for student submissions & signed DTRs
+CREATE POLICY "submissions_upload_policy" ON storage.objects 
+FOR INSERT WITH CHECK (bucket_id IN ('student_submissions', 'signed_dtrs'));
+
+-- Restrict listing student submissions to authenticated staff/advisers (prevents public file scraping)
+CREATE POLICY "submissions_select_policy" ON storage.objects 
+FOR SELECT TO authenticated 
+USING (
+    bucket_id IN ('student_submissions', 'signed_dtrs')
+    AND (
+        ((SELECT auth.jwt()) -> 'app_metadata' ->> 'role') IN ('admin', 'adviser')
+        OR ((SELECT auth.jwt()) ->> 'role') IN ('admin', 'adviser', 'service_role')
+        OR (storage.foldername(name))[1] = (SELECT auth.uid())::text
+    )
+);
+```
 
 ---
+
+## 4. Supabase Security & Database Advisor Guidelines
+
+When writing Supabase SQL migrations and RLS policies, adhere to these rules:
+1. **Never use `user_metadata` for authorization:** Always check `app_metadata` (`(SELECT auth.jwt()) -> 'app_metadata' ->> 'role'`) or `auth.uid()`. `user_metadata` can be tampered with by client users.
+2. **Wrap Auth calls for InitPlan query caching:** Always use `(SELECT auth.uid())` and `(SELECT auth.jwt())` inside RLS policy conditions so Postgres evaluates user identity once per query instead of per row.
+3. **Explicit Search Path on Functions:** All Postgres trigger functions must declare `SET search_path = public, pg_temp` and `SECURITY DEFINER` to prevent search path hijacking.
+4. **Index All Foreign Keys:** Every foreign key column (e.g. `template_id`, `current_version_id`) must have a dedicated index for optimal JOIN and constraint performance.
 
 ## 4. Offline Fallback Architecture
 

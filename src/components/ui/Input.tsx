@@ -4,10 +4,11 @@ import { cn } from '@/src/lib/utils';
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement | HTMLTextAreaElement> {
   label?: string;
   as?: 'input' | 'textarea';
+  icon?: React.ReactNode;
 }
 
 export const Input = React.forwardRef<HTMLInputElement | HTMLTextAreaElement, InputProps>(
-  ({ className, label, type = 'text', as = 'input', ...props }, ref) => {
+  ({ className, label, type = 'text', as = 'input', icon, ...props }, ref) => {
     const Component = as;
     return (
       <div className="flex flex-col gap-2 w-full">
@@ -16,16 +17,24 @@ export const Input = React.forwardRef<HTMLInputElement | HTMLTextAreaElement, In
             {label}
           </label>
         )}
-        <Component
-          ref={ref as any}
-          type={type}
-          className={cn(
-            'w-full bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800/80 rounded-lg p-3 font-medium transition-all shadow-xs focus:border-zinc-950 dark:focus:border-zinc-200 focus:ring-4 focus:ring-zinc-950/10 outline-none placeholder:text-zinc-400 dark:placeholder:text-zinc-500 text-sm text-zinc-950 dark:text-white',
-            as === 'textarea' && 'min-h-[120px] resize-none',
-            className
+        <div className="relative flex items-center w-full">
+          {icon && (
+            <div className="absolute left-3 text-zinc-400 pointer-events-none flex items-center justify-center">
+              {icon}
+            </div>
           )}
-          {...props as any}
-        />
+          <Component
+            ref={ref as any}
+            type={type}
+            className={cn(
+              'w-full bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800/80 rounded-lg p-3 font-medium transition-all shadow-xs focus:border-zinc-950 dark:focus:border-zinc-200 focus:ring-4 focus:ring-zinc-950/10 outline-none placeholder:text-zinc-400 dark:placeholder:text-zinc-500 text-sm text-zinc-950 dark:text-white',
+              icon && 'pl-10',
+              as === 'textarea' && 'min-h-[120px] resize-none',
+              className
+            )}
+            {...props as any}
+          />
+        </div>
       </div>
     );
   }

@@ -86,10 +86,10 @@ export const StructuredDocumentRenderer: React.FC<StructuredDocumentRendererProp
   const handleTableCellChange = (block: DocumentBlock, rowIndex: number, colIndex: number, cellVal: string) => {
     if (readOnly || saveStatus === 'conflict') return;
     const headerCols = block.columns || ['Date', 'Hours', 'Task Description'];
-    const currentTable: string[][] = fieldValues[block.id]?.value || [
-      headerCols,
-      new Array(headerCols.length).fill('')
-    ];
+    const val = fieldValues[block.id]?.value;
+    const currentTable: string[][] = Array.isArray(val) && Array.isArray(val[0])
+      ? (val as string[][])
+      : [headerCols, new Array(headerCols.length).fill('')];
     const newTable = currentTable.map((row, rIdx) =>
       rIdx === rowIndex ? row.map((cell, cIdx) => cIdx === colIndex ? cellVal : cell) : row
     );
@@ -199,10 +199,9 @@ export const StructuredDocumentRenderer: React.FC<StructuredDocumentRendererProp
 
       case 'table':
         const headerCols = block.columns || ['Date', 'Hours', 'Task Description'];
-        const tableData: string[][] = Array.isArray(currentValue) ? currentValue : [
-          headerCols,
-          new Array(headerCols.length).fill('')
-        ];
+        const tableData: string[][] = Array.isArray(currentValue) && Array.isArray(currentValue[0])
+          ? (currentValue as string[][])
+          : [headerCols, new Array(headerCols.length).fill('')];
         return (
           <div key={block.id} className="my-4 border border-zinc-200 dark:border-zinc-800 rounded-lg overflow-hidden">
             <div className="bg-slate-100 dark:bg-zinc-900 px-4 py-2 font-semibold text-slate-800 dark:text-zinc-200 text-sm border-b dark:border-zinc-800">
