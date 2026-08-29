@@ -86,32 +86,63 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
   // FAQ Accordion State (all closed by default until user clicks)
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
-  // Scroll detection for floating rounded navbar UI
+  // Scroll detection for floating rounded navbar UI & active section indicator
   const [isScrolled, setIsScrolled] = useState(false);
+  const [activeSection, setActiveSection] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Unified ref & viewport observer for repeating brush underline animation on scroll
   const underlineRef = useRef<HTMLSpanElement>(null);
   const isUnderlineInView = useInView(underlineRef, { amount: 0.2, once: false });
 
+  const navLinks = [
+    { id: 'project-management', label: 'Clearance' },
+    { id: 'work-together', label: 'Verification' },
+    { id: 'features', label: 'Documents' },
+    { id: 'journey', label: 'OJT Journey' },
+    { id: 'faq', label: 'FAQ' }
+  ];
+
   React.useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
+
+      const sectionIds = ['project-management', 'work-together', 'features', 'journey', 'faq'];
+      const scrollPosition = window.scrollY + 140; // offset for floating navbar height
+
+      let current: string | null = null;
+      for (const id of sectionIds) {
+        const el = document.getElementById(id);
+        if (el) {
+          const top = el.offsetTop;
+          const height = el.offsetHeight;
+          if (scrollPosition >= top && scrollPosition < top + height) {
+            current = id;
+            break;
+          }
+        }
+      }
+      setActiveSection(current);
     };
+
     handleScroll();
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Scroll to top
+  // Scroll to top / header
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    setActiveSection(null);
   };
 
   const scrollToSection = (id: string) => {
     const el = document.getElementById(id);
     if (el) {
-      el.scrollIntoView({ behavior: 'smooth' });
+      const yOffset = -72; // floating island navbar offset
+      const y = el.getBoundingClientRect().top + window.pageYOffset + yOffset;
+      window.scrollTo({ top: y, behavior: 'smooth' });
+      setActiveSection(id);
     }
   };
 
@@ -210,9 +241,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
               : "bg-transparent border-transparent shadow-none"
           )}
         >
-          {/* Brand Logo & Name */}
+          {/* Brand Logo & Name (Clicks return to header / top) */}
           <div
-            onClick={() => navigate('/')}
+            onClick={scrollToTop}
             className="flex items-center gap-2.5 cursor-pointer group select-none shrink-0"
           >
             <div className="relative flex items-center justify-center">
@@ -227,24 +258,26 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
             </span>
           </div>
 
-          {/* Desktop Navigation Anchors */}
+          {/* Desktop Navigation Anchors with Active Indicator */}
           <nav className="hidden md:flex items-center gap-1 text-[13.5px] sm:text-sm font-semibold text-[#4B5563]">
-            {[
-              { id: 'journey', label: 'OJT Journey' },
-              { id: 'project-management', label: 'Clearance' },
-              { id: 'work-together', label: 'Verification' },
-              { id: 'features', label: 'Documents' },
-              { id: 'faq', label: 'FAQ' }
-            ].map((navItem) => (
-              <button
-                key={navItem.id}
-                type="button"
-                onClick={() => scrollToSection(navItem.id)}
-                className="px-3.5 py-1.5 rounded-full hover:text-[#111827] hover:bg-zinc-900/5 transition-all cursor-pointer"
-              >
-                {navItem.label}
-              </button>
-            ))}
+            {navLinks.map((navItem) => {
+              const isActive = activeSection === navItem.id;
+              return (
+                <button
+                  key={navItem.id}
+                  type="button"
+                  onClick={() => scrollToSection(navItem.id)}
+                  className={cn(
+                    "px-3.5 py-1.5 rounded-full transition-all cursor-pointer relative",
+                    isActive
+                      ? "text-zinc-900 font-bold bg-zinc-100 shadow-2xs"
+                      : "hover:text-[#111827] hover:bg-zinc-900/5 text-[#4B5563]"
+                  )}
+                >
+                  {navItem.label}
+                </button>
+              );
+            })}
           </nav>
 
           {/* Action Buttons */}
@@ -292,25 +325,27 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
               className="md:hidden max-w-sm mx-auto mt-2 p-4 rounded-2xl bg-white/98 backdrop-blur-xl border border-[#D1D5DB] shadow-2xl pointer-events-auto space-y-3"
             >
               <div className="flex flex-col space-y-1">
-                {[
-                  { id: 'journey', label: 'OJT Journey' },
-                  { id: 'project-management', label: 'Clearance' },
-                  { id: 'work-together', label: 'Verification' },
-                  { id: 'features', label: 'Documents' },
-                  { id: 'faq', label: 'Frequently Asked Questions' }
-                ].map((item) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => {
-                      scrollToSection(item.id);
-                      setMobileMenuOpen(false);
-                    }}
-                    className="text-left px-3.5 py-2.5 rounded-xl text-sm font-extrabold text-[#111827] hover:bg-zinc-100 transition-colors"
-                  >
-                    {item.label}
-                  </button>
-                ))}
+                {navLinks.map((item) => {
+                  const isActive = activeSection === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => {
+                        scrollToSection(item.id);
+                        setMobileMenuOpen(false);
+                      }}
+                      className={cn(
+                        "text-left px-3.5 py-2.5 rounded-xl text-sm font-extrabold transition-colors cursor-pointer",
+                        isActive
+                          ? "bg-zinc-100 text-[#111827]"
+                          : "text-[#4B5563] hover:text-[#111827] hover:bg-zinc-50"
+                      )}
+                    >
+                      {item.label}
+                    </button>
+                  );
+                })}
               </div>
 
               <div className="pt-2 border-t border-[#E5E7EB] space-y-2">
@@ -566,7 +601,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
       </section>
 
       {/* ═══════════════════ SECTION: REQUIREMENT CLEARANCE ═══════════════════ */}
-      <section id="project-management" className="relative w-full min-h-[calc(100vh-4rem)] flex flex-col justify-center items-center bg-white text-[#111827] py-14 sm:py-20 px-4 sm:px-6 lg:px-8 overflow-hidden border-b border-[#E5E7EB]">
+      <section id="project-management" className="relative w-full min-h-[calc(100vh-4rem)] flex flex-col justify-center items-center bg-white text-[#111827] py-14 sm:py-20 px-4 sm:px-6 lg:px-8 overflow-hidden border-b border-[#E5E7EB] scroll-mt-24">
         
         {/* Left-Side Subtle Topographic Contour Lines */}
         <div className="absolute left-0 top-0 bottom-0 w-[40%] max-w-[450px] pointer-events-none select-none opacity-25 overflow-hidden">
@@ -588,11 +623,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
               
               {/* Headline with RoughHighlight on Clearance */}
               <motion.h2
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 14 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6 }}
-                className="text-4xl sm:text-5xl lg:text-6xl font-black text-[#111827] tracking-tight leading-[1.12]"
+                viewport={{ once: false, amount: 0.15 }}
+                transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                className="text-4xl sm:text-5xl lg:text-6xl font-black text-[#111827] tracking-tight leading-[1.12] transform-gpu will-change-transform"
               >
                 Requirement <br className="hidden sm:block" />
                 <RoughHighlight color="#FEF08A">
@@ -602,22 +637,22 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
 
               {/* Subtitle */}
               <motion.p
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 12 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: 0.15 }}
-                className="text-sm sm:text-base text-[#4B5563] max-w-lg mx-auto lg:mx-0 leading-relaxed font-normal"
+                viewport={{ once: false, amount: 0.15 }}
+                transition={{ duration: 0.5, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
+                className="text-sm sm:text-base text-[#4B5563] max-w-lg mx-auto lg:mx-0 leading-relaxed font-normal transform-gpu will-change-transform"
               >
                 From pre-internship forms to final milestone reports, complete and submit all your official paperwork seamlessly. Fill out live templates, attach verified proof, and get approved by your advisers without the paper clutter.
               </motion.p>
 
               {/* Sky Blue CTA Button */}
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 10 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: 0.25 }}
-                className="flex items-center justify-center lg:justify-start pt-1"
+                viewport={{ once: false, amount: 0.15 }}
+                transition={{ duration: 0.5, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+                className="flex items-center justify-center lg:justify-start pt-1 transform-gpu will-change-transform"
               >
                 <button
                   type="button"
@@ -633,17 +668,19 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
 
             {/* Right Collaborative System Illustration */}
             <motion.div
-              initial={{ opacity: 0, x: 30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.7, delay: 0.2 }}
-              className="lg:col-span-6 flex items-center justify-center lg:justify-end"
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: false, amount: 0.15 }}
+              transition={{ duration: 0.6, delay: 0.12, ease: [0.16, 1, 0.3, 1] }}
+              className="lg:col-span-6 flex items-center justify-center lg:justify-end transform-gpu will-change-transform"
             >
               <div className="relative w-full max-w-[460px] lg:max-w-[500px] flex items-center justify-center">
-                <img
+                <motion.img
+                  animate={{ y: [0, -8, 0] }}
+                  transition={{ repeat: Infinity, duration: 5, ease: "easeInOut" }}
                   src="/images/Landing Page Icons/Project Management Collaboration.svg"
                   alt="Student Passing Documents and Practicum Requirement Clearance"
-                  className="w-full h-auto max-h-[340px] sm:max-h-[400px] object-contain drop-shadow-lg"
+                  className="w-full h-auto max-h-[340px] sm:max-h-[400px] object-contain drop-shadow-lg transform-gpu"
                 />
               </div>
             </motion.div>
@@ -654,7 +691,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
       </section>
 
       {/* ═══════════════════ SECTION: DOCUMENT VERIFICATION ═══════════════════ */}
-      <section id="work-together" className="relative w-full min-h-[calc(100vh-4rem)] flex flex-col justify-center items-center bg-white text-[#111827] py-14 sm:py-20 px-4 sm:px-6 lg:px-8 overflow-hidden border-b border-[#E5E7EB]">
+      <section id="work-together" className="relative w-full min-h-[calc(100vh-4rem)] flex flex-col justify-center items-center bg-white text-[#111827] py-14 sm:py-20 px-4 sm:px-6 lg:px-8 overflow-hidden border-b border-[#E5E7EB] scroll-mt-24">
         <div className="max-w-6xl mx-auto w-full relative z-10 my-auto">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
 
@@ -662,7 +699,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
+              viewport={{ once: false, amount: 0.2 }}
               transition={{ duration: 0.7 }}
               className="lg:col-span-6 flex items-center justify-center"
             >
@@ -678,7 +715,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
                 <motion.div
                   initial={{ scale: 0 }}
                   whileInView={{ scale: 1 }}
-                  viewport={{ once: true }}
+                  viewport={{ once: false, amount: 0.2 }}
                   transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.2 }}
                   className="relative z-20 flex items-center justify-center filter drop-shadow-[0_16px_28px_rgba(0,0,0,0.12)]"
                 >
@@ -697,87 +734,132 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
                   </div>
                 </motion.div>
 
-                {/* Orbit Avatar Nodes */}
+                {/* Orbit Avatar Nodes with Dynamic Floating and Hover physics */}
                 {/* 1. Top-Left (Outer Orbit - Female Avatar on yellow bg) */}
-                <div className="absolute top-[8%] left-[18%] z-10 w-11 h-11 sm:w-13 sm:h-13 md:w-14 md:h-14 rounded-full overflow-hidden border-2 border-white shadow-lg bg-[#FBBF24] flex items-center justify-center p-0.5">
+                <motion.div
+                  animate={{ y: [0, -6, 0], scale: [1, 1.03, 1] }}
+                  transition={{ repeat: Infinity, duration: 4.2, ease: "easeInOut" }}
+                  whileHover={{ scale: 1.15, rotate: 6 }}
+                  className="absolute top-[8%] left-[18%] z-10 w-11 h-11 sm:w-13 sm:h-13 md:w-14 md:h-14 rounded-full overflow-hidden border-2 border-white shadow-lg bg-[#FBBF24] flex items-center justify-center p-0.5 cursor-pointer"
+                >
                   <img
                     src="/images/Landing Page Icons/undraw_female-avatar_7t6k.svg"
                     alt="Female Trainee"
-                    className="w-full h-full object-cover rounded-full"
+                    className="w-full h-full object-cover rounded-full pointer-events-none"
                   />
-                </div>
+                </motion.div>
 
                 {/* 2. Top-Center (Inner Orbit - Reading on green bg) */}
-                <div className="absolute top-[16%] left-[45%] z-10 w-11 h-11 sm:w-13 sm:h-13 md:w-14 md:h-14 rounded-full overflow-hidden border-2 border-white shadow-lg bg-[#10B981] flex items-center justify-center p-1.5">
+                <motion.div
+                  animate={{ y: [0, 5, 0], scale: [1, 1.04, 1] }}
+                  transition={{ repeat: Infinity, duration: 3.8, ease: "easeInOut", delay: 0.2 }}
+                  whileHover={{ scale: 1.15, rotate: -6 }}
+                  className="absolute top-[16%] left-[45%] z-10 w-11 h-11 sm:w-13 sm:h-13 md:w-14 md:h-14 rounded-full overflow-hidden border-2 border-white shadow-lg bg-[#10B981] flex items-center justify-center p-1.5 cursor-pointer"
+                >
                   <img
                     src="/images/Landing Page Icons/undraw_reading_c1xl.svg"
                     alt="Reading / Journal Writing"
-                    className="w-full h-full object-contain"
+                    className="w-full h-full object-contain pointer-events-none"
                   />
-                </div>
+                </motion.div>
 
                 {/* 3. Top-Right (Outer Orbit - Male Avatar on blue bg) */}
-                <div className="absolute top-[10%] right-[18%] z-10 w-11 h-11 sm:w-13 sm:h-13 md:w-14 md:h-14 rounded-full overflow-hidden border-2 border-white shadow-lg bg-[#3B82F6] flex items-center justify-center p-0.5">
+                <motion.div
+                  animate={{ y: [0, -7, 0], scale: [1, 1.02, 1] }}
+                  transition={{ repeat: Infinity, duration: 4.6, ease: "easeInOut", delay: 0.4 }}
+                  whileHover={{ scale: 1.15, rotate: 6 }}
+                  className="absolute top-[10%] right-[18%] z-10 w-11 h-11 sm:w-13 sm:h-13 md:w-14 md:h-14 rounded-full overflow-hidden border-2 border-white shadow-lg bg-[#3B82F6] flex items-center justify-center p-0.5 cursor-pointer"
+                >
                   <img
                     src="/images/Landing Page Icons/undraw_male-avatar_zkzx.svg"
                     alt="Male Trainee"
-                    className="w-full h-full object-cover rounded-full"
+                    className="w-full h-full object-cover rounded-full pointer-events-none"
                   />
-                </div>
+                </motion.div>
 
                 {/* 4. Middle-Left (Outer Orbit - Coding on red bg) */}
-                <div className="absolute top-[44%] left-[2%] z-10 w-11 h-11 sm:w-13 sm:h-13 md:w-14 md:h-14 rounded-full overflow-hidden border-2 border-white shadow-lg bg-[#EF4444] flex items-center justify-center p-1.5">
+                <motion.div
+                  animate={{ y: [0, 6, 0], scale: [1, 1.03, 1] }}
+                  transition={{ repeat: Infinity, duration: 4.0, ease: "easeInOut", delay: 0.1 }}
+                  whileHover={{ scale: 1.15, rotate: -6 }}
+                  className="absolute top-[44%] left-[2%] z-10 w-11 h-11 sm:w-13 sm:h-13 md:w-14 md:h-14 rounded-full overflow-hidden border-2 border-white shadow-lg bg-[#EF4444] flex items-center justify-center p-1.5 cursor-pointer"
+                >
                   <img
                     src="/images/Landing Page Icons/undraw_coding_joxb.svg"
                     alt="Coding & Development"
-                    className="w-full h-full object-contain"
+                    className="w-full h-full object-contain pointer-events-none"
                   />
-                </div>
+                </motion.div>
 
                 {/* 5. Middle-Left (Inner Orbit - Female Avatar on blue bg) */}
-                <div className="absolute top-[42%] left-[19%] z-10 w-11 h-11 sm:w-13 sm:h-13 md:w-14 md:h-14 rounded-full overflow-hidden border-2 border-white shadow-lg bg-[#3B82F6] flex items-center justify-center p-0.5">
+                <motion.div
+                  animate={{ y: [0, -5, 0], scale: [1, 1.03, 1] }}
+                  transition={{ repeat: Infinity, duration: 4.4, ease: "easeInOut", delay: 0.5 }}
+                  whileHover={{ scale: 1.15, rotate: 6 }}
+                  className="absolute top-[42%] left-[19%] z-10 w-11 h-11 sm:w-13 sm:h-13 md:w-14 md:h-14 rounded-full overflow-hidden border-2 border-white shadow-lg bg-[#3B82F6] flex items-center justify-center p-0.5 cursor-pointer"
+                >
                   <img
                     src="/images/Landing Page Icons/undraw_female-avatar_7t6k.svg"
                     alt="Female Student"
-                    className="w-full h-full object-cover rounded-full"
+                    className="w-full h-full object-cover rounded-full pointer-events-none"
                   />
-                </div>
+                </motion.div>
 
                 {/* 6. Middle-Right (Inner Orbit - Group Collaboration on purple bg) */}
-                <div className="absolute top-[42%] right-[19%] z-10 w-11 h-11 sm:w-13 sm:h-13 md:w-14 md:h-14 rounded-full overflow-hidden border-2 border-white shadow-lg bg-[#6366F1] flex items-center justify-center p-1">
+                <motion.div
+                  animate={{ y: [0, 5, 0], scale: [1, 1.03, 1] }}
+                  transition={{ repeat: Infinity, duration: 3.9, ease: "easeInOut", delay: 0.3 }}
+                  whileHover={{ scale: 1.15, rotate: -6 }}
+                  className="absolute top-[42%] right-[19%] z-10 w-11 h-11 sm:w-13 sm:h-13 md:w-14 md:h-14 rounded-full overflow-hidden border-2 border-white shadow-lg bg-[#6366F1] flex items-center justify-center p-1 cursor-pointer"
+                >
                   <img
                     src="/images/Landing Page Icons/undraw_real-time-collaboration_bchs.svg"
                     alt="Group Collaboration"
-                    className="w-full h-full object-contain"
+                    className="w-full h-full object-contain pointer-events-none"
                   />
-                </div>
+                </motion.div>
 
                 {/* 7. Middle-Right (Outer Orbit - Reading on green bg) */}
-                <div className="absolute top-[56%] right-[3%] z-10 w-11 h-11 sm:w-13 sm:h-13 md:w-14 md:h-14 rounded-full overflow-hidden border-2 border-white shadow-lg bg-[#10B981] flex items-center justify-center p-1.5">
+                <motion.div
+                  animate={{ y: [0, -6, 0], scale: [1, 1.02, 1] }}
+                  transition={{ repeat: Infinity, duration: 4.5, ease: "easeInOut", delay: 0.6 }}
+                  whileHover={{ scale: 1.15, rotate: 6 }}
+                  className="absolute top-[56%] right-[3%] z-10 w-11 h-11 sm:w-13 sm:h-13 md:w-14 md:h-14 rounded-full overflow-hidden border-2 border-white shadow-lg bg-[#10B981] flex items-center justify-center p-1.5 cursor-pointer"
+                >
                   <img
                     src="/images/Landing Page Icons/undraw_reading_c1xl.svg"
                     alt="Reading & Studies"
-                    className="w-full h-full object-contain"
+                    className="w-full h-full object-contain pointer-events-none"
                   />
-                </div>
+                </motion.div>
 
                 {/* 8. Bottom-Center (Inner Orbit - Coding on orange bg) */}
-                <div className="absolute bottom-[16%] left-[45%] z-10 w-11 h-11 sm:w-13 sm:h-13 md:w-14 md:h-14 rounded-full overflow-hidden border-2 border-white shadow-lg bg-[#F97316] flex items-center justify-center p-1.5">
+                <motion.div
+                  animate={{ y: [0, 5, 0], scale: [1, 1.04, 1] }}
+                  transition={{ repeat: Infinity, duration: 3.7, ease: "easeInOut", delay: 0.25 }}
+                  whileHover={{ scale: 1.15, rotate: -6 }}
+                  className="absolute bottom-[16%] left-[45%] z-10 w-11 h-11 sm:w-13 sm:h-13 md:w-14 md:h-14 rounded-full overflow-hidden border-2 border-white shadow-lg bg-[#F97316] flex items-center justify-center p-1.5 cursor-pointer"
+                >
                   <img
                     src="/images/Landing Page Icons/undraw_coding_joxb.svg"
                     alt="Coding Tasks"
-                    className="w-full h-full object-contain"
+                    className="w-full h-full object-contain pointer-events-none"
                   />
-                </div>
+                </motion.div>
 
                 {/* 9. Bottom-Left (Outer Orbit - Male Avatar on blue bg) */}
-                <div className="absolute bottom-[8%] left-[20%] z-10 w-11 h-11 sm:w-13 sm:h-13 md:w-14 md:h-14 rounded-full overflow-hidden border-2 border-white shadow-lg bg-[#3B82F6] flex items-center justify-center p-0.5">
+                <motion.div
+                  animate={{ y: [0, -6, 0], scale: [1, 1.03, 1] }}
+                  transition={{ repeat: Infinity, duration: 4.3, ease: "easeInOut", delay: 0.45 }}
+                  whileHover={{ scale: 1.15, rotate: 6 }}
+                  className="absolute bottom-[8%] left-[20%] z-10 w-11 h-11 sm:w-13 sm:h-13 md:w-14 md:h-14 rounded-full overflow-hidden border-2 border-white shadow-lg bg-[#3B82F6] flex items-center justify-center p-0.5 cursor-pointer"
+                >
                   <img
                     src="/images/Landing Page Icons/undraw_male-avatar_zkzx.svg"
                     alt="Male Student"
-                    className="w-full h-full object-cover rounded-full"
+                    className="w-full h-full object-cover rounded-full pointer-events-none"
                   />
-                </div>
+                </motion.div>
 
               </div>
             </motion.div>
@@ -787,11 +869,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
               
               {/* Headline with RoughHighlight on Verification */}
               <motion.h2
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 14 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6 }}
-                className="text-4xl sm:text-5xl lg:text-6xl font-black text-[#111827] tracking-tight leading-[1.12]"
+                viewport={{ once: false, amount: 0.15 }}
+                transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                className="text-4xl sm:text-5xl lg:text-6xl font-black text-[#111827] tracking-tight leading-[1.12] transform-gpu will-change-transform"
               >
                 Document{' '}
                 <RoughHighlight color="#FEF08A">
@@ -801,22 +883,22 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
 
               {/* Subtitle */}
               <motion.p
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 12 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: 0.15 }}
-                className="text-sm sm:text-base text-[#4B5563] max-w-lg mx-auto lg:mx-0 leading-relaxed font-normal"
+                viewport={{ once: false, amount: 0.15 }}
+                transition={{ duration: 0.5, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
+                className="text-sm sm:text-base text-[#4B5563] max-w-lg mx-auto lg:mx-0 leading-relaxed font-normal transform-gpu will-change-transform"
               >
                 Empower practicum advisers and company coordinators to inspect student submissions in real time. Review uploaded templates, provide targeted feedback remarks, and verify internship records with complete confidence.
               </motion.p>
 
               {/* Sky Blue CTA Button */}
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 10 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: 0.25 }}
-                className="flex items-center justify-center lg:justify-start pt-1"
+                viewport={{ once: false, amount: 0.15 }}
+                transition={{ duration: 0.5, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+                className="flex items-center justify-center lg:justify-start pt-1 transform-gpu will-change-transform"
               >
                 <button
                   type="button"
@@ -835,7 +917,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
       </section>
 
       {/* ═══════════════════ SECTION: OFFICIAL PRACTICUM TEMPLATES & DOWNLOAD ═══════════════════ */}
-      <section id="features" className="relative py-16 sm:py-24 px-4 sm:px-6 lg:px-8 bg-white border-b border-[#E5E7EB] overflow-hidden">
+      <section id="features" className="relative py-16 sm:py-24 px-4 sm:px-6 lg:px-8 bg-white border-b border-[#E5E7EB] overflow-hidden scroll-mt-24">
         {/* Background Brand Logo Watermark */}
         <div className="absolute -right-12 -bottom-16 w-80 h-80 sm:w-96 sm:h-96 lg:w-[440px] lg:h-[440px] opacity-[0.05] pointer-events-none select-none z-0">
           <img
@@ -859,7 +941,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
             
             {/* Left Column: Descriptive Text & Features & Download Actions */}
-            <div className="lg:col-span-6 space-y-6 text-center lg:text-left">
+            <motion.div
+              initial={{ opacity: 0, y: 14 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: false, amount: 0.15 }}
+              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              className="lg:col-span-6 space-y-6 text-center lg:text-left transform-gpu will-change-transform"
+            >
               <div>
                 <h3 className="text-2xl sm:text-3xl lg:text-4xl font-black text-zinc-900 tracking-tight mb-3">
                   Sample Document Templates
@@ -911,11 +999,21 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
                   <ArrowRight size={14} />
                 </button>
               </div>
-            </div>
+            </motion.div>
 
-            {/* Right Column: Stylized Blueprint Template Sample */}
-            <div className="lg:col-span-6 flex justify-center">
-              <div className="w-full max-w-md bg-white border border-zinc-200/90 rounded-2xl shadow-xl shadow-zinc-300/30 p-6 sm:p-7 relative overflow-hidden font-sans text-left">
+            {/* Right Column: Stylized Blueprint Template Sample with Hover Animation */}
+            <motion.div
+              initial={{ opacity: 0, y: 14 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: false, amount: 0.15 }}
+              transition={{ duration: 0.5, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+              className="lg:col-span-6 flex justify-center transform-gpu will-change-transform"
+            >
+              <motion.div
+                whileHover={{ y: -6, scale: 1.01 }}
+                transition={{ duration: 0.25 }}
+                className="w-full max-w-md bg-white border border-zinc-200/90 rounded-2xl shadow-xl shadow-zinc-300/30 p-6 sm:p-7 relative overflow-hidden font-sans text-left transition-shadow hover:shadow-2xl"
+              >
                 {/* Top Document Header Bar (without preview badge) */}
                 <div className="flex items-center pb-3.5 mb-4 border-b border-zinc-100">
                   <div className="flex items-center gap-2">
@@ -958,11 +1056,23 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
                       <span className="px-1.5 py-0.5 rounded bg-blue-50 text-blue-800 font-mono text-[10px] font-bold border border-blue-200">&lt;PROGRAM_NAME&gt;</span>
                     </div>
 
-                    {/* Placeholder Skeleton Bars */}
+                    {/* Placeholder Skeleton Bars with Subtle Shimmer */}
                     <div className="space-y-1.5 pt-1">
-                      <div className="h-2 bg-zinc-200/80 rounded-full w-full" />
-                      <div className="h-2 bg-zinc-200/70 rounded-full w-4/5" />
-                      <div className="h-2 bg-zinc-200/60 rounded-full w-3/5" />
+                      <motion.div
+                        animate={{ opacity: [0.6, 1, 0.6] }}
+                        transition={{ repeat: Infinity, duration: 2.8, ease: "easeInOut" }}
+                        className="h-2 bg-zinc-200/80 rounded-full w-full"
+                      />
+                      <motion.div
+                        animate={{ opacity: [0.6, 1, 0.6] }}
+                        transition={{ repeat: Infinity, duration: 2.8, ease: "easeInOut", delay: 0.3 }}
+                        className="h-2 bg-zinc-200/70 rounded-full w-4/5"
+                      />
+                      <motion.div
+                        animate={{ opacity: [0.6, 1, 0.6] }}
+                        transition={{ repeat: Infinity, duration: 2.8, ease: "easeInOut", delay: 0.6 }}
+                        className="h-2 bg-zinc-200/60 rounded-full w-3/5"
+                      />
                     </div>
                   </div>
 
@@ -977,25 +1087,25 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
 
           </div>
         </div>
       </section>
 
       {/* ═══════════════════ THREE-PHASE OJT JOURNEY 3D CAROUSEL ═══════════════════ */}
-      <section id="journey" className="relative py-6 sm:py-8 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-[#F8FAFC] via-[#EFF6FF]/40 to-[#F8FAFC] border-b border-zinc-200 overflow-hidden flex flex-col justify-center">
+      <section id="journey" className="relative py-6 sm:py-8 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-[#F8FAFC] via-[#EFF6FF]/40 to-[#F8FAFC] border-b border-zinc-200 overflow-hidden flex flex-col justify-center scroll-mt-24">
         {/* Centered Horizon Stage Radial Glow */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl h-[260px] bg-[radial-gradient(ellipse_at_center,rgba(56,189,248,0.20),rgba(59,130,246,0.08)_50%,transparent_75%)] blur-2xl pointer-events-none -z-0" />
 
         <div className="max-w-4xl mx-auto w-full relative z-10">
           <motion.div
-            initial={{ opacity: 0, y: 15 }}
+            initial={{ opacity: 0, y: 12 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.4 }}
-            className="text-center mb-2.5 sm:mb-3"
+            viewport={{ once: false, amount: 0.15 }}
+            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            className="text-center mb-2.5 sm:mb-3 transform-gpu will-change-transform"
           >
             <h2 className="text-xl sm:text-2xl font-black tracking-tight text-zinc-900 mb-0.5">
               Your Practicum Journey
@@ -1013,7 +1123,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
       </section>
 
       {/* ═══════════════════ FAQ ACCORDION SECTION ═══════════════════ */}
-      <section id="faq" className="py-16 sm:py-24 px-4 sm:px-6 lg:px-8 bg-white border-b border-[#E5E7EB]">
+      <section id="faq" className="py-16 sm:py-24 px-4 sm:px-6 lg:px-8 bg-white border-b border-[#E5E7EB] scroll-mt-24">
         <div className="max-w-5xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-start">
             <div className="lg:col-span-5 text-center lg:text-left">
@@ -1081,11 +1191,24 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
 
       {/* ═══════════════════ TESTIMONIAL / QUOTE SECTION ═══════════════════ */}
       <section className="text-gray-600 body-font bg-white border-b border-[#E5E7EB]">
-        <div className="max-w-3xl px-4 py-8 sm:py-10 mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 14 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: false, amount: 0.15 }}
+          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          className="max-w-3xl px-4 py-8 sm:py-10 mx-auto transform-gpu will-change-transform"
+        >
           <div className="w-full mx-auto text-center">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" className="inline-block w-6 h-6 text-gray-400 mb-3" viewBox="0 0 975.036 975.036">
+            <motion.svg
+              whileHover={{ rotate: 12, scale: 1.1 }}
+              transition={{ type: "spring", stiffness: 300, damping: 15 }}
+              xmlns="http://www.w3.org/2000/svg"
+              fill="currentColor"
+              className="inline-block w-6 h-6 text-gray-400 mb-3 cursor-pointer"
+              viewBox="0 0 975.036 975.036"
+            >
               <path d="M925.036 57.197h-304c-27.6 0-50 22.4-50 50v304c0 27.601 22.4 50 50 50h145.5c-1.9 79.601-20.4 143.3-55.4 191.2-27.6 37.8-69.399 69.1-125.3 93.8-25.7 11.3-36.8 41.7-24.8 67.101l36 76c11.6 24.399 40.3 35.1 65.1 24.399 66.2-28.6 122.101-64.8 167.7-108.8 55.601-53.7 93.7-114.3 114.3-181.9 20.601-67.6 30.9-159.8 30.9-276.8v-239c0-27.599-22.401-50-50-50zM106.036 913.497c65.4-28.5 121-64.699 166.9-108.6 56.1-53.7 94.4-114.1 115-181.2 20.6-67.1 30.899-159.6 30.899-277.5v-239c0-27.6-22.399-50-50-50h-304c-27.6 0-50 22.4-50 50v304c0 27.601 22.4 50 50 50h145.5c-1.9 79.601-20.4 143.3-55.4 191.2-27.6 37.8-69.4 69.1-125.3 93.8-25.7 11.3-36.8 41.7-24.8 67.101l35.9 75.8c11.601 24.399 40.501 35.2 65.301 24.399z" />
-            </svg>
+            </motion.svg>
             <p className="leading-relaxed text-sm sm:text-base text-zinc-700 font-medium max-w-2xl mx-auto">
               &ldquo;Our digital practicum platform streamlines every internship milestone—from orientation to final clearance. We empower students to develop real-world industry skills while ensuring effortless coordination between faculty advisers and partner companies.&rdquo;
             </p>
@@ -1093,18 +1216,18 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
             <h2 className="text-gray-900 font-bold title-font tracking-wider text-xs sm:text-sm">PRACTICUM ADVISER</h2>
             <p className="text-gray-500 text-[11px] sm:text-xs font-medium">Practicum &amp; Industry Placement Coordinator</p>
           </div>
-        </div>
+        </motion.div>
       </section>
 
       {/* ═══════════════════ FINAL CALL TO ACTION BANNER ═══════════════════ */}
       <section className="py-8 sm:py-12 px-4 sm:px-6 lg:px-8 bg-[#F8F9FA] border-b border-[#E5E7EB]">
         <div className="max-w-6xl mx-auto">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-            className="rounded-3xl p-8 sm:p-12 lg:p-14 text-center space-y-6 relative overflow-hidden bg-white border border-zinc-200 shadow-xl shadow-zinc-200/50"
+            viewport={{ once: false, amount: 0.15 }}
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            className="rounded-3xl p-8 sm:p-12 lg:p-14 text-center space-y-6 relative overflow-hidden bg-white border border-zinc-200 shadow-xl shadow-zinc-200/50 transform-gpu will-change-transform"
           >
             {/* Subtle Brand Logo Watermark */}
             <div className="absolute -bottom-16 -right-16 w-64 h-64 opacity-[0.04] pointer-events-none select-none -z-0">
@@ -1142,7 +1265,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
             {/* Brand Column (5 cols on lg) */}
             <div className="sm:col-span-2 lg:col-span-5 pr-0 lg:pr-8">
               <div
-                onClick={() => navigate('/')}
+                onClick={scrollToTop}
                 className="flex items-center gap-2.5 mb-4 cursor-pointer group"
               >
                 <img
