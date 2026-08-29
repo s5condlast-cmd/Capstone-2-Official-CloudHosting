@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence, useInView } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowRight,
   Clock,
   FileText,
-  TrendingUp,
   ShieldCheck,
   ChevronRight,
   UserCheck,
@@ -14,12 +13,23 @@ import {
   CheckCircle2,
   ChevronDown,
   ArrowUp,
-  Check
+  GraduationCap,
+  BookOpen,
+  Sparkles,
+  PenTool,
+  Users,
+  Menu,
+  X,
+  BadgeCheck,
+  RotateCcw,
+  Plus,
+  Download
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import { documentGenerator } from '../../lib/documentGenerator';
+import Carousel, { SlideData } from '../../components/ui/carousel';
 
 // Clean Two-Stroke Hand-Painted Inward Brush Highlighter Component
-// Exactly two main brush strokes: Stroke 1 sweeps from the Left; Stroke 2 sweeps from the Right with a slight upward tilt and delay.
 const RoughHighlight: React.FC<{
   children: React.ReactNode;
   color?: string;
@@ -71,21 +81,24 @@ interface LandingPageProps {
 export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
   const navigate = useNavigate();
   const dashboardLink = userRole ? `/${userRole}` : '/login?role=student';
-  const ctaText = userRole ? 'Go to Dashboard' : 'Access Portal';
+  const ctaText = userRole ? 'Go to Dashboard' : 'Student Portal';
 
   // FAQ Accordion State (all closed by default until user clicks)
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
-  // Workflow Active Step State
-  const [activeStep, setActiveStep] = useState<number>(1);
-
   // Scroll detection for floating rounded navbar UI
   const [isScrolled, setIsScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Unified ref & viewport observer for repeating brush underline animation on scroll
+  const underlineRef = useRef<HTMLSpanElement>(null);
+  const isUnderlineInView = useInView(underlineRef, { amount: 0.2, once: false });
 
   React.useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
     };
+    handleScroll();
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -102,309 +115,362 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
     }
   };
 
-  // Feature Data
-  const features = [
-    {
-      id: 'dtr',
-      title: 'Automated DTR & Hour Computation',
-      description: 'Real-time daily time record calculation with supervisor digital approvals. No more manual math or log discrepancies.',
-      icon: Clock,
-      badge: 'Zero Math Error',
-      accentColor: 'from-blue-500/20 to-indigo-500/20 text-blue-600'
-    },
-    {
-      id: 'docs',
-      title: 'Paperless Document Engine',
-      description: 'Instant filling and preview for STI official templates: MOA, Student Application, Consent Forms, and Journal logs.',
-      icon: FileText,
-      badge: '100% Compliant',
-      accentColor: 'from-purple-500/20 to-pink-500/20 text-purple-600'
-    },
-    {
-      id: 'pipeline',
-      title: 'Multi-Tier Clearance Pipeline',
-      description: 'Structured approval flow connecting Students, Practicum Advisers, Department Chairs, and Industry Supervisors.',
-      icon: ShieldCheck,
-      badge: 'Audit Ready',
-      accentColor: 'from-emerald-500/20 to-teal-500/20 text-emerald-600'
-    },
-    {
-      id: 'directory',
-      title: 'Live Industry MOA Registry',
-      description: 'Directory of verified partner companies, active MOA expiration alerts, and direct internship slot allocations.',
-      icon: Building2,
-      badge: 'Live Database',
-      accentColor: 'from-amber-500/20 to-orange-500/20 text-amber-600'
-    },
-    {
-      id: 'reviewer',
-      title: 'Adviser Annotation & Review Hub',
-      description: 'In-browser document reviewer with inline DOCX feedback comments, instant revision requests, and status logs.',
-      icon: UserCheck,
-      badge: 'Instant Feedback',
-      accentColor: 'from-cyan-500/20 to-blue-500/20 text-cyan-600'
-    },
-    {
-      id: 'analytics',
-      title: 'Real-Time Deployment Funnel',
-      description: 'Live analytics dashboard tracking student OJT phase progression, hour bottlenecks, and department reports.',
-      icon: TrendingUp,
-      badge: 'Real-Time Sync',
-      accentColor: 'from-rose-500/20 to-red-500/20 text-rose-600'
-    }
+  const [downloadState, setDownloadState] = useState<'idle' | 'downloading' | 'downloaded'>('idle');
+
+  const handleSimulatedDownload = () => {
+    if (downloadState !== 'idle') return;
+    setDownloadState('downloading');
+    setTimeout(() => {
+      setDownloadState('downloaded');
+      setTimeout(() => {
+        setDownloadState('idle');
+      }, 2500);
+    }, 1200);
+  };
+
+  // ─── Data Arrays ───────────────────────────────────────────────────────
+  const ICON = (name: string) => `/images/Landing Page Icons/${name}`;
+
+  const marqueeItems = [
+    { title: 'Student Application Letter', icon: ICON('Application Letter Signed.svg'), badge: 'Pre-OJT', color: 'blue' },
+    { title: 'Memorandum of Agreement', icon: ICON('MOA Contract Signed.svg'), badge: 'Required', color: 'blue' },
+    { title: 'Daily Time Record (DTR)', icon: ICON('undraw_work-time_1ogn.svg'), badge: 'Live Sync', color: 'emerald' },
+    { title: 'Weekly Reflection Journal', icon: ICON('Weekly Journal Writing.svg'), badge: 'Weekly', color: 'emerald' },
+    { title: 'Student Consent Form', icon: ICON('undraw_signed-document_y8vk.svg'), badge: 'Approved', color: 'blue' },
+    { title: 'Digital Signatures', icon: ICON('Digital Signature.svg'), badge: 'Verified', color: 'amber' },
+    { title: 'Training Plan Form', icon: ICON('Landing Page Post.svg'), badge: 'In-OJT', color: 'emerald' },
+    { title: 'Performance Appraisal', icon: ICON('Clearance Completed.svg'), badge: 'Finals', color: 'amber' },
+    { title: 'Integration Paper', icon: ICON('undraw_essay-writing_nlru.svg'), badge: 'Milestone', color: 'amber' },
+    { title: 'Host Company Matching', icon: ICON('Industry Partner Exploration.svg'), badge: 'Partnership', color: 'blue' },
   ];
 
-  // FAQ Items
+  const slideData: SlideData[] = [
+    {
+      title: "Internship Launch",
+      description: "Kickstart your training journey with guided onboarding and immediate faculty guidance.",
+      src: ICON('Application Letter Signed.svg'),
+      onClick: () => scrollToSection('project-management')
+    },
+    {
+      title: "Attendance & Shifts",
+      description: "Log daily workplace hours, monitor lunch intervals, and track completion progress in real time.",
+      src: ICON('undraw_work-time_1ogn.svg'),
+      onClick: () => scrollToSection('work-together')
+    },
+    {
+      title: "Supervisor Feedback",
+      description: "Receive transparent milestone evaluations and performance ratings from industry mentors.",
+      src: ICON('Clearance Completed.svg'),
+      onClick: () => scrollToSection('features')
+    },
+    {
+      title: "Partner Directory",
+      description: "Explore accredited host training establishments aligned directly with your field of study.",
+      src: ICON('Industry Partner Exploration.svg'),
+      onClick: () => navigate(dashboardLink)
+    },
+    {
+      title: "Weekly Insights",
+      description: "Document technical skills learned on the job and showcase your weekly hands-on experience.",
+      src: ICON('Weekly Journal Writing.svg'),
+      onClick: () => scrollToSection('features')
+    },
+    {
+      title: "Instant Verification",
+      description: "Seamlessly authorize milestone sign-offs across any device with zero friction.",
+      src: ICON('Digital Signature.svg'),
+      onClick: () => scrollToSection('features')
+    },
+  ];
+
   const faqItems = [
-    {
-      q: 'How do students log into the Practicum Portal?',
-      a: 'Students sign in using their official STI credentials or assigned student ID account. Pre-filled profile data syncs automatically with active section assignments.'
-    },
-    {
-      q: 'How does the automated DTR hour computation work?',
-      a: 'Students log daily check-in and check-out times. The system automatically computes total hours worked, subtracts lunch breaks, flags weekend overtime caps, and sends daily summaries to supervisors for 1-click verification.'
-    },
-    {
-      q: 'What happens if a document requires revision by the Practicum Adviser?',
-      a: 'The adviser marks specific fields or adds inline comments using the built-in document editor. The student receives an instant notification, updates the document, and resubmits without starting over.'
-    },
-    {
-      q: 'Are MOA templates compliant with STI academic standards?',
-      a: 'Yes. All templates (MOA, Consent Forms, Application Letters, Appraisal Forms) strictly adhere to official STI academic guidelines and tag structures for seamless DOCX/PDF generation.'
-    },
-    {
-      q: 'Can supervisors access the portal on mobile devices?',
-      a: 'Absolutely. Supervisors receive instant mobile-friendly approval links via email to approve DTR sheets and complete intern performance appraisals with zero software installation.'
-    }
+    { q: 'How do students log into the Practicum Portal?', a: 'Students sign in using their official STI credentials or assigned student ID account. Pre-filled profile data syncs automatically with active section assignments.' },
+    { q: 'How does the automated DTR hour computation work?', a: 'Students log daily check-in and check-out times. The system automatically computes total hours worked, subtracts lunch breaks, flags weekend overtime caps, and sends daily summaries to supervisors for 1-click verification.' },
+    { q: 'What happens if a document requires revision?', a: 'The adviser marks specific fields or adds inline comments using the built-in document editor. The student receives an instant notification, updates the document, and resubmits without starting over.' },
+    { q: 'Are templates compliant with STI academic standards?', a: 'Yes. All templates (MOA, Consent Forms, Application Letters, Appraisal Forms) strictly adhere to official STI academic guidelines and tag structures for seamless DOCX/PDF generation.' },
+    { q: 'Can supervisors access the portal on mobile?', a: 'Absolutely. Supervisors receive mobile-friendly approval links via email to approve DTR sheets and complete intern performance appraisals with zero software installation.' },
+    { q: 'Is the platform secure and data protected?', a: 'All data is protected by Row-Level Security (RLS) policies on Supabase. Students can only access their own submissions, while advisers and admins have scoped access controls enforced at the database level.' }
   ];
 
   return (
     <div className="min-h-screen font-sans overflow-x-hidden bg-[#F8F9FA] text-[#111827] selection:bg-zinc-900 selection:text-white">
 
-      {/* Floating Island Navigation Bar (Always follows scroll to the end) */}
-      <header className="fixed top-0 inset-x-0 z-50 transition-all duration-300 px-4 sm:px-6 lg:px-8 pt-3 sm:pt-4 pointer-events-none">
-        <nav className={cn(
-          "max-w-7xl mx-auto h-14 sm:h-16 px-4 sm:px-6 flex items-center justify-between transition-all duration-300 pointer-events-auto rounded-2xl sm:rounded-full",
-          isScrolled
-            ? "bg-white/95 backdrop-blur-xl border border-[#E5E7EB] shadow-md"
-            : "bg-white/75 backdrop-blur-md border border-[#E5E7EB]/60 shadow-xs"
-        )}>
-
-          {/* Brand Logo */}
+      {/* Floating Island Navigation Bar */}
+      <header
+        className={cn(
+          "fixed top-0 inset-x-0 z-50 transition-all duration-300 pointer-events-none",
+          isScrolled ? "pt-2 sm:pt-2.5 px-3 sm:px-6 lg:px-8" : "pt-3 sm:pt-4 px-4 sm:px-6 lg:px-8"
+        )}
+      >
+        <div
+          className={cn(
+            "max-w-7xl mx-auto flex items-center justify-between px-5 sm:px-7 py-2 sm:py-2.5 transition-all duration-300 rounded-full border pointer-events-auto",
+            isScrolled
+              ? "bg-white/90 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] border-[#E5E7EB]"
+              : "bg-transparent border-transparent shadow-none"
+          )}
+        >
+          {/* Brand Logo & Name */}
           <div
             onClick={() => navigate('/')}
-            className="flex items-center gap-3 group cursor-pointer"
+            className="flex items-center gap-2.5 cursor-pointer group select-none shrink-0"
           >
-            <img
-              src="/images/Landing Page Icons/Logo.svg"
-              alt="Practicum Logo"
-              className="h-9 sm:h-10 w-auto object-contain transition-transform duration-300 group-hover:scale-105 rotate-6 drop-shadow-xs"
-            />
-            <div className="flex items-center gap-1.5 font-black text-base sm:text-lg tracking-tight leading-none">
-              <span className="text-[#111827]">Practicum</span>
-              <span className="text-[#4B5563]">Website</span>
+            <div className="relative flex items-center justify-center">
+              <img
+                src="/images/Landing Page Icons/Logo.svg"
+                alt="Practicum Logo"
+                className="h-7.5 sm:h-8 w-auto object-contain transition-all duration-300 group-hover:scale-105 group-hover:rotate-12 rotate-6 drop-shadow-xs"
+              />
             </div>
+            <span className="font-bold text-base sm:text-lg tracking-tight text-[#111827]">
+              Practicum
+            </span>
           </div>
 
-          {/* Nav Links */}
-          <div className="hidden lg:flex items-center gap-8 text-sm font-semibold text-[#4B5563]">
-            <button
-              type="button"
-              onClick={() => scrollToSection('work-everywhere')}
-              className="hover:text-[#111827] transition-colors cursor-pointer"
-            >
-              Overview
-            </button>
-            <button
-              type="button"
-              onClick={() => scrollToSection('features')}
-              className="hover:text-[#111827] transition-colors cursor-pointer"
-            >
-              Features
-            </button>
-            <button
-              type="button"
-              onClick={() => scrollToSection('workflow')}
-              className="hover:text-[#111827] transition-colors cursor-pointer"
-            >
-              Workflow
-            </button>
-            <button
-              type="button"
-              onClick={() => scrollToSection('faq')}
-              className="hover:text-[#111827] transition-colors cursor-pointer"
-            >
-              FAQ
-            </button>
-          </div>
+          {/* Desktop Navigation Anchors */}
+          <nav className="hidden md:flex items-center gap-1 text-[13.5px] sm:text-sm font-semibold text-[#4B5563]">
+            {[
+              { id: 'journey', label: 'OJT Journey' },
+              { id: 'project-management', label: 'Clearance' },
+              { id: 'work-together', label: 'Verification' },
+              { id: 'features', label: 'Documents' },
+              { id: 'faq', label: 'FAQ' }
+            ].map((navItem) => (
+              <button
+                key={navItem.id}
+                type="button"
+                onClick={() => scrollToSection(navItem.id)}
+                className="px-3.5 py-1.5 rounded-full hover:text-[#111827] hover:bg-zinc-900/5 transition-all cursor-pointer"
+              >
+                {navItem.label}
+              </button>
+            ))}
+          </nav>
 
-          {/* Action CTAs */}
-          <div className="flex items-center gap-3">
+          {/* Action Buttons */}
+          <div className="flex items-center gap-2 sm:gap-2.5">
             {!userRole && (
               <button
                 type="button"
                 onClick={() => navigate('/login?role=faculty')}
-                className="text-xs sm:text-sm font-semibold text-[#4B5563] hover:text-[#111827] transition-colors hidden sm:block cursor-pointer"
+                className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs sm:text-[13px] font-semibold text-[#4B5563] hover:text-[#111827] hover:bg-zinc-900/5 transition-all cursor-pointer"
               >
-                Faculty / Admin Login
+                <UserCheck size={15} className="text-[#6B7280]" />
+                <span>Faculty Login</span>
               </button>
             )}
+
             <button
               type="button"
               onClick={() => navigate(dashboardLink)}
-              className="group relative inline-flex items-center justify-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-bold rounded-full overflow-hidden transition-all duration-300 hover:scale-[1.03] active:scale-[0.98] bg-[#111827] text-white hover:bg-zinc-800 shadow-xs cursor-pointer"
+              className="group relative inline-flex items-center gap-1.5 px-4.5 sm:px-5 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-bold transition-all duration-200 cursor-pointer shadow-xs bg-[#111827] text-white hover:bg-zinc-800 hover:scale-[1.02] active:scale-[0.98]"
             >
               <span>{ctaText}</span>
-              <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+              <ChevronRight size={15} className="transition-transform group-hover:translate-x-0.5" />
+            </button>
+
+            {/* Mobile Hamburger Button */}
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden p-2 rounded-full text-[#4B5563] hover:text-[#111827] hover:bg-zinc-900/5 transition-colors cursor-pointer"
+              aria-label="Toggle navigation menu"
+            >
+              {mobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
             </button>
           </div>
-        </nav>
+        </div>
+
+        {/* Mobile Dropdown Drawer */}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: -10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -10, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              className="md:hidden max-w-sm mx-auto mt-2 p-4 rounded-2xl bg-white/98 backdrop-blur-xl border border-[#D1D5DB] shadow-2xl pointer-events-auto space-y-3"
+            >
+              <div className="flex flex-col space-y-1">
+                {[
+                  { id: 'journey', label: 'OJT Journey' },
+                  { id: 'project-management', label: 'Clearance' },
+                  { id: 'work-together', label: 'Verification' },
+                  { id: 'features', label: 'Documents' },
+                  { id: 'faq', label: 'Frequently Asked Questions' }
+                ].map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => {
+                      scrollToSection(item.id);
+                      setMobileMenuOpen(false);
+                    }}
+                    className="text-left px-3.5 py-2.5 rounded-xl text-sm font-extrabold text-[#111827] hover:bg-zinc-100 transition-colors"
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="pt-2 border-t border-[#E5E7EB] space-y-2">
+                {!userRole && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigate('/login?role=faculty');
+                      setMobileMenuOpen(false);
+                    }}
+                    className="w-full py-2.5 px-3 rounded-xl border border-[#D1D5DB] text-xs sm:text-sm font-extrabold text-[#111827] flex items-center justify-center gap-2 hover:bg-zinc-50"
+                  >
+                    <UserCheck size={15} />
+                    <span>Faculty & Adviser Login</span>
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigate(dashboardLink);
+                    setMobileMenuOpen(false);
+                  }}
+                  className="w-full py-2.5 px-3 rounded-xl bg-[#111827] text-white text-xs sm:text-sm font-black flex items-center justify-center gap-2 shadow-xs"
+                >
+                  <span>Student Portal Login</span>
+                  <ChevronRight size={15} />
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </header>
 
-      {/* FIRST VIEW OF THE USER ONLY (100% VIEWPORT HEIGHT & WIDTH POV - NO LINES) */}
-      <section className="relative w-full min-h-screen flex flex-col justify-center items-center px-4 sm:px-6 lg:px-8 pt-20 pb-10 sm:pt-24 sm:pb-12 text-center transition-all duration-500 overflow-hidden bg-[#F8F9FA] text-[#111827]">
+      {/* ═══════════════════ HERO SECTION ═══════════════════ */}
+      <section className="relative min-h-[90vh] lg:min-h-screen flex flex-col justify-between items-center pt-28 sm:pt-32 pb-8 sm:pb-12 px-4 sm:px-6 lg:px-8 overflow-hidden border-b border-[#E5E7EB] bg-gradient-to-b from-slate-100/90 via-sky-50/30 to-[#F8FAFC]">
 
-        {/* Soft Ambient Radial Spotlight */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[550px] bg-[radial-gradient(ellipse_at_top,rgba(0,0,0,0.035),transparent_70%)] pointer-events-none" />
+        {/* Full-Width Edge-to-Edge Cosmic Slate & Ice Cyan Mesh Aurora Glows */}
+        <div className="absolute top-0 inset-x-0 h-[700px] bg-[radial-gradient(ellipse_100%_80%_at_50%_-10%,rgba(14,165,233,0.28),rgba(59,130,246,0.15)_50%,transparent_80%)] pointer-events-none -z-0" />
+        <div className="absolute top-0 left-0 w-3/5 h-[650px] bg-[radial-gradient(ellipse_80%_60%_at_20%_20%,rgba(100,116,139,0.20),transparent_70%)] blur-3xl pointer-events-none -z-0" />
+        <div className="absolute top-0 right-0 w-3/5 h-[650px] bg-[radial-gradient(ellipse_80%_60%_at_80%_25%,rgba(56,189,248,0.20),transparent_70%)] blur-3xl pointer-events-none -z-0" />
+        <div className="absolute top-1/4 inset-x-0 h-[500px] bg-[radial-gradient(ellipse_90%_50%_at_50%_40%,rgba(14,165,233,0.14),rgba(71,85,105,0.10)_60%,transparent_80%)] blur-3xl pointer-events-none -z-0" />
+        <div className="absolute bottom-0 inset-x-0 h-40 bg-gradient-to-t from-[#F8FAFC] to-transparent pointer-events-none -z-0" />
 
-        <div className="max-w-5xl mx-auto w-full h-full flex flex-col justify-center items-center relative z-10">
+        {/* Subtle Decorative Background Lines */}
+        <div className="absolute inset-0 pointer-events-none opacity-30 select-none overflow-hidden -z-0">
+          <svg className="w-full h-full" viewBox="0 0 1200 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M-100 200 C300 100, 700 300, 1300 150" stroke="#E2E8F0" strokeWidth="1.5" strokeDasharray="6 6" />
+            <path d="M-100 500 C400 400, 800 600, 1300 450" stroke="#E2E8F0" strokeWidth="1.5" strokeDasharray="6 6" />
+          </svg>
+        </div>
 
-          <div className="space-y-6 lg:space-y-8 flex flex-col items-center">
+        {/* Center Hero Content Container */}
+        <div className="max-w-5xl mx-auto w-full text-center relative z-20 my-auto flex-1 flex flex-col items-center justify-center py-6 sm:py-10">
+
+          <div className="space-y-6 lg:space-y-8 flex flex-col items-center justify-center text-center w-full mx-auto">
+
             {/* Headline */}
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
-              className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight leading-[1.18] text-[#111827] flex flex-col items-center justify-center text-center gap-2 sm:gap-3.5"
+              className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight leading-[1.18] text-[#111827] flex flex-col items-center justify-center text-center gap-2.5 sm:gap-4 w-full mx-auto"
             >
-              {/* Line 1: Upload Your Documents. [Post/Document Icon] */}
-              <div className="relative inline-flex items-center justify-center">
-                <span>Upload Your Documents.</span>
-                <img
-                  src="/images/Landing Page Icons/Landing Page Post.svg"
-                  alt="Post Icon"
-                  className="absolute left-full top-1/2 -translate-y-1/2 -ml-1 sm:-ml-2 md:-ml-3 h-9 sm:h-13 md:h-18 lg:h-22 w-auto object-contain pointer-events-none select-none drop-shadow-md transition-transform duration-300 hover:scale-110"
+              {/* Line 1: Upload Your Documents. [Messedup Drawable Icon] */}
+              <div className="relative inline-flex items-center justify-center text-center">
+                <span className="relative z-10">Upload Your Documents.</span>
+                <motion.img
+                  animate={{
+                    y: [0, -6, 0],
+                    rotate: [0, 5, 0]
+                  }}
+                  transition={{ repeat: Infinity, duration: 5.2, ease: "easeInOut" }}
+                  src="/images/Landing Page Icons/Messedup.svg"
+                  alt="Drawable Messedup"
+                  className="absolute left-full top-1/2 -translate-y-1/2 ml-1 sm:ml-2 md:ml-3 h-8 sm:h-12 md:h-16 lg:h-20 w-auto object-contain pointer-events-none select-none drop-shadow-sm transition-transform duration-300 hover:scale-110"
                 />
               </div>
 
-              {/* Line 2: [Key Points Icon] Track Your Work Hours. */}
-              <div className="relative inline-flex items-center justify-center">
-                {/* Key Points Icon beside first word 'Track' */}
-                <img
-                  src="/images/Landing Page Icons/Landing Page key Points.svg"
-                  alt="Key Points Icon"
-                  className="absolute right-full top-1/2 -translate-y-1/2 -mr-1 sm:-mr-2 md:-mr-3 h-9 sm:h-13 md:h-18 lg:h-22 w-auto object-contain -rotate-12 pointer-events-none select-none drop-shadow-md transition-transform duration-300 hover:-rotate-18 hover:scale-110"
+              {/* Line 2: [Isthisdoc Drawable Document Icon] Track Your Work Hours. */}
+              <div className="relative inline-flex items-center justify-center text-center">
+                {/* Drawable Document Sketch Icon beside first word 'Track' */}
+                <motion.img
+                  animate={{
+                    y: [0, 6, 0],
+                    rotate: [-12, -7, -12]
+                  }}
+                  transition={{ repeat: Infinity, duration: 4.5, ease: "easeInOut", delay: 0.3 }}
+                  src="/images/Landing Page Icons/Isthisdoc.svg"
+                  alt="Drawable Document"
+                  className="absolute right-full top-1/2 -translate-y-1/2 mr-1 sm:mr-2 md:mr-3 h-8 sm:h-12 md:h-16 lg:h-20 w-auto object-contain -rotate-12 pointer-events-none select-none drop-shadow-sm transition-transform duration-300 hover:-rotate-18 hover:scale-110"
                 />
 
-                <span className="relative inline-block text-transparent bg-clip-text bg-gradient-to-r from-[#111827] via-[#374151] to-[#6B7280] pb-1 sm:pb-2">
+                <span ref={underlineRef} className="relative inline-block text-transparent bg-clip-text bg-gradient-to-r from-[#111827] via-[#374151] to-[#6B7280] pb-1.5 sm:pb-2.5 z-10">
                   Track Your Work Hours.
 
-                  {/* Artistic Upward-Arched Brush Underline (Sequential 2-Pass: Left→Right, then visible pause, then Right→Left return brush) */}
+                  {/* Artistic Upward-Arched Brush Underline (Sequential 2-Pass Organic Wavy Calligraphy Brush - Repeating on Scroll) */}
                   <svg
-                    className="absolute -bottom-2.5 sm:-bottom-4 md:-bottom-5 left-0 w-full h-6 sm:h-8 md:h-10 pointer-events-none overflow-visible select-none"
-                    viewBox="0 0 400 30"
+                    className="absolute -bottom-3 sm:-bottom-4 md:-bottom-5 left-1/2 -translate-x-1/2 w-[102%] sm:w-[104%] h-7 sm:h-9 md:h-11 pointer-events-none overflow-visible select-none"
+                    viewBox="0 0 400 32"
                     fill="none"
                     preserveAspectRatio="none"
                   >
-                    {/* Left Bristle Entry Flare (Bold) */}
+                    {/* PASS 1 (LEFT → RIGHT): Organic wavy painterly brush stroke */}
                     <motion.path
-                      d="M 2 23 C 8 26, 18 25, 30 23"
+                      d="M 5 20 C 48 23, 98 18.5, 148 12.5 C 198 6.5, 258 7.5, 318 12.5 C 348 15, 375 18, 396 16"
                       stroke="#EF4444"
-                      strokeWidth="4"
-                      strokeLinecap="round"
-                      initial={{ pathLength: 0, opacity: 0 }}
-                      whileInView={{ pathLength: 1, opacity: 0.95 }}
-                      viewport={{ once: false, amount: 0.2 }}
-                      transition={{ duration: 0.3, delay: 0.05, ease: "easeOut" }}
-                    />
-
-                    {/* PASS 1 (LEFT → RIGHT): Bold primary brush stroke sweeping across */}
-                    <motion.path
-                      d="M 4 22 C 75 10, 140 7.5, 200 7.5 C 260 7.5, 325 10, 396 22"
-                      stroke="#EF4444"
-                      strokeWidth="10"
+                      strokeWidth="11"
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       initial={{ pathLength: 0, opacity: 0 }}
-                      whileInView={{ pathLength: 1, opacity: 1 }}
-                      viewport={{ once: false, amount: 0.2 }}
-                      transition={{ duration: 0.75, delay: 0.1, ease: [0.33, 1, 0.68, 1] }}
+                      animate={isUnderlineInView ? { pathLength: 1, opacity: 1 } : { pathLength: 0, opacity: 0 }}
+                      transition={{
+                        pathLength: { duration: 0.8, delay: isUnderlineInView ? 0.1 : 0, ease: [0.16, 1, 0.3, 1] },
+                        opacity: { duration: 0.01, delay: isUnderlineInView ? 0.09 : 0 }
+                      }}
                     />
 
-                    {/* Upper Fine Bristle Trail (Left → Right) */}
+                    {/* Pass 1 Upper Wave Sheen (Left → Right) */}
                     <motion.path
-                      d="M 12 19.5 C 80 8.5, 140 5.5, 200 5.5 C 260 5.5, 320 8.5, 388 19.5"
-                      stroke="#F87171"
+                      d="M 12 17 C 52 20, 102 15.5, 152 9.5 C 202 3.5, 262 4.5, 322 9.5 C 350 12, 375 14.5, 390 13"
+                      stroke="#FCA5A5"
                       strokeWidth="3.5"
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       initial={{ pathLength: 0, opacity: 0 }}
-                      whileInView={{ pathLength: 1, opacity: 0.9 }}
-                      viewport={{ once: false, amount: 0.2 }}
-                      transition={{ duration: 0.75, delay: 0.15, ease: [0.33, 1, 0.68, 1] }}
+                      animate={isUnderlineInView ? { pathLength: 1, opacity: 0.9 } : { pathLength: 0, opacity: 0 }}
+                      transition={{
+                        pathLength: { duration: 0.8, delay: isUnderlineInView ? 0.15 : 0, ease: [0.16, 1, 0.3, 1] },
+                        opacity: { duration: 0.01, delay: isUnderlineInView ? 0.14 : 0 }
+                      }}
                     />
 
-                    {/* Dry-Brush Texture Bristle Accent (Left → Right) */}
+                    {/* PASS 2 (RIGHT → LEFT): Organic wavy return brush stroke sweeping back across */}
                     <motion.path
-                      d="M 28 20.5 C 95 9.5, 150 7, 200 7 C 250 7, 305 9.5, 370 20.5"
-                      stroke="#EF4444"
-                      strokeWidth="2.2"
-                      strokeLinecap="round"
-                      strokeDasharray="18 4 10 3"
-                      initial={{ pathLength: 0, opacity: 0 }}
-                      whileInView={{ pathLength: 1, opacity: 0.85 }}
-                      viewport={{ once: false, amount: 0.2 }}
-                      transition={{ duration: 0.8, delay: 0.2, ease: [0.33, 1, 0.68, 1] }}
-                    />
-
-                    {/* Right Brush Exit Flare (Lands when Pass 1 completes) */}
-                    <motion.path
-                      d="M 370 22 C 382 25, 392 25.5, 399 22.5"
-                      stroke="#EF4444"
-                      strokeWidth="4"
-                      strokeLinecap="round"
-                      initial={{ pathLength: 0, opacity: 0 }}
-                      whileInView={{ pathLength: 1, opacity: 0.95 }}
-                      viewport={{ once: false, amount: 0.2 }}
-                      transition={{ duration: 0.35, delay: 0.8, ease: "easeOut" }}
-                    />
-
-                    {/* PASS 2 (RIGHT → LEFT): Distinct return brush stroke sweeping back across AFTER a noticeable delay */}
-                    <motion.path
-                      d="M 396 24 C 325 12, 260 9.5, 200 9.5 C 140 9.5, 75 12, 4 24"
+                      d="M 396 19 C 355 23.5, 295 18, 235 12.5 C 175 7, 115 9.5, 65 16 C 38 19.5, 18 21, 5 21"
                       stroke="#DC2626"
-                      strokeWidth="8"
+                      strokeWidth="9.5"
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       initial={{ pathLength: 0, opacity: 0 }}
-                      whileInView={{ pathLength: 1, opacity: 1 }}
-                      viewport={{ once: false, amount: 0.2 }}
-                      transition={{ duration: 0.8, delay: 1.2, ease: [0.33, 1, 0.68, 1] }}
+                      animate={isUnderlineInView ? { pathLength: 1, opacity: 1 } : { pathLength: 0, opacity: 0 }}
+                      transition={{
+                        pathLength: { duration: 0.8, delay: isUnderlineInView ? 1.05 : 0, ease: [0.16, 1, 0.3, 1] },
+                        opacity: { duration: 0.01, delay: isUnderlineInView ? 1.04 : 0 }
+                      }}
                     />
 
-                    {/* Dense Ink Shadow Reservoir (Right → Left return pass) */}
+                    {/* Pass 2 Lower Wave Accent (Right → Left) */}
                     <motion.path
-                      d="M 384 26 C 315 14, 255 11.5, 200 11.5 C 145 11.5, 85 14, 16 26"
-                      stroke="#991B1B"
-                      strokeWidth="4.5"
+                      d="M 380 22 C 340 26, 285 19.5, 225 14.5 C 165 9.5, 105 11.5, 55 18 C 30 21, 15 22, 8 22"
+                      stroke="#EF4444"
+                      strokeWidth="3"
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       initial={{ pathLength: 0, opacity: 0 }}
-                      whileInView={{ pathLength: 1, opacity: 0.95 }}
-                      viewport={{ once: false, amount: 0.2 }}
-                      transition={{ duration: 0.75, delay: 1.28, ease: [0.33, 1, 0.68, 1] }}
-                    />
-
-                    {/* Left Finish Lock (Completes as Pass 2 lands) */}
-                    <motion.path
-                      d="M 22 23.5 C 14 24.5, 6 25, 2 24"
-                      stroke="#DC2626"
-                      strokeWidth="3.5"
-                      strokeLinecap="round"
-                      initial={{ pathLength: 0, opacity: 0 }}
-                      whileInView={{ pathLength: 1, opacity: 0.95 }}
-                      viewport={{ once: false, amount: 0.2 }}
-                      transition={{ duration: 0.3, delay: 1.95, ease: "easeOut" }}
+                      animate={isUnderlineInView ? { pathLength: 1, opacity: 0.85 } : { pathLength: 0, opacity: 0 }}
+                      transition={{
+                        pathLength: { duration: 0.8, delay: isUnderlineInView ? 1.1 : 0, ease: [0.16, 1, 0.3, 1] },
+                        opacity: { duration: 0.01, delay: isUnderlineInView ? 1.09 : 0 }
+                      }}
                     />
                   </svg>
                 </span>
@@ -416,7 +482,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              className="text-base sm:text-lg text-[#4B5563] max-w-2xl mx-auto leading-relaxed font-medium"
+              className="text-base sm:text-lg text-[#4B5563] max-w-2xl mx-auto leading-relaxed font-medium text-center"
             >
               Submit practicum requirements online, log daily time in and out, and clear your OJT milestones with instant adviser and supervisor approvals.
             </motion.p>
@@ -426,7 +492,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
-              className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2 w-full sm:w-auto"
+              className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2 w-full sm:w-auto mx-auto"
             >
               <button
                 type="button"
@@ -448,13 +514,59 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
                 </button>
               )}
             </motion.div>
+
           </div>
 
         </div>
+
+        {/* Moving Infinite Requirement & Feature Carousel */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+          className="w-full max-w-5xl mx-auto pt-6 sm:pt-8 pb-2 relative overflow-hidden shrink-0 z-20"
+        >
+          {/* Left and Right Fade Overlays */}
+          <div className="absolute left-0 top-0 bottom-0 w-16 sm:w-28 bg-gradient-to-r from-[#F8FAFC] via-[#F8FAFC]/80 to-transparent z-20 pointer-events-none" />
+          <div className="absolute right-0 top-0 bottom-0 w-16 sm:w-28 bg-gradient-to-l from-[#F8FAFC] via-[#F8FAFC]/80 to-transparent z-20 pointer-events-none" />
+
+          {/* Moving Track */}
+          <div className="flex overflow-hidden select-none group/marquee">
+            <motion.div
+              animate={{ x: ['0%', '-50%'] }}
+              transition={{ ease: 'linear', duration: 95, repeat: Infinity }}
+              className="flex gap-3.5 flex-nowrap shrink-0 py-2 group-hover/marquee:[animation-play-state:paused]"
+            >
+              {[...marqueeItems, ...marqueeItems].map((item, idx) => (
+                <div
+                  key={idx}
+                  className="inline-flex items-center gap-3 px-4 py-2.5 rounded-full bg-white border border-[#E5E7EB] shadow-xs hover:shadow-md hover:border-zinc-300 transition-all cursor-default shrink-0"
+                >
+                  <div className="w-6 h-6 rounded-full bg-[#F3F4F6] flex items-center justify-center p-0.5">
+                    <img src={item.icon} alt="" className="w-full h-full object-contain" />
+                  </div>
+                  <span className="text-xs sm:text-sm font-bold text-[#111827] whitespace-nowrap">{item.title}</span>
+                  <span
+                    className={cn(
+                      "text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full border",
+                      item.color === 'emerald'
+                        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                        : item.color === 'amber'
+                        ? "bg-amber-50 text-amber-700 border-amber-200"
+                        : "bg-blue-50 text-blue-700 border-blue-200"
+                    )}
+                  >
+                    {item.badge}
+                  </span>
+                </div>
+              ))}
+            </motion.div>
+          </div>
+        </motion.div>
       </section>
 
-      {/* SECTION 2: PROJECT & PRACTICUM MANAGEMENT (LIGHT SECTION WITH YELLOW ACCENT) */}
-      <section id="project-management" className="relative w-full min-h-[calc(100vh-4rem)] flex flex-col justify-center items-center bg-white text-[#111827] py-12 sm:py-16 px-4 sm:px-6 lg:px-8 overflow-hidden border-b border-[#E5E7EB]">
+      {/* ═══════════════════ SECTION: REQUIREMENT CLEARANCE ═══════════════════ */}
+      <section id="project-management" className="relative w-full min-h-[calc(100vh-4rem)] flex flex-col justify-center items-center bg-white text-[#111827] py-14 sm:py-20 px-4 sm:px-6 lg:px-8 overflow-hidden border-b border-[#E5E7EB]">
         
         {/* Left-Side Subtle Topographic Contour Lines */}
         <div className="absolute left-0 top-0 bottom-0 w-[40%] max-w-[450px] pointer-events-none select-none opacity-25 overflow-hidden">
@@ -474,7 +586,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
             {/* Left Content Column */}
             <div className="lg:col-span-6 space-y-6 text-center lg:text-left">
               
-              {/* Headline with RoughNotation Highlight on Clearance */}
+              {/* Headline with RoughHighlight on Clearance */}
               <motion.h2
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -531,7 +643,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
                 <img
                   src="/images/Landing Page Icons/Project Management Collaboration.svg"
                   alt="Student Passing Documents and Practicum Requirement Clearance"
-                  className="w-full h-auto max-h-[340px] sm:max-h-[380px] object-contain drop-shadow-lg"
+                  className="w-full h-auto max-h-[340px] sm:max-h-[400px] object-contain drop-shadow-lg"
                 />
               </div>
             </motion.div>
@@ -541,7 +653,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
 
       </section>
 
-      {/* SECTION 3: WORK TOGETHER (COLLABORATIVE ORBIT & TEAMWORK) */}
+      {/* ═══════════════════ SECTION: DOCUMENT VERIFICATION ═══════════════════ */}
       <section id="work-together" className="relative w-full min-h-[calc(100vh-4rem)] flex flex-col justify-center items-center bg-white text-[#111827] py-14 sm:py-20 px-4 sm:px-6 lg:px-8 overflow-hidden border-b border-[#E5E7EB]">
         <div className="max-w-6xl mx-auto w-full relative z-10 my-auto">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
@@ -562,23 +674,31 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
                   <ellipse cx="250" cy="250" rx="220" ry="220" stroke="#93C5FD" strokeWidth="1.5" strokeDasharray="6 6" fill="none" opacity="0.45" />
                 </svg>
 
-                {/* Center Main Logo (Tilted a bit to the right with floating cast shadow) */}
+                {/* Center Document Card with Plus Badge */}
                 <motion.div
-                  initial={{ scale: 0, rotate: 0 }}
-                  whileInView={{ scale: 1, rotate: 6 }}
+                  initial={{ scale: 0 }}
+                  whileInView={{ scale: 1 }}
                   viewport={{ once: true }}
                   transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.2 }}
-                  className="relative z-20 flex items-center justify-center filter drop-shadow-[0_20px_28px_rgba(0,0,0,0.2)] drop-shadow-[0_6px_10px_rgba(0,0,0,0.1)]"
+                  className="relative z-20 flex items-center justify-center filter drop-shadow-[0_16px_28px_rgba(0,0,0,0.12)]"
                 >
-                  <img
-                    src="/images/Landing Page Icons/Logo.svg"
-                    alt="Practicum Main Logo"
-                    className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 object-contain select-none pointer-events-none"
-                  />
+                  <div className="relative w-20 h-24 sm:w-24 sm:h-28 rounded-2xl bg-white border border-zinc-200/90 shadow-xl p-3 flex flex-col justify-between">
+                    <div className="space-y-1.5">
+                      <div className="w-8 h-2 bg-blue-500/80 rounded-full" />
+                      <div className="w-14 h-1.5 bg-zinc-200 rounded-full" />
+                      <div className="w-12 h-1.5 bg-zinc-200 rounded-full" />
+                      <div className="w-10 h-1.5 bg-zinc-200 rounded-full" />
+                    </div>
+                    <div className="flex justify-end">
+                      <div className="w-6 h-6 rounded-full bg-[#3B82F6] text-white flex items-center justify-center shadow-md -mr-1.5 -mb-1.5">
+                        <Plus size={14} strokeWidth={3} />
+                      </div>
+                    </div>
+                  </div>
                 </motion.div>
 
-                {/* Orbit Circles with Images for Female, Male, Group, Reading, Coding */}
-                {/* 1. Top-Left (Outer Orbit - Female Icon Image on yellow bg) */}
+                {/* Orbit Avatar Nodes */}
+                {/* 1. Top-Left (Outer Orbit - Female Avatar on yellow bg) */}
                 <div className="absolute top-[8%] left-[18%] z-10 w-11 h-11 sm:w-13 sm:h-13 md:w-14 md:h-14 rounded-full overflow-hidden border-2 border-white shadow-lg bg-[#FBBF24] flex items-center justify-center p-0.5">
                   <img
                     src="/images/Landing Page Icons/undraw_female-avatar_7t6k.svg"
@@ -587,7 +707,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
                   />
                 </div>
 
-                {/* 2. Top-Center (Inner Orbit - Reading Icon Image on green bg) */}
+                {/* 2. Top-Center (Inner Orbit - Reading on green bg) */}
                 <div className="absolute top-[16%] left-[45%] z-10 w-11 h-11 sm:w-13 sm:h-13 md:w-14 md:h-14 rounded-full overflow-hidden border-2 border-white shadow-lg bg-[#10B981] flex items-center justify-center p-1.5">
                   <img
                     src="/images/Landing Page Icons/undraw_reading_c1xl.svg"
@@ -596,7 +716,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
                   />
                 </div>
 
-                {/* 3. Top-Right (Outer Orbit - Male Icon Image on blue bg) */}
+                {/* 3. Top-Right (Outer Orbit - Male Avatar on blue bg) */}
                 <div className="absolute top-[10%] right-[18%] z-10 w-11 h-11 sm:w-13 sm:h-13 md:w-14 md:h-14 rounded-full overflow-hidden border-2 border-white shadow-lg bg-[#3B82F6] flex items-center justify-center p-0.5">
                   <img
                     src="/images/Landing Page Icons/undraw_male-avatar_zkzx.svg"
@@ -605,7 +725,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
                   />
                 </div>
 
-                {/* 4. Middle-Left (Outer Orbit - Coding Icon Image on red bg) */}
+                {/* 4. Middle-Left (Outer Orbit - Coding on red bg) */}
                 <div className="absolute top-[44%] left-[2%] z-10 w-11 h-11 sm:w-13 sm:h-13 md:w-14 md:h-14 rounded-full overflow-hidden border-2 border-white shadow-lg bg-[#EF4444] flex items-center justify-center p-1.5">
                   <img
                     src="/images/Landing Page Icons/undraw_coding_joxb.svg"
@@ -614,7 +734,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
                   />
                 </div>
 
-                {/* 5. Middle-Left (Inner Orbit - Female Icon Image on blue bg) */}
+                {/* 5. Middle-Left (Inner Orbit - Female Avatar on blue bg) */}
                 <div className="absolute top-[42%] left-[19%] z-10 w-11 h-11 sm:w-13 sm:h-13 md:w-14 md:h-14 rounded-full overflow-hidden border-2 border-white shadow-lg bg-[#3B82F6] flex items-center justify-center p-0.5">
                   <img
                     src="/images/Landing Page Icons/undraw_female-avatar_7t6k.svg"
@@ -623,7 +743,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
                   />
                 </div>
 
-                {/* 6. Middle-Right (Inner Orbit - Group Collaboration Icon Image on purple bg) */}
+                {/* 6. Middle-Right (Inner Orbit - Group Collaboration on purple bg) */}
                 <div className="absolute top-[42%] right-[19%] z-10 w-11 h-11 sm:w-13 sm:h-13 md:w-14 md:h-14 rounded-full overflow-hidden border-2 border-white shadow-lg bg-[#6366F1] flex items-center justify-center p-1">
                   <img
                     src="/images/Landing Page Icons/undraw_real-time-collaboration_bchs.svg"
@@ -632,7 +752,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
                   />
                 </div>
 
-                {/* 7. Middle-Right (Outer Orbit - Reading / Journal Icon Image on green bg) */}
+                {/* 7. Middle-Right (Outer Orbit - Reading on green bg) */}
                 <div className="absolute top-[56%] right-[3%] z-10 w-11 h-11 sm:w-13 sm:h-13 md:w-14 md:h-14 rounded-full overflow-hidden border-2 border-white shadow-lg bg-[#10B981] flex items-center justify-center p-1.5">
                   <img
                     src="/images/Landing Page Icons/undraw_reading_c1xl.svg"
@@ -641,7 +761,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
                   />
                 </div>
 
-                {/* 8. Bottom-Center (Inner Orbit - Coding Icon Image on orange bg) */}
+                {/* 8. Bottom-Center (Inner Orbit - Coding on orange bg) */}
                 <div className="absolute bottom-[16%] left-[45%] z-10 w-11 h-11 sm:w-13 sm:h-13 md:w-14 md:h-14 rounded-full overflow-hidden border-2 border-white shadow-lg bg-[#F97316] flex items-center justify-center p-1.5">
                   <img
                     src="/images/Landing Page Icons/undraw_coding_joxb.svg"
@@ -650,7 +770,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
                   />
                 </div>
 
-                {/* 9. Bottom-Left (Outer Orbit - Male Icon Image on blue bg) */}
+                {/* 9. Bottom-Left (Outer Orbit - Male Avatar on blue bg) */}
                 <div className="absolute bottom-[8%] left-[20%] z-10 w-11 h-11 sm:w-13 sm:h-13 md:w-14 md:h-14 rounded-full overflow-hidden border-2 border-white shadow-lg bg-[#3B82F6] flex items-center justify-center p-0.5">
                   <img
                     src="/images/Landing Page Icons/undraw_male-avatar_zkzx.svg"
@@ -665,7 +785,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
             {/* Right Content Column */}
             <div className="lg:col-span-6 space-y-6 text-center lg:text-left">
               
-              {/* Headline with RoughNotation Highlight on Verification */}
+              {/* Headline with RoughHighlight on Verification */}
               <motion.h2
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -714,458 +834,393 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
         </div>
       </section>
 
-      {/* DEEP NAVY BLUE BANNER - "Your work, everywhere you are" */}
-      <section id="work-everywhere" className="relative w-full bg-[#043873] text-white py-12 sm:py-16 px-4 sm:px-6 lg:px-12 overflow-hidden border-b border-[#032B5F]">
-        
-        {/* Left-Side Topographic Contour Lines SVG (Matching Reference Pattern) */}
-        <div className="absolute left-0 top-0 bottom-0 w-[50%] max-w-[550px] pointer-events-none select-none opacity-20 overflow-hidden">
-          <svg className="w-full h-full object-cover" viewBox="0 0 600 600" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M-150 300 C-150 120, 100 60, 280 60 C460 60, 560 180, 560 300 C560 420, 440 540, 280 540 C120 540, -150 480, -150 300 Z" stroke="white" strokeWidth="2.5"/>
-            <path d="M-100 300 C-100 150, 120 100, 260 100 C400 100, 490 200, 490 300 C490 400, 390 500, 260 500 C130 500, -100 450, -100 300 Z" stroke="white" strokeWidth="2.5"/>
-            <path d="M-50 300 C-50 180, 140 140, 240 140 C340 140, 420 220, 420 300 C420 380, 340 460, 240 460 C140 460, -50 420, -50 300 Z" stroke="white" strokeWidth="2.5"/>
-            <path d="M0 300 C0 210, 160 180, 220 180 C280 180, 350 240, 350 300 C350 360, 290 420, 220 420 C150 420, 0 390, 0 300 Z" stroke="white" strokeWidth="2.5"/>
-            <path d="M50 300 C50 240, 175 220, 210 220 C245 220, 285 260, 285 300 C285 340, 245 380, 210 380 C175 380, 50 360, 50 300 Z" stroke="white" strokeWidth="2.5"/>
-            <path d="M100 300 C100 270, 185 260, 200 260 C215 260, 230 280, 230 300 C230 320, 215 340, 200 340 C185 340, 100 330, 100 300 Z" stroke="white" strokeWidth="2.5"/>
-          </svg>
+      {/* ═══════════════════ SECTION: OFFICIAL PRACTICUM TEMPLATES & DOWNLOAD ═══════════════════ */}
+      <section id="features" className="relative py-16 sm:py-24 px-4 sm:px-6 lg:px-8 bg-white border-b border-[#E5E7EB] overflow-hidden">
+        {/* Background Brand Logo Watermark */}
+        <div className="absolute -right-12 -bottom-16 w-80 h-80 sm:w-96 sm:h-96 lg:w-[440px] lg:h-[440px] opacity-[0.05] pointer-events-none select-none z-0">
+          <img
+            src="/images/Landing Page Icons/Logo.svg"
+            alt=""
+            aria-hidden="true"
+            className="w-full h-full object-contain"
+          />
+        </div>
+        <div className="absolute -left-12 -top-12 w-64 h-64 sm:w-80 sm:h-80 opacity-[0.035] pointer-events-none select-none z-0">
+          <img
+            src="/images/Landing Page Icons/Logo.svg"
+            alt=""
+            aria-hidden="true"
+            className="w-full h-full object-contain"
+          />
         </div>
 
-        {/* Ambient Glow */}
-        <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-[450px] h-[450px] bg-blue-400/10 blur-3xl pointer-events-none rounded-full" />
-
-        <div className="max-w-7xl mx-auto w-full relative z-10">
-          
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+        <div className="max-w-6xl mx-auto relative z-10">
+          {/* 2-Column Grid: Text & Download on Left, Blueprint Sample on Right */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
             
-            {/* Left Content Column */}
-            <div className="lg:col-span-7 xl:col-span-8 space-y-6 text-center lg:text-left">
-              
-              {/* Main Headline with Cyan Underline Accent */}
-              <motion.h2
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6 }}
-                className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight"
-              >
-                Your work,{' '}
-                <span className="relative inline-block whitespace-nowrap">
-                  <span className="relative z-10 text-[#38BDF8]">everywhere you are</span>
-                  <span className="absolute bottom-1 left-0 w-full h-2.5 sm:h-3 bg-cyan-400/25 -rotate-1 rounded-sm z-0" />
-                </span>
-              </motion.h2>
+            {/* Left Column: Descriptive Text & Features & Download Actions */}
+            <div className="lg:col-span-6 space-y-6 text-center lg:text-left">
+              <div>
+                <h3 className="text-2xl sm:text-3xl lg:text-4xl font-black text-zinc-900 tracking-tight mb-3">
+                  Sample Document Templates
+                </h3>
+                <p className="text-sm sm:text-base text-[#4B5563] leading-relaxed font-normal max-w-lg mx-auto lg:mx-0">
+                  Explore standardized practicum document templates formatted for STI College interns. Built for seamless field deployment, adviser endorsement, and instant institutional compliance.
+                </p>
+              </div>
 
-              {/* Supporting Subtitle */}
-              <motion.p
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: 0.15 }}
-                className="text-sm sm:text-base text-blue-100 max-w-xl mx-auto lg:mx-0 leading-relaxed font-normal opacity-90"
-              >
-                Access your practicum documents, daily time records, and weekly journals from your computer, phone or tablet by synchronizing with STI College advisement, industry supervisors, and official DOCX/PDF templates.
-              </motion.p>
-
-              {/* Sky-Blue Action Button */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: 0.25 }}
-                className="flex items-center justify-center lg:justify-start pt-2"
-              >
+              {/* Download and Portal CTA Buttons */}
+              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 pt-2">
                 <button
                   type="button"
-                  onClick={() => navigate(dashboardLink)}
-                  className="px-7 py-3 bg-[#4F9CF9] hover:bg-[#3B8DEE] text-white text-sm sm:text-base font-bold rounded-lg transition-all shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer"
+                  onClick={handleSimulatedDownload}
+                  disabled={downloadState !== 'idle'}
+                  className={cn(
+                    "inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-white text-xs sm:text-sm font-bold transition-all shadow-md hover:shadow-lg cursor-pointer",
+                    downloadState === 'downloaded'
+                      ? "bg-emerald-600 scale-[1.02]"
+                      : "bg-[#4F9CF9] hover:bg-[#3B8DEE] hover:scale-[1.02] active:scale-[0.98]"
+                  )}
                 >
-                  <span>Try Practicum</span>
-                  <ArrowRight size={18} />
+                  {downloadState === 'downloading' && (
+                    <>
+                      <RotateCcw size={16} className="animate-spin" />
+                      <span>Downloading Sample...</span>
+                    </>
+                  )}
+                  {downloadState === 'downloaded' && (
+                    <>
+                      <CheckCircle2 size={16} className="text-white" />
+                      <span>Sample Downloaded!</span>
+                    </>
+                  )}
+                  {downloadState === 'idle' && (
+                    <>
+                      <Download size={16} />
+                      <span>Download Sample</span>
+                    </>
+                  )}
                 </button>
-              </motion.div>
 
+                <button
+                  type="button"
+                  onClick={() => navigate('/login?role=student')}
+                  className="inline-flex items-center justify-center gap-1.5 px-5 py-3.5 rounded-xl border border-zinc-300 bg-white hover:bg-zinc-50 text-zinc-800 text-xs sm:text-sm font-bold transition-all shadow-2xs hover:border-zinc-400 cursor-pointer"
+                >
+                  <span>Access Portal</span>
+                  <ArrowRight size={14} />
+                </button>
+              </div>
             </div>
 
-            {/* Right Standing Character Illustration */}
-            <motion.div
-              initial={{ opacity: 0, x: 30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.7, delay: 0.2 }}
-              className="lg:col-span-5 xl:col-span-4 flex items-center justify-center lg:justify-end relative"
-            >
-              <div className="relative w-full max-w-[280px] sm:max-w-[320px] lg:max-w-[360px] flex items-center justify-center">
-                
-                {/* Standing Character with Tablet / Completion Vector Graphic */}
-                <img 
-                  src="/images/Landing Page Icons/Clearance Completed.svg" 
-                  alt="Practicum Trainee Holding Tablet"
-                  className="w-full h-auto max-h-[300px] sm:max-h-[340px] lg:max-h-[380px] object-contain drop-shadow-2xl select-none"
-                />
-
-                {/* Floating Loading Dots (Left side, below the curved broken arrow) */}
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.8, x: -10 }}
-                  whileInView={{ opacity: 1, scale: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: 0.35 }}
-                  className="absolute -left-2 sm:-left-6 top-[46%] sm:top-[48%] z-20 bg-white/95 backdrop-blur-xs rounded-xl py-1.5 sm:py-2 px-3 sm:px-4 shadow-xl border border-white/40 flex items-center gap-1.5 sm:gap-2"
-                >
-                  <span className="w-2 h-2 rounded-full bg-blue-500 animate-bounce [animation-delay:-0.3s]" />
-                  <span className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce [animation-delay:-0.15s]" />
-                  <span className="w-2 h-2 rounded-full bg-sky-400 animate-bounce" />
-                </motion.div>
-
-                {/* Floating Box with Checkmark (Below the loading dots) */}
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.8, x: -10 }}
-                  whileInView={{ opacity: 1, scale: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: 0.5 }}
-                  className="absolute -left-1 sm:-left-4 top-[64%] sm:top-[66%] z-20 bg-white/95 backdrop-blur-xs rounded-xl py-1.5 sm:py-2 px-2.5 sm:px-3.5 shadow-xl border border-white/40 flex items-center gap-2"
-                >
-                  <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-emerald-500 flex items-center justify-center text-white shadow-xs">
-                    <Check className="w-3.5 h-3.5 stroke-[3]" />
+            {/* Right Column: Stylized Blueprint Template Sample */}
+            <div className="lg:col-span-6 flex justify-center">
+              <div className="w-full max-w-md bg-white border border-zinc-200/90 rounded-2xl shadow-xl shadow-zinc-300/30 p-6 sm:p-7 relative overflow-hidden font-sans text-left">
+                {/* Top Document Header Bar (without preview badge) */}
+                <div className="flex items-center pb-3.5 mb-4 border-b border-zinc-100">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-amber-400" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
+                    <span className="text-[11px] font-mono text-zinc-400 ml-1.5 font-medium">Application_Letter_Template.docx</span>
                   </div>
-                  <div className="flex flex-col gap-1">
-                    <div className="w-9 sm:w-12 h-1.5 bg-slate-300 rounded-full" />
-                    <div className="w-5 sm:w-7 h-1 bg-slate-200 rounded-full" />
+                </div>
+
+                {/* Blueprint Template Schematic Content */}
+                <div className="space-y-4 text-xs text-zinc-700 select-none">
+                  {/* Date Tag */}
+                  <div className="inline-block px-2 py-0.5 rounded bg-zinc-100 text-zinc-500 font-mono text-[10.5px] border border-zinc-200">
+                    &lt;DATE: CURRENT_DATE&gt;
                   </div>
-                </motion.div>
-
-              </div>
-            </motion.div>
-
-          </div>
-
-        </div>
-
-      </section>
-
-      {/* CONTINUOUS HORIZONTAL MARQUEE FEATURE SLIDER SECTION */}
-      <section id="features" className="py-16 lg:py-24 overflow-hidden border-b border-[#E5E7EB] bg-[#F8F9FA] text-[#111827]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-
-          <div className="text-center max-w-3xl mx-auto mb-12 space-y-3">
-            <h2 className="text-3xl sm:text-5xl font-black tracking-tight text-[#111827]">
-              Complete Practicum Lifecycle Management.
-            </h2>
-            <p className="text-[#4B5563] text-base sm:text-lg font-medium">
-              Designed to solve every paperwork bottleneck, attendance discrepancy, and compliance audit requirement. Hover your mouse to pause scrolling.
-            </p>
-          </div>
-
-        </div>
-
-        {/* CONTINUOUS HORIZONTAL SCROLLING MARQUEE CONTAINER */}
-        <div className="relative w-full overflow-hidden py-4 group">
-          {/* Soft neutral gradient side mask fade overlays */}
-          <div className="absolute left-0 top-0 bottom-0 w-20 sm:w-36 bg-gradient-to-r from-[#F8F9FA] to-transparent z-10 pointer-events-none" />
-          <div className="absolute right-0 top-0 bottom-0 w-20 sm:w-36 bg-gradient-to-l from-[#F8F9FA] to-transparent z-10 pointer-events-none" />
-
-          <div className="flex gap-6 w-max animate-marquee group-hover:[animation-play-state:paused] cursor-pointer">
-            {[...features, ...features].map((feature, i) => (
-              <div
-                key={`${feature.id}-${i}`}
-                className="w-[300px] sm:w-[350px] shrink-0 p-6 rounded-2xl border border-[#E5E7EB] bg-white text-[#111827] shadow-xs flex flex-col justify-between hover:border-zinc-300 hover:shadow-md transition-all duration-300 hover:scale-[1.02]"
-              >
-                <div>
-                  <div className="flex items-center justify-between mb-5">
-                    <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br shadow-xs", feature.accentColor)}>
-                      <feature.icon size={20} strokeWidth={2.5} />
+                  
+                  {/* Recipient Details Blueprint */}
+                  <div className="space-y-1.5">
+                    <div className="inline-block px-2 py-0.5 rounded bg-blue-50 text-blue-800 font-mono text-[11px] font-semibold border border-blue-200/80">
+                      &lt;HOST_REPRESENTATIVE_NAME&gt;
                     </div>
-                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-[#111827] text-white border border-[#111827]">
-                      {feature.badge}
-                    </span>
+                    <div className="h-2 bg-zinc-200/80 rounded-full w-2/3" />
+                    <div className="h-2 bg-zinc-200/80 rounded-full w-1/2" />
                   </div>
-                  <h3 className="text-base font-extrabold mb-2 text-[#111827]">{feature.title}</h3>
-                  <p className="text-[#4B5563] text-xs leading-relaxed font-medium">
-                    {feature.description}
+
+                  {/* Salutation */}
+                  <p className="font-semibold text-zinc-900 text-xs">
+                    Dear Mr./Ms. <span className="text-blue-700 font-mono">&lt;REPRESENTATIVE&gt;</span>:
                   </p>
-                </div>
 
-                <div className="pt-4 border-t border-[#E5E7EB] flex items-center justify-between text-xs font-bold text-[#6B7280] hover:text-[#111827] transition-colors mt-4">
-                  <span>View feature detail</span>
-                  <ArrowRight size={14} />
+                  {/* Body Placeholder Blueprint */}
+                  <div className="space-y-2.5 bg-zinc-50/70 p-3.5 rounded-xl border border-zinc-100">
+                    <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-zinc-600 font-medium">
+                      <span>I, a student of STI</span>
+                      <span className="px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 font-mono text-[10px] font-bold border border-amber-200">&lt;CAMPUS_NAME&gt;</span>
+                      <span>undergo</span>
+                      <span className="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-800 font-mono text-[10px] font-bold border border-emerald-200">&lt;300 HOURS&gt;</span>
+                      <span>for</span>
+                      <span className="px-1.5 py-0.5 rounded bg-blue-50 text-blue-800 font-mono text-[10px] font-bold border border-blue-200">&lt;PROGRAM_NAME&gt;</span>
+                    </div>
+
+                    {/* Placeholder Skeleton Bars */}
+                    <div className="space-y-1.5 pt-1">
+                      <div className="h-2 bg-zinc-200/80 rounded-full w-full" />
+                      <div className="h-2 bg-zinc-200/70 rounded-full w-4/5" />
+                      <div className="h-2 bg-zinc-200/60 rounded-full w-3/5" />
+                    </div>
+                  </div>
+
+                  {/* Signature Sign-Off Block */}
+                  <div className="pt-1 text-zinc-800">
+                    <p className="text-[11px] font-medium text-zinc-500">Respectfully yours,</p>
+                    <div className="mt-3 pt-1.5 w-48 border-t-2 border-zinc-900">
+                      <span className="inline-block px-2 py-0.5 rounded bg-zinc-900 text-white font-mono text-[10px] font-bold">
+                        &lt;STUDENT_SIGNATURE_INK&gt;
+                      </span>
+                      <p className="text-[10px] text-zinc-500 font-medium mt-0.5">OJT Candidate Applicant</p>
+                    </div>
+                  </div>
                 </div>
               </div>
-            ))}
+            </div>
+
           </div>
         </div>
       </section>
 
-      {/* WORKFLOW TIMELINE SECTION */}
-      <section id="workflow" className="relative w-full min-h-[calc(100vh-4rem)] flex flex-col justify-center items-center px-4 sm:px-6 lg:px-8 py-10 sm:py-14 text-center bg-[#F3F4F6]/70 text-[#111827] border-b border-[#E5E7EB]">
-        <div className="max-w-6xl mx-auto w-full my-auto">
+      {/* ═══════════════════ THREE-PHASE OJT JOURNEY 3D CAROUSEL ═══════════════════ */}
+      <section id="journey" className="relative py-6 sm:py-8 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-[#F8FAFC] via-[#EFF6FF]/40 to-[#F8FAFC] border-b border-zinc-200 overflow-hidden flex flex-col justify-center">
+        {/* Centered Horizon Stage Radial Glow */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl h-[260px] bg-[radial-gradient(ellipse_at_center,rgba(56,189,248,0.20),rgba(59,130,246,0.08)_50%,transparent_75%)] blur-2xl pointer-events-none -z-0" />
 
-          <div className="text-center max-w-3xl mx-auto mb-6 sm:mb-8 space-y-1">
-            <h2 className="text-3xl sm:text-5xl font-black tracking-tight text-[#111827]">
-              4-Phase OJT Clearance Pipeline.
+        <div className="max-w-4xl mx-auto w-full relative z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.4 }}
+            className="text-center mb-2.5 sm:mb-3"
+          >
+            <h2 className="text-xl sm:text-2xl font-black tracking-tight text-zinc-900 mb-0.5">
+              Your Practicum Journey
             </h2>
-            <p className="text-[#4B5563] text-sm sm:text-base font-medium">
-              From pre-OJT application clearance to final performance evaluation and graduation clearance.
+            <p className="text-[11px] sm:text-xs text-zinc-600 max-w-lg mx-auto font-medium">
+              Explore each milestone of your internship—from onboarding and shift tracking to final evaluation.
             </p>
+          </motion.div>
+
+          {/* 3-Box Carousel Viewport */}
+          <div className="relative overflow-hidden w-full">
+            <Carousel slides={slideData} />
           </div>
+        </div>
+      </section>
 
-          {/* Interactive Accordion Cards for 4 Workflow Phases */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-6xl mx-auto w-full text-left">
-            {[
-              {
-                step: '01',
-                title: 'Pre-OJT Requirements',
-                desc: 'Generate Application Letter, Parent Consent, and verify company MOA clearance.',
-                icon: FileText,
-                badge: 'PHASE 01 • PRE-OJT CLEARANCE',
-                badgeColor: 'bg-blue-500/10 text-blue-700 border-blue-500/30',
-                items: [
-                  { title: 'Student Application Letter', text: 'Fill student details, upload signature, and route to Practicum Adviser.', status: 'Template Ready', statusBg: 'bg-emerald-500/10 text-emerald-700', icon: FileText },
-                  { title: 'Parent Consent Forms', text: 'Generate With Fee or Without Fee consent forms with guardian e-signature.', status: 'Template Ready', statusBg: 'bg-emerald-500/10 text-emerald-700', icon: FileText },
-                  { title: 'MOA Clearance Verification', text: 'Verify active Memorandum of Agreement expiration and company accreditation.', status: 'Database Synced', statusBg: 'bg-emerald-500/10 text-emerald-700', icon: Building2 }
-                ]
-              },
-              {
-                step: '02',
-                title: 'Company Placement',
-                desc: 'Submit Endorsement Letter, receive acceptance, and set up Training Plan.',
-                icon: Building2,
-                badge: 'PHASE 02 • PLACEMENT & ENDORSEMENT',
-                badgeColor: 'bg-amber-500/10 text-amber-700 border-amber-500/30',
-                items: [
-                  { title: 'Endorsement Letter', text: 'Auto-generate official STI endorsement letter with department seal.', status: 'Generated', statusBg: 'bg-blue-500/10 text-blue-700', icon: FileText },
-                  { title: 'Proposal Letter to Industry', text: 'Submit proposal details for custom company partnership onboarding.', status: 'Pending Accept', statusBg: 'bg-amber-500/10 text-amber-700', icon: Building2 },
-                  { title: 'Training Plan Form', text: 'Outline internship objectives, shift schedules, and target 480 hours.', status: 'Approved', statusBg: 'bg-purple-500/10 text-purple-700', icon: Award }
-                ]
-              },
-              {
-                step: '03',
-                title: 'Active OJT Execution',
-                desc: 'Log daily DTR hours, submit weekly journals, and get supervisor sign-offs.',
-                icon: Clock,
-                badge: 'PHASE 03 • ACTIVE OJT EXECUTION',
-                badgeColor: 'bg-emerald-500/10 text-emerald-700 border-emerald-500/30',
-                items: [
-                  { title: 'DTR Attendance Sheet', text: 'Real-time hour calculation with daily supervisor 1-click approvals.', status: 'Auto Math', statusBg: 'bg-emerald-500/10 text-emerald-700', icon: Clock },
-                  { title: 'Weekly Journal Logs', text: 'Submit weekly learning reflection reports and task photo evidence.', status: 'Active Stream', statusBg: 'bg-blue-500/10 text-blue-700', icon: FileText },
-                  { title: 'Adviser Consultation', text: 'In-browser annotation review with direct feedback & revision logs.', status: 'Live Comments', statusBg: 'bg-cyan-500/10 text-cyan-700', icon: UserCheck }
-                ]
-              },
-              {
-                step: '04',
-                title: 'Final Clearance',
-                desc: 'Submit Performance Appraisal, Integration Paper, and earn final OJT clearance.',
-                icon: Award,
-                badge: 'PHASE 04 • FINAL CLEARANCE',
-                badgeColor: 'bg-purple-500/10 text-purple-700 border-purple-500/30',
-                items: [
-                  { title: 'Performance Appraisal Form', text: 'Digital evaluation score sheet filled directly by industry supervisor.', status: 'Score Verified', statusBg: 'bg-purple-500/10 text-purple-700', icon: Award },
-                  { title: 'Integration Paper', text: 'Final practicum synthesis report verified by department chair.', status: 'Passed Audit', statusBg: 'bg-emerald-500/10 text-emerald-700', icon: FileText },
-                  { title: 'Final Clearance Certificate', text: 'Digital certificate issue declaring 100% completion of OJT requirements.', status: '100% Cleared', statusBg: 'bg-blue-500/10 text-blue-700', icon: CheckCircle2 }
-                ]
-              }
-            ].map((item, idx) => {
-              const isOpen = activeStep === idx + 1;
-              return (
-                <div
-                  key={idx}
-                  className={cn(
-                    "rounded-2xl border transition-all duration-300 overflow-hidden cursor-pointer bg-white",
-                    isOpen
-                      ? "border-blue-600 shadow-md ring-1 ring-blue-600/20"
-                      : "border-[#E5E7EB] hover:border-zinc-300 shadow-xs"
-                  )}
-                  onClick={() => setActiveStep(isOpen ? 0 : idx + 1)}
-                >
-                  {/* Card Header Bar */}
-                  <div className="p-5 flex items-start justify-between gap-4">
-                    <div className="flex items-start gap-4">
-                      <span className="text-3xl font-black tracking-tighter text-blue-600 font-mono">
-                        {item.step}
-                      </span>
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="text-lg font-bold text-[#111827]">{item.title}</h3>
-                          <span className={cn("px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase border", item.badgeColor)}>
-                            {item.badge}
-                          </span>
-                        </div>
-                        <p className="text-xs text-[#4B5563] leading-relaxed font-medium">{item.desc}</p>
-                      </div>
-                    </div>
+      {/* ═══════════════════ FAQ ACCORDION SECTION ═══════════════════ */}
+      <section id="faq" className="py-16 sm:py-24 px-4 sm:px-6 lg:px-8 bg-white border-b border-[#E5E7EB]">
+        <div className="max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-start">
+            <div className="lg:col-span-5 text-center lg:text-left">
+              <p className="text-xs font-bold tracking-[0.2em] uppercase text-amber-600 mb-2">Questions?</p>
+              <h2 className="text-3xl sm:text-4xl font-black tracking-tight text-[#111827] mb-3">
+                Frequently Asked
+              </h2>
+              <p className="text-sm text-[#4B5563] font-medium mb-6">
+                Everything you need to know about system access, DTR calculation, and document clearance.
+              </p>
+              <div className="hidden lg:block">
+                <img
+                  src={ICON('undraw_questions_52ic.svg')}
+                  alt="FAQ Illustration"
+                  className="w-full max-w-[240px] h-auto object-contain opacity-80"
+                />
+              </div>
+            </div>
 
-                    <div className="p-2 rounded-full bg-[#F8F9FA] text-[#6B7280] border border-[#E5E7EB] shrink-0">
+            <div className="lg:col-span-7 space-y-3">
+              {faqItems.map((item, index) => {
+                const isOpen = openFaq === index;
+                return (
+                  <div
+                    key={index}
+                    className={cn(
+                      "rounded-xl border transition-all overflow-hidden bg-[#F8F9FA] border-[#E5E7EB] hover:border-zinc-300 shadow-xs",
+                      isOpen ? "border-zinc-400 bg-white shadow-sm" : ""
+                    )}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setOpenFaq(isOpen ? null : index)}
+                      className="w-full p-4 sm:p-5 text-left flex items-center justify-between gap-4 font-bold text-sm sm:text-base cursor-pointer"
+                    >
+                      <span className="text-[#111827] leading-snug">{item.q}</span>
                       <ChevronDown
                         size={18}
-                        className={cn("transition-transform duration-300", isOpen && "rotate-180 text-blue-600")}
+                        className={cn(
+                          "transition-transform duration-300 text-[#6B7280] shrink-0",
+                          isOpen ? "rotate-180 text-blue-600" : ""
+                        )}
                       />
-                    </div>
-                  </div>
-
-                  {/* Dropdown Details Accordion Content */}
-                  <AnimatePresence>
-                    {isOpen && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.3 }}
-                        className="border-t border-[#E5E7EB] bg-[#F8F9FA] p-5 space-y-3"
-                      >
-                        <div className="text-[11px] font-mono uppercase text-blue-600 font-bold mb-2">
-                          Key Deliverables & Clearance Steps:
-                        </div>
-                        <div className="space-y-3 pt-1">
-                          {item.items.map((sub, sIdx) => (
-                            <div key={sIdx} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs border-b border-[#E5E7EB] pb-2.5 last:border-b-0 last:pb-0">
-                              <div className="flex items-start gap-2.5">
-                                <sub.icon size={15} className="text-blue-600 shrink-0 mt-0.5" />
-                                <div>
-                                  <span className="font-bold text-[#111827] mr-2">{sub.title}:</span>
-                                  <span className="text-[#4B5563] text-xs font-normal">{sub.text}</span>
-                                </div>
-                              </div>
-                              <span className={cn("px-2.5 py-0.5 rounded text-[10px] font-mono font-bold shrink-0 self-start sm:self-center ml-6 sm:ml-0", sub.statusBg)}>
-                                {sub.status}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              );
-            })}
-          </div>
-
-        </div>
-      </section>
-
-      {/* RIGHT-SIZED FAQ ACCORDION SECTION */}
-      <section id="faq" className="py-16 lg:py-24 px-4 sm:px-6 lg:px-8 border-b border-[#E5E7EB] bg-[#F8F9FA] text-[#111827]">
-        <div className="max-w-3xl mx-auto">
-
-          <div className="text-center mb-10 space-y-2">
-            <h2 className="text-3xl sm:text-4xl font-black tracking-tight text-[#111827]">
-              Frequently Asked Questions.
-            </h2>
-            <p className="text-[#4B5563] text-sm sm:text-base font-medium">
-              Everything you need to know about system access, DTR calculation, and document clearance.
-            </p>
-          </div>
-
-          <div className="space-y-3">
-            {faqItems.map((item, index) => {
-              const isOpen = openFaq === index;
-              return (
-                <div
-                  key={index}
-                  className={cn(
-                    "rounded-xl border transition-all overflow-hidden bg-white border-[#E5E7EB] hover:border-zinc-300 shadow-xs",
-                    isOpen ? "border-zinc-400 shadow-sm" : ""
-                  )}
-                >
-                  <button
-                    type="button"
-                    onClick={() => setOpenFaq(isOpen ? null : index)}
-                    className="w-full p-4 sm:p-5 text-left flex items-center justify-between gap-4 font-bold text-sm sm:text-base cursor-pointer"
-                  >
-                    <span className="text-[#111827] leading-snug">{item.q}</span>
-                    <ChevronDown
-                      size={18}
-                      className={cn(
-                        "transition-transform duration-300 text-[#6B7280] shrink-0",
-                        isOpen ? "rotate-180 text-blue-600" : ""
+                    </button>
+                    <AnimatePresence>
+                      {isOpen && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.25 }}
+                          className="px-4 sm:px-5 pb-5 text-xs sm:text-sm text-[#4B5563] leading-relaxed border-t border-[#E5E7EB] pt-3 font-medium bg-white"
+                        >
+                          {item.a}
+                        </motion.div>
                       )}
-                    />
-                  </button>
-                  <AnimatePresence>
-                    {isOpen && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        transition={{ duration: 0.25 }}
-                        className="px-4 sm:px-5 pb-5 text-xs sm:text-sm text-[#4B5563] leading-relaxed border-t border-[#E5E7EB] pt-3 font-medium bg-[#F8F9FA]"
-                      >
-                        {item.a}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              );
-            })}
+                    </AnimatePresence>
+                  </div>
+                );
+              })}
+            </div>
           </div>
-
         </div>
       </section>
 
-      {/* FINAL CALL TO ACTION BANNER */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-[#F3F4F6]/70">
-        <div className="max-w-7xl mx-auto">
-          <div className="rounded-3xl p-8 sm:p-14 text-center space-y-6 relative overflow-hidden shadow-2xl border bg-gradient-to-r from-zinc-950 via-zinc-900 to-zinc-950 text-white border-zinc-800">
-            <div className="max-w-3xl mx-auto space-y-4 relative z-10">
-              <span className="px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-widest bg-white/10 text-white border border-white/20 inline-block">
-                Ready to Access the System?
-              </span>
-              <h2 className="text-3xl sm:text-5xl font-black tracking-tight text-white">
-                Empower Your OJT Experience Today.
+      {/* ═══════════════════ TESTIMONIAL / QUOTE SECTION ═══════════════════ */}
+      <section className="text-gray-600 body-font bg-white border-b border-[#E5E7EB]">
+        <div className="max-w-3xl px-4 py-8 sm:py-10 mx-auto">
+          <div className="w-full mx-auto text-center">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" className="inline-block w-6 h-6 text-gray-400 mb-3" viewBox="0 0 975.036 975.036">
+              <path d="M925.036 57.197h-304c-27.6 0-50 22.4-50 50v304c0 27.601 22.4 50 50 50h145.5c-1.9 79.601-20.4 143.3-55.4 191.2-27.6 37.8-69.399 69.1-125.3 93.8-25.7 11.3-36.8 41.7-24.8 67.101l36 76c11.6 24.399 40.3 35.1 65.1 24.399 66.2-28.6 122.101-64.8 167.7-108.8 55.601-53.7 93.7-114.3 114.3-181.9 20.601-67.6 30.9-159.8 30.9-276.8v-239c0-27.599-22.401-50-50-50zM106.036 913.497c65.4-28.5 121-64.699 166.9-108.6 56.1-53.7 94.4-114.1 115-181.2 20.6-67.1 30.899-159.6 30.899-277.5v-239c0-27.6-22.399-50-50-50h-304c-27.6 0-50 22.4-50 50v304c0 27.601 22.4 50 50 50h145.5c-1.9 79.601-20.4 143.3-55.4 191.2-27.6 37.8-69.4 69.1-125.3 93.8-25.7 11.3-36.8 41.7-24.8 67.101l35.9 75.8c11.601 24.399 40.501 35.2 65.301 24.399z" />
+            </svg>
+            <p className="leading-relaxed text-sm sm:text-base text-zinc-700 font-medium max-w-2xl mx-auto">
+              &ldquo;Our digital practicum platform streamlines every internship milestone—from orientation to final clearance. We empower students to develop real-world industry skills while ensuring effortless coordination between faculty advisers and partner companies.&rdquo;
+            </p>
+            <span className="inline-block h-0.5 w-8 rounded bg-[#4F9CF9] mt-4 mb-3"></span>
+            <h2 className="text-gray-900 font-bold title-font tracking-wider text-xs sm:text-sm">PRACTICUM ADVISER</h2>
+            <p className="text-gray-500 text-[11px] sm:text-xs font-medium">Practicum &amp; Industry Placement Coordinator</p>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════ FINAL CALL TO ACTION BANNER ═══════════════════ */}
+      <section className="py-8 sm:py-12 px-4 sm:px-6 lg:px-8 bg-[#F8F9FA] border-b border-[#E5E7EB]">
+        <div className="max-w-6xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="rounded-3xl p-8 sm:p-12 lg:p-14 text-center space-y-6 relative overflow-hidden bg-white border border-zinc-200 shadow-xl shadow-zinc-200/50"
+          >
+            {/* Subtle Brand Logo Watermark */}
+            <div className="absolute -bottom-16 -right-16 w-64 h-64 opacity-[0.04] pointer-events-none select-none -z-0">
+              <img src={ICON('Logo.svg')} alt="" className="w-full h-full object-contain" />
+            </div>
+
+            <div className="max-w-2xl mx-auto space-y-4 relative z-10">
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-zinc-900 leading-tight">
+                Ready to Integrate Your Practicum Online?
               </h2>
-              <p className="text-zinc-300 text-sm sm:text-base leading-relaxed max-w-xl mx-auto font-medium">
-                Log in as a Student, Practicum Adviser, or Admin to begin managing daily time records, documents, and company endorsements.
+
+              <p className="text-[#4B5563] text-sm sm:text-base leading-relaxed max-w-lg mx-auto font-medium">
+                Access your institutional portal to manage requirements, track daily time records, and complete your OJT clearance with zero paperwork friction.
               </p>
-              <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
+
+              <div className="pt-2 flex justify-center">
                 <button
                   type="button"
-                  onClick={() => navigate(dashboardLink)}
-                  className="w-full sm:w-auto px-8 py-4 bg-white hover:bg-zinc-100 text-zinc-950 font-extrabold text-sm rounded-full shadow-lg transition-transform hover:scale-105 flex items-center justify-center gap-2 cursor-pointer"
+                  onClick={() => navigate('/login?role=student')}
+                  className="px-8 py-3.5 bg-[#4F9CF9] hover:bg-[#3B8DEE] text-white font-bold text-xs sm:text-sm rounded-xl shadow-md hover:shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98] inline-flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  <span>Access Student Portal</span>
-                  <ArrowRight size={18} />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => navigate('/login?role=faculty')}
-                  className="w-full sm:w-auto px-8 py-4 bg-white/10 hover:bg-white/20 text-white border border-white/20 font-extrabold text-sm rounded-full transition-all flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  <span>Faculty / Adviser Access</span>
+                  <span>Access Portal</span>
+                  <ArrowRight size={15} />
                 </button>
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
       </section>
 
-      {/* FOOTER */}
-      <footer className="py-12 px-4 sm:px-6 lg:px-8 border-t border-[#E5E7EB] bg-[#F8F9FA] text-[#111827]">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-          <div
-            onClick={() => navigate('/')}
-            className="flex items-center gap-3 cursor-pointer group"
-          >
-            <img
-              src="/images/Landing Page Icons/Logo.svg"
-              alt="Practicum Logo"
-              className="h-9 sm:h-10 w-auto object-contain transition-transform duration-300 group-hover:scale-105 rotate-6 drop-shadow-xs"
-            />
-            <div className="flex items-center gap-1.5 font-extrabold text-base sm:text-lg tracking-tight leading-none">
-              <span className="text-[#111827]">Practicum</span>
-              <span className="text-[#4B5563]">Website</span>
+      {/* ═══════════════════ FOOTER ═══════════════════ */}
+      <footer className="py-10 sm:py-14 px-6 sm:px-10 lg:px-16 w-full border-t border-[#E5E7EB] bg-white text-[#111827]">
+        <div className="w-full">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-8 sm:gap-10 lg:gap-12 mb-12">
+            {/* Brand Column (5 cols on lg) */}
+            <div className="sm:col-span-2 lg:col-span-5 pr-0 lg:pr-8">
+              <div
+                onClick={() => navigate('/')}
+                className="flex items-center gap-2.5 mb-4 cursor-pointer group"
+              >
+                <img
+                  src={ICON('Logo.svg')}
+                  alt="Practicum Logo"
+                  className="h-8 w-auto object-contain transition-transform duration-300 group-hover:scale-105 rotate-6"
+                />
+                <span className="font-extrabold text-base sm:text-lg text-[#111827]">
+                  Practicum<span className="text-[#6B7280] ml-1">Portal</span>
+                </span>
+              </div>
+              <p className="text-xs sm:text-sm text-[#6B7280] leading-relaxed max-w-md font-medium">
+                A comprehensive digital platform for managing practicum requirements, daily time records, and OJT milestones.
+              </p>
+            </div>
+
+            {/* Platform Links (3 cols on lg) */}
+            <div className="lg:col-span-3">
+              <p className="text-xs font-bold text-[#111827] uppercase tracking-wider mb-4">Platform</p>
+              <div className="space-y-2.5">
+                {[
+                  { label: 'Student Portal', role: 'student' },
+                  { label: 'Adviser Dashboard', role: 'adviser' },
+                  { label: 'Supervisor View', role: 'supervisor' },
+                  { label: 'Admin Panel', role: 'admin' }
+                ].map((item, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => navigate(`/login?role=${item.role}`)}
+                    className="block text-xs sm:text-[13px] text-[#6B7280] hover:text-[#111827] transition-colors cursor-pointer font-medium"
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Documents (2 cols on lg) */}
+            <div className="lg:col-span-2">
+              <p className="text-xs font-bold text-[#111827] uppercase tracking-wider mb-4">Documents</p>
+              <div className="space-y-2.5">
+                {['Application Letter', 'MOA Template', 'DTR Form', 'Integration Paper'].map((link, i) => (
+                  <span key={i} className="block text-xs sm:text-[13px] text-[#6B7280] font-medium">{link}</span>
+                ))}
+              </div>
+            </div>
+
+            {/* Support (2 cols on lg) */}
+            <div className="lg:col-span-2">
+              <p className="text-xs font-bold text-[#111827] uppercase tracking-wider mb-4">Support</p>
+              <div className="space-y-2.5">
+                {['FAQ', 'Contact Admin', 'Report Issue'].map((link, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => link === 'FAQ' ? scrollToSection('faq') : navigate('/login')}
+                    className="block text-xs sm:text-[13px] text-[#6B7280] hover:text-[#111827] transition-colors cursor-pointer font-medium"
+                  >
+                    {link}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 text-xs font-semibold text-emerald-800 bg-emerald-500/10 px-3 py-1.5 rounded-full border border-emerald-500/20">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span>All Systems Operational</span>
-          </div>
-
-          <div className="flex items-center gap-6 text-xs font-bold text-[#4B5563]">
-            <span>© 2026 STI College</span>
+          {/* Bottom Bar */}
+          <div className="pt-8 border-t border-[#E5E7EB] flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p className="text-xs sm:text-[13px] text-[#6B7280] font-medium">
+              &copy; {new Date().getFullYear()} Practicum Portal. STI College — Academic Technology.
+            </p>
             <button
               type="button"
               onClick={scrollToTop}
-              className="hover:text-[#111827] transition-colors flex items-center gap-1 cursor-pointer"
+              className="flex items-center gap-1.5 text-xs sm:text-[13px] font-bold text-[#6B7280] hover:text-[#111827] transition-colors cursor-pointer"
             >
-              <span>Back to Top</span>
               <ArrowUp size={14} />
+              <span>Back to top</span>
             </button>
           </div>
         </div>

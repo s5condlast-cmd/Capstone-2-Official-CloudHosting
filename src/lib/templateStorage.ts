@@ -96,21 +96,22 @@ export const templateStorage = {
     }
 
     try {
-      const { error } = await supabase.storage
-        .from('templates')
-        .upload(id, file, {
-          upsert: true,
-        });
-
-      if (error) {
-        console.warn('Supabase template upload warning:', error.message);
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch(`/api/cloudinary/upload?folder=practicum/templates&customId=${encodeURIComponent(id)}`, {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        console.warn('Cloudinary template upload warning:', data.error);
       }
     } catch (err) {
-      console.warn('Supabase storage unreachable, saved to local store:', err);
+      console.warn('Cloudinary unreachable, saved to local store:', err);
     }
   },
 
-  // Retrieve the raw file buffer from Supabase Storage or local IndexedDB fallback
+  // Retrieve the raw file buffer from Cloudinary or local IndexedDB fallback
   async getTemplateFile(id: string): Promise<ArrayBuffer | undefined> {
     // Check local store first for instant load
     const localBuf = await getIDBFile(id);
@@ -118,6 +119,23 @@ export const templateStorage = {
       return localBuf;
     }
 
+    try {
+      // Try fetching the Cloudinary URL from the backend
+      const res = await fetch(`/api/cloudinary/url?publicId=${encodeURIComponent('practicum/templates/' + id)}`);
+      if (res.ok) {
+        const { url } = await res.json();
+        const fileRes = await fetch(url);
+        if (fileRes.ok) {
+          const buf = await fileRes.arrayBuffer();
+          await saveIDBFile(id, buf);
+          return buf;
+        }
+      }
+    } catch (e) {
+      console.warn('Cloudinary fetch failed, trying Supabase fallback:', e);
+    }
+
+    // Legacy fallback: Supabase Storage
     try {
       const { data, error } = await supabase.storage
         .from('templates')
@@ -129,7 +147,7 @@ export const templateStorage = {
         return buf;
       }
     } catch (e) {
-      console.warn('Supabase fetch failed:', e);
+      console.warn('Supabase fetch also failed:', e);
     }
 
     return undefined;
@@ -144,6 +162,22 @@ export const templateStorage = {
     }
 
     try {
+      const res = await fetch(`/api/cloudinary/url?publicId=${encodeURIComponent('practicum/templates/' + backupKey)}`);
+      if (res.ok) {
+        const { url } = await res.json();
+        const fileRes = await fetch(url);
+        if (fileRes.ok) {
+          const buf = await fileRes.arrayBuffer();
+          await saveIDBFile(backupKey, buf);
+          return buf;
+        }
+      }
+    } catch (e) {
+      console.warn('Cloudinary fetch PDF backup failed, trying Supabase fallback:', e);
+    }
+
+    // Legacy fallback: Supabase Storage
+    try {
       const { data, error } = await supabase.storage
         .from('templates')
         .download(backupKey);
@@ -154,7 +188,7 @@ export const templateStorage = {
         return buf;
       }
     } catch (e) {
-      console.warn('Supabase fetch PDF backup failed:', e);
+      console.warn('Supabase fetch PDF backup also failed:', e);
     }
 
     return undefined;
@@ -262,6 +296,23 @@ export const templateStorage = {
     }
 
     try {
+      // Delete from Cloudinary
+      await fetch('/api/cloudinary/delete', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ publicId: `practicum/templates/${id}` }),
+      });
+      await fetch('/api/cloudinary/delete', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ publicId: `practicum/templates/${id}_pdf_backup` }),
+      });
+    } catch (e) {
+      console.warn('Cloudinary delete template warning:', e);
+    }
+
+    try {
+      // Legacy cleanup: Supabase Storage
       await supabase.storage.from('templates').remove([id, `${id}_pdf_backup`]);
       await supabase.from('template_metadata').delete().eq('id', id);
     } catch (e) {

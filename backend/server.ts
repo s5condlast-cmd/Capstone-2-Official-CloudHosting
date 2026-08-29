@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import analyzeRouter from './routes/analyze';
+import cloudinaryRouter from './routes/cloudinary';
 
 // Load environment variables from CWD .env
 dotenv.config();
@@ -12,8 +13,9 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
-// Mount the API Router
+// Mount the API Routers
 app.use('/api', analyzeRouter);
+app.use('/api', cloudinaryRouter);
 
 if (!process.env.VERCEL) {
   app.listen(PORT, () => {

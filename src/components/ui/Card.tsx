@@ -3,6 +3,7 @@ import { cn } from '@/src/lib/utils';
 
 interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   title?: string;
+  subtitle?: string;
   action?: React.ReactNode;
   footer?: React.ReactNode;
 }
@@ -10,6 +11,7 @@ interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 export const Card: React.FC<CardProps> = ({ 
   className, 
   title, 
+  subtitle,
   action, 
   footer, 
   children, 
@@ -23,9 +25,12 @@ export const Card: React.FC<CardProps> = ({
       )}
       {...props}
     >
-      {(title || action) && (
+      {(title || action || subtitle) && (
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 bg-zinc-50/50 dark:bg-zinc-900/50 px-6 py-3.5 border-b border-zinc-200/60 dark:border-zinc-800 rounded-t-xl">
-          {title && <h3 className="font-semibold text-[13px] text-zinc-900 dark:text-zinc-100 tracking-tight">{title}</h3>}
+          <div>
+            {title && <h3 className="font-semibold text-[13px] text-zinc-900 dark:text-zinc-100 tracking-tight">{title}</h3>}
+            {subtitle && <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">{subtitle}</p>}
+          </div>
           <div className="flex items-center gap-2">
             {action}
           </div>

@@ -87,7 +87,8 @@ MainCode/
 │   └── push_to_github.bat          # Git staging, commit, and push script
 ├── supabase/
 │   └── migrations/
-│       └── 20260724_template_platform.sql  # Full SQL schema with RLS policies
+│       ├── 01_initial_schema.sql            # Master database tables, triggers, indexes, and table RLS policies
+│       └── 02_storage_security_policies.sql # Storage buckets and scoped storage security policies
 ├── src/
 │   ├── components/
 │   │   ├── admin/
