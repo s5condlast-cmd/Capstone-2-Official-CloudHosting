@@ -26,8 +26,7 @@ import {
   Download
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import { documentGenerator } from '../../lib/documentGenerator';
-import Carousel, { SlideData } from '../../components/ui/carousel';
+import Carousel, { type SlideData } from '../../components/ui/carousel';
 
 interface RoughHighlightProps {
   children: React.ReactNode;
