@@ -189,39 +189,69 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
 
   const slideData: SlideData[] = [
     {
-      title: "Internship Launch",
-      description: "Kickstart your training journey with guided onboarding and immediate faculty guidance.",
+      step: '01',
+      title: 'Internship Launch',
+      phase: 'Pre-OJT',
+      badge: 'Onboarding',
+      description: 'Kickstart your training journey with guided onboarding, verified consent forms, and immediate faculty endorsement.',
       src: ICON('Application Letter Signed.svg'),
+      color: 'blue',
+      button: 'View Clearance',
       onClick: () => scrollToSection('project-management')
     },
     {
-      title: "Attendance & Shifts",
-      description: "Log daily workplace hours, monitor lunch intervals, and track completion progress in real time.",
+      step: '02',
+      title: 'Attendance & Shifts',
+      phase: 'In-OJT',
+      badge: 'Time Tracking',
+      description: 'Log daily workplace hours, monitor lunch intervals, and track total hour completion progress in real time.',
       src: ICON('undraw_work-time_1ogn.svg'),
+      color: 'emerald',
+      button: 'Check Attendance',
       onClick: () => scrollToSection('work-together')
     },
     {
-      title: "Supervisor Feedback",
-      description: "Receive transparent milestone evaluations and performance ratings from industry mentors.",
+      step: '03',
+      title: 'Supervisor Feedback',
+      phase: 'Finals',
+      badge: 'Mentorship',
+      description: 'Receive transparent milestone evaluations, competency scoring, and performance ratings from industry mentors.',
       src: ICON('Clearance Completed.svg'),
+      color: 'amber',
+      button: 'Review Feedback',
       onClick: () => scrollToSection('features')
     },
     {
-      title: "Partner Directory",
-      description: "Explore accredited host training establishments aligned directly with your field of study.",
+      step: '04',
+      title: 'Partner Directory',
+      phase: 'Partnership',
+      badge: 'Industry Match',
+      description: 'Explore accredited host training establishments and tech industry partners aligned directly with your program.',
       src: ICON('Industry Partner Exploration.svg'),
+      color: 'blue',
+      button: 'Explore Partners',
       onClick: () => navigate(dashboardLink)
     },
     {
-      title: "Weekly Insights",
-      description: "Document technical skills learned on the job and showcase your weekly hands-on experience.",
+      step: '05',
+      title: 'Weekly Insights',
+      phase: 'In-OJT',
+      badge: 'Reflection',
+      description: 'Document technical skills learned on the job, submit weekly journals, and showcase your hands-on experience.',
       src: ICON('Weekly Journal Writing.svg'),
+      color: 'emerald',
+      button: 'Read Insights',
       onClick: () => scrollToSection('features')
     },
     {
-      title: "Instant Verification",
-      description: "Seamlessly authorize milestone sign-offs across any device with zero friction.",
+      step: '06',
+      title: 'Instant Verification',
+      phase: 'Milestone',
+      badge: 'Final Clearance',
+      description: 'Complete your practicum journey with instant digital certificate verification, dean sign-off, and final clearance.',
       src: ICON('Digital Signature.svg'),
+      color: 'amber',
+      button: 'Graduate & Authorize',
       onClick: () => scrollToSection('features')
     },
   ];
@@ -1107,28 +1137,39 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
         </div>
       </section>
 
-      {/* ═══════════════════ THREE-PHASE OJT JOURNEY 3D CAROUSEL ═══════════════════ */}
-      <section id="journey" className="relative py-6 sm:py-8 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-[#F8FAFC] via-[#EFF6FF]/40 to-[#F8FAFC] border-b border-zinc-200 overflow-hidden flex flex-col justify-center scroll-mt-24">
+      {/* ═══════════════════ PRACTICUM JOURNEY BENTO SHOWCASE ═══════════════════ */}
+      <section id="journey" className="relative w-full min-h-[calc(100vh-4rem)] flex flex-col justify-center items-center bg-gradient-to-b from-[#F8FAFC] via-[#EFF6FF]/30 to-[#F8FAFC] border-b border-zinc-200 py-8 sm:py-10 px-4 sm:px-6 lg:px-8 overflow-hidden scroll-mt-24">
         {/* Centered Horizon Stage Radial Glow */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl h-[260px] bg-[radial-gradient(ellipse_at_center,rgba(56,189,248,0.20),rgba(59,130,246,0.08)_50%,transparent_75%)] blur-2xl pointer-events-none -z-0" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-5xl h-[300px] bg-[radial-gradient(ellipse_at_center,rgba(56,189,248,0.18),rgba(59,130,246,0.06)_50%,transparent_75%)] blur-3xl pointer-events-none -z-0" />
 
-        <div className="max-w-4xl mx-auto w-full relative z-10">
+        <div className="max-w-5xl mx-auto w-full relative z-10 my-auto">
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: false, amount: 0.15 }}
-            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-            className="text-center mb-2.5 sm:mb-3 transform-gpu will-change-transform"
+            transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+            className="text-center mb-4 sm:mb-5 space-y-1.5 transform-gpu will-change-transform"
           >
-            <h2 className="text-xl sm:text-2xl font-black tracking-tight text-zinc-900 mb-0.5">
-              Your Practicum Journey
+            {/* Category Eyebrow Pill */}
+            <span className="inline-block px-3 py-0.5 rounded-full bg-blue-50 text-blue-700 font-extrabold text-[11px] uppercase tracking-wider border border-blue-100">
+              Internship Milestones
+            </span>
+
+            {/* Headline with RoughHighlight matching clearance & verification */}
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-[-0.03em] text-[#111827] leading-tight">
+              Your Practicum{' '}
+              <RoughHighlight color="#FEF08A">
+                Journey
+              </RoughHighlight>
             </h2>
-            <p className="text-[11px] sm:text-xs text-zinc-600 max-w-lg mx-auto font-medium">
-              Explore each milestone of your internship—from onboarding and shift tracking to final evaluation.
+
+            {/* Subtitle with standard typography and leading */}
+            <p className="text-xs sm:text-sm text-[#4B5563] max-w-lg mx-auto leading-relaxed font-normal">
+              Explore each milestone of your internship—from onboarding and daily shift logging to supervisor ratings and final institutional clearance.
             </p>
           </motion.div>
 
-          {/* 3-Box Carousel Viewport */}
+          {/* Spatial Bento Horizon Carousel Viewport */}
           <div className="relative overflow-hidden w-full">
             <Carousel slides={slideData} />
           </div>
