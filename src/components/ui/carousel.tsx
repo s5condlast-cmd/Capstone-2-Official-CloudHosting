@@ -7,20 +7,19 @@ import {
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
-export interface SlideData {
+export type SlideData = {
+  step: string;
   title: string;
-  step?: string;
-  phase?: 'Pre-OJT' | 'In-OJT' | 'Finals' | 'Partnership' | 'Milestone';
-  badge?: string;
+  phase: string;
+  badge: string;
   description: string;
-  deliverables?: string[];
   src: string;
-  color?: string;
-  link?: string;
-  button?: string;
+  color?: 'blue' | 'emerald' | 'amber' | string;
+  button: string;
   onClick?: () => void;
-  [key: string]: any;
-}
+  deliverables?: string[];
+  link?: string;
+};
 
 export interface CarouselProps {
   slides: SlideData[];
