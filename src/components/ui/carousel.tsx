@@ -297,7 +297,7 @@ export const Carousel: React.FC<CarouselProps> = ({
               slide={slide}
               index={((index - cloneCount) % total + total) % total}
               widthStyle={cardWidthStyle}
-              handleSlideClick={() => handleSlideClick(((index - cloneCount) % total + total) % total)}
+              handleSlideClick={handleSlideClick}
             />
           ))}
         </ul>

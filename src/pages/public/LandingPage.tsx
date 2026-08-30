@@ -29,50 +29,53 @@ import { cn } from '../../lib/utils';
 import { documentGenerator } from '../../lib/documentGenerator';
 import Carousel, { SlideData } from '../../components/ui/carousel';
 
-// Clean Two-Stroke Hand-Painted Inward Brush Highlighter Component
-const RoughHighlight: React.FC<{
+interface RoughHighlightProps {
   children: React.ReactNode;
   color?: string;
   className?: string;
-}> = ({ children, color = '#FEF08A', className }) => {
+}
+
+// Clean Two-Stroke Hand-Painted Inward Brush Highlighter Component (GPU Accelerated & Responsive)
+function RoughHighlight({ children, color = '#FEF08A', className }: RoughHighlightProps) {
   return (
-    <span className={cn("relative inline-block whitespace-nowrap px-1.5", className)}>
+    <span className={cn("relative inline-block whitespace-nowrap px-1.5 transform-gpu will-change-transform", className)}>
       <span className="relative z-10">{children}</span>
       
       {/* Hand-Painted Two-Stroke Inward Brush SVG */}
       <svg
-        className="absolute inset-0 top-[15%] bottom-[4%] -left-1.5 -right-1.5 w-[calc(100%+12px)] h-[85%] pointer-events-none -z-0 select-none overflow-visible"
+        className="absolute inset-0 top-[15%] bottom-[4%] -left-1.5 -right-1.5 w-[calc(100%+12px)] h-[85%] pointer-events-none -z-0 select-none overflow-visible transform-gpu"
         viewBox="0 0 200 36"
         fill="none"
         preserveAspectRatio="none"
+        shapeRendering="geometricPrecision"
       >
         {/* Stroke 1 (From Left): Primary Hand-Painted Brush Body */}
         <motion.path
           d="M 1 6 C 50 3, 120 4, 198 7 C 200 13, 199 26, 195 30 C 140 34, 60 34, 2 28 C 0 21, -1 12, 1 6 Z"
           fill={color}
-          fillOpacity="0.85"
+          fillOpacity="0.88"
           initial={{ scaleX: 0, opacity: 0 }}
           whileInView={{ scaleX: 1, opacity: 1 }}
-          viewport={{ once: false, amount: 0.2 }}
-          transition={{ duration: 0.9, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
-          style={{ originX: 0 }}
+          viewport={{ once: false, amount: 0.15 }}
+          transition={{ duration: 0.55, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
+          style={{ transformOrigin: '0% 50%' }}
         />
 
         {/* Stroke 2 (From Right, Tilted Slightly Upward): Secondary Hand-Painted Brush Body */}
         <motion.path
           d="M 199 14 C 145 7, 75 4, 2 6 C 0 12, 2 23, 6 27 C 65 29, 140 31, 198 30 C 200 24, 201 18, 199 14 Z"
           fill="#FDE047"
-          fillOpacity="0.72"
+          fillOpacity="0.75"
           initial={{ scaleX: 0, opacity: 0, rotate: -2 }}
           whileInView={{ scaleX: 1, opacity: 1, rotate: -2 }}
-          viewport={{ once: false, amount: 0.2 }}
-          transition={{ duration: 0.95, delay: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          style={{ originX: 1, originY: 0.5 }}
+          viewport={{ once: false, amount: 0.15 }}
+          transition={{ duration: 0.85, delay: 0.45, ease: [0.16, 1, 0.3, 1] }}
+          style={{ transformOrigin: '100% 50%' }}
         />
       </svg>
     </span>
   );
-};
+}
 
 interface LandingPageProps {
   userRole?: string | null;
@@ -147,13 +150,22 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
   };
 
   const [downloadState, setDownloadState] = useState<'idle' | 'downloading' | 'downloaded'>('idle');
+  const downloadTimer1Ref = useRef<NodeJS.Timeout | null>(null);
+  const downloadTimer2Ref = useRef<NodeJS.Timeout | null>(null);
+
+  React.useEffect(() => {
+    return () => {
+      if (downloadTimer1Ref.current) clearTimeout(downloadTimer1Ref.current);
+      if (downloadTimer2Ref.current) clearTimeout(downloadTimer2Ref.current);
+    };
+  }, []);
 
   const handleSimulatedDownload = () => {
     if (downloadState !== 'idle') return;
     setDownloadState('downloading');
-    setTimeout(() => {
+    downloadTimer1Ref.current = setTimeout(() => {
       setDownloadState('downloaded');
-      setTimeout(() => {
+      downloadTimer2Ref.current = setTimeout(() => {
         setDownloadState('idle');
       }, 2500);
     }, 1200);
@@ -407,7 +419,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
-              className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight leading-[1.18] text-[#111827] flex flex-col items-center justify-center text-center gap-2.5 sm:gap-4 w-full mx-auto"
+              className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-[-0.03em] leading-[1.16] text-[#111827] flex flex-col items-center justify-center text-center gap-2.5 sm:gap-4 w-full mx-auto"
             >
               {/* Line 1: Upload Your Documents. [Messedup Drawable Icon] */}
               <div className="relative inline-flex items-center justify-center text-center">
@@ -441,12 +453,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
                 <span ref={underlineRef} className="relative inline-block text-transparent bg-clip-text bg-gradient-to-r from-[#111827] via-[#374151] to-[#6B7280] pb-1.5 sm:pb-2.5 z-10">
                   Track Your Work Hours.
 
-                  {/* Artistic Upward-Arched Brush Underline (Sequential 2-Pass Organic Wavy Calligraphy Brush - Repeating on Scroll) */}
+                  {/* Artistic Upward-Arched Brush Underline (Sequential 2-Pass Organic Wavy Calligraphy Brush - Responsive & GPU Accelerated) */}
                   <svg
-                    className="absolute -bottom-3 sm:-bottom-4 md:-bottom-5 left-1/2 -translate-x-1/2 w-[102%] sm:w-[104%] h-7 sm:h-9 md:h-11 pointer-events-none overflow-visible select-none"
+                    className="absolute -bottom-3 sm:-bottom-4 md:-bottom-5 left-1/2 -translate-x-1/2 w-[102%] sm:w-[104%] h-7 sm:h-9 md:h-11 pointer-events-none overflow-visible select-none transform-gpu will-change-transform"
                     viewBox="0 0 400 32"
                     fill="none"
                     preserveAspectRatio="none"
+                    shapeRendering="geometricPrecision"
                   >
                     {/* PASS 1 (LEFT → RIGHT): Organic wavy painterly brush stroke */}
                     <motion.path
@@ -458,8 +471,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
                       initial={{ pathLength: 0, opacity: 0 }}
                       animate={isUnderlineInView ? { pathLength: 1, opacity: 1 } : { pathLength: 0, opacity: 0 }}
                       transition={{
-                        pathLength: { duration: 0.8, delay: isUnderlineInView ? 0.1 : 0, ease: [0.16, 1, 0.3, 1] },
-                        opacity: { duration: 0.01, delay: isUnderlineInView ? 0.09 : 0 }
+                        pathLength: { duration: 0.5, delay: isUnderlineInView ? 0.05 : 0, ease: [0.16, 1, 0.3, 1] },
+                        opacity: { duration: 0.01, delay: isUnderlineInView ? 0.04 : 0 }
                       }}
                     />
 
@@ -473,12 +486,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
                       initial={{ pathLength: 0, opacity: 0 }}
                       animate={isUnderlineInView ? { pathLength: 1, opacity: 0.9 } : { pathLength: 0, opacity: 0 }}
                       transition={{
-                        pathLength: { duration: 0.8, delay: isUnderlineInView ? 0.15 : 0, ease: [0.16, 1, 0.3, 1] },
-                        opacity: { duration: 0.01, delay: isUnderlineInView ? 0.14 : 0 }
+                        pathLength: { duration: 0.5, delay: isUnderlineInView ? 0.08 : 0, ease: [0.16, 1, 0.3, 1] },
+                        opacity: { duration: 0.01, delay: isUnderlineInView ? 0.07 : 0 }
                       }}
                     />
 
-                    {/* PASS 2 (RIGHT → LEFT): Organic wavy return brush stroke sweeping back across */}
+                    {/* PASS 2 (RIGHT → LEFT): Organic wavy return brush stroke sweeping back across (Slower Painterly Sweep) */}
                     <motion.path
                       d="M 396 19 C 355 23.5, 295 18, 235 12.5 C 175 7, 115 9.5, 65 16 C 38 19.5, 18 21, 5 21"
                       stroke="#DC2626"
@@ -488,8 +501,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
                       initial={{ pathLength: 0, opacity: 0 }}
                       animate={isUnderlineInView ? { pathLength: 1, opacity: 1 } : { pathLength: 0, opacity: 0 }}
                       transition={{
-                        pathLength: { duration: 0.8, delay: isUnderlineInView ? 1.05 : 0, ease: [0.16, 1, 0.3, 1] },
-                        opacity: { duration: 0.01, delay: isUnderlineInView ? 1.04 : 0 }
+                        pathLength: { duration: 0.85, delay: isUnderlineInView ? 0.60 : 0, ease: [0.16, 1, 0.3, 1] },
+                        opacity: { duration: 0.01, delay: isUnderlineInView ? 0.59 : 0 }
                       }}
                     />
 
@@ -503,8 +516,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
                       initial={{ pathLength: 0, opacity: 0 }}
                       animate={isUnderlineInView ? { pathLength: 1, opacity: 0.85 } : { pathLength: 0, opacity: 0 }}
                       transition={{
-                        pathLength: { duration: 0.8, delay: isUnderlineInView ? 1.1 : 0, ease: [0.16, 1, 0.3, 1] },
-                        opacity: { duration: 0.01, delay: isUnderlineInView ? 1.09 : 0 }
+                        pathLength: { duration: 0.85, delay: isUnderlineInView ? 0.62 : 0, ease: [0.16, 1, 0.3, 1] },
+                        opacity: { duration: 0.01, delay: isUnderlineInView ? 0.61 : 0 }
                       }}
                     />
                   </svg>
@@ -522,7 +535,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
               Submit practicum requirements online, log daily time in and out, and clear your OJT milestones with instant adviser and supervisor approvals.
             </motion.p>
 
-            {/* Hero CTAs */}
+            {/* Hero CTAs with Impeccable Ergonomics */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -532,19 +545,19 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
               <button
                 type="button"
                 onClick={() => navigate(dashboardLink)}
-                className="w-full sm:w-auto px-8 py-3.5 text-sm font-extrabold rounded-full transition-all flex items-center justify-center gap-2 shadow-md hover:-translate-y-0.5 cursor-pointer bg-[#111827] text-white hover:bg-zinc-800"
+                className="w-full sm:w-auto min-h-[48px] px-8 py-3.5 text-sm font-extrabold rounded-full transition-all flex items-center justify-center gap-2 shadow-md hover:-translate-y-0.5 active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/40 cursor-pointer bg-[#111827] text-white hover:bg-zinc-800 transform-gpu will-change-transform"
               >
                 <span>{userRole ? 'Continue to Dashboard' : 'Student Portal Login'}</span>
-                <ChevronRight size={18} />
+                <ChevronRight size={18} className="transition-transform group-hover:translate-x-0.5" />
               </button>
 
               {!userRole && (
                 <button
                   type="button"
                   onClick={() => navigate('/login?role=faculty')}
-                  className="w-full sm:w-auto px-8 py-3.5 bg-white hover:bg-zinc-50 text-[#111827] text-sm font-extrabold rounded-full border border-[#E5E7EB] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+                  className="w-full sm:w-auto min-h-[48px] px-8 py-3.5 bg-white hover:bg-zinc-50 text-[#111827] text-sm font-extrabold rounded-full border border-zinc-200/90 shadow-xs hover:border-zinc-300 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 transform-gpu will-change-transform"
                 >
-                  <UserCheck size={16} />
+                  <UserCheck size={16} className="text-zinc-600" />
                   <span>Faculty & Adviser Login</span>
                 </button>
               )}
@@ -1150,16 +1163,16 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
                   <div
                     key={index}
                     className={cn(
-                      "rounded-xl border transition-all overflow-hidden bg-[#F8F9FA] border-[#E5E7EB] hover:border-zinc-300 shadow-xs",
-                      isOpen ? "border-zinc-400 bg-white shadow-sm" : ""
+                      "rounded-2xl border transition-all duration-200 overflow-hidden bg-[#F8F9FA] border-[#E5E7EB] hover:border-zinc-300 shadow-2xs",
+                      isOpen ? "border-zinc-400/80 bg-white shadow-sm ring-1 ring-zinc-200/50" : ""
                     )}
                   >
                     <button
                       type="button"
                       onClick={() => setOpenFaq(isOpen ? null : index)}
-                      className="w-full p-4 sm:p-5 text-left flex items-center justify-between gap-4 font-bold text-sm sm:text-base cursor-pointer"
+                      className="w-full min-h-[52px] p-4 sm:p-5 text-left flex items-center justify-between gap-4 font-bold text-sm sm:text-base cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 active:scale-[0.99] transition-all"
                     >
-                      <span className="text-[#111827] leading-snug">{item.q}</span>
+                      <span className="text-[#111827] leading-snug tracking-tight">{item.q}</span>
                       <ChevronDown
                         size={18}
                         className={cn(
@@ -1174,7 +1187,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
                           initial={{ opacity: 0, height: 0 }}
                           animate={{ opacity: 1, height: 'auto' }}
                           exit={{ opacity: 0, height: 0 }}
-                          transition={{ duration: 0.25 }}
+                          transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
                           className="px-4 sm:px-5 pb-5 text-xs sm:text-sm text-[#4B5563] leading-relaxed border-t border-[#E5E7EB] pt-3 font-medium bg-white"
                         >
                           {item.a}
@@ -1190,68 +1203,99 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
       </section>
 
       {/* ═══════════════════ TESTIMONIAL / QUOTE SECTION ═══════════════════ */}
-      <section className="text-gray-600 body-font bg-white border-b border-[#E5E7EB]">
+      <section className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-white via-slate-50/50 to-white border-b border-[#E5E7EB]">
         <motion.div
           initial={{ opacity: 0, y: 14 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: false, amount: 0.15 }}
           transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-          className="max-w-3xl px-4 py-8 sm:py-10 mx-auto transform-gpu will-change-transform"
+          className="max-w-4xl mx-auto transform-gpu will-change-transform"
         >
-          <div className="w-full mx-auto text-center">
-            <motion.svg
-              whileHover={{ rotate: 12, scale: 1.1 }}
+          <div className="rounded-3xl bg-white border border-zinc-200/90 shadow-sm p-8 sm:p-12 text-center relative overflow-hidden">
+            {/* Subtle Horizon Glow inside quote card */}
+            <div className="absolute top-0 inset-x-0 h-24 bg-gradient-to-b from-blue-50/40 to-transparent pointer-events-none -z-0" />
+            
+            <motion.div
+              whileHover={{ rotate: 8, scale: 1.08 }}
               transition={{ type: "spring", stiffness: 300, damping: 15 }}
-              xmlns="http://www.w3.org/2000/svg"
-              fill="currentColor"
-              className="inline-block w-6 h-6 text-gray-400 mb-3 cursor-pointer"
-              viewBox="0 0 975.036 975.036"
+              className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-blue-50 text-[#4F9CF9] mb-6 shadow-2xs cursor-pointer select-none"
             >
-              <path d="M925.036 57.197h-304c-27.6 0-50 22.4-50 50v304c0 27.601 22.4 50 50 50h145.5c-1.9 79.601-20.4 143.3-55.4 191.2-27.6 37.8-69.399 69.1-125.3 93.8-25.7 11.3-36.8 41.7-24.8 67.101l36 76c11.6 24.399 40.3 35.1 65.1 24.399 66.2-28.6 122.101-64.8 167.7-108.8 55.601-53.7 93.7-114.3 114.3-181.9 20.601-67.6 30.9-159.8 30.9-276.8v-239c0-27.599-22.401-50-50-50zM106.036 913.497c65.4-28.5 121-64.699 166.9-108.6 56.1-53.7 94.4-114.1 115-181.2 20.6-67.1 30.899-159.6 30.899-277.5v-239c0-27.6-22.399-50-50-50h-304c-27.6 0-50 22.4-50 50v304c0 27.601 22.4 50 50 50h145.5c-1.9 79.601-20.4 143.3-55.4 191.2-27.6 37.8-69.4 69.1-125.3 93.8-25.7 11.3-36.8 41.7-24.8 67.101l35.9 75.8c11.601 24.399 40.501 35.2 65.301 24.399z" />
-            </motion.svg>
-            <p className="leading-relaxed text-sm sm:text-base text-zinc-700 font-medium max-w-2xl mx-auto">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="currentColor"
+                className="w-6 h-6"
+                viewBox="0 0 975.036 975.036"
+              >
+                <path d="M925.036 57.197h-304c-27.6 0-50 22.4-50 50v304c0 27.601 22.4 50 50 50h145.5c-1.9 79.601-20.4 143.3-55.4 191.2-27.6 37.8-69.399 69.1-125.3 93.8-25.7 11.3-36.8 41.7-24.8 67.101l36 76c11.6 24.399 40.3 35.1 65.1 24.399 66.2-28.6 122.101-64.8 167.7-108.8 55.601-53.7 93.7-114.3 114.3-181.9 20.601-67.6 30.9-159.8 30.9-276.8v-239c0-27.599-22.401-50-50-50zM106.036 913.497c65.4-28.5 121-64.699 166.9-108.6 56.1-53.7 94.4-114.1 115-181.2 20.6-67.1 30.899-159.6 30.899-277.5v-239c0-27.6-22.399-50-50-50h-304c-27.6 0-50 22.4-50 50v304c0 27.601 22.4 50 50 50h145.5c-1.9 79.601-20.4 143.3-55.4 191.2-27.6 37.8-69.4 69.1-125.3 93.8-25.7 11.3-36.8 41.7-24.8 67.101l35.9 75.8c11.601 24.399 40.501 35.2 65.301 24.399z" />
+              </svg>
+            </motion.div>
+
+            <blockquote className="leading-relaxed text-base sm:text-lg lg:text-xl text-zinc-800 font-semibold max-w-2xl mx-auto tracking-tight mb-6">
               &ldquo;Our digital practicum platform streamlines every internship milestone—from orientation to final clearance. We empower students to develop real-world industry skills while ensuring effortless coordination between faculty advisers and partner companies.&rdquo;
-            </p>
-            <span className="inline-block h-0.5 w-8 rounded bg-[#4F9CF9] mt-4 mb-3"></span>
-            <h2 className="text-gray-900 font-bold title-font tracking-wider text-xs sm:text-sm">PRACTICUM ADVISER</h2>
-            <p className="text-gray-500 text-[11px] sm:text-xs font-medium">Practicum &amp; Industry Placement Coordinator</p>
+            </blockquote>
+
+            <div className="inline-flex flex-col items-center gap-1 pt-2 border-t border-zinc-100">
+              <div className="inline-flex items-center gap-1.5 font-black tracking-wide text-xs sm:text-sm text-zinc-900 uppercase">
+                <span>Practicum Academic Coordinator</span>
+                <BadgeCheck size={16} className="text-blue-600 fill-blue-50" />
+              </div>
+              <p className="text-zinc-500 text-xs font-medium">Practicum &amp; Industry Placement Council — STI College</p>
+            </div>
           </div>
         </motion.div>
       </section>
 
       {/* ═══════════════════ FINAL CALL TO ACTION BANNER ═══════════════════ */}
-      <section className="py-8 sm:py-12 px-4 sm:px-6 lg:px-8 bg-[#F8F9FA] border-b border-[#E5E7EB]">
+      <section className="py-10 sm:py-16 px-4 sm:px-6 lg:px-8 bg-[#F8F9FA] border-b border-[#E5E7EB]">
         <div className="max-w-6xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: false, amount: 0.15 }}
             transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-            className="rounded-3xl p-8 sm:p-12 lg:p-14 text-center space-y-6 relative overflow-hidden bg-white border border-zinc-200 shadow-xl shadow-zinc-200/50 transform-gpu will-change-transform"
+            className="rounded-3xl p-8 sm:p-12 lg:p-16 text-center space-y-6 relative overflow-hidden bg-white border border-zinc-200/90 shadow-xl shadow-zinc-200/40 transform-gpu will-change-transform"
           >
+            {/* Subtle Horizon Radial Spotlight Glow */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3/4 h-[220px] bg-[radial-gradient(ellipse_at_center,rgba(56,189,248,0.18),rgba(59,130,246,0.06)_55%,transparent_75%)] blur-2xl pointer-events-none -z-0" />
+
             {/* Subtle Brand Logo Watermark */}
             <div className="absolute -bottom-16 -right-16 w-64 h-64 opacity-[0.04] pointer-events-none select-none -z-0">
               <img src={ICON('Logo.svg')} alt="" className="w-full h-full object-contain" />
             </div>
 
             <div className="max-w-2xl mx-auto space-y-4 relative z-10">
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-zinc-900 leading-tight">
-                Ready to Integrate Your Practicum Online?
+              <span className="inline-block px-3 py-1 rounded-full bg-blue-50 text-blue-700 font-extrabold text-[11px] uppercase tracking-wider border border-blue-100 mb-1">
+                Ready to Get Started?
+              </span>
+
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-[-0.03em] text-zinc-900 leading-tight">
+                Integrate Your Practicum Online
               </h2>
 
               <p className="text-[#4B5563] text-sm sm:text-base leading-relaxed max-w-lg mx-auto font-medium">
                 Access your institutional portal to manage requirements, track daily time records, and complete your OJT clearance with zero paperwork friction.
               </p>
 
-              <div className="pt-2 flex justify-center">
+              <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
                 <button
                   type="button"
                   onClick={() => navigate('/login?role=student')}
-                  className="px-8 py-3.5 bg-[#4F9CF9] hover:bg-[#3B8DEE] text-white font-bold text-xs sm:text-sm rounded-xl shadow-md hover:shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98] inline-flex items-center justify-center gap-2 cursor-pointer"
+                  className="w-full sm:w-auto min-h-[48px] px-8 py-3.5 bg-[#4F9CF9] hover:bg-[#3B8DEE] text-white font-bold text-xs sm:text-sm rounded-xl shadow-md hover:shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 inline-flex items-center justify-center gap-2 cursor-pointer transform-gpu will-change-transform"
                 >
-                  <span>Access Portal</span>
+                  <span>Access Student Portal</span>
                   <ArrowRight size={15} />
                 </button>
+
+                {!userRole && (
+                  <button
+                    type="button"
+                    onClick={() => navigate('/login?role=faculty')}
+                    className="w-full sm:w-auto min-h-[48px] px-6 py-3.5 bg-white hover:bg-zinc-50 text-zinc-800 font-bold text-xs sm:text-sm rounded-xl border border-zinc-200/90 shadow-2xs hover:border-zinc-300 transition-all active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/40 inline-flex items-center justify-center gap-2 cursor-pointer transform-gpu will-change-transform"
+                  >
+                    <UserCheck size={15} className="text-zinc-500" />
+                    <span>Faculty &amp; Adviser Sign In</span>
+                  </button>
+                )}
               </div>
             </div>
           </motion.div>
