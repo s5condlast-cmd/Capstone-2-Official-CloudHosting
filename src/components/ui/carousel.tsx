@@ -19,6 +19,7 @@ export interface SlideData {
   link?: string;
   button?: string;
   onClick?: () => void;
+  [key: string]: any;
 }
 
 export interface CarouselProps {
