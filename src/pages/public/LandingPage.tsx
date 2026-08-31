@@ -1141,13 +1141,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
         {/* Centered Horizon Stage Radial Glow */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-5xl h-[360px] bg-[radial-gradient(ellipse_at_center,rgba(56,189,248,0.18),rgba(59,130,246,0.06)_50%,transparent_75%)] blur-3xl pointer-events-none -z-0" />
 
-        <div className="max-w-4xl mx-auto w-full relative z-10 my-auto">
+        <div className="max-w-5xl mx-auto w-full relative z-10 my-auto">
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: false, amount: 0.15 }}
             transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-            className="text-center mb-6 sm:mb-8 space-y-1.5 transform-gpu will-change-transform"
+            className="text-center mb-8 sm:mb-12 space-y-2 transform-gpu will-change-transform"
           >
             {/* Category Eyebrow Pill */}
             <span className="inline-block px-3 py-0.5 rounded-full bg-blue-50 text-blue-700 font-extrabold text-[11px] uppercase tracking-wider border border-blue-100">
