@@ -194,7 +194,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
       badge: 'Onboarding',
       description: 'Kickstart your training journey with guided onboarding, verified consent forms, and immediate faculty endorsement.',
       src: ICON('MOA Contract Signed.svg'),
-      color: 'blue',
       button: 'View Clearance',
       onClick: () => scrollToSection('project-management')
     },
