@@ -12,7 +12,7 @@ export const ScrollStackItem: React.FC<ScrollStackItemProps> = ({ children, item
   <div className={`scroll-stack-card ${itemClassName}`.trim()}>{children}</div>
 );
 
-export interface ScrollStackProps {
+interface ScrollStackProps {
   className?: string;
   children: ReactNode;
   itemDistance?: number;
@@ -28,7 +28,7 @@ export interface ScrollStackProps {
   onStackComplete?: () => void;
 }
 
-export const ScrollStack: React.FC<ScrollStackProps> = ({
+const ScrollStack: React.FC<ScrollStackProps> = ({
   children,
   className = '',
   itemDistance = 100,
@@ -74,8 +74,8 @@ export const ScrollStack: React.FC<ScrollStackProps> = ({
     } else {
       const scroller = scrollerRef.current;
       return {
-        scrollTop: scroller ? scroller.scrollTop : 0,
-        containerHeight: scroller ? scroller.clientHeight : 0,
+        scrollTop: scroller!.scrollTop,
+        containerHeight: scroller!.clientHeight,
         scrollContainer: scroller!
       };
     }
@@ -233,12 +233,9 @@ export const ScrollStack: React.FC<ScrollStackProps> = ({
       const scroller = scrollerRef.current;
       if (!scroller) return;
 
-      const content = scroller.querySelector('.scroll-stack-inner') as HTMLElement;
-      if (!content) return;
-
       const lenis = new Lenis({
         wrapper: scroller,
-        content: content,
+        content: scroller.querySelector('.scroll-stack-inner') as HTMLElement,
         duration: 1.2,
         easing: t => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
         smoothWheel: true,
@@ -266,12 +263,12 @@ export const ScrollStack: React.FC<ScrollStackProps> = ({
 
   useLayoutEffect(() => {
     const scroller = scrollerRef.current;
-    if (!scroller && !useWindowScroll) return;
+    if (!scroller) return;
 
     const cards = Array.from(
       useWindowScroll
         ? document.querySelectorAll('.scroll-stack-card')
-        : (scroller ? scroller.querySelectorAll('.scroll-stack-card') : [])
+        : scroller.querySelectorAll('.scroll-stack-card')
     ) as HTMLElement[];
 
     cardsRef.current = cards;

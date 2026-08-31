@@ -1171,51 +1171,39 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
           {/* React Bits ScrollStack Stacking Cards Viewport */}
           <div className="relative w-full h-[520px] sm:h-[560px] max-w-3xl mx-auto">
             <ScrollStack
-              className="h-full rounded-3xl border border-zinc-200/90 bg-white/50 backdrop-blur-xs shadow-xs"
-              itemDistance={80}
-              itemScale={0.04}
-              itemStackDistance={26}
-              stackPosition="18%"
-              scaleEndPosition="8%"
+              className="h-full bg-transparent border-0 shadow-none overflow-visible"
+              itemDistance={70}
+              stackPosition="16%"
+              scaleEndPosition="6%"
               baseScale={0.86}
-              rotationAmount={-1.5}
-              blurAmount={1.5}
-            >
-              {slideData.map((slide, idx) => (
+              rotationAmount={-1.2}
                 <ScrollStackItem
                   key={`scroll-stack-${idx}`}
-                  itemClassName="bg-white border border-zinc-200/90 shadow-lg rounded-3xl p-5 sm:p-6 flex flex-col sm:flex-row items-center gap-5 sm:gap-7 justify-between hover:border-zinc-300 transition-colors"
-                >
-                  {/* Left Column: Framed Vector Artwork */}
-                  <div className="w-full sm:w-44 h-28 sm:h-36 shrink-0 rounded-2xl bg-zinc-50/90 border border-zinc-100/90 flex items-center justify-center p-3 overflow-hidden">
+                  itemClassName="group relative bg-white/95 backdrop-blur-md border border-zinc-200/90 shadow-[0_20px_48px_-12px_rgba(15,23,42,0.09)] rounded-3xl p-5 sm:p-6.5 flex flex-col sm:flex-row items-center gap-5 sm:gap-7 justify-between hover:border-zinc-300 hover:shadow-[0_24px_56px_-12px_rgba(15,23,42,0.12)] transition-all duration-300 transform-gpu cursor-pointer"
+                  <div className="w-full sm:w-44 h-28 sm:h-36 shrink-0 rounded-2xl bg-zinc-50/90 border border-zinc-100/90 flex items-center justify-center p-3.5 overflow-hidden group-hover:bg-zinc-50 transition-colors shadow-2xs">
                     <img
                       src={slide.src}
                       alt={slide.title}
-                      className="w-full h-full object-contain drop-shadow-sm"
-                    />
+                      className="w-full h-full object-contain drop-shadow-sm transition-transform duration-300 group-hover:scale-105"
                   </div>
 
                   {/* Right Column: Detailed Milestone Content */}
-                  <div className="flex-1 flex flex-col justify-between h-full space-y-2.5 w-full">
                     {/* Header: Phase Pill + Step Counter */}
                     <div className="flex items-center justify-between">
-                      <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-zinc-100 text-zinc-800 border border-zinc-200/80">
+                      <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10.5px] font-extrabold uppercase tracking-wider bg-zinc-100 text-zinc-800 border border-zinc-200/80">
                         <span className="w-1.5 h-1.5 rounded-full bg-zinc-900" />
-                        <span>{slide.badge}</span>
                       </div>
-                      <span className="font-mono text-xs font-black text-zinc-900 bg-zinc-100 px-2 py-0.5 rounded-lg border border-zinc-200">
+                      <span className="font-mono text-xs font-black text-zinc-900 bg-zinc-100 px-2.5 py-0.5 rounded-lg border border-zinc-200">
                         {slide.step} / 0{slideData.length}
                       </span>
                     </div>
 
                     {/* Title & Description */}
                     <div>
-                      <h3 className="text-base sm:text-lg font-black text-[#111827] tracking-tight">
                         {slide.title}
                       </h3>
                       <p className="text-xs text-[#4B5563] leading-relaxed mt-1 font-normal">
                         {slide.description}
-                      </p>
                     </div>
 
                     {/* Footer: Action Button & Phase */}
@@ -1223,10 +1211,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
                       <button
                         type="button"
                         onClick={slide.onClick}
-                        className="text-xs font-extrabold text-[#111827] hover:text-blue-600 flex items-center gap-1.5 cursor-pointer transition-colors"
                       >
                         <span>{slide.button || 'Explore Milestone'}</span>
-                        <ArrowRight size={13} />
+                        <ArrowRight size={13} className="transition-transform group-hover:translate-x-1" />
                       </button>
                       <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-zinc-400">
                         {slide.phase}
@@ -1237,11 +1224,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
               ))}
             </ScrollStack>
           </div>
-        </div>
       </section>
 
       {/* ═══════════════════ FAQ ACCORDION SECTION ═══════════════════ */}
-      <section id="faq" className="py-16 sm:py-24 px-4 sm:px-6 lg:px-8 bg-white border-b border-[#E5E7EB] scroll-mt-24">
         <div className="max-w-5xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-start">
             <div className="lg:col-span-5 text-center lg:text-left">
