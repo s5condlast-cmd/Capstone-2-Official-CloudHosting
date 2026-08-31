@@ -26,7 +26,8 @@ import {
   Download
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import Carousel, { type SlideData } from '../../components/ui/carousel';
+import { type SlideData } from '../../components/ui/carousel';
+import ScrollStack, { ScrollStackItem } from '../../components/ui/ScrollStack';
 
 interface RoughHighlightProps {
   children: React.ReactNode;
@@ -1135,18 +1136,18 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
         </div>
       </section>
 
-      {/* ═══════════════════ PRACTICUM JOURNEY BENTO SHOWCASE ═══════════════════ */}
-      <section id="journey" className="relative w-full min-h-[calc(100vh-4rem)] flex flex-col justify-center items-center bg-gradient-to-b from-[#F8FAFC] via-[#EFF6FF]/30 to-[#F8FAFC] border-b border-zinc-200 py-8 sm:py-10 px-4 sm:px-6 lg:px-8 overflow-hidden scroll-mt-24">
+      {/* ═══════════════════ PRACTICUM JOURNEY SCROLL STACK ═══════════════════ */}
+      <section id="journey" className="relative w-full min-h-screen flex flex-col justify-center items-center bg-gradient-to-b from-[#F8FAFC] via-[#EFF6FF]/30 to-[#F8FAFC] border-b border-zinc-200 py-12 sm:py-16 px-4 sm:px-6 lg:px-8 overflow-hidden scroll-mt-24">
         {/* Centered Horizon Stage Radial Glow */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-5xl h-[300px] bg-[radial-gradient(ellipse_at_center,rgba(56,189,248,0.18),rgba(59,130,246,0.06)_50%,transparent_75%)] blur-3xl pointer-events-none -z-0" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-5xl h-[360px] bg-[radial-gradient(ellipse_at_center,rgba(56,189,248,0.18),rgba(59,130,246,0.06)_50%,transparent_75%)] blur-3xl pointer-events-none -z-0" />
 
-        <div className="max-w-5xl mx-auto w-full relative z-10 my-auto">
+        <div className="max-w-4xl mx-auto w-full relative z-10 my-auto">
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: false, amount: 0.15 }}
             transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-            className="text-center mb-4 sm:mb-5 space-y-1.5 transform-gpu will-change-transform"
+            className="text-center mb-6 sm:mb-8 space-y-1.5 transform-gpu will-change-transform"
           >
             {/* Category Eyebrow Pill */}
             <span className="inline-block px-3 py-0.5 rounded-full bg-blue-50 text-blue-700 font-extrabold text-[11px] uppercase tracking-wider border border-blue-100">
@@ -1167,9 +1168,74 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
             </p>
           </motion.div>
 
-          {/* Spatial Bento Horizon Carousel Viewport */}
-          <div className="relative overflow-hidden w-full">
-            <Carousel slides={slideData} />
+          {/* React Bits ScrollStack Stacking Cards Viewport */}
+          <div className="relative w-full h-[520px] sm:h-[560px] max-w-3xl mx-auto">
+            <ScrollStack
+              className="h-full rounded-3xl border border-zinc-200/90 bg-white/50 backdrop-blur-xs shadow-xs"
+              itemDistance={80}
+              itemScale={0.04}
+              itemStackDistance={26}
+              stackPosition="18%"
+              scaleEndPosition="8%"
+              baseScale={0.86}
+              rotationAmount={-1.5}
+              blurAmount={1.5}
+            >
+              {slideData.map((slide, idx) => (
+                <ScrollStackItem
+                  key={`scroll-stack-${idx}`}
+                  itemClassName="bg-white border border-zinc-200/90 shadow-lg rounded-3xl p-5 sm:p-6 flex flex-col sm:flex-row items-center gap-5 sm:gap-7 justify-between hover:border-zinc-300 transition-colors"
+                >
+                  {/* Left Column: Framed Vector Artwork */}
+                  <div className="w-full sm:w-44 h-28 sm:h-36 shrink-0 rounded-2xl bg-zinc-50/90 border border-zinc-100/90 flex items-center justify-center p-3 overflow-hidden">
+                    <img
+                      src={slide.src}
+                      alt={slide.title}
+                      className="w-full h-full object-contain drop-shadow-sm"
+                    />
+                  </div>
+
+                  {/* Right Column: Detailed Milestone Content */}
+                  <div className="flex-1 flex flex-col justify-between h-full space-y-2.5 w-full">
+                    {/* Header: Phase Pill + Step Counter */}
+                    <div className="flex items-center justify-between">
+                      <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-zinc-100 text-zinc-800 border border-zinc-200/80">
+                        <span className="w-1.5 h-1.5 rounded-full bg-zinc-900" />
+                        <span>{slide.badge}</span>
+                      </div>
+                      <span className="font-mono text-xs font-black text-zinc-900 bg-zinc-100 px-2 py-0.5 rounded-lg border border-zinc-200">
+                        {slide.step} / 0{slideData.length}
+                      </span>
+                    </div>
+
+                    {/* Title & Description */}
+                    <div>
+                      <h3 className="text-base sm:text-lg font-black text-[#111827] tracking-tight">
+                        {slide.title}
+                      </h3>
+                      <p className="text-xs text-[#4B5563] leading-relaxed mt-1 font-normal">
+                        {slide.description}
+                      </p>
+                    </div>
+
+                    {/* Footer: Action Button & Phase */}
+                    <div className="pt-2.5 border-t border-zinc-100 flex items-center justify-between">
+                      <button
+                        type="button"
+                        onClick={slide.onClick}
+                        className="text-xs font-extrabold text-[#111827] hover:text-blue-600 flex items-center gap-1.5 cursor-pointer transition-colors"
+                      >
+                        <span>{slide.button || 'Explore Milestone'}</span>
+                        <ArrowRight size={13} />
+                      </button>
+                      <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-zinc-400">
+                        {slide.phase}
+                      </span>
+                    </div>
+                  </div>
+                </ScrollStackItem>
+              ))}
+            </ScrollStack>
           </div>
         </div>
       </section>
