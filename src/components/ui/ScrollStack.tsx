@@ -278,6 +278,7 @@ const ScrollStack: React.FC<ScrollStackProps> = ({
       if (i < cards.length - 1) {
         card.style.marginBottom = `${itemDistance}px`;
       }
+      card.style.zIndex = `${i + 1}`;
       card.style.willChange = 'transform, filter';
       card.style.transformOrigin = 'top center';
       card.style.backfaceVisibility = 'hidden';
