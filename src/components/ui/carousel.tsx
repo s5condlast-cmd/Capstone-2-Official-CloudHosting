@@ -38,26 +38,29 @@ export const Carousel: React.FC<CarouselProps> = ({
   const total = slides ? slides.length : 0;
 
   const containerRef = useRef<HTMLDivElement>(null);
-  const [cardWidth, setCardWidth] = useState<number>(300);
-  const [gapWidth, setGapWidth] = useState<number>(16);
+  const [cardWidth, setCardWidth] = useState<number>(280);
+  const [gapWidth, setGapWidth] = useState<number>(18);
   const [visibleCount, setVisibleCount] = useState<number>(3);
 
-  // Responsive layout measurement
+  // Dynamic layout dimension calculation for Tall Portrait format
   const updateDimensions = useCallback(() => {
     if (!containerRef.current) return;
     const width = containerRef.current.offsetWidth;
-    if (window.innerWidth < 640) {
+    const isMobile = window.innerWidth < 640;
+    const isTablet = window.innerWidth >= 640 && window.innerWidth < 1024;
+
+    if (isMobile) {
       setVisibleCount(1);
       setGapWidth(12);
       setCardWidth(width);
-    } else if (window.innerWidth < 1024) {
+    } else if (isTablet) {
       setVisibleCount(2);
       setGapWidth(16);
       setCardWidth((width - 16) / 2);
     } else {
       setVisibleCount(3);
-      setGapWidth(16);
-      setCardWidth((width - 32) / 3);
+      setGapWidth(18);
+      setCardWidth((width - 36) / 3);
     }
   }, []);
 
@@ -110,7 +113,7 @@ export const Carousel: React.FC<CarouselProps> = ({
   return (
     <div className={cn("relative w-full select-none", className)}>
       {/* Continuous Physical Sliding Viewport */}
-      <div ref={containerRef} className="overflow-hidden w-full max-w-5xl mx-auto py-1 px-1">
+      <div ref={containerRef} className="overflow-hidden w-full max-w-5xl mx-auto py-2 px-1">
         <motion.div
           className="flex items-stretch transform-gpu will-change-transform"
           style={{ gap: `${gapWidth}px` }}
@@ -125,13 +128,13 @@ export const Carousel: React.FC<CarouselProps> = ({
           {slides.map((slide, idx) => {
             return (
               <motion.div
-                key={`slide-card-${idx}`}
+                key={`slide-card-tall-${idx}`}
                 style={{
                   width: `${cardWidth}px`,
                   minWidth: `${cardWidth}px`
                 }}
                 whileHover={{
-                  y: -4,
+                  y: -5,
                   transition: { duration: 0.2, ease: 'easeOut' }
                 }}
                 whileTap={{ scale: 0.98 }}
@@ -140,22 +143,22 @@ export const Carousel: React.FC<CarouselProps> = ({
                   handleSlideSelect(idx);
                 }}
                 className={cn(
-                  "group relative flex flex-col justify-between rounded-2xl bg-white p-4 sm:p-4.5 transition-all duration-300 cursor-pointer overflow-hidden border border-zinc-200/90 transform-gpu shadow-xs hover:shadow-md hover:border-zinc-300 opacity-100"
+                  "group relative flex flex-col justify-between rounded-3xl bg-white p-5 sm:p-6 border border-zinc-200/90 shadow-sm hover:shadow-xl hover:border-zinc-300 transition-all duration-300 cursor-pointer overflow-hidden transform-gpu"
                 )}
               >
-                {/* Header: Neutral Phase Pill + Step Counter */}
-                <div className="flex items-center justify-between relative z-10 mb-1.5">
-                  <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-zinc-100 text-zinc-800 border border-zinc-200/80">
+                {/* Header: Phase Badge + Step Indicator Pill */}
+                <div className="flex items-center justify-between relative z-10 mb-2">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-zinc-100 text-zinc-800 border border-zinc-200/80">
                     <span className="w-1.5 h-1.5 rounded-full bg-zinc-900" />
-                    <span>{slide.badge || slide.phase || 'OJT Milestone'}</span>
+                    <span>{slide.badge || slide.phase}</span>
                   </div>
-                  <span className="font-mono text-[10.5px] font-bold text-zinc-400 bg-zinc-50 border border-zinc-100 px-1.5 py-0.5 rounded-md">
-                    {slide.step || `0${idx + 1}`} / 0{slides.length}
+                  <span className="font-mono text-xs font-black text-zinc-900 bg-zinc-100 px-2 py-0.5 rounded-lg border border-zinc-200">
+                    {slide.step || `0${idx + 1}`}
                   </span>
                 </div>
 
-                {/* Center Illustration Frame */}
-                <div className="relative w-full h-22 sm:h-24 my-1 rounded-xl bg-zinc-50/90 border border-zinc-100/90 flex items-center justify-center p-2 overflow-hidden group-hover:bg-zinc-50 transition-colors shadow-2xs">
+                {/* Generous Artwork Canvas Stage */}
+                <div className="relative w-full h-28 sm:h-32 my-2 rounded-2xl bg-zinc-50/90 border border-zinc-100/90 flex items-center justify-center p-3 overflow-hidden group-hover:bg-zinc-50 transition-colors shadow-2xs">
                   <img
                     src={slide.src}
                     alt={slide.title}
@@ -163,23 +166,23 @@ export const Carousel: React.FC<CarouselProps> = ({
                   />
                 </div>
 
-                {/* Body: Title & Full Readable Description */}
+                {/* Body Content */}
                 <div className="space-y-1 relative z-10 pt-1 flex-1 flex flex-col justify-start">
-                  <h3 className="text-sm sm:text-base font-black tracking-tight text-[#111827] group-hover:text-blue-600 transition-colors leading-snug">
+                  <h3 className="text-base font-black tracking-tight text-[#111827] group-hover:text-blue-600 transition-colors leading-snug">
                     {slide.title}
                   </h3>
-                  <p className="text-[11.5px] sm:text-xs text-[#4B5563] leading-relaxed font-normal line-clamp-2 sm:line-clamp-none">
+                  <p className="text-xs text-[#4B5563] leading-relaxed font-normal">
                     {slide.description}
                   </p>
                 </div>
 
-                {/* Bottom: Micro-Action CTA */}
-                <div className="pt-2 mt-2 border-t border-zinc-100/90 flex items-center justify-between text-xs font-bold relative z-10">
-                  <span className="text-[#111827] group-hover:text-blue-600 transition-colors flex items-center gap-1 font-extrabold text-[11.5px]">
+                {/* Bottom CTA Action Row */}
+                <div className="pt-3 mt-3 border-t border-zinc-100/90 flex items-center justify-between text-xs font-bold relative z-10">
+                  <span className="text-[#111827] group-hover:text-blue-600 transition-colors flex items-center gap-1 font-extrabold text-xs">
                     <span>{slide.button || 'Explore Milestone'}</span>
-                    <ArrowRight size={12} className="transition-transform group-hover:translate-x-1" />
+                    <ArrowRight size={13} className="transition-transform group-hover:translate-x-1" />
                   </span>
-                  <span className="text-[9.5px] font-mono font-bold uppercase tracking-wider text-zinc-400">
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-zinc-400">
                     {slide.phase}
                   </span>
                 </div>
