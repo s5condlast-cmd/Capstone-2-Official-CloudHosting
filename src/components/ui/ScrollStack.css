@@ -4,15 +4,14 @@
   height: 100%;
   overflow-y: auto;
   overflow-x: visible;
-  overscroll-behavior: contain;
+  overscroll-behavior: auto;
   -webkit-overflow-scrolling: touch;
-  scroll-behavior: smooth;
   -webkit-transform: translateZ(0);
   transform: translateZ(0);
   will-change: scroll-position;
-  /* Hide scrollbars across all browsers */
   scrollbar-width: none;
   -ms-overflow-style: none;
+  padding: 12px 6px 24px;
 }
 
 .scroll-stack-scroller::-webkit-scrollbar {
@@ -22,8 +21,8 @@
 }
 
 .scroll-stack-inner {
-  padding: 10vh 1.5rem 32rem;
-  min-height: 100vh;
+  padding: 12px 1rem 60px;
+  min-height: 100%;
 }
 
 .scroll-stack-card-wrapper {
@@ -32,16 +31,16 @@
 
 .scroll-stack-card {
   transform-origin: top center;
-  will-change: transform, filter;
+  will-change: transform, opacity;
   backface-visibility: hidden;
   transform-style: preserve-3d;
-  box-shadow: 0 20px 48px -12px rgba(15, 23, 42, 0.09), 0 0 0 1px rgba(229, 231, 235, 0.9);
-  height: 20rem;
+  box-shadow: 0 16px 36px -10px rgba(15, 23, 42, 0.1), 0 0 0 1px rgba(229, 231, 235, 0.85);
+  min-height: 18rem;
   width: 100%;
-  max-width: 56rem;
-  margin: 30px auto;
-  padding: 2.25rem 2.75rem;
-  border-radius: 36px;
+  max-width: 58rem;
+  margin: 16px auto;
+  padding: 2rem 2.25rem;
+  border-radius: 28px;
   box-sizing: border-box;
   background: #ffffff;
   /* Improve mobile performance */

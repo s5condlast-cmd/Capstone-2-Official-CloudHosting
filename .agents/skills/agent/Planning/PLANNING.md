@@ -33,7 +33,7 @@ Do not use it for simple requests.
 
 **Note:** if your Antigravity workspace has `/grill-me` and `/goal` configured as custom commands, use those directly. If not (or you're unsure), use these plain-language equivalents instead so the behavior doesn't silently disappear when the commands aren't set up:
 
-- **In place of `/grill-me`:** "Ask me clarifying questions one at a time until the requirements are unambiguous, then summarize what you understood before proposing a plan."
+- **In place of `/grill-me`:** "Ask me clarifying questions one at a time using simple, everyday words (no technical jargon) until the requirements are unambiguous, then summarize what you understood before proposing a plan."
 - **In place of `/goal`:** "Break this into phases, each with its own mini-plan and checkpoint, and confirm progress with me at the end of each phase before starting the next."
 
 ---

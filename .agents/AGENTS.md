@@ -2,7 +2,8 @@
 
 ## Alignment and Formatting Clarification
 - **Identify Render Channels**: When the user reports layout or styling discrepancies in documents, clarify immediately whether the issue is visible on the **web application's React preview** or within the **downloaded/exported DOCX or PDF files**.
-- **Interactive Alignment**: Suggest the `/grill-me` slash command if there is layout ambiguity or if multiple attempts to resolve a visual bug have failed. This helps align on design specs through an interactive interview.
+- **Interactive Alignment (`/grill-me`)**: Suggest the `/grill-me` slash command if there is layout ambiguity or if multiple attempts to resolve a visual bug have failed.
+  - **Plain Language Standard**: When conducting a `/grill-me` interview, you MUST use **simple, everyday, easy-to-understand words**. Avoid dense technical jargon, complex code terminology, or confusing phrasing. Ask one simple question at a time, frame choices around visual behavior (e.g., *"Should the card stay fixed at the top or move away?"*), and keep questions short and clear so the user never gets confused.
 - **Mandatory Post-Grill /goal Interactive Prompt**: Immediately after concluding any `/grill-me` interview and finalizing the implementation plan, the agent MUST call the `ask_question` tool with an interactive choice asking the user:
   1. *Execute using `/goal` mode* (Autonomous, extra-thorough end-to-end execution without stopping until 100% complete)
   2. *Execute using standard step-by-step mode* (Standard execution with intermediate checkpoints)
@@ -125,63 +126,37 @@ When configuring Vercel deployment for this Vite + Express full-stack project:
 - You must stage and commit the code locally (if appropriate), but you must then **STOP** and inform the user that the code is ready to be pushed.
 - You are strictly forbidden from executing a `git push` command until the user explicitly types the authorization code: `/push`.
 
-## Review Scope Protocol (/review)
+## Unified Debug Protocol (`/debug`)
 
-When the user invokes `/review`, the review scope must be determined in the following priority order:
+The `/debug` command is the master diagnostic and verification protocol that unifies **Architecture Scanning** (`/scan`), **Code & Quality Review** (`/review`), and **Systematic Root-Cause Debugging** (`/debug`) into a single command. It activates the **`systematic-debugging`** and **`alignment-auditor`** skills.
 
-1. **User Prompt (Highest Priority)**  
-   If the user specifies what to review (e.g., `/review UI`, `/review authentication`, `/review dashboard`, `/review accessibility`), the review must focus exclusively on that request.
+### 1. Scope Resolution
+When `/debug` (or legacy `/scan`/`/review`) is invoked, resolve the target in the following order:
+1. **User Prompt (Highest Priority)**: If the user specifies what to debug/review (e.g., `/debug UI`, `/debug authentication`, `/debug ScrollStack`), focus strictly on that target.
+2. **Context References (`@`)**: If context references are provided (e.g., `/debug @Dashboard.tsx`), focus on those referenced items.
+3. **Recent Changes**: If no target is specified, focus on the files, features, or components most recently modified or discussed.
+4. **Conversation Context**: Infer the target from the ongoing conversation.
 
-2. **Recent Changes**  
-   If no specific scope is provided, review the files, features, or code that were most recently created, modified, or discussed during the current session.
+### 2. The 4-Phase Execution Pipeline
 
-3. **Conversation Context**  
-   If there are no recent code changes, infer the review target from the current conversation and review the implementation, ideas, architecture, or designs that were being discussed.
+#### Phase 1: Architecture & Dataflow Scan
+- Analyze what the target is, its dependencies, and how it fits into the overall system architecture.
+- Trace data execution, state lifecycles (`loading -> fetch -> data OR EmptyState`), and potential risk areas.
+- Identify the exact rendering channel (React Web Preview vs. DOCX/PDF export vs. Supabase API).
 
-4. **Entire Workspace (Fallback)**  
-   Only if no review target can be determined from the prompt, recent changes, or conversation context should the agent perform a broader review of the relevant project or workspace.
+#### Phase 2: Code & Quality Review
+- Review code against React 19 standards, TypeScript strict typing, and Supabase security standards.
+- Inspect for CSS transition vs. JS transform conflicts (`transition-all` on RAF animated elements).
+- Check scroll engine conflicts (CSS `scroll-behavior: smooth` vs. Lenis).
+- Audit Supabase RLS policies for `(SELECT auth.uid())` InitPlan optimization and verify storage permissions.
 
-The agent must never review unrelated parts of the project unless explicitly requested by the user.
+#### Phase 3: Single Root-Cause Isolation & Fix
+- Formulate a single, confirmed root-cause hypothesis without guesswork.
+- Implement the minimal, clean, non-breaking fix.
 
-## Scan Protocol (`/scan`)
-
-When the user invokes `/scan`, the agent must perform a comprehensive analysis of the most relevant files, features, or topics based on the current context.
-
-### Scope Resolution
-
-Determine what to scan using the following priority:
-
-1. **User Prompt (Highest Priority)**  
-   If the user specifies what to scan (e.g., `/scan authentication`, `/scan dashboard`, `/scan API`), focus only on that target.
-
-2. **Context References (`@`)**  
-   If the user provides one or more context references (e.g., `/scan @Dashboard.tsx`, `/scan @StudentPortal`), scan only those referenced items.
-
-3. **Recent Changes**  
-   If no specific target is provided, scan the files, features, or code most recently created, modified, or discussed.
-
-4. **Conversation Context**  
-   If there are no recent code changes, infer the scan target from the current conversation and analyze the implementation, architecture, or design being discussed.
-
-5. **Entire Feature (Fallback)**  
-   If no clear target can be determined, scan the most relevant feature or module related to the conversation. Do not scan the entire workspace unless explicitly requested.
-
-### Scan Output
-
-The scan should explain:
-
-- What the target is
-- Why it exists
-- How it works
-- How it fits into the overall architecture
-- Data flow and execution
-- Key components, functions, and dependencies
-- Important logic and business rules
-- Potential risks or areas that require caution
-- Related files or modules
-- A concise summary of the target's purpose and responsibilities
-
-The objective of `/scan` is to help the user fully understand the current implementation before making changes. The explanation should be clear, structured, and based on the actual codebase and conversation context.
+#### Phase 4: Zero-Error Verification
+- Execute `npm run lint` (`tsc --noEmit`) to verify 0 compiler/type errors.
+- Confirm all related components, styles, and document generation pipelines remain untouched and fully operational.
 
 ## GitHub Repository Configuration
 - **Main Repository:** The primary remote repository (origin) for the project must always be set to `https://github.com/s5condlast-cmd/Capstone-2-Official-CloudHosting.git`.
