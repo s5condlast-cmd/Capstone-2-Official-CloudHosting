@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, useLocation, Navigate } from 'react-router-dom';
-import { Sidebar } from './Sidebar';
-import { Topbar } from './Topbar';
-import { User, Role } from '@/src/types';
+import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
+import { AppSidebar } from '@/components/app-sidebar';
+import { SiteHeader } from '@/components/site-header';
+import { User } from '@/src/types';
 import { motion, AnimatePresence } from 'motion/react';
 import { CommandPalette } from '../ui/CommandPalette';
 
@@ -13,17 +14,16 @@ interface MainLayoutProps {
 
 export const MainLayout: React.FC<MainLayoutProps> = ({ user, onLogout }) => {
   const location = useLocation();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
 
   // Persist theme to localStorage
-  const [theme, setTheme] = React.useState<'light' | 'dark'>(() => {
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     const saved = localStorage.getItem('practicum_theme');
     if (saved === 'dark' || saved === 'light') return saved;
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   });
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
     } else {
@@ -32,103 +32,41 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ user, onLogout }) => {
     localStorage.setItem('practicum_theme', theme);
   }, [theme]);
 
-  const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
+  const toggleTheme = () => setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
 
   if (!user) return <Navigate to="/login" replace />;
 
-  const getPageTitle = (path: string) => {
-    const parts = path.split('/').filter(p => p !== '' && p !== 'admin' && p !== 'adviser' && p !== 'student');
-    if (parts.length === 0) return 'Dashboard';
-    return parts[0].charAt(0).toUpperCase() + parts[0].slice(1).replace('-', ' ');
-  };
-
-  const getPageSubtitle = (path: string): string | undefined => {
-    const key = path.split('/').filter(p => p !== '').pop() || '';
-    const subtitles: Record<string, string> = {
-      'student': 'Track your practicum progress and submissions',
-      'admin': 'System overview and practicum management tools',
-      'adviser': 'Review and manage student document submissions',
-      'supervisor': 'Manage assigned intern records, verify DTR logs, and review weekly journals',
-      'interns': 'View and track the students currently deployed to your department',
-      'resume': 'Upload your professional CV for adviser review',
-      'consent': 'Submit your signed parent or guardian consent form',
-      'moa': 'Submit the signed Memorandum of Agreement',
-      'endorsement': 'Request and submit your endorsement letter',
-      'dtr': 'Verify and sign student Daily Time Record logs',
-      'journal': 'Review and annotate student weekly learning journals',
-      'training-plan': 'Submit your OJT training plan and objectives',
-      'evaluation': 'Final performance evaluation from your supervisor',
-      'completion': 'Upload your letter of recognition and OJT certification',
-      'notifications': 'Recent alerts, feedback, and system updates',
-      'profile': 'Manage your account and personal information',
-      'monitoring': 'System events, login activity, and alert history',
-      'templates': 'Upload and manage official practicum document forms',
-      'users': 'Manage student and adviser account records',
-      'documents': 'Verify and validate submitted practicum documents',
-      'reports': 'Practicum compliance and completion reports',
-      'review': 'Review and annotate pending student documents',
-      'approvals': 'Previously approved and verified documents',
-      'students': 'View progress of assigned practicum students',
-      'settings': 'Configure system preferences and policies',
-    };
-    return subtitles[key];
-  };
-
-  // Close mobile menu on route change
-  React.useEffect(() => {
-    setIsMobileMenuOpen(false);
-  }, [location.pathname]);
-
   return (
-    <div className="min-h-screen flex bg-zinc-50 dark:bg-zinc-950 text-zinc-950 dark:text-zinc-50 selection:bg-zinc-950 dark:selection:bg-white selection:text-white dark:selection:text-zinc-950 relative transition-colors duration-300">
+    <SidebarProvider defaultOpen={true}>
       <CommandPalette 
         isOpen={isCommandPaletteOpen} 
         setIsOpen={setIsCommandPaletteOpen} 
         user={user} 
         onLogout={onLogout} 
       />
-      
-      <Sidebar 
-        role={user.role} 
+
+      <AppSidebar
         user={user}
-        onLogout={onLogout} 
-        isOpen={isMobileMenuOpen} 
-        onToggle={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
+        onLogout={onLogout}
         onSearchClick={() => setIsCommandPaletteOpen(true)}
       />
-      
-      {/* Mobile Overlay */}
-      <AnimatePresence>
-        {isMobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setIsMobileMenuOpen(false)}
-            className="fixed inset-0 bg-black/50 z-30 md:hidden backdrop-blur-sm"
-          />
-        )}
-      </AnimatePresence>
 
-      <main className="flex-1 flex flex-col min-h-screen overflow-hidden">
-        <Topbar 
-          title={getPageTitle(location.pathname)} 
-          subtitle={getPageSubtitle(location.pathname)}
-          user={user} 
-          onMenuClick={() => setIsMobileMenuOpen(true)} 
+      <SidebarInset className="bg-background min-h-screen flex flex-col overflow-hidden transition-colors duration-200">
+        <SiteHeader
+          user={user}
           theme={theme}
           onToggleTheme={toggleTheme}
           onSearchClick={() => setIsCommandPaletteOpen(true)}
           onLogout={onLogout}
         />
-        
-        <div className="flex-1 overflow-y-auto bg-zinc-50 dark:bg-zinc-950 transition-colors duration-300">
+
+        <div className="flex-1 overflow-y-auto bg-background transition-colors duration-200">
           <AnimatePresence mode="wait">
             <motion.div
               key={location.pathname}
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
+              exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.2 }}
               className="px-4 md:px-6 py-5 md:py-6 w-full max-w-[1720px] mx-auto"
             >
@@ -136,7 +74,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ user, onLogout }) => {
             </motion.div>
           </AnimatePresence>
         </div>
-      </main>
-    </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 };
+

@@ -1143,19 +1143,19 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
 
         <div className="max-w-5xl mx-auto w-full relative z-10 my-auto">
           <motion.div
-            initial={{ opacity: 0, y: 12 }}
+            initial={{ opacity: 0, y: 14 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: false, amount: 0.15 }}
-            transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-            className="text-center mb-8 sm:mb-12 space-y-2 transform-gpu will-change-transform"
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            className="text-center mb-10 sm:mb-14 space-y-3 sm:space-y-3.5 transform-gpu will-change-transform"
           >
             {/* Category Eyebrow Pill */}
-            <span className="inline-block px-3 py-0.5 rounded-full bg-blue-50 text-blue-700 font-extrabold text-[11px] uppercase tracking-wider border border-blue-100">
+            <span className="inline-block px-3.5 py-1 rounded-full bg-blue-50 text-blue-700 font-extrabold text-xs sm:text-[12px] uppercase tracking-wider border border-blue-100/90 shadow-2xs">
               Internship Milestones
             </span>
 
             {/* Headline with RoughHighlight matching clearance & verification */}
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-[-0.03em] text-[#111827] leading-tight">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-[-0.03em] text-[#111827] leading-tight sm:leading-[1.15]">
               Your Practicum{' '}
               <RoughHighlight color="#FEF08A">
                 Journey
@@ -1163,7 +1163,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
             </h2>
 
             {/* Subtitle with standard typography and leading */}
-            <p className="text-xs sm:text-sm text-[#4B5563] max-w-lg mx-auto leading-relaxed font-normal">
+            <p className="text-sm sm:text-base md:text-lg text-[#4B5563] max-w-2xl mx-auto leading-relaxed font-normal">
               Explore each milestone of your internship—from onboarding and daily shift logging to supervisor ratings and final institutional clearance.
             </p>
           </motion.div>

@@ -26,7 +26,8 @@ import {
   UserCheck as UserCheckIcon,
   Lock as LockIcon,
   Building2 as BuildingIcon,
-  Menu as MenuIcon
+  Menu as MenuIcon,
+  Sparkles as SparklesIcon
 } from 'lucide-react';
 import { Role, User } from '@/src/types';
 import { usePhaseLock } from '@/src/hooks/usePhaseLock';
@@ -150,7 +151,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
         return [
           {
             group: 'Overview',
-            items: [{ to: '/student', icon: LayoutDashboardIcon, label: 'Dashboard' }],
+            items: [
+              { to: '/student', icon: LayoutDashboardIcon, label: 'Dashboard' },
+              { to: '/student/generative-ui', icon: SparklesIcon, label: 'AI Assistant' },
+            ],
           },
           {
             group: 'Before OJT',
