@@ -42,6 +42,7 @@ import { AdminReviewSession } from './pages/admin/AdminReviewSession';
 import { AdminDocumentEditor } from './pages/admin/AdminDocumentEditor';
 import { MyStudents } from './pages/adviser/MyStudents';
 import { Notifications } from './pages/shared/Notifications';
+import { CalendarPage } from './pages/shared/CalendarPage';
 
 import { SupervisorDashboard } from './pages/supervisor/SupervisorDashboard';
 import { MyInterns } from './pages/supervisor/MyInterns';
@@ -170,6 +171,7 @@ export default function App() {
           <Route path="reports" element={<Reports />} />
           <Route path="settings" element={<Settings />} />
           <Route path="announcements" element={<Announcements />} />
+          <Route path="calendar" element={<CalendarPage user={user} />} />
           <Route path="profile" element={<Profile user={user} />} />
         </Route>
 
@@ -189,6 +191,7 @@ export default function App() {
           <Route path="evaluations" element={<CompanyEvaluations />} />
           <Route path="comparison" element={<AdviserComparison />} />
           <Route path="class-reports" element={<ClassReports />} />
+          <Route path="calendar" element={<CalendarPage user={user} />} />
           <Route path="notifications" element={<Notifications user={user} />} />
           <Route path="profile" element={<Profile user={user} />} />
         </Route>
@@ -211,6 +214,7 @@ export default function App() {
           <Route path="evaluation" element={<PhaseGuard phase="finals"><PerformanceAppraisal /></PhaseGuard>} />
           <Route path="completion" element={<PhaseGuard phase="finals"><IntegrationPaper /></PhaseGuard>} />
           <Route path="progress" element={<Placeholder name="Progress Tracker" />} />
+          <Route path="calendar" element={<CalendarPage user={user} />} />
           <Route path="notifications" element={<Notifications user={user} />} />
           <Route path="profile" element={<Profile user={user} />} />
         </Route>
@@ -226,6 +230,7 @@ export default function App() {
           <Route path="dtr" element={<DTRApproval />} />
           <Route path="journal" element={<WeeklyJournalReview />} />
           <Route path="completion" element={<InternshipCompletion />} />
+          <Route path="calendar" element={<CalendarPage user={user} />} />
           <Route path="notifications" element={<Notifications user={user} />} />
           <Route path="profile" element={<Profile user={user} />} />
         </Route>
