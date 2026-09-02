@@ -266,3 +266,14 @@ When building or updating UI components, forms, modals, or dashboards, always ad
 
 6. **Form Simplicity**:
    - Prioritize essential fields first. Omit redundant secondary inputs (like unnecessary categories) from quick-create modals to keep workflows fast and uncluttered.
+
+## Microsoft OneDrive & Graph Integration Protocol
+
+When integrating or troubleshooting Microsoft Graph API and OneDrive cloud storage in this repository:
+
+1. **Credit-Card-Free Student Activation**: When setting up Azure subscriptions for academic projects, never direct students to the standard credit-card-gated Azure signup. Always instruct them to activate **Azure for Students** (`azure.microsoft.com/free/students`) using their official `.edu.ph` institutional email, which grants full Microsoft Entra ID access with $0 cost and zero payment info.
+2. **Multi-Tenant Account Scope**: Always register Azure applications with `signInAudience`: `"AzureADandPersonalMicrosoftAccount"` (*"Accounts in any organizational directory and personal Microsoft accounts"*). This prevents AADSTS50020 tenant mismatch errors when testing across personal and school accounts.
+3. **The SPO (SharePoint Online) Trap & Delegated Auth**: Pure Azure directories created by personal accounts lack SharePoint Online (SPO) licenses. As a result, client-credential application calls to `/drives` fail with `Tenant does not have a SPO license`. Always implement the OAuth2 Authorization Code flow with `offline_access Files.ReadWrite User.Read` targeting `/me/drive`, which works universally on both personal OneDrive and institutional OneDrive.
+4. **Institutional Consent Lockdown**: School domains (`@marikina.sti.edu.ph`) strictly block student accounts from granting OAuth permissions to third-party apps (`Need admin approval`). For developer testing and demonstrations, advise using personal Microsoft accounts where the user has full self-consent authority.
+5. **Web Platform Redirect URIs**: Always register callback endpoints (e.g. `http://localhost:3001/api/onedrive/auth/callback`) under the **Web** platform in the Azure Portal (never SPA or Mobile) to avoid `invalid_request: redirect_uri` errors.
+6. **Token Leak Protection Invariant**: Token cache files (`backend/config/*token.json` and `*-token.json`) must remain permanently listed in `.gitignore`. Never commit or stage raw access or refresh tokens.
