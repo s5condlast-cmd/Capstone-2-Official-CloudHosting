@@ -51,9 +51,22 @@ A historical record of completed tasks, refactors, bug fixes, and architectural 
 ---
 
 ## 📌 Upcoming Tasks
-- [ ] **Role Dashboards Redesign (Option A)**:
+
+- [ ] **Role Dashboards Redesign & UI Polish (Option A)**
   - [ ] Admin Dashboard (Cards, interactive metrics, activity table)
   - [ ] Student Dashboard (Progress metrics, quick requirements, submissions)
   - [ ] Adviser Dashboard (Pending reviews, student roster, approval queue)
   - [ ] Supervisor Dashboard (DTR approvals, evaluations, attendance charts)
+  - [ ] General UI polish across all pages (responsive spacing, consistent cards)
+- [ ] **Student Experience & Portal Refinement**
+  - [ ] Dynamic database sync for requirements progress
+  - [ ] Real-time completed tasks sync across To-do, submissions, and modal
+  - [ ] Standardize student document workflows via `StudentDocumentPage.tsx`
+- [ ] **Document Digitization: Interactive Inputs for All Templates**
+  - [ ] Convert all 13 official templates across Before OJT, In OJT, and Final into digital interactive inputs (`AutoWidthInput`)
+  - [ ] Enforce strict 30-word limits, print stylesheets (`@media print`), and sequential JSZip injection
+- [ ] **Core Backend, Security & Cloud Sync (High Priority — Post-Dashboards)**
+  - [ ] Authentication & Security (Login + OTP verification)
+  - [ ] Automated Emailing System (OTP codes, approval notifications)
+  - [ ] Microsoft OneDrive Integration (Microsoft Graph API, cloud document sync & backup)
 
