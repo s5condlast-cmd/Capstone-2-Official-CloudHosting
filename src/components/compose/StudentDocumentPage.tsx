@@ -14,7 +14,8 @@ import {
   Info,
   UserCheck,
   Users,
-  ChevronDown
+  ChevronDown,
+  Cloud
 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import { AnimatePresence, motion } from 'motion/react';
@@ -464,6 +465,11 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
                 >
                   {isSubmitted ? 'Submitted' : isUploading ? 'Processing...' : currentStatus === 'Pending' ? 'Submit' : 'Submit File'}
                 </Button>
+              </div>
+
+              <div className="flex items-center justify-center gap-1.5 pt-1 text-[10px] text-zinc-500 dark:text-zinc-400">
+                <Cloud size={12} className={cn("shrink-0", isSubmitted ? "text-emerald-500" : "text-sky-500")} />
+                <span>{isSubmitted ? 'Signed copy archived to Microsoft OneDrive' : 'Cloud sync: Auto-archives to Microsoft OneDrive'}</span>
               </div>
             </div>
           </Card>

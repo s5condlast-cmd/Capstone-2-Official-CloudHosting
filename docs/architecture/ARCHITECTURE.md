@@ -12,7 +12,7 @@ The **Web-Based Practicum Management System with AI** is a full-stack web applic
 
 ## Architecture Diagram
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                            CLIENT (Browser)                            │
 │                                                                         │
@@ -63,7 +63,7 @@ The **Web-Based Practicum Management System with AI** is a full-stack web applic
 
 ## Directory Layout (Verified)
 
-```
+```text
 MainCode/
 ├── .agents/
 │   └── AGENTS.md                   # Agent rules, coding constraints, operational protocols
@@ -222,15 +222,17 @@ MainCode/
 ## Routing Architecture (from App.tsx)
 
 ### Public Routes
+
 | Path | Component | Notes |
-|:---|:---|:---|
+| :--- | :--- | :--- |
 | `/` | `LandingPage` | Public landing page |
 | `/login` | `Login` | Multi-role login, redirects if authenticated |
 | `/forgot-password` | `ForgotPassword` | Password recovery |
 
 ### Student Routes (`/student/*`) — wrapped in `ProtectedRoute` + `PhaseGuard`
+
 | Path | Component | Phase |
-|:---|:---|:---|
+| :--- | :--- | :--- |
 | `/student` | `StudentDashboard` | — |
 | `/student/application-letter` | `StudentApplicationLetter` | beforeOjt |
 | `/student/consent` | `LetterOfConsent` | beforeOjt |
@@ -244,8 +246,9 @@ MainCode/
 | `/student/completion` | `IntegrationPaper` | finals |
 
 ### Adviser Routes (`/adviser/*`)
+
 | Path | Component |
-|:---|:---|
+| :--- | :--- |
 | `/adviser` | `AdviserDashboard` |
 | `/adviser/students` | `MyStudents` |
 | `/adviser/review` | `ReviewDocs` |
@@ -258,8 +261,9 @@ MainCode/
 | `/adviser/class-reports` | `ClassReports` |
 
 ### Supervisor Routes (`/supervisor/*`)
+
 | Path | Component |
-|:---|:---|
+| :--- | :--- |
 | `/supervisor` | `SupervisorDashboard` |
 | `/supervisor/interns` | `MyInterns` |
 | `/supervisor/dtr` | `DTRApproval` |
@@ -267,8 +271,9 @@ MainCode/
 | `/supervisor/completion` | `InternshipCompletion` |
 
 ### Admin Routes (`/admin/*`)
+
 | Path | Component |
-|:---|:---|
+| :--- | :--- |
 | `/admin` | `AdminDashboard` |
 | `/admin/monitoring` | `Monitoring` |
 | `/admin/users` | `UserManagement` |

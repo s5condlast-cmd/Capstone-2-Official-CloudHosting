@@ -1,0 +1,103 @@
+# 👥 Adviser & Supervisor Review Rooms Documentation
+
+A comprehensive guide on the **Faculty Adviser and Industry Supervisor Review Workflows**, dual-viewport document inspection, revision cycles, and official sign-offs.
+
+> 💡 **Executive Summary**: Streamlined review room with side-by-side viewports. Displays student submissions alongside criteria checklists, AI suggestions, and persistent feedback comment threads.
+
+---
+
+## 🌟 Feature Overview
+
+The review workflows give academic coordinators and company supervisors dedicated portals to verify student submissions:
+
+1. **Dual-Viewport Inspection**: View the student's submitted document (PDF, DOCX, XLSX) on the left while checking criteria and writing remarks on the right.
+2. **Four-State Submission Lifecycle**: Structured status transitions (`Pending` $\rightarrow$ `Needs Revision` $\rightarrow$ `Approved` $\rightarrow$ `Verified`).
+3. **Historical Comments Thread**: Preserves an append-only audit trail of adviser feedback, timestamps, and student revision notes.
+
+---
+
+## 🏗️ State Machine & Review Dataflow
+
+```mermaid
+stateDiagram-v2
+    [*] --> Pending: Student Submits Document
+    
+    Pending --> NeedsRevision: Adviser/Supervisor Requests Fixes
+    NeedsRevision --> Pending: Student Uploads Revised File
+    
+    Pending --> Approved: Adviser / Supervisor Signs Off
+    Approved --> Verified: Dean / Registrar Final Clearance
+    
+    Verified --> [*]: Archived in Student Records
+```
+
+---
+
+## 🔍 How It Works Under the Hood
+
+### 1. Dual-Viewport Layout (`ReviewDocuments.tsx`)
+
+To avoid opening external PDF viewers or downloading files to the desktop:
+
+* **Left Viewport (`col-span-7` or `col-span-8`)**:
+  * Renders native PDF submissions with `@embedpdf/react-pdf-viewer`.
+  * Renders DOCX submissions with `DocxViewer.tsx`.
+  * Supports zoom, page navigation, and text search.
+* **Right Viewport (`col-span-5` or `col-span-4`)**:
+  * Displays the student's submission metadata (submission timestamp, student number, section).
+  * Hosts the **AI Grammar Audit Panel** with one-click suggestion insertion.
+  * Contains the feedback input box and action buttons:
+    * **Request Revision** (destructive/amber style)
+    * **Approve Document** (emerald/success style)
+
+---
+
+### 2. Multi-Role Permissions & Responsibilities
+
+| User Role | Supervised Scope | Key Decision Documents | Primary Authority |
+| :--- | :--- | :--- | :--- |
+| **Academic Adviser** | Section Cohort (40–50 students) | Application Letter, Consent Forms, Industry MOA, Endorsement Letter | Academic Eligibility & Placement Approval |
+| **Company Supervisor** | Intern Team (1–5 students) | DTR Work Hours, Weekly Journals, Training Plan, Appraisal Form | Industry Verification & Attendance Sign-off |
+| **Admin / Registrar** | Entire Institution (All Programs) | Practicum Clearance Certificate, Final Grade Endorsement | Graduation Eligibility & Archival |
+
+---
+
+### 3. Dynamic Submission History Syncing
+
+When a faculty member selects a student from the review queue:
+
+1. The component queries `submissionStorage` for the active submission ID.
+2. It fetches the document file buffer from Cloudinary or Supabase Storage.
+3. It loads the `comments` array and maps prior revision logs sequentially:
+
+   ```typescript
+   interface SubmissionComment {
+     id: string;
+     authorName: string;
+     authorRole: 'adviser' | 'supervisor' | 'student';
+     text: string;
+     createdAt: string;
+   }
+   ```
+
+4. Clicking **"Approve"** updates `status = 'Approved'`, adds a system comment, and sends a notification alert to the student's dashboard.
+
+---
+
+## 🎯 Target Code Locator
+
+| Component / Utility | File Location | Purpose |
+| :--- | :--- | :--- |
+| **Adviser Review Room** | [`src/pages/adviser/ReviewDocuments.tsx`](https://github.com/s5condlast-cmd/Capstone-2-Official-CloudHosting/blob/feature/landing-page-fixes/src/pages/adviser/ReviewDocuments.tsx) | Side-by-side document review room |
+| **Adviser Sign-offs** | [`src/pages/adviser/Approvals.tsx`](https://github.com/s5condlast-cmd/Capstone-2-Official-CloudHosting/blob/feature/landing-page-fixes/src/pages/adviser/Approvals.tsx) | Batch approval and clearance actions |
+| **Supervisor Journal Review** | [`src/pages/supervisor/WeeklyJournalReview.tsx`](https://github.com/s5condlast-cmd/Capstone-2-Official-CloudHosting/blob/feature/landing-page-fixes/src/pages/supervisor/WeeklyJournalReview.tsx) | Supervisor weekly journal rating & comments |
+| **Supervisor DTR Approval** | [`src/pages/supervisor/DTRApproval.tsx`](https://github.com/s5condlast-cmd/Capstone-2-Official-CloudHosting/blob/feature/landing-page-fixes/src/pages/supervisor/DTRApproval.tsx) | Supervisor attendance review & signature stamping |
+| **Preview Modal** | [`src/components/review/DocumentPreviewModal.tsx`](https://github.com/s5condlast-cmd/Capstone-2-Official-CloudHosting/blob/feature/landing-page-fixes/src/components/review/DocumentPreviewModal.tsx) | Fullscreen document preview dialog |
+
+---
+
+## 💡 Important Rules & Design Invariants
+
+1. **Localized Loading Indicators**: Do not reload the entire page skeleton when clicking Approve or Request Revision; show a localized spinner on the action button itself.
+2. **Mandatory Revision Reason**: The system strictly forbids marking a submission as `Needs Revision` without providing at least 10 characters of explanatory feedback.
+3. **Empty States**: If a review queue has zero pending submissions, always render the standard `EmptyState.tsx` component with clear messaging.

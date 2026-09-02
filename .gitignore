@@ -3,6 +3,12 @@ build/
 dist/
 coverage/
 .DS_Store
+Thumbs.db
 *.log
+*.tsbuildinfo
 .env*
 !.env.example
+tmp/
+.obsidian/
+*-token.json
+backend/config/*token.json
