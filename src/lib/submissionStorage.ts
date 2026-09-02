@@ -15,6 +15,7 @@ export interface StudentDocument {
   ai_findings?: any;
   adviser_feedback?: string;
   comments?: { author: string; msg: string; time: string }[];
+  onedrive_url?: string;
 }
 
 export const submissionStorage = {
@@ -23,6 +24,7 @@ export const submissionStorage = {
     const fileExt = file.name.split('.').pop();
     const fileName = `${studentName.replace(/\s+/g, '_')}_${docType.replace(/\s+/g, '_')}_${Date.now()}.${fileExt}`;
     let filePath = `submissions/${fileName}`;
+    let onedriveUrl: string | undefined = undefined;
 
     try {
       // Upload file to Cloudinary via backend
@@ -38,6 +40,24 @@ export const submissionStorage = {
       } else {
         // Use the Cloudinary URL as file_path
         filePath = uploadData.url;
+      }
+
+      // Automatically archive signed letter to Microsoft OneDrive
+      try {
+        const onedriveFormData = new FormData();
+        onedriveFormData.append('file', file);
+        const folder = `Practicum_AY_2025_2026/${course.replace(/\s+/g, '_')}/${studentName.replace(/\s+/g, '_')}/${docType.replace(/\s+/g, '_')}`;
+        const onedriveRes = await fetch(`/api/onedrive/upload?folder=${encodeURIComponent(folder)}`, {
+          method: 'POST',
+          body: onedriveFormData,
+        });
+        const onedriveData = await onedriveRes.json();
+        if (onedriveData?.success && onedriveData.file?.webUrl) {
+          onedriveUrl = onedriveData.file.webUrl;
+          console.log('[OneDrive] Signed letter archived to OneDrive:', onedriveUrl);
+        }
+      } catch (onedriveErr) {
+        console.warn('[OneDrive] Background archive notice:', onedriveErr);
       }
 
       // Insert database record
@@ -67,12 +87,13 @@ export const submissionStorage = {
           status: 'Pending Adviser Review',
           urgency: urgency,
           file_path: filePath,
+          onedrive_url: onedriveUrl,
           created_at: new Date().toISOString(),
           ai_status: 'Pending'
         };
       }
 
-      return data as StudentDocument;
+      return { ...(data as StudentDocument), onedrive_url: onedriveUrl };
     } catch (err: any) {
       console.warn('Supabase integration notice:', err);
       return {
@@ -83,6 +104,7 @@ export const submissionStorage = {
         status: 'Pending Adviser Review',
         urgency: urgency,
         file_path: filePath,
+        onedrive_url: onedriveUrl,
         created_at: new Date().toISOString(),
         ai_status: 'Pending'
       };
@@ -149,6 +171,25 @@ export const submissionStorage = {
       } else {
         filePath = uploadData.url;
         newDoc.file_path = uploadData.url;
+      }
+
+      // Automatically archive signed DTR to Microsoft OneDrive
+      try {
+        const onedriveFormData = new FormData();
+        const dtrFile = new File([xlsxBlob], fileName, { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        onedriveFormData.append('file', dtrFile);
+        const folder = `Practicum_AY_2025_2026/${course.replace(/\s+/g, '_')}/${studentName.replace(/\s+/g, '_')}/Signed_DTR`;
+        const onedriveRes = await fetch(`/api/onedrive/upload?folder=${encodeURIComponent(folder)}`, {
+          method: 'POST',
+          body: onedriveFormData,
+        });
+        const onedriveData = await onedriveRes.json();
+        if (onedriveData?.success && onedriveData.file?.webUrl) {
+          newDoc.onedrive_url = onedriveData.file.webUrl;
+          console.log('[OneDrive] Signed DTR archived to OneDrive:', onedriveData.file.webUrl);
+        }
+      } catch (onedriveErr) {
+        console.warn('[OneDrive] Signed DTR background archive notice:', onedriveErr);
       }
 
       const { data, error: insertError } = await supabase
