@@ -81,7 +81,7 @@
   - [ ] Transactional email service integration (Resend / SendGrid / Nodemailer SMTP)
   - [ ] Delivery of OTP verification codes to institutional school emails (`@marikina.sti.edu.ph`)
   - [ ] Submission status notification emails (Document Approved, Revision Requested, DTR Signed)
-- [ ] **Microsoft OneDrive Integration**
-  - [ ] Microsoft Graph API / OneDrive cloud storage connection
-  - [ ] Automated sync and backup of approved student documents, MOAs, and signed DTR forms to institutional OneDrive
-  - [ ] High-priority sync queue with upload retry and error handling
+- [x] **Microsoft OneDrive Integration**
+  - [x] Microsoft Graph API / OneDrive cloud storage connection
+  - [x] Automated sync and backup of approved student documents, MOAs, and signed DTR forms to institutional OneDrive
+  - [x] Auto-refresh OAuth2 token engine and status/quota monitoring endpoint

@@ -35,6 +35,29 @@ A historical record of completed tasks, refactors, bug fixes, and architectural 
 
 ---
 
+### ☁️ Microsoft OneDrive & Graph API Cloud Archival Integration
+
+- [x] **Credit-Card-Free Azure Activation**:
+  - Unlocked free Microsoft Entra ID directory via **Azure for Students** academic verification (`@marikina.sti.edu.ph`) with \$0 cost and zero payment information required.
+- [x] **Multi-Tenant Azure App Registration**:
+  - Registered confidential client application (`fbe81653-8deb-44da-a644-3cff2e4696a4`) supporting both organizational and personal accounts.
+  - Configured `Files.ReadWrite.All` application permissions and OAuth2 Web redirect URIs (`http://localhost:3001/api/onedrive/auth/callback`).
+- [x] **Automated Auto-Refreshing Backend Engine**:
+  - Created [`backend/services/onedriveService.ts`](file:///c:/Users/johnd/Downloads/MainCode/backend/services/onedriveService.ts) with silent token rotation refreshing 2 minutes prior to expiration (`offline_access`).
+  - Implemented `testOneDriveConnection()` for live quota and storage health diagnostics.
+- [x] **OneDrive REST API Routes**:
+  - Implemented [`backend/routes/onedrive.ts`](file:///c:/Users/johnd/Downloads/MainCode/backend/routes/onedrive.ts) providing `GET /api/onedrive/auth/login`, callback handler, `GET /api/onedrive/status`, and multipart `POST /api/onedrive/upload`.
+  - Mounted router on `/api` in `backend/server.ts`.
+- [x] **Automated Signed Letter & DTR Archiving**:
+  - Integrated student document uploads in [`src/lib/submissionStorage.ts`](file:///c:/Users/johnd/Downloads/MainCode/src/lib/submissionStorage.ts) to automatically mirror signed Application Letters, Consent Forms, and DTR spreadsheets into structured OneDrive paths (`STI_Practicum_Archive/<AY>/<Section>/<Student>/...`).
+  - Added live OneDrive sync indicators to the student upload interface in `StudentDocumentPage.tsx`.
+- [x] **Zero-Leak Security Hardening**:
+  - Protected `.env` and `backend/config/onedrive-token.json` via `.gitignore`.
+  - Verified 0 TypeScript errors with `npm run lint` (`tsc --noEmit`).
+  - Authorized and pushed clean repository commits (`6baf611` & `e409fa1`) to GitHub.
+
+---
+
 ## 📅 September 1, 2026
 
 ### 🎨 Calendar Page Alignment & UI Restoration
@@ -72,4 +95,4 @@ A historical record of completed tasks, refactors, bug fixes, and architectural 
 - [ ] **Core Backend, Security & Cloud Sync (High Priority — Post-Dashboards)**
   - [ ] Authentication & Security (Login + OTP verification)
   - [ ] Automated Emailing System (OTP codes, approval notifications)
-  - [ ] Microsoft OneDrive Integration (Microsoft Graph API, cloud document sync & backup)
+  - [x] Microsoft OneDrive Integration (Microsoft Graph API, cloud document sync & backup)
