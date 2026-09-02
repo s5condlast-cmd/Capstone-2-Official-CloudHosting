@@ -6,7 +6,7 @@ A comprehensive, state-of-the-art web platform designed to streamline, track, an
 
 ## 📚 Technical Documentation & Architecture
 
-Comprehensive guides and technical documentation are organized in the [`docs/`](./docs) directory (compatible with [Obsidian](https://obsidian.md/)):
+Comprehensive guides and technical documentation are organized in the [`docs/`](./docs) directory:
 
 -  [**Tasks & Roadmap**](./docs/tasks/TASKS.md) &mdash; Active development tasks, feature checklist, and priorities.
 - 📜 [**Task History & Changelog**](./docs/tasks/TASK_HISTORY.md) &mdash; Complete log of implemented features, bug fixes, and milestones.

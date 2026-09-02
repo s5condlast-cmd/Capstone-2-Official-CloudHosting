@@ -1,4 +1,4 @@
-# Task History & Changelog
+ Task History & Changelog
 
 A historical record of completed tasks, refactors, bug fixes, and architectural milestones for the **Capstone-2 CloudHosting OJT Management System**.
 

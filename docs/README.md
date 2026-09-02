@@ -1,6 +1,6 @@
 # 📚 Project Documentation Hub
 
-Welcome to the **Capstone-2 CloudHosting OJT Management System** documentation vault.
+Welcome to the **Capstone-2 CloudHosting OJT Management System** documentation center.
 
 ---
 
@@ -8,26 +8,26 @@ Welcome to the **Capstone-2 CloudHosting OJT Management System** documentation v
 
 ### 📋 [Tasks](tasks/TASKS.md)
 
-- [[tasks/TASKS|Active Tasks]] — Ongoing and pending project tasks
-- [[tasks/TASK_HISTORY|Task History]] — Completed milestones, changelogs, and daily progress
+- [Active Tasks](tasks/TASKS.md) — Ongoing and pending project tasks
+- [Task History](tasks/TASK_HISTORY.md) — Completed milestones, changelogs, and daily progress
 
 ### 🏗️ [Architecture](architecture/ARCHITECTURE.md)
 
-- [[architecture/ARCHITECTURE|Architecture Overview]] — System structure, rendering channels, and tech stack
-- [[architecture/BACKEND_AND_DATABASE|Backend & Database]] — Supabase schemas, tables, RLS policies, and triggers
-- [[architecture/DOCUMENT_WORKFLOWS|Document Workflows]] — Dynamic PDF/DOCX preview and editing pipelines
+- [Architecture Overview](architecture/ARCHITECTURE.md) — System structure, rendering channels, and tech stack
+- [Backend & Database](architecture/BACKEND_AND_DATABASE.md) — Supabase schemas, tables, RLS policies, and triggers
+- [Document Workflows](architecture/DOCUMENT_WORKFLOWS.md) — Dynamic PDF/DOCX preview and editing pipelines
 
 ### 🚀 [Deployment](deployment/DEPLOYMENT_AND_VERCEL.md)
 
-- [[deployment/DEPLOYMENT_AND_VERCEL|Vercel Deployment]] — Full-stack deployment guides and serverless gotchas
-- [[deployment/CLOUDINARY_INTEGRATION_SUMMARY|Cloudinary Integration]] — Cloud file storage and asset pipeline
+- [Vercel Deployment](deployment/DEPLOYMENT_AND_VERCEL.md) — Full-stack deployment guides and serverless gotchas
+- [Cloudinary Integration](deployment/CLOUDINARY_INTEGRATION_SUMMARY.md) — Cloud file storage and asset pipeline
 
 ### 📐 [Guidelines](guidelines/REFACTORING_GUIDELINES.md)
 
-- [[guidelines/REFACTORING_GUIDELINES|Refactoring Guidelines]] — Code standards, component rules, and naming conventions
-- [[guidelines/Main_Document|Main Document]] — Core project requirements and specifications
+- [Refactoring Guidelines](guidelines/REFACTORING_GUIDELINES.md) — Code standards, component rules, and naming conventions
+- [Main Document](guidelines/Main_Document.md) — Core project requirements and specifications
 
 ### 🕒 [Sessions](sessions/ALL_SESSIONS_HISTORY.md)
 
-- [[sessions/ALL_SESSIONS_HISTORY|All Sessions History]] — Complete multi-session archive
-- [[sessions/SESSION_SUMMARY_2026-08-26|Session Summary (Aug 26)]] — Historical checkpoint
+- [All Sessions History](sessions/ALL_SESSIONS_HISTORY.md) — Complete multi-session archive
+- [Session Summary (Aug 26)](sessions/SESSION_SUMMARY_2026-08-26.md) — Historical checkpoint
