@@ -11,6 +11,7 @@ Comprehensive guides and technical documentation are organized in the [`docs/`](
 -  [**Tasks & Roadmap**](./docs/tasks/TASKS.md) &mdash; Active development tasks, feature checklist, and priorities.
 - 📜 [**Task History & Changelog**](./docs/tasks/TASK_HISTORY.md) &mdash; Complete log of implemented features, bug fixes, and milestones.
 - 🏗️ [**System Architecture**](./docs/architecture/ARCHITECTURE.md) &mdash; High-level architecture, component hierarchy, directory layout, and data flow.
+- 🗺️ [**System Map & Problem Register**](./docs/architecture/SYSTEM_MAP.md) &mdash; Granular code locator, component targets, and known problem-fix playbook.
 - 📐 [**Refactoring Guidelines**](./docs/guidelines/REFACTORING_GUIDELINES.md) &mdash; Essential development rules, styling standards, and single-source-of-truth state conventions.
 - 📄 [**Document Workflows & Templates**](./docs/architecture/DOCUMENT_WORKFLOWS.md) &mdash; Complete 3-phase template inventory (11 documents), DOCX generation, and Excel DTR signature fitting.
 - 🗄️ [**Backend, Database & AI**](./docs/architecture/BACKEND_AND_DATABASE.md) &mdash; Supabase schema, storage buckets, fallback persistence, and serverless AI review routes.

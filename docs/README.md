@@ -13,6 +13,7 @@ Welcome to the **Capstone-2 CloudHosting OJT Management System** documentation c
 
 ### 🏗️ [Architecture](architecture/ARCHITECTURE.md)
 
+- [System Map & Target Locator](architecture/SYSTEM_MAP.md) — Code locator, component index, and problem-fix register
 - [Architecture Overview](architecture/ARCHITECTURE.md) — System structure, rendering channels, and tech stack
 - [Backend & Database](architecture/BACKEND_AND_DATABASE.md) — Supabase schemas, tables, RLS policies, and triggers
 - [Document Workflows](architecture/DOCUMENT_WORKFLOWS.md) — Dynamic PDF/DOCX preview and editing pipelines
