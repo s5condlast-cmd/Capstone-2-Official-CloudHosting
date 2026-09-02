@@ -8,7 +8,9 @@
     "**/dist": true,
     "**/build": true,
     "**/coverage": true,
-    "**/*.tsbuildinfo": true
+    "**/*.tsbuildinfo": true,
+    "**/package-lock.json": true,
+    "**/.markdownlint.json": true
   },
   "search.exclude": {
     "**/node_modules": true,
