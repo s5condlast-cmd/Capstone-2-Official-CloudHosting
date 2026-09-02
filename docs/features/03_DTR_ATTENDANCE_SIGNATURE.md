@@ -2,8 +2,6 @@
 
 A technical guide on the **Daily Time Record (DTR)** tracking system, work hour computation toward 460 hours, supervisor digital canvas signing, and Excel spreadsheet signature embedding.
 
-> 💡 **Executive Summary**: Accurate work-hours tracking toward the 460-hour goal. Allows supervisors to draw or stamp digital signatures, which are fitted into Excel spreadsheets using dark-ink luminance filtering and exact 1:1 cell anchors.
-
 ---
 
 ## 🌟 Feature Overview
@@ -58,15 +56,31 @@ graph TD
 
 Embedding raw signature drawings into Excel spreadsheets often causes alignment bugs due to extra whitespace or light gray canvas pixels. We apply a 5-step fitting protocol:
 
-> 💡 **ExcelJS Precision Invariant**: Never use fractional column offsets when placing signature images in spreadsheets. ExcelJS requires exact integer boundaries (e.g. `col: 6.0` to `7.0`) to prevent canvas frame shifts.
-
-| Step | Fitting Phase | Technical Execution |
-| :--- | :--- | :--- |
-| **1** | **Physical Cell Ratio** | Column G Width 30 (225px), Row Height 45 (60px) $\rightarrow$ Strict Ratio `3.75:1` |
-| **2** | **Dark Ink Luminance** | Scan RGBA buffer to ignore white pixels: `alpha > 30 && (r < 200 \|\| g < 200 \|\| b < 200)` |
-| **3** | **Adaptive Height Scaling** | Scale ink bounds to fill 90% of target cell height: `targetH = Math.round(rowHeightPoints * 1.33 * 2)` |
-| **4** | **1:1 Cell Anchoring** | Two-cell integer anchors: `tl: { col: 6.0, row: rowIndex - 1 }, br: { col: 7.0, row: rowIndex }` |
-| **5** | **Zero Left-Shift Drift** | Disallow fractional offsets (such as `col: 6.2`) that distort spreadsheet rendering |
+```text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    EXCEL SIGNATURE FITTING PROTOCOL                         │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  1. Physical Cell Dimensions:                                               │
+│     Column G Width 30 = 225px, Row Height 45 = 60px (Ratio 3.75:1)         │
+│                                                                             │
+│  2. Dark Ink Luminance Filtering:                                           │
+│     Scan RGBA array to ignore white pixels and find true stroke bounds:     │
+│     isInk = alpha > 30 && (r < 200 || g < 200 || b < 200)                  │
+│                                                                             │
+│  3. Adaptive Scaling:                                                       │
+│     Scale ink bounds to fill 90% of target cell height:                     │
+│     targetH = Math.round(rowHeightPoints * 1.33 * 2)                        │
+│                                                                             │
+│  4. Strict 1:1 Cell Anchoring:                                              │
+│     Span ExcelJS two-cell anchors strictly from integer boundary to boundary:│
+│     tl: { col: 6.0, row: rowIndex - 1 }, br: { col: 7.0, row: rowIndex }    │
+│                                                                             │
+│  5. Zero Left Shift:                                                        │
+│     Avoid fractional offsets (e.g. col: 6.2) that cause Excel to distort.   │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
 
 ---
 

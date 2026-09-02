@@ -2,8 +2,6 @@
 
 A comprehensive guide on the **Faculty Adviser and Industry Supervisor Review Workflows**, dual-viewport document inspection, revision cycles, and official sign-offs.
 
-> 💡 **Executive Summary**: Streamlined review room with side-by-side viewports. Displays student submissions alongside criteria checklists, AI suggestions, and persistent feedback comment threads.
-
 ---
 
 ## 🌟 Feature Overview
@@ -54,11 +52,28 @@ To avoid opening external PDF viewers or downloading files to the desktop:
 
 ### 2. Multi-Role Permissions & Responsibilities
 
-| User Role | Supervised Scope | Key Decision Documents | Primary Authority |
-| :--- | :--- | :--- | :--- |
-| **Academic Adviser** | Section Cohort (40–50 students) | Application Letter, Consent Forms, Industry MOA, Endorsement Letter | Academic Eligibility & Placement Approval |
-| **Company Supervisor** | Intern Team (1–5 students) | DTR Work Hours, Weekly Journals, Training Plan, Appraisal Form | Industry Verification & Attendance Sign-off |
-| **Admin / Registrar** | Entire Institution (All Programs) | Practicum Clearance Certificate, Final Grade Endorsement | Graduation Eligibility & Archival |
+```text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                          REVIEW WORKFLOW BY ROLE                            │
+├───────────────────────┬─────────────────────────┬───────────────────────────┤
+│ User Role             │ Supervised Scope        │ Key Decision Documents    │
+├───────────────────────┼─────────────────────────┼───────────────────────────┤
+│ Academic Adviser      │ Entire student section  │ • Application Letter      │
+│                       │ (40–50 students)        │ • Consent Forms           │
+│                       │                         │ • Industry MOA            │
+│                       │                         │ • Proposal Letter         │
+│                       │                         │ • Endorsement Letter      │
+├───────────────────────┼─────────────────────────┼───────────────────────────┤
+│ Company Supervisor    │ Host company interns    │ • Daily Time Records (DTR)│
+│                       │ (1–5 students)          │ • Weekly Journals         │
+│                       │                         │ • Training Plan Form      │
+│                       │                         │ • Performance Appraisal   │
+│                       │                         │ • Certificate of Complete │
+├───────────────────────┼─────────────────────────┼───────────────────────────┤
+│ Admin / Registrar     │ Entire institution      │ • Final Practicum Clearance│
+│                       │ (All programs)          │ • Grade Endorsement       │
+└───────────────────────┴─────────────────────────┴───────────────────────────┘
+```
 
 ---
 

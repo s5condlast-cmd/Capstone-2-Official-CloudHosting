@@ -89,18 +89,22 @@ Follow this complete step-by-step procedure if you ever need to inspect, recreat
 
 1. On the left sidebar, click **Authentication** > **+ Add a platform** > choose **Web**.
 2. Set Redirect URI to:
+
    ```text
    http://localhost:3001/api/onedrive/auth/callback
    ```
+
 3. Click **Configure** / **Save**.
 
 ### Step 6: 1-Click Account Linking
 
 1. Start your local dev server: `npm run dev`.
 2. Open an incognito browser window and visit:
+
    ```text
    http://localhost:3001/api/onedrive/auth/login
    ```
+
 3. Sign in with your personal Microsoft account (bypasses institutional IT consent policies) and click **Accept**.
 4. The screen will display: **"OneDrive Connected Successfully!"**.
 
@@ -114,12 +118,14 @@ Understanding the token lifecycle ensures you know exactly when and how the syst
 
 - **Lifespan**: Access tokens expire every **3,600 seconds (1 hour)** for security.
 - **How It Works**: You **never** have to manually refresh this. [`backend/services/onedriveService.ts`](file:///c:/Users/johnd/Downloads/MainCode/backend/services/onedriveService.ts) runs an automatic interceptor:
+
   ```typescript
   // Checks before every operation; renews 2 minutes before expiration
   if (Date.now() >= token.expiresAt - 120000) {
     return await refreshAccessToken(token.refreshToken);
   }
   ```
+
   It silently requests a new access token from Microsoft before your upload starts, keeping operations 100% seamless.
 
 ### 2. Refresh Token (Rolling 90-Day Window — Indefinite Active Use)
@@ -130,6 +136,7 @@ Understanding the token lifecycle ensures you know exactly when and how the syst
 ### 3. Re-Activation Protocol (The 5-Second Fix)
 
 If the project sits completely idle for over 90 days (e.g. during summer vacation) and Microsoft deactivates the session:
+
 - **No Data Loss**: All folders, archives, and files in OneDrive remain **100% permanent and intact**.
 - **1-Click Reconnect**: Visit `http://localhost:3001/api/onedrive/auth/login`, click **Accept**, and a brand new refresh token is saved instantly.
 

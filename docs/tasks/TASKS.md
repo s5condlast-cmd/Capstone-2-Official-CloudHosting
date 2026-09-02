@@ -41,6 +41,12 @@
   - [ ] Eliminate layout duplication and ensure consistent action bars, preview panels, and upload triggers
   - [ ] Dynamic database state syncing on mount (`submissionStorage` status, remarks, comment history)
   - [ ] Proper empty states using standard `src/components/ui/EmptyState.tsx`
+- [ ] **Speech-to-Text Voice Dictation (Weekly Journal Only)**
+  - [ ] Integrate Web Speech API (`webkitSpeechRecognition` / `SpeechRecognition`) inside `WeeklyJournal.tsx`
+  - [ ] Interactive microphone record/pause toggle button beside the reflection entry field
+  - [ ] Real-time live transcript streaming with voice-to-text appending into the journal text body
+  - [ ] Microphone permission request handling, active listening pulse wave animation, and error feedback
+  - [ ] Strict scope enforcement: Speech-to-text is strictly restricted to **Weekly Journal reflection entry only** (never applied to other formal fill-in-the-blank letter templates)
 
 ---
 
@@ -57,7 +63,7 @@
     - [ ] Endorsement Letter
     - [ ] Proposal Letter
   - [ ] **Phase 2: In OJT Templates**
-    - [ ] Journal Template
+    - [ ] Journal Template (with Speech-to-Text voice dictation)
     - [ ] DTR Form
     - [ ] Training Plan Form
   - [ ] **Phase 3: Final Templates**

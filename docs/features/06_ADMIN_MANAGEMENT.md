@@ -2,8 +2,6 @@
 
 A complete technical breakdown of the **Administrator Console**, master template distribution system, uniform 4-button action grid, and institutional clearance verification.
 
-> 💡 **Executive Summary**: Institutional administrator console. Features a uniform 4-button template management grid, registrar clearance queues, and user/company directories.
-
 ---
 
 ## 🌟 Feature Overview
@@ -39,16 +37,24 @@ graph TD
 
 ### 1. The Uniform 4-Button Action Grid
 
-To eliminate hidden actions, ambiguous menus, and inconsistent card layouts, every template card in [`TemplateManagement.tsx`](file:///c:/Users/johnd/Downloads/MainCode/src/pages/admin/TemplateManagement.tsx) exposes an identical 4-button action grid:
+To eliminate hidden actions, ambiguous menus, and inconsistent card layouts, every template card in [`TemplateManagement.tsx`](https://github.com/s5condlast-cmd/Capstone-2-Official-CloudHosting/blob/feature/landing-page-fixes/src/pages/admin/TemplateManagement.tsx) exposes an identical 4-button action grid:
 
-> 💡 **Admin Design Invariant**: File management actions are never hidden behind dropdown menus. Every template card strictly exposes this 4-button action grid for identical spacing and alignment across all 13 documents.
-
-| Action Button | Button Variant | Intended Function |
-| :--- | :--- | :--- |
-| **⬆ Upload DOCX** | Primary | Uploads master `.docx` template used by the document generator |
-| **⬆ Upload PDF** | Primary | Uploads official PDF reference and fallback download |
-| **⬇ Download DOCX** | Secondary / Outline | Downloads raw `.docx` template for offline coordinator editing |
-| **⬇ Download PDF** | Secondary / Outline | Downloads blank official PDF reference for viewing or printing |
+```text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                       MASTER TEMPLATE CARD ACTION GRID                      │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  [Template Title: Student Application Letter]                               │
+│  Phase: Before OJT   |   File Type: DOCX + PDF Reference   |  Status: Active│
+│                                                                             │
+│  ┌───────────────────────────────┬───────────────────────────────┐          │
+│  │   ⬆ Upload DOCX (Primary)     │   ⬆ Upload PDF (Primary)      │          │
+│  ├───────────────────────────────┼───────────────────────────────┤          │
+│  │   ⬇ Download DOCX (Outline)   │   ⬇ Download PDF (Outline)    │          │
+│  └───────────────────────────────┴───────────────────────────────┘          │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
 
 * **Upload DOCX**: Replaces the master document used by `documentGenerator.ts` to generate student submissions.
 * **Upload PDF Backup**: Serves as a reference layout and provides an automatic fallback download if the student's browser cannot render dynamic DOCX previews.
