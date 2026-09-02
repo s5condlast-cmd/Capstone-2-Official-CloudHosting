@@ -93,6 +93,6 @@ A historical record of completed tasks, refactors, bug fixes, and architectural 
   - [ ] Convert all 13 official templates across Before OJT, In OJT, and Final into digital interactive inputs (`AutoWidthInput`)
   - [ ] Enforce strict 30-word limits, print stylesheets (`@media print`), and sequential JSZip injection
 - [ ] **Core Backend, Security & Cloud Sync (High Priority — Post-Dashboards)**
-  - [ ] Authentication & Security (Login + OTP verification)
-  - [ ] Automated Emailing System (OTP codes, approval notifications)
+  - [ ] Authentication & Security (Microsoft 365 SSO + Institutional OTP)
+  - [ ] Automated Emailing System (Microsoft Graph Outlook Mail `Mail.Send`)
   - [x] Microsoft OneDrive Integration (Microsoft Graph API, cloud document sync & backup)

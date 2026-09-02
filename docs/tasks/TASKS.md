@@ -73,14 +73,14 @@
 
 ## Core Backend, Security & Cloud Sync (High Priority — Post-Dashboards)
 
-- [ ] **Authentication & Security (Login + OTP)**
-  - [ ] Modern login screen with institutional branding and role-based redirection
-  - [ ] OTP (One-Time Password) generation and validation workflow
+- [ ] **Authentication & Security (Microsoft 365 SSO + OTP Login)**
+  - [ ] Modern login screen with institutional branding, 1-click Microsoft 365 Single Sign-On (SSO), and role-based redirection
+  - [ ] Institutional OTP (One-Time Password) generation and validation workflow
   - [ ] Supabase Auth integration with secure RLS policies and JWT session handling
-- [ ] **Automated Emailing System**
-  - [ ] Transactional email service integration (Resend / SendGrid / Nodemailer SMTP)
-  - [ ] Delivery of OTP verification codes to institutional school emails (`@marikina.sti.edu.ph`)
-  - [ ] Submission status notification emails (Document Approved, Revision Requested, DTR Signed)
+- [ ] **Automated Emailing System (Microsoft Graph / Outlook Integration)**
+  - [ ] Microsoft Graph API Outlook Mail integration (`Mail.Send`) using existing Microsoft Entra credentials
+  - [ ] Delivery of OTP verification codes directly via Outlook to school emails (`@marikina.sti.edu.ph`)
+  - [ ] Submission status notification emails (Document Approved, Revision Requested, DTR Signed) sent via Outlook
 - [x] **Microsoft OneDrive Integration**
   - [x] Microsoft Graph API / OneDrive cloud storage connection
   - [x] Automated sync and backup of approved student documents, MOAs, and signed DTR forms to institutional OneDrive
