@@ -4,7 +4,7 @@ A comprehensive engineering map of the **Capstone-2 CloudHosting OJT Management 
 
 ---
 
-## 🎯 Code Locator: Find Any Feature Fast
+## 🎯 Code Locator — Find Any Feature Fast
 
 ### 1. Frontend Pages & Routes by User Role
 
@@ -92,7 +92,7 @@ All routes are defined in [`src/App.tsx`](file:///c:/Users/johnd/Downloads/MainC
 
 This register documents known failure modes, technical gotchas, and immediate solutions.
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                          FAILURE MODE & RISK MATRIX                         │
 ├──────────────────────────┬───────────────────────┬──────────────────────────┤
@@ -111,28 +111,31 @@ This register documents known failure modes, technical gotchas, and immediate so
 
 ---
 
-### Problem 1: Word Document Tags Split Across XML Nodes (`<STUDENT_NAME>`)
+### Problem 1 — Word Document Tags Split Across XML Nodes (`<STUDENT_NAME>`)
 
 * **Symptoms**: When downloading or filling a DOCX, tags like `<STUDENT NAME>` remain unpopulated or corrupt the document.
 * **Root Cause**: Microsoft Word splits text runs into separate XML elements (e.g. `<w:t><STUDENT</w:t><w:t>NAME></w:t>`) when a user edits or saves the document. Plain regex string replacement will miss the tag.
 * **Fix**:
   * In [`documentGenerator.ts`](file:///c:/Users/johnd/Downloads/MainCode/src/utils/documentGenerator.ts), use `easy-template-x` configured with custom angle delimiters:
+
     ```typescript
     const handler = new TemplateHandler({
       delimiters: { tagStart: "<", tagEnd: ">" }
     });
     const docBuffer = await handler.process(templateBuffer, angleData);
     ```
+
   * For sequential blanks (`____`), replace directly inside `word/document.xml` using `JSZip`.
 
 ---
 
-### Problem 2: Form Input Truncation When Printing to PDF
+### Problem 2 — Form Input Truncation When Printing to PDF
 
 * **Symptoms**: Printable form fields (`AutoWidthInput`) get cut off to 1 character (~15px wide) when saving to PDF via the browser print dialogue (`Ctrl + P`).
 * **Root Cause**: The Chromium print engine ignores dynamic `<input size={...}>` calculations and forces a single-character baseline during page rendering.
 * **Fix**:
   * In [`src/index.css`](file:///c:/Users/johnd/Downloads/MainCode/src/index.css), hide raw inputs and reveal the offscreen measurement span during print:
+
     ```css
     @media print {
       input.auto-width-input {
@@ -147,16 +150,19 @@ This register documents known failure modes, technical gotchas, and immediate so
 
 ---
 
-### Problem 3: Excel DTR Signature Shifting or Stretching
+### Problem 3 — Excel DTR Signature Shifting or Stretching
 
 * **Symptoms**: Digital canvas signatures embedded in exported Excel DTR sheets appear shifted to the left, squished, or cropped incorrectly.
 * **Root Cause**: ExcelJS two-cell anchors using fractional offsets (`col: 6.2`) cause Microsoft Excel's rendering engine to miscalculate column bounds. Also, white background pixels around the signature draw frame prevent accurate boundary calculation.
 * **Fix**:
   * In [`excelGenerator.ts`](file:///c:/Users/johnd/Downloads/MainCode/src/utils/excelGenerator.ts), apply luminance filtering to crop only dark ink pixels:
+
     ```typescript
     const isInk = alpha > 30 && (r < 200 || g < 200 || b < 200);
     ```
+
   * Always use strict 1:1 integer column boundaries:
+
     ```typescript
     tl: { col: 6.0, row: rowIndex - 1 },
     br: { col: 7.0, row: rowIndex }
@@ -164,19 +170,22 @@ This register documents known failure modes, technical gotchas, and immediate so
 
 ---
 
-### Problem 4: Vercel Serverless Function Crash on Startup
+### Problem 4 — Vercel Serverless Function Crash on Startup
 
 * **Symptoms**: Vercel deployment reports `FUNCTION_INVOCATION_FAILED` or hangs on incoming requests.
 * **Root Cause**: `app.listen(PORT)` is called in the serverless environment where Vercel automatically manages the HTTP listener, causing port collision errors.
 * **Fix**:
   * In [`backend/server.ts`](file:///c:/Users/johnd/Downloads/MainCode/backend/server.ts), guard the listener:
+
     ```typescript
     if (!process.env.VERCEL) {
       app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
     }
     export default app;
     ```
+
   * In [`api/server.ts`](file:///c:/Users/johnd/Downloads/MainCode/api/server.ts), re-export the app instance:
+
     ```typescript
     import app from '../backend/server';
     export default app;
@@ -184,12 +193,13 @@ This register documents known failure modes, technical gotchas, and immediate so
 
 ---
 
-### Problem 5: Supabase RLS Query Slowdown as Records Grow
+### Problem 5 — Supabase RLS Query Slowdown as Records Grow
 
 * **Symptoms**: Document queries become sluggish over time as more student rows are created.
 * **Root Cause**: Calling `auth.uid()` directly inside row security policies forces Postgres to evaluate the authentication function on every single row scan.
 * **Fix**:
   * In Supabase SQL migrations, always wrap auth evaluations in subqueries `(SELECT auth.uid())` so Postgres calculates user identity once per query (InitPlan optimization):
+
     ```sql
     CREATE POLICY "Students view own documents"
     ON student_documents FOR SELECT
@@ -198,12 +208,13 @@ This register documents known failure modes, technical gotchas, and immediate so
 
 ---
 
-### Problem 6: PDF Canvas Collapses to 0px (Black Screen)
+### Problem 6 — PDF Canvas Collapses to 0px (Black Screen)
 
 * **Symptoms**: Embedded PDF viewer displays a solid black box or blank white space.
 * **Root Cause**: The `@embedpdf/react-pdf-viewer` canvas does not have intrinsic CSS dimensions and collapses to 0px if the parent container doesn't specify explicit sizing.
 * **Fix**:
   * In [`PDFViewer.tsx`](file:///c:/Users/johnd/Downloads/MainCode/src/components/compose/PDFViewer.tsx), always apply explicit dimensions directly:
+
     ```tsx
     <PDFViewer
       className="w-full h-full min-h-[500px]"
@@ -213,12 +224,13 @@ This register documents known failure modes, technical gotchas, and immediate so
 
 ---
 
-### Problem 7: React 19 vs. Framer Motion Prop Type Collision
+### Problem 7 — React 19 vs. Framer Motion Prop Type Collision
 
 * **Symptoms**: `npm run lint` fails with `TS2322: Type '...' is not assignable to type 'HTMLMotionProps'`.
 * **Root Cause**: React 19 introduced updated signatures for `onAnimationStart`, conflicting with Framer Motion's internal animation definition handlers.
 * **Fix**:
   * Type all motion-wrapped primitives using `Omit`:
+
     ```typescript
     interface CustomMotionProps extends Omit<HTMLMotionProps<'div'>, 'ref' | 'children'> {
       // custom props
@@ -227,17 +239,19 @@ This register documents known failure modes, technical gotchas, and immediate so
 
 ---
 
-### Problem 8: Microsoft OneDrive Token Expiry & Sync Throttling (Upcoming)
+### Problem 8 — Microsoft OneDrive Token Expiry & Sync Throttling (Upcoming)
 
 * **Symptoms**: Automatic cloud backup to OneDrive fails silently after 1 hour of server uptime, or large batch uploads fail with HTTP 429.
 * **Root Cause**: Microsoft Graph OAuth2 access tokens expire every 3600 seconds (60 minutes). Sending rapid sequential file uploads triggers Microsoft's cloud rate-limiting.
 * **Fix**:
   * Implement an automatic token refresh interceptor in the OneDrive service:
+
     ```typescript
     if (Date.now() >= tokenExpiresAt - 60000) {
       await refreshAccessToken();
     }
     ```
+
   * Batch file syncs in queues of 3 with exponential backoff on HTTP 429.
 
 ---
@@ -247,18 +261,22 @@ This register documents known failure modes, technical gotchas, and immediate so
 When troubleshooting an issue, follow this 3-step diagnostic sequence:
 
 1. **Type & Compilation Check**:
+
    ```bash
    npm run lint
    # (Runs tsc --noEmit: catches missing imports, prop mismatches, broken types)
    ```
+
 2. **Git Working Tree Check**:
+
    ```bash
    git status
    # (Confirms branch, uncommitted changes, or deleted assets)
    ```
+
 3. **Backend Health Check**:
+
    ```bash
    curl http://localhost:3001/api/health
    # (Verifies Express API server status and database connectivity)
    ```
-

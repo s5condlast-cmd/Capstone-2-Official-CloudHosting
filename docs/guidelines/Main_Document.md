@@ -1,290 +1,161 @@
-WEB‑BASED PRACTICUM SYSTEM WITH AI‑ASSISTED VALIDATION AND COMPLIANCE MONITORING  
+# WEB‑BASED PRACTICUM SYSTEM WITH AI‑ASSISTED VALIDATION AND COMPLIANCE MONITORING
 
-FOR STI MARIKINA 
+FOR STI MARIKINA
 
- 
+A Capstone Project Proposal
 
- 
+Presented to the Faculty of the
 
- 
+Information and Communications Technology Program
 
- 
+STI College Marikina
 
- 
+In Partial Fulfilment
 
- 
+of the Requirements for the Degree
 
-A Capstone Project Proposal 
+Bachelor of Science in Information Technology
 
-Presented to the Faculty of the 
+Kerin Gabriel del Rosario
 
-Information and Communications Technology Program 
+John Dwayne Guaniso
 
-STI College Marikina 
+Jiro Salvan
 
-In Partial Fulfilment 
+May 23, 2026
 
-of the Requirements for the Degree 
+ENDORSEMENT FORM FOR PROPOSAL DEFENSE
 
-Bachelor of Science in Information Technology 
+TITLE OF RESEARCH:  Web‑Based Practicum System with AI‑Assisted Validation and Compliance Monitoring for STI Marikina
 
-Kerin Gabriel del Rosario 
+NAME OF PROPONENTS: Kerin Gabriel del Rosario
 
-John Dwayne Guaniso 
+John Dwayne Guaniso
 
-Jiro Salvan 
-
- 
-
- 
-
- 
-
- 
-
-May 23, 2026 
-
- 
-
-ENDORSEMENT FORM FOR PROPOSAL DEFENSE 
-
- 
-
- 
-
-TITLE OF RESEARCH: 	Web‑Based Practicum System with AI‑Assisted Validation and Compliance Monitoring for STI Marikina 
-
- 
-
- 
-
- 
-
-NAME OF PROPONENTS:	Kerin Gabriel del Rosario 
-
-John Dwayne Guaniso 
-
-Jiro Salvan	 
-
- 
-
- 
+Jiro Salvan  
 
 In Partial Fulfilment of the Requirements  
 
-for the degree Bachelor of Science in Information Technology 
+for the degree Bachelor of Science in Information Technology
 
-has been examined and is recommended for Proposal Defense. 
+has been examined and is recommended for Proposal Defense.
 
- 
+ENDORSED BY:
 
- 
+Dave Lord Rubaya
 
- 
+Capstone Project Adviser
 
-ENDORSED BY: 
+APPROVED FOR PROPOSAL DEFENSE:
 
- 
+Dr. Frederic D. Yulo
 
- 
+Capstone Project Coordinator
 
-Dave Lord Rubaya 
+NOTED BY:
 
-Capstone Project Adviser 
+Mr. Dave Lord Rubaya
 
- 
+Program Head
 
- 
+MAY 23, 2026
 
-APPROVED FOR PROPOSAL DEFENSE: 
+APPROVAL SHEET
 
- 
+This capstone project proposal titled Web‑Based Practicum System with AI‑Assisted Validation and Compliance Monitoring for STI Marikina, prepared and submitted by Kerin Gabriel B. del Rosario, John Dwayne Guaniso, and Jiro Salvan in partial fulfillment of the requirements for the degree of Bachelor of Science in Information Technology, has been examined and is recommended for acceptance and approval.
 
- 
+Dave Lord Rubaya
 
- 
+Capstone Project Adviser
 
-Dr. Frederic D. Yulo 
-
-Capstone Project Coordinator 
-
- 
-
- 
-
- 
-
-NOTED BY: 
-
- 
-
- 
-
- 
-
-Mr. Dave Lord Rubaya 
-
-Program Head 
-
- 
-
- 
-
-MAY 23, 2026 
-
- 
-
-APPROVAL SHEET 
-
-This capstone project proposal titled Web‑Based Practicum System with AI‑Assisted Validation and Compliance Monitoring for STI Marikina, prepared and submitted by Kerin Gabriel B. del Rosario, John Dwayne Guaniso, and Jiro Salvan in partial fulfillment of the requirements for the degree of Bachelor of Science in Information Technology, has been examined and is recommended for acceptance and approval. 
-
-Dave Lord Rubaya 
-
-Capstone Project Adviser 
-
-Accepted and approved by the Capstone Project Review Panel 
+Accepted and approved by the Capstone Project Review Panel
 
 in partial fulfillment of the requirements for the degree of  
 
-Bachelor of Science in Information Technology 
+Bachelor of Science in Information Technology
 
- 
+Dr. Frederic D. Yulo
 
-Dr. Frederic D. Yulo 
+Mr. Warren Marklou Rosqueta
 
-Mr. Warren Marklou Rosqueta 
+Panel Member
 
-Panel Member 
+Panel Member
 
-Panel Member 
+Mr. Mark Saledio
 
-  
+Lead Panelist
 
-Mr. Mark Saledio 
+Noted:
 
-Lead Panelist 
+Dr Frederic D. Yulo
 
- 
+Mr. Dave Lord Rubaya
 
-Noted: 
+Capstone Project Coordinator
 
-Dr Frederic D. Yulo 
-
-Mr. Dave Lord Rubaya 
-
-Capstone Project Coordinator 
-
-Program Head 
-
- 
+Program Head
 
 May 23, 2026
- 
 
-Table of Contents 
+Table of Contents
 
- 
+Page
 
-Page 
+Title Page
 
-Title Page 
+i
 
-i 
+Endorsement form for Proposal Defense
 
-Endorsement form for Proposal Defense 
+ii
 
-ii 
+Approval Sheet
 
-Approval Sheet 
+iii
 
-iii 
+Table of Contents
 
-Table of Contents 
+iv
 
-iv 
+Introduction
 
-Introduction 
+1
 
-1 
+Project Context
 
- 
+4
 
-Project Context 
+Purpose and Description
 
-4 
+4
 
- 
+Objectives
 
-Purpose and Description 
+6
 
-4 
+Scope and Limitations
 
- 
+Review of Related Literature/Studies/Systems
 
-Objectives 
+7
 
-6 
+Methodology
 
- 
+Technical Background
 
-Scope and Limitations 
+18
 
-Review of Related Literature/Studies/Systems 
+Requirements Analysis
 
-7 
+Requirements Documentation
 
-Methodology 
+Design of Software, System, Product, and/or Processes
 
- 
+References
 
- 
+Appendices
 
-Technical Background 
+Resource Persons
 
-18 
-
- 
-
-Requirements Analysis 
-
- 
-
- 
-
-Requirements Documentation 
-
- 
-
- 
-
-Design of Software, System, Product, and/or Processes 
-
- 
-
-References 
-
- 
-
-Appendices 
-
- 
-
- 
-
-Resource Persons 
-
- 
-
- 
-
-Personal Technical Vitae 
-
- 
-
- 
-
- 
-
- 
-
- 
+Personal Technical Vitae

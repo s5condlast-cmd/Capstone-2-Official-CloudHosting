@@ -9,7 +9,7 @@ All template names, generation steps, and signature protocols verified against a
 ### Phase 1: Before OJT (8 templates)
 
 | # | Template Name | File Type | FT-CRD Code | Student Page Component |
-|:--|:---|:---|:---|:---|
+| :-- | :--- | :--- | :--- | :--- |
 | 1 | Student Application Letter | DOCX | `FT-CRD-137-01` | `StudentApplicationLetter.tsx` |
 | 2 | Parent Consent Form (With Fee) | PDF | `FT-CRD-130-00` | `LetterOfConsent.tsx` |
 | 3 | Parent Consent Form (Without Fee) | PDF | `FT-CRD-131-00` | `LetterOfConsent.tsx` |
@@ -22,7 +22,7 @@ All template names, generation steps, and signature protocols verified against a
 ### Phase 2: In OJT (3 templates)
 
 | # | Template Name | File Type | FT-CRD Code | Student Page Component |
-|:--|:---|:---|:---|:---|
+| :-- | :--- | :--- | :--- | :--- |
 | 1 | Journal Template | DOCX | `FT-CRD-167-00` | `WeeklyJournal.tsx` |
 | 2 | DTR Form | XLSX (generated) | — | `DTR.tsx` |
 | 3 | Training Plan Form (BSIT/BSCS/etc.) | DOCX | `FT-CRD-176-00` | `OJTTrainingPlan.tsx` |
@@ -31,7 +31,7 @@ All template names, generation steps, and signature protocols verified against a
 ### Phase 3: Final (2 templates)
 
 | # | Template Name | File Type | FT-CRD Code | Student Page Component |
-|:--|:---|:---|:---|:---|
+| :-- | :--- | :--- | :--- | :--- |
 | 1 | Integration Paper Template | PDF | `FT-CRD-127-01` | `IntegrationPaper.tsx` |
 | 2 | Performance Appraisal Template | PDF | `FT-CRD-133-02` | `PerformanceAppraisal.tsx` |
 
@@ -44,6 +44,7 @@ All template names, generation steps, and signature protocols verified against a
 Every student requirement page MUST use the shared layout: [`StudentDocumentPage.tsx`](file:///c:/Users/johnd/Downloads/MainCode/src/components/compose/StudentDocumentPage.tsx).
 
 **Configuration pattern** (example from `StudentApplicationLetter.tsx`):
+
 ```tsx
 const templates = [{
   name: "Student Application Letter",
@@ -55,6 +56,7 @@ return <StudentDocumentPage templates={templates} status={status} ... />;
 ```
 
 **What `StudentDocumentPage` provides:**
+
 - Template selector (if multiple variants exist, e.g. consent forms)
 - Status badge display (Draft / Pending / Approved / Revision Required)
 - Adviser feedback display
@@ -68,9 +70,11 @@ return <StudentDocumentPage templates={templates} status={status} ... />;
 Source: [`src/lib/documentGenerator.ts`](file:///c:/Users/johnd/Downloads/MainCode/src/lib/documentGenerator.ts)
 
 ### Step 1: DocxViewer TreeWalker Scan
+
 Source: [`src/components/review/DocxViewer.tsx`](file:///c:/Users/johnd/Downloads/MainCode/src/components/review/DocxViewer.tsx)
 
 After `renderAsync()` from `docx-preview`:
+
 1. Remove all `<header>` elements from container
 2. TreeWalker scans all text nodes for regex: `/(\\[.*?\\]|_{3,}|<.*?>|^\\s*Date\\s*:?\\s*$)/g`
 3. Wraps matches in `<span class="editable-placeholder">`:
@@ -79,22 +83,26 @@ After `renderAsync()` from `docx-preview`:
    - `[brackets]` or `<angles>` → gets `data-original` attribute
 
 ### Step 2: DocumentWorkflow Form Extraction
+
 Source: [`src/components/compose/DocumentWorkflow.tsx`](file:///c:/Users/johnd/Downloads/MainCode/src/components/compose/DocumentWorkflow.tsx)
 
 Queries `.editable-placeholder` elements to build:
+
 - `blankEdits[]` — values for `data-blank-index` items (sequential)
 - `dateEdits[]` — values for `data-date-index` items (sequential)
 - `angleData{}` — dictionary for `<TAG>` items (key = tag name without `<>`)
 - `squareData{}` — dictionary for `[bracket]` items
 
 ### Step 3: Document Generation
+
 Source: [`src/lib/documentGenerator.ts`](file:///c:/Users/johnd/Downloads/MainCode/src/lib/documentGenerator.ts)
 
-```
+```typescript
 documentGenerator.generateDocx(templateUrl, formData, blankEdits, angleData, squareData, dateEdits, templateId, title)
 ```
 
 Pipeline:
+
 1. Fetch DOCX template buffer (from Supabase via `templateStorage` or direct URL)
 2. **JSZip** (static import): Open `.docx` → read `word/document.xml`
 3. **Inject blanks**: Replace `/_{3,}/g` matches sequentially with `blankEdits[]`
@@ -125,10 +133,12 @@ Pipeline:
 Source: [`src/lib/excelGenerator.ts`](file:///c:/Users/johnd/Downloads/MainCode/src/lib/excelGenerator.ts)
 
 ### Exports
+
 - `generateCSV(entry: WeeklyJournalEntry)` — CSV string for journal entries
 - DTR spreadsheet generation via ExcelJS with embedded signatures
 
 ### Canvas Signature Fitting Protocol
+
 1. **Cell dimensions**: Column G width 30 = ~225px, Row height 45 = ~60px
 2. **Luminance filtering**: Scan RGBA pixels with `alpha > 30 && (r < 200 || g < 200 || b < 200)` to isolate dark ink strokes
 3. **Adaptive scaling**: Fill 90% of target canvas height: `targetH = Math.round(rowHeightPoints * 1.33 * 2)`

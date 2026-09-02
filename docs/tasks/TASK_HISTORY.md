@@ -1,4 +1,4 @@
- Task History & Changelog
+# 📜 Task History & Changelog
 
 A historical record of completed tasks, refactors, bug fixes, and architectural milestones for the **Capstone-2 CloudHosting OJT Management System**.
 
@@ -7,6 +7,7 @@ A historical record of completed tasks, refactors, bug fixes, and architectural 
 ## 📅 September 2, 2026
 
 ### 🗓️ Add Event Modal & Date/Time Picker Polish
+
 - [x] **shadcn DatePickerSimple Integration**:
   - Connected shadcn `<Popover>` + `<Calendar mode="single" captionLayout="dropdown" />` to the Add Event form.
   - Set default unselected state to `"Select date"` in muted placeholder typography until picked.
@@ -25,6 +26,7 @@ A historical record of completed tasks, refactors, bug fixes, and architectural 
 ---
 
 ### 📱 Calendar Mobile Responsiveness
+
 - [x] **Adaptive Heights**: Converted fixed `h-[calc(100vh-5.2rem)]` on mobile to adaptive `h-auto lg:h-[calc(100vh-5.2rem)]`.
 - [x] **2-Row Responsive Toolbar**: Compact 2-row layout on mobile phones (`Today`, nav arrows, and title on top row; `+ Add Event` and view switcher on bottom row).
 - [x] **Mobile Month View**: Replaced overflowing text with clean day numbers and colored category dot badges (`size-1.5 rounded-full`), plus a 1-tap **Selected Day Events List** underneath.
@@ -36,6 +38,7 @@ A historical record of completed tasks, refactors, bug fixes, and architectural 
 ## 📅 September 1, 2026
 
 ### 🎨 Calendar Page Alignment & UI Restoration
+
 - [x] **Restored Sidebar Mini Calendar**: Re-implemented standard shadcn `<Calendar />` in sidebar.
 - [x] **Circular Category Check Badges**: Converted rectangular badges to clean circular check chips matching shadcn design tokens.
 - [x] **Editorial Header Typography**: Split header date into bold modern month/year typography.
@@ -46,6 +49,7 @@ A historical record of completed tasks, refactors, bug fixes, and architectural 
 ---
 
 ### 🚀 Git & Deployment
+
 - [x] **Authorized Repository Push**: Staged, committed, and pushed 69 clean files to `origin/feature/landing-page-fixes` following explicit user authorization (`/push`).
 
 ---
@@ -69,4 +73,3 @@ A historical record of completed tasks, refactors, bug fixes, and architectural 
   - [ ] Authentication & Security (Login + OTP verification)
   - [ ] Automated Emailing System (OTP codes, approval notifications)
   - [ ] Microsoft OneDrive Integration (Microsoft Graph API, cloud document sync & backup)
-
