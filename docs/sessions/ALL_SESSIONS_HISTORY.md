@@ -1,4 +1,4 @@
-﻿# Capstone 2 Cloud Hosting Platform — All Sessions History & Learnings
+# Capstone 2 Cloud Hosting Platform — All Sessions History & Learnings
 
 **Project:** Web-Based Practicum System with AI-Assisted Validation and Compliance Monitoring for STI Marikina  
 **Repository:** `https://github.com/s5condlast-cmd/Capstone-2-Official-CloudHosting.git`  

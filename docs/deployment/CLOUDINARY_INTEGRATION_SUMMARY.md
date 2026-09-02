@@ -1,8 +1,8 @@
 # Cloudinary Document Storage Integration Summary
 
-**Date:** August 25–26, 2026  
-**Project:** STI Marikina — Web-Based Practicum Management System with AI  
-**Scope:** Integration of Cloudinary for Document, PDF, and Spreadsheet Blob Storage  
+**Date:** August 25–26, 2026
+**Project:** STI Marikina — Web-Based Practicum Management System with AI
+**Scope:** Integration of Cloudinary for Document, PDF, and Spreadsheet Blob Storage
 
 ---
 
@@ -10,7 +10,8 @@
 
 During this session, we integrated **Cloudinary** as the primary cloud file storage provider for student submissions, supervisor-signed Daily Time Records (DTRs), and administrator document templates.
 
-### Key Architecture Decisions:
+### Key Architecture Decisions
+
 - **Cloudinary for File Blobs**: All uploaded documents (`.pdf`, `.docx`, `.xlsx`) are stored directly on Cloudinary CDN under `resource_type: 'raw'`.
 - **Supabase PostgreSQL for Metadata**: Document metadata (student name, course, status, urgency, AI findings, adviser feedback, timestamps) remains securely managed in Supabase PostgreSQL (`student_documents` and `template_metadata` tables).
 - **Server-Side Security**: File uploads pass through the Express backend (`backend/routes/cloudinary.ts`) to ensure the Cloudinary API Secret is never exposed to the frontend browser.
@@ -56,10 +57,12 @@ sequenceDiagram
 ## 4. Summary of Code Changes
 
 ### A. Dependencies Added ([`package.json`](file:///c:/Users/johnd/Downloads/MainCode/package.json))
+
 - `cloudinary` (`^2.5.0`): Server-side Cloudinary Node.js SDK.
 - `multer` (`^1.4.5-lts.1`) & `@types/multer` (`^1.4.7`): Multipart/form-data middleware for file uploads.
 
 ### B. Backend Implementation
+
 1. **[`backend/config/cloudinaryConfig.ts`](file:///c:/Users/johnd/Downloads/MainCode/backend/config/cloudinaryConfig.ts)** *(New)*:
    - Initialized `cloudinary.v2` using environment variables.
    - Ensures `dotenv.config()` is executed before configuration evaluation.
@@ -73,6 +76,7 @@ sequenceDiagram
    - Mounted `cloudinaryRouter` under `/api` alongside the existing `/api/analyze` AI route.
 
 ### C. Frontend Storage Layer Migration
+
 1. **[`src/lib/submissionStorage.ts`](file:///c:/Users/johnd/Downloads/MainCode/src/lib/submissionStorage.ts)** *(Modified)*:
    - `uploadSubmission()`: Routes document submissions (`.pdf`, `.docx`) through `/api/cloudinary/upload?folder=practicum/submissions` and persists the Cloudinary HTTPS URL in Supabase DB.
    - `publishSignedDTR()`: Converts supervisor-signed Excel timesheets (`.xlsx`) to a Blob, uploads to Cloudinary, and saves the CDN URL.
@@ -88,16 +92,20 @@ sequenceDiagram
 ## 5. Verification & Testing
 
 ### Live Cloudinary API Verification
+
 An end-to-end verification script was executed against the live Cloudinary servers:
+
 1. **Authentication / Ping**: `cloudinary.api.ping()` returned `{ status: 'ok', rate_limit_allowed: 500 }`.
 2. **Raw File Upload**: Test document uploaded to `practicum/test/`, returning a secure CDN URL (`https://res.cloudinary.com/o3fze0oi/raw/upload/...`).
 3. **Asset Deletion**: `cloudinary.uploader.destroy()` successfully removed the test asset (`{ result: 'ok' }`).
 
 ### TypeScript Compilation & Linting
+
 - Executed `npm run lint` (`tsc --noEmit`).
 - **Result:** `0 errors` across both client and server codebases.
 
 ### Server Lifecycle Test
+
 - Ran `npm run dev` concurrently:
   - **Frontend (Vite):** Running on `http://localhost:3000/`
   - **Backend (Express + Cloudinary + AI Review):** Running on `http://localhost:3001/`

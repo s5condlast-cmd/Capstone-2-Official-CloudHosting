@@ -1,4 +1,4 @@
-﻿# Session Summary — TypeScript Diagnosis & Component Type Alignments
+# Session Summary — TypeScript Diagnosis & Component Type Alignments
 
 **Date:** August 26, 2026  
 **Focus:** Resolving TypeScript compilation and IDE errors in React 19 & UI components

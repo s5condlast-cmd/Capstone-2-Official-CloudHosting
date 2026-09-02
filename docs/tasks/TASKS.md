@@ -1,5 +1,7 @@
 # Tasks
 
+> 📜 **History & Completed Logs**: [[TASK_HISTORY]] | [TASK_HISTORY.md](TASK_HISTORY.md)
+
 ## Calendar Page
 
 - [x] Calendar sidebar mini calendar (restored original `<Calendar />`)
@@ -13,8 +15,8 @@
 
 ## Add Event Modal (Calendar)
 
-- [ ] Fix date picker — replace plain `<input type="date">` with a proper calendar date picker (e.g. Popover + `<Calendar />`)
-- [ ] Fix time setter — replace plain text input with a proper time picker or structured time selection UI
+- [x] Fix date picker — replace plain `<input type="date">` with a proper calendar date picker (shadcn Popover + `<Calendar />`)
+- [x] Fix time setter — replace plain text input with structured time picker (`DatePickerTime` pattern with `FieldGroup`)
 
 ---
 

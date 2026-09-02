@@ -1,6 +1,7 @@
 # Project Rules
 
 ## Alignment and Formatting Clarification
+
 - **Identify Render Channels**: When the user reports layout or styling discrepancies in documents, clarify immediately whether the issue is visible on the **web application's React preview** or within the **downloaded/exported DOCX or PDF files**.
 - **Interactive Alignment (`/grill-me`)**: Suggest the `/grill-me` slash command if there is layout ambiguity or if multiple attempts to resolve a visual bug have failed.
   - **Plain Language Standard**: When conducting a `/grill-me` interview, you MUST use **simple, everyday, easy-to-understand words**. Avoid dense technical jargon, complex code terminology, or confusing phrasing. Ask one simple question at a time, frame choices around visual behavior (e.g., *"Should the card stay fixed at the top or move away?"*), and keep questions short and clear so the user never gets confused.
@@ -44,14 +45,14 @@ When implementing or modifying browser-based DOCX editing and generation in this
 - **State Independence**: Always assign unique state keys to separate document placeholders (e.g., `companyName` vs `salutationName`). Never reuse state keys across distinct fields.
 - **Word Count Restrictions**: Enforce a strict **30-word limit** in `handleInputChange` for fill-in-the-blank document inputs to preserve letter layout structure.
 
-
 ## Student Document Workflows
- 
-When adding new document requirement workflows to the student portal (e.g., MOA, Consent Forms, Application Letters): 
-- **Never duplicate the layout UI:** Always use the generic `StudentDocumentPage` layout component located at `src/components/compose/StudentDocumentPage.tsx`. 
-- Pass all required configuration to the component, including the `templates` array, `status`, `submissionInfo`, and `adviserFeedback`. 
-- If a document requires dynamic instructions before uploading (e.g., explaining fees), use the `instructionsModal` property on the template object rather than building a custom modal. 
-- **Dynamic Database State Syncing:** Always query the database (`submissionStorage`) on mount/change to fetch the latest submission record for the active student and selected template. Merge the database status, adviser feedback remarks, and comments history array dynamically to override the default hardcoded props. 
+
+When adding new document requirement workflows to the student portal (e.g., MOA, Consent Forms, Application Letters):
+
+- **Never duplicate the layout UI:** Always use the generic `StudentDocumentPage` layout component located at `src/components/compose/StudentDocumentPage.tsx`.
+- Pass all required configuration to the component, including the `templates` array, `status`, `submissionInfo`, and `adviserFeedback`.
+- If a document requires dynamic instructions before uploading (e.g., explaining fees), use the `instructionsModal` property on the template object rather than building a custom modal.
+- **Dynamic Database State Syncing:** Always query the database (`submissionStorage`) on mount/change to fetch the latest submission record for the active student and selected template. Merge the database status, adviser feedback remarks, and comments history array dynamically to override the default hardcoded props.
 
 ## Template Document Organization
 
@@ -81,6 +82,7 @@ When creating or referencing React components and filenames for student document
 ## Template Fallback and Download Patterns
 
 When building document preview workflows (e.g. `DocumentWorkflow.tsx`), handle "Print / Save PDF" logic dynamically to avoid broken HTML-rendered prints:
+
 1. **Native PDF Documents:** If a template is natively a PDF (e.g. `useDocxPreview === false`), clicking "Download PDF" MUST trigger a direct file download of the raw PDF buffer using `window.URL.createObjectURL(new Blob([docBuffer]))`. Never call `window.print()` for native PDFs as the browser dialogue will distort the canvas rendering.
 2. **DOCX Documents with PDF Backups:** If a template is natively a DOCX, check Supabase Storage for a `${templateId}_pdf_backup` file. If the admin has uploaded this backup, download it directly for the student as a fallback. Only call `window.print()` if no PDF backup exists.
 3. **Explicit Admin Template Actions:** In the Admin Templates page, DO NOT hide file management actions behind dropdown menus. **Every** template card must consistently expose an explicit 4-button action grid at the bottom:
@@ -98,10 +100,13 @@ When building document preview workflows (e.g. `DocumentWorkflow.tsx`), handle "
 ## Refactoring and File Renaming Cleanups
 
 When performing refactoring or file renaming operations (such as renaming legacy page files to descriptive names):
+
 - **Delete Legacy Files**: Ensure old files are completely deleted from the disk and their corresponding exports are removed.
 - **Git State Care**: If a file is marked as deleted or renamed in `git status`, do not run `git checkout` on the legacy file path as it will restore outdated versions and cause build conflicts.
 - **Verification**: Run `npm run lint` (`tsc --noEmit`) immediately after any file renaming or refactoring to ensure no legacy imports, missing components, or duplicate exports exist.
+
 ## Backend Preference & Supabase Security Standards
+
 - **Always use Supabase**: For any backend features involving databases, authentication, or file storage, always use the configured Supabase client instead of creating mock stores or local state.
 - **RLS Authorization Security**: Never check `user_metadata` in RLS policies or trigger functions. Always use `auth.uid()` or check protected claims via `(SELECT auth.jwt() -> 'app_metadata' ->> 'role')`.
 - **Auth Query Performance (InitPlan)**: In RLS policies, always wrap auth evaluations as subqueries `(SELECT auth.uid())` and `(SELECT auth.jwt())` so Postgres calculates the user identity once per query instead of per row.
@@ -111,16 +116,19 @@ When performing refactoring or file renaming operations (such as renaming legacy
 ## EmbedPDF Viewer Pattern
 
 When implementing or modifying the `@embedpdf/react-pdf-viewer` SDK (e.g., `<PDFViewer>`):
+
 - **Explicit Sizing Required**: The viewer component does not have intrinsic dimensions. You MUST always apply explicit sizing (e.g., `className="w-full h-full"` and `style={{ width: '100%', height: '100%' }}`) directly to the `<PDFViewer>` component. Failure to do so will cause the canvas to collapse to 0px, resulting in a blank or black document area.
 
 ## Vercel Deployment & Redeploy Gotchas
 
 When configuring Vercel deployment for this Vite + Express full-stack project:
+
 1. **Explicit Output Directory**: Always ensure `"outputDirectory": "dist"` is explicitly set in `vercel.json` to prevent Vercel from searching for a `public/` directory if the user accidentally alters the framework preset.
 2. **Serverless Backend Compatibility**: Express backends must export the `app` instance by default, and `app.listen()` must be wrapped in `if (!process.env.VERCEL)` to prevent port collisions in Vercel's serverless runtime. Place a proxy entrypoint at `api/server.ts` that re-exports the backend app.
 3. **The "Redeploy" Trap**: If the user pushes a fix but Vercel still fails on the old commit, it is because clicking "Redeploy" in the Vercel dashboard re-runs the exact same commit hash. Do NOT assume the fix failed. Instead, instruct the user to force a fresh webhook trigger by pushing an empty commit: `git commit --allow-empty -m "force vercel update" && git push`.
 
 ## Git Push Authorization Protocol
+
 - **NEVER** run `git push` autonomously.
 - **NEVER** assume the user wants their code pushed to the remote repository, even if a task is fully complete and verified.
 - You must stage and commit the code locally (if appropriate), but you must then **STOP** and inform the user that the code is ready to be pushed.
@@ -131,7 +139,9 @@ When configuring Vercel deployment for this Vite + Express full-stack project:
 The `/debug` command is the master diagnostic and verification protocol that unifies **Architecture Scanning** (`/scan`), **Code & Quality Review** (`/review`), and **Systematic Root-Cause Debugging** (`/debug`) into a single command. It activates the **`systematic-debugging`** and **`alignment-auditor`** skills.
 
 ### 1. Scope Resolution
+
 When `/debug` (or legacy `/scan`/`/review`) is invoked, resolve the target in the following order:
+
 1. **User Prompt (Highest Priority)**: If the user specifies what to debug/review (e.g., `/debug UI`, `/debug authentication`, `/debug ScrollStack`), focus strictly on that target.
 2. **Context References (`@`)**: If context references are provided (e.g., `/debug @Dashboard.tsx`), focus on those referenced items.
 3. **Recent Changes**: If no target is specified, focus on the files, features, or components most recently modified or discussed.
@@ -140,30 +150,37 @@ When `/debug` (or legacy `/scan`/`/review`) is invoked, resolve the target in th
 ### 2. The 4-Phase Execution Pipeline
 
 #### Phase 1: Architecture & Dataflow Scan
+
 - Analyze what the target is, its dependencies, and how it fits into the overall system architecture.
 - Trace data execution, state lifecycles (`loading -> fetch -> data OR EmptyState`), and potential risk areas.
 - Identify the exact rendering channel (React Web Preview vs. DOCX/PDF export vs. Supabase API).
 
 #### Phase 2: Code & Quality Review
+
 - Review code against React 19 standards, TypeScript strict typing, and Supabase security standards.
 - Inspect for CSS transition vs. JS transform conflicts (`transition-all` on RAF animated elements).
 - Check scroll engine conflicts (CSS `scroll-behavior: smooth` vs. Lenis).
 - Audit Supabase RLS policies for `(SELECT auth.uid())` InitPlan optimization and verify storage permissions.
 
 #### Phase 3: Single Root-Cause Isolation & Fix
+
 - Formulate a single, confirmed root-cause hypothesis without guesswork.
 - Implement the minimal, clean, non-breaking fix.
 
 #### Phase 4: Zero-Error Verification
+
 - Execute `npm run lint` (`tsc --noEmit`) to verify 0 compiler/type errors.
 - Confirm all related components, styles, and document generation pipelines remain untouched and fully operational.
 
 ## GitHub Repository Configuration
+
 - **Main Repository:** The primary remote repository (origin) for the project must always be set to `https://github.com/s5condlast-cmd/Capstone-2-Official-CloudHosting.git`.
 - **Branching Workflow:** When adding new code or features, always create and work on a dedicated branch. This ensures that multiple collaborators can safely add code and submit pull requests without directly altering the main branch.
 
 ## Rendering State & Loading Lifecycles
+
 When implementing UI that fetches data from the backend (Supabase), strictly adhere to the following rules to prevent UI stuttering, Layout Shifts, and data hallucinations:
+
 1. **Single Source of Truth:** Each page must derive its displayed data from exactly one source: the backend database. Never mix arrays of hardcoded/mock data with live database records.
 2. **Strict Loading Lifecycle:**
    - **Initial Load:** Component Mounts -> `loading = true` -> Fetch Database -> `loading = false` -> Render Database Data OR Empty State. (Never simulate loading with artificial `setTimeout` delays).
@@ -175,6 +192,7 @@ When implementing UI that fetches data from the backend (Supabase), strictly adh
 ## Excel DTR Signature Fitting Protocol
 
 When embedding supervisor or student canvas signatures into exported Excel spreadsheets (`.xlsx`) using ExcelJS:
+
 1. **Dynamic Physical Cell Dimensions**: Calculate the exact physical pixel dimensions of the cell (e.g., Column G width 30 = 225px, Row height 45 = 60px -> ratio 3.75:1).
 2. **Dark Ink Stroke Luminance Filtering**: When cropping signature canvas drawings, scan RGBA pixel arrays with a luminance filter (`alpha > 30 && (r < 200 || g < 200 || b < 200)`) to ignore solid white/light background pixels and lock tightly onto dark ink strokes.
 3. **Adaptive Scale Condition**: Scale the ink stroke to fill 90% of the target canvas height (`targetH = Math.round(rowHeightPoints * 1.33 * 2)`), expanding narrow strokes/initials so they fill the cell box in full view.
@@ -182,6 +200,7 @@ When embedding supervisor or student canvas signatures into exported Excel sprea
 5. **Scope Scoping**: Restrict signature cropping to DTR Approval (`DTRApproval.tsx`) and spreadsheet generation (`excelGenerator.ts`); do not alter unrelated pages like Weekly Journal Review.
 
 ## Landing Page Asset Organization Protocol
+
 - **Native Directory**: All landing page icons, logos, and vector assets must be stored in and directly referenced from `public/images/Landing Page Icons/`:
   - Brand Logo: `/images/Landing Page Icons/Logo.svg`
   - Post Document Icon: `/images/Landing Page Icons/Landing Page Post.svg`
@@ -190,8 +209,60 @@ When embedding supervisor or student canvas signatures into exported Excel sprea
 - **File Discovery & Correct Placement**: Always inspect existing folder structures before moving or duplicating assets. Put all files into their designated directory and reference them by their exact native paths to prevent broken links or Vite `ENOENT` bundling errors.
 
 ## TypeScript & React 19 Standards
+
 - **Core Type Declarations**: React 19 projects must always include `@types/react@^19.0.0` and `@types/react-dom@^19.0.0` in `devDependencies`. Missing declarations cause widespread `JSX.IntrinsicElements` and callback parameter inference failures across all TSX files.
 - **Framer Motion Component Integration**: When wrapping `motion` components (`motion.button`, `motion.div`, `motion.span`), do not extend standard `React.ButtonHTMLAttributes` or `React.HTMLAttributes` directly as React 19's `onAnimationStart` signature conflicts with Framer Motion's `AnimationDefinition`. Always type props as `Omit<HTMLMotionProps<'element'>, 'ref' | 'children'>`.
 - **Component Prop & Variant Extensibility**: Foundational UI primitives (`Button`, `Badge`, `Card`, `Input`, `Skeleton`) must preserve standard variant aliases (`default`, `secondary`, `primary`, `destructive`, `outline`) and common layout props (`icon`, `subtitle`) to maintain compatibility across all admin, student, adviser, and supervisor sub-pages.
 - **Zero-Error Verification Gatekeeping**: Before concluding any code modification, always execute `npm run lint` (`tsc --noEmit`) to verify that all modules, JSX types, and interfaces compile cleanly with zero errors.
 
+## Strict Markdown & Documentation Formatting Standards
+
+Whenever creating, modifying, or refactoring any Markdown file (`.md`), strictly adhere to the following `markdownlint` standards to prevent formatting warnings:
+
+1. **Headings (MD022 & MD026)**:
+   - Always surround headings (`#`, `##`, `###`, `####`) with exactly **one blank line above** and **one blank line below**.
+   - Never end headings with trailing punctuation like colons (`:`) or periods (`.`). Write `### Key Architecture Decisions` instead of `### Key Architecture Decisions:`.
+
+2. **Lists (MD032)**:
+   - Always surround bulleted (`-`, `*`) and numbered (`1.`, `2.`) lists with a blank line before the first item and after the last item.
+
+3. **Code Fences & Blocks (MD031 & MD040)**:
+   - Always surround fenced code blocks (```) with blank lines above and below.
+   - Always specify a valid language tag (e.g. `tsx`, `ts`, `json`, `bash`, `mermaid`, `plaintext`). Never leave fenced code blocks bare without a language identifier.
+
+4. **Tables (MD058 & MD060)**:
+   - Always surround tables with a blank line before the header row and after the last row.
+   - Include spaces inside table pipe delimiters (e.g. `| :--- | :--- |` and `| Col A | Col B |`).
+
+5. **Spacing & Cleanliness (MD009 & MD012)**:
+   - Never leave trailing whitespace at the end of any line.
+   - Never use multiple consecutive blank lines (maximum 1 blank line between elements).
+
+## User UI Taste & Design Invariants
+
+When building or updating UI components, forms, modals, or dashboards, always adhere to the user's specific design aesthetic:
+
+1. **Geometry & Curvature**:
+   - **Interactive controls** (inputs, buttons, select triggers, day cells): Use `rounded-xl` and `h-9 px-3 text-sm`. Avoid tiny cramped buttons or rectangular pill shapes.
+   - **Containers** (modals, dialogs, popovers, cards): Use `rounded-2xl shadow-2xl border border-border bg-popover`.
+
+2. **Breathing Room & Edge Padding**:
+   - Always provide generous container padding (`p-4` or `p-5`) for popovers, dropdowns, and cards. Elements must never touch or feel cramped against outer boundaries.
+
+3. **Typography & Readability**:
+   - Primary input text and labels: readable `text-sm font-semibold text-foreground/90` (never unreadable `text-[10px]` or `text-xs` for core inputs).
+   - Placeholders: Use clear, natural text (`"Select date"`, `--:-- --`) in `text-muted-foreground`. Do not pre-fill forced default values unless specifically requested.
+   - Headers: Clean, minimalist, and balanced with subtle hierarchy.
+
+4. **Dropdowns & Selectors**:
+   - Avoid heavy, bordered rectangular boxes around inline selectors.
+   - Design dropdown triggers as clean text with a subtle chevron (`Sep ˅` `2026 ˅`) and a gentle hover background (`hover:bg-muted/50 rounded-md`).
+   - Center navigation arrows (`<` and `>`) on the far ends with dropdowns centered in between.
+
+5. **Soft Pill Selection States**:
+   - **Current / Today**: Soft, subtle pill background (`bg-muted/80 text-foreground font-bold rounded-xl`).
+   - **Selected Item**: Solid high-contrast primary pill (`bg-primary text-primary-foreground font-bold rounded-xl`).
+   - **Outside / Inactive**: Soft muted gray (`text-muted-foreground/40`).
+
+6. **Form Simplicity**:
+   - Prioritize essential fields first. Omit redundant secondary inputs (like unnecessary categories) from quick-create modals to keep workflows fast and uncluttered.
