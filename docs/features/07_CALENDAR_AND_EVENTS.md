@@ -2,6 +2,8 @@
 
 A complete technical breakdown of the **Practicum Calendar & Scheduling System**, multi-view timeline engine, event creation modal, and compact widget integrations.
 
+> 💡 **Executive Summary**: Central practicum calendar supporting Month, Week, Day, and Agenda views. Includes a comprehensive Add Event modal with custom date and time pickers.
+
 ---
 
 ## 🌟 Feature Overview
@@ -76,10 +78,10 @@ In `StudentDashboard.tsx`, the right sidebar hosts a compact mini-calendar:
 
 | Component / Utility | File Location | Purpose |
 | :--- | :--- | :--- |
-| **Main Calendar Page** | [`src/pages/shared/CalendarPage.tsx`](file:///c:/Users/johnd/Downloads/MainCode/src/pages/shared/CalendarPage.tsx) | Full calendar component with 4 view modes |
-| **Simple Date Picker** | [`components/date-picker-simple.tsx`](file:///c:/Users/johnd/Downloads/MainCode/components/date-picker-simple.tsx) | Popover date selection primitive |
-| **Modal Primitive** | [`src/components/ui/dialog.tsx`](file:///c:/Users/johnd/Downloads/MainCode/src/components/ui/dialog.tsx) | Radix UI modal wrapper |
-| **Mini Sidebar Calendar** | [`src/pages/student/StudentDashboard.tsx`](file:///c:/Users/johnd/Downloads/MainCode/src/pages/student/StudentDashboard.tsx) | Compact sidebar calendar |
+| **Main Calendar Page** | [`src/pages/shared/CalendarPage.tsx`](https://github.com/s5condlast-cmd/Capstone-2-Official-CloudHosting/blob/feature/landing-page-fixes/src/pages/shared/CalendarPage.tsx) | Full calendar component with 4 view modes |
+| **Simple Date Picker** | [`components/date-picker-simple.tsx`](https://github.com/s5condlast-cmd/Capstone-2-Official-CloudHosting/blob/feature/landing-page-fixes/components/date-picker-simple.tsx) | Popover date selection primitive |
+| **Modal Primitive** | [`src/components/ui/dialog.tsx`](https://github.com/s5condlast-cmd/Capstone-2-Official-CloudHosting/blob/feature/landing-page-fixes/src/components/ui/dialog.tsx) | Radix UI modal wrapper |
+| **Mini Sidebar Calendar** | [`src/pages/student/StudentDashboard.tsx`](https://github.com/s5condlast-cmd/Capstone-2-Official-CloudHosting/blob/feature/landing-page-fixes/src/pages/student/StudentDashboard.tsx) | Compact sidebar calendar |
 
 ---
 
@@ -88,4 +90,3 @@ In `StudentDashboard.tsx`, the right sidebar hosts a compact mini-calendar:
 1. **No External Date Layout Breakage**: Date calculations must use `date-fns` functions (`startOfWeek`, `endOfMonth`, `addDays`) to prevent timezone offset bugs.
 2. **Theme-Aware Event Styling**: Event badge colors must use dynamic theme-safe variables (e.g. `bg-primary/10 text-primary border-primary/20`) rather than hardcoded CSS colors.
 3. **Keyboard Accessibility**: Modal traps focus and allows closing via the `Escape` key.
-

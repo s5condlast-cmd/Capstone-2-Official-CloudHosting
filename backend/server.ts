@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import analyzeRouter from './routes/analyze';
 import cloudinaryRouter from './routes/cloudinary';
+import onedriveRouter from './routes/onedrive';
 
 // Load environment variables from CWD .env
 dotenv.config();
@@ -16,6 +17,7 @@ app.use(express.json());
 // Mount the API Routers
 app.use('/api', analyzeRouter);
 app.use('/api', cloudinaryRouter);
+app.use('/api', onedriveRouter);
 
 if (!process.env.VERCEL) {
   app.listen(PORT, () => {

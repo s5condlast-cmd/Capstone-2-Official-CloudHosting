@@ -2,6 +2,8 @@
 
 A complete technical breakdown of the **Administrator Console**, master template distribution system, uniform 4-button action grid, and institutional clearance verification.
 
+> 💡 **Executive Summary**: Institutional administrator console. Features a uniform 4-button template management grid, registrar clearance queues, and user/company directories.
+
 ---
 
 ## 🌟 Feature Overview
@@ -39,22 +41,14 @@ graph TD
 
 To eliminate hidden actions, ambiguous menus, and inconsistent card layouts, every template card in [`TemplateManagement.tsx`](file:///c:/Users/johnd/Downloads/MainCode/src/pages/admin/TemplateManagement.tsx) exposes an identical 4-button action grid:
 
-```text
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                       MASTER TEMPLATE CARD ACTION GRID                      │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│  [Template Title: Student Application Letter]                               │
-│  Phase: Before OJT   |   File Type: DOCX + PDF Reference   |  Status: Active│
-│                                                                             │
-│  ┌───────────────────────────────┬───────────────────────────────┐          │
-│  │   ⬆ Upload DOCX (Primary)     │   ⬆ Upload PDF (Primary)      │          │
-│  ├───────────────────────────────┼───────────────────────────────┤          │
-│  │   ⬇ Download DOCX (Outline)   │   ⬇ Download PDF (Outline)    │          │
-│  └───────────────────────────────┴───────────────────────────────┘          │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
+> 💡 **Admin Design Invariant**: File management actions are never hidden behind dropdown menus. Every template card strictly exposes this 4-button action grid for identical spacing and alignment across all 13 documents.
+
+| Action Button | Button Variant | Intended Function |
+| :--- | :--- | :--- |
+| **⬆ Upload DOCX** | Primary | Uploads master `.docx` template used by the document generator |
+| **⬆ Upload PDF** | Primary | Uploads official PDF reference and fallback download |
+| **⬇ Download DOCX** | Secondary / Outline | Downloads raw `.docx` template for offline coordinator editing |
+| **⬇ Download PDF** | Secondary / Outline | Downloads blank official PDF reference for viewing or printing |
 
 * **Upload DOCX**: Replaces the master document used by `documentGenerator.ts` to generate student submissions.
 * **Upload PDF Backup**: Serves as a reference layout and provides an automatic fallback download if the student's browser cannot render dynamic DOCX previews.
@@ -78,11 +72,11 @@ The final institutional gate before a student receives academic practicum credit
 
 | Component / Utility | File Location | Purpose |
 | :--- | :--- | :--- |
-| **Admin Dashboard** | [`src/pages/admin/AdminDashboard.tsx`](file:///c:/Users/johnd/Downloads/MainCode/src/pages/admin/AdminDashboard.tsx) | System statistics, active student counts, charts |
-| **Template Management** | [`src/pages/admin/TemplateManagement.tsx`](file:///c:/Users/johnd/Downloads/MainCode/src/pages/admin/TemplateManagement.tsx) | Master template uploads and 4-button action grid |
-| **Document Verification** | [`src/pages/admin/DocumentVerification.tsx`](file:///c:/Users/johnd/Downloads/MainCode/src/pages/admin/DocumentVerification.tsx) | Registrar final clearance and graduation sign-off |
-| **User Management** | [`src/pages/admin/UserManagement.tsx`](file:///c:/Users/johnd/Downloads/MainCode/src/pages/admin/UserManagement.tsx) | User accounts, roles, and section assignments |
-| **Company Management** | [`src/pages/admin/CompanyManagement.tsx`](file:///c:/Users/johnd/Downloads/MainCode/src/pages/admin/CompanyManagement.tsx) | Host company directory and MOA validities |
+| **Admin Dashboard** | [`src/pages/admin/AdminDashboard.tsx`](https://github.com/s5condlast-cmd/Capstone-2-Official-CloudHosting/blob/feature/landing-page-fixes/src/pages/admin/AdminDashboard.tsx) | System statistics, active student counts, charts |
+| **Template Management** | [`src/pages/admin/TemplateManagement.tsx`](https://github.com/s5condlast-cmd/Capstone-2-Official-CloudHosting/blob/feature/landing-page-fixes/src/pages/admin/TemplateManagement.tsx) | Master template uploads and 4-button action grid |
+| **Document Verification** | [`src/pages/admin/DocumentVerification.tsx`](https://github.com/s5condlast-cmd/Capstone-2-Official-CloudHosting/blob/feature/landing-page-fixes/src/pages/admin/DocumentVerification.tsx) | Registrar final clearance and graduation sign-off |
+| **User Management** | [`src/pages/admin/UserManagement.tsx`](https://github.com/s5condlast-cmd/Capstone-2-Official-CloudHosting/blob/feature/landing-page-fixes/src/pages/admin/UserManagement.tsx) | User accounts, roles, and section assignments |
+| **Company Management** | [`src/pages/admin/CompanyManagement.tsx`](https://github.com/s5condlast-cmd/Capstone-2-Official-CloudHosting/blob/feature/landing-page-fixes/src/pages/admin/CompanyManagement.tsx) | Host company directory and MOA validities |
 
 ---
 
@@ -91,4 +85,3 @@ The final institutional gate before a student receives academic practicum credit
 1. **No Dropdowns for Actions**: Never hide upload/download buttons behind dropdown menus on template cards. Maintain the explicit 4-button grid.
 2. **Synchronized Sizing**: All template cards must maintain identical height, grid padding, and button alignment regardless of title length.
 3. **Template Storage Bucket**: All files are stored under the Supabase `templates` storage bucket with public read access for authenticated students.
-

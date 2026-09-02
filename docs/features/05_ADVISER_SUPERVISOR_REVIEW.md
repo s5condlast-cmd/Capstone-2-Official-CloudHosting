@@ -2,6 +2,8 @@
 
 A comprehensive guide on the **Faculty Adviser and Industry Supervisor Review Workflows**, dual-viewport document inspection, revision cycles, and official sign-offs.
 
+> 💡 **Executive Summary**: Streamlined review room with side-by-side viewports. Displays student submissions alongside criteria checklists, AI suggestions, and persistent feedback comment threads.
+
 ---
 
 ## 🌟 Feature Overview
@@ -52,28 +54,11 @@ To avoid opening external PDF viewers or downloading files to the desktop:
 
 ### 2. Multi-Role Permissions & Responsibilities
 
-```text
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                          REVIEW WORKFLOW BY ROLE                            │
-├───────────────────────┬─────────────────────────┬───────────────────────────┤
-│ User Role             │ Supervised Scope        │ Key Decision Documents    │
-├───────────────────────┼─────────────────────────┼───────────────────────────┤
-│ Academic Adviser      │ Entire student section  │ • Application Letter      │
-│                       │ (40–50 students)        │ • Consent Forms           │
-│                       │                         │ • Industry MOA            │
-│                       │                         │ • Proposal Letter         │
-│                       │                         │ • Endorsement Letter      │
-├───────────────────────┼─────────────────────────┼───────────────────────────┤
-│ Company Supervisor    │ Host company interns    │ • Daily Time Records (DTR)│
-│                       │ (1–5 students)          │ • Weekly Journals         │
-│                       │                         │ • Training Plan Form      │
-│                       │                         │ • Performance Appraisal   │
-│                       │                         │ • Certificate of Complete │
-├───────────────────────┼─────────────────────────┼───────────────────────────┤
-│ Admin / Registrar     │ Entire institution      │ • Final Practicum Clearance│
-│                       │ (All programs)          │ • Grade Endorsement       │
-└───────────────────────┴─────────────────────────┴───────────────────────────┘
-```
+| User Role | Supervised Scope | Key Decision Documents | Primary Authority |
+| :--- | :--- | :--- | :--- |
+| **Academic Adviser** | Section Cohort (40–50 students) | Application Letter, Consent Forms, Industry MOA, Endorsement Letter | Academic Eligibility & Placement Approval |
+| **Company Supervisor** | Intern Team (1–5 students) | DTR Work Hours, Weekly Journals, Training Plan, Appraisal Form | Industry Verification & Attendance Sign-off |
+| **Admin / Registrar** | Entire Institution (All Programs) | Practicum Clearance Certificate, Final Grade Endorsement | Graduation Eligibility & Archival |
 
 ---
 
@@ -84,6 +69,7 @@ When a faculty member selects a student from the review queue:
 1. The component queries `submissionStorage` for the active submission ID.
 2. It fetches the document file buffer from Cloudinary or Supabase Storage.
 3. It loads the `comments` array and maps prior revision logs sequentially:
+
    ```typescript
    interface SubmissionComment {
      id: string;
@@ -93,6 +79,7 @@ When a faculty member selects a student from the review queue:
      createdAt: string;
    }
    ```
+
 4. Clicking **"Approve"** updates `status = 'Approved'`, adds a system comment, and sends a notification alert to the student's dashboard.
 
 ---
@@ -101,11 +88,11 @@ When a faculty member selects a student from the review queue:
 
 | Component / Utility | File Location | Purpose |
 | :--- | :--- | :--- |
-| **Adviser Review Room** | [`src/pages/adviser/ReviewDocuments.tsx`](file:///c:/Users/johnd/Downloads/MainCode/src/pages/adviser/ReviewDocuments.tsx) | Side-by-side document review room |
-| **Adviser Sign-offs** | [`src/pages/adviser/Approvals.tsx`](file:///c:/Users/johnd/Downloads/MainCode/src/pages/adviser/Approvals.tsx) | Batch approval and clearance actions |
-| **Supervisor Journal Review** | [`src/pages/supervisor/WeeklyJournalReview.tsx`](file:///c:/Users/johnd/Downloads/MainCode/src/pages/supervisor/WeeklyJournalReview.tsx) | Supervisor weekly journal rating & comments |
-| **Supervisor DTR Approval** | [`src/pages/supervisor/DTRApproval.tsx`](file:///c:/Users/johnd/Downloads/MainCode/src/pages/supervisor/DTRApproval.tsx) | Supervisor attendance review & signature stamping |
-| **Preview Modal** | [`src/components/review/DocumentPreviewModal.tsx`](file:///c:/Users/johnd/Downloads/MainCode/src/components/review/DocumentPreviewModal.tsx) | Fullscreen document preview dialog |
+| **Adviser Review Room** | [`src/pages/adviser/ReviewDocuments.tsx`](https://github.com/s5condlast-cmd/Capstone-2-Official-CloudHosting/blob/feature/landing-page-fixes/src/pages/adviser/ReviewDocuments.tsx) | Side-by-side document review room |
+| **Adviser Sign-offs** | [`src/pages/adviser/Approvals.tsx`](https://github.com/s5condlast-cmd/Capstone-2-Official-CloudHosting/blob/feature/landing-page-fixes/src/pages/adviser/Approvals.tsx) | Batch approval and clearance actions |
+| **Supervisor Journal Review** | [`src/pages/supervisor/WeeklyJournalReview.tsx`](https://github.com/s5condlast-cmd/Capstone-2-Official-CloudHosting/blob/feature/landing-page-fixes/src/pages/supervisor/WeeklyJournalReview.tsx) | Supervisor weekly journal rating & comments |
+| **Supervisor DTR Approval** | [`src/pages/supervisor/DTRApproval.tsx`](https://github.com/s5condlast-cmd/Capstone-2-Official-CloudHosting/blob/feature/landing-page-fixes/src/pages/supervisor/DTRApproval.tsx) | Supervisor attendance review & signature stamping |
+| **Preview Modal** | [`src/components/review/DocumentPreviewModal.tsx`](https://github.com/s5condlast-cmd/Capstone-2-Official-CloudHosting/blob/feature/landing-page-fixes/src/components/review/DocumentPreviewModal.tsx) | Fullscreen document preview dialog |
 
 ---
 
@@ -114,4 +101,3 @@ When a faculty member selects a student from the review queue:
 1. **Localized Loading Indicators**: Do not reload the entire page skeleton when clicking Approve or Request Revision; show a localized spinner on the action button itself.
 2. **Mandatory Revision Reason**: The system strictly forbids marking a submission as `Needs Revision` without providing at least 10 characters of explanatory feedback.
 3. **Empty States**: If a review queue has zero pending submissions, always render the standard `EmptyState.tsx` component with clear messaging.
-

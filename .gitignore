@@ -10,3 +10,5 @@ Thumbs.db
 !.env.example
 tmp/
 .obsidian/
+*-token.json
+backend/config/*token.json

@@ -2,6 +2,8 @@
 
 A complete technical breakdown of the **AI Document Auditing Assistant**, backend text extraction pipeline, and dual-model LLM architecture (Groq + Gemini fallback).
 
+> 💡 **Executive Summary**: AI-powered advisory assistant for coordinators. Automatically extracts PDF text on the backend and runs deterministic grammar and compliance audits using Groq Llama-3.3 with Gemini fallback.
+
 ---
 
 ## 🌟 Feature Overview
@@ -107,10 +109,10 @@ The AI returns a normalized JSON object that the frontend renders into interacti
 
 | Entity / Logic | File Location | Purpose |
 | :--- | :--- | :--- |
-| **API Route** | [`backend/routes/analyze.ts`](file:///c:/Users/johnd/Downloads/MainCode/backend/routes/analyze.ts) | Express route `POST /api/analyze` |
-| **AI Service Provider** | [`backend/services/aiService.ts`](file:///c:/Users/johnd/Downloads/MainCode/backend/services/aiService.ts) | Groq and Gemini SDK orchestrator |
-| **Review Panel Component** | [`src/components/review/GrammarReviewPanel.tsx`](file:///c:/Users/johnd/Downloads/MainCode/src/components/review/GrammarReviewPanel.tsx) | Interactive suggestion UI for faculty |
-| **Adviser Review Page** | [`src/pages/adviser/ReviewDocuments.tsx`](file:///c:/Users/johnd/Downloads/MainCode/src/pages/adviser/ReviewDocuments.tsx) | Split-view document inspection room |
+| **API Route** | [`backend/routes/analyze.ts`](https://github.com/s5condlast-cmd/Capstone-2-Official-CloudHosting/blob/feature/landing-page-fixes/backend/routes/analyze.ts) | Express route `POST /api/analyze` |
+| **AI Service Provider** | [`backend/services/aiService.ts`](https://github.com/s5condlast-cmd/Capstone-2-Official-CloudHosting/blob/feature/landing-page-fixes/backend/services/aiService.ts) | Groq and Gemini SDK orchestrator |
+| **Review Panel Component** | [`src/components/review/GrammarReviewPanel.tsx`](https://github.com/s5condlast-cmd/Capstone-2-Official-CloudHosting/blob/feature/landing-page-fixes/src/components/review/GrammarReviewPanel.tsx) | Interactive suggestion UI for faculty |
+| **Adviser Review Page** | [`src/pages/adviser/ReviewDocuments.tsx`](https://github.com/s5condlast-cmd/Capstone-2-Official-CloudHosting/blob/feature/landing-page-fixes/src/pages/adviser/ReviewDocuments.tsx) | Split-view document inspection room |
 
 ---
 
@@ -119,4 +121,3 @@ The AI returns a normalized JSON object that the frontend renders into interacti
 1. **Non-Destructive**: The AI never alters the student's document automatically. It only provides advisory suggestions to the faculty member.
 2. **Environment Variable Safeguards**: The backend gracefully checks for `VITE_GROQ_API_KEY` and `GEMINI_API_KEY`. If keys are missing, it returns a helpful diagnostic error instead of crashing.
 3. **Database Audit Trail**: All audit findings are stored in Supabase under `student_documents.ai_findings` for historical review.
-

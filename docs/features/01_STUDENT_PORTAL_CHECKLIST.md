@@ -2,6 +2,8 @@
 
 A complete functional and technical breakdown of the **Student Dashboard**, interactive requirement checklist, host company deployment card, and completed tasks modal.
 
+> 💡 **Executive Summary**: The student command center. Tracks stage-gated practicum milestones (Before, In, Finals), calculates host company attendance progress, and verifies approved requirements via an accessible modal dialog.
+
 ---
 
 ## 🌟 Feature Overview
@@ -29,30 +31,25 @@ graph TD
 
 ## 🏗️ Architecture & Dataflow
 
-```text
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                    STUDENT DASHBOARD DATAFLOW PIPELINE                      │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│   1. Mount Lifecycle:                                                       │
-│      StudentDashboard.tsx ───► submissionStorage.ts (Supabase DB)           │
-│                                ├─ Fetches active student profile            │
-│                                ├─ Queries submitted documents for student   │
-│                                └─ Calculates requirement phase completion % │
-│                                                                             │
-│   2. Requirement State Evaluation:                                          │
-│      ┌────────────────────────┬──────────────────────┬──────────────────┐   │
-│      │ Before OJT (8 items)   │ In OJT (3 items)     │ Finals (2 items) │   │
-│      └────────────────────────┴──────────────────────┴──────────────────┘   │
-│                 │                                                           │
-│                 ▼                                                           │
-│   3. Dynamic UI Render:                                                     │
-│      • Segmented Phase Tabs (Active phase tab highlighted)                  │
-│      • Stepper Timeline with current "Next Step" callout card               │
-│      • Host Company Card (InnoTech Labs, supervisor, hours logged / 460)    │
-│      • Completed Tasks Counter (Opens Radix Dialog on click)                │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
+```mermaid
+graph TD
+    subgraph 1. Mount Lifecycle
+        M1[StudentDashboard.tsx Mounts] --> M2[Query submissionStorage]
+        M2 --> M3[(Supabase DB)]
+        M3 --> M4[Calculate Completion %]
+    end
+
+    subgraph 2. Phase Evaluation
+        M4 --> P1[Before OJT: 8 Documents]
+        M4 --> P2[In OJT: DTR & Journals]
+        M4 --> P3[Finals: Clearance]
+    end
+
+    subgraph 3. Interactive UI Render
+        P1 --> U1[Segmented Phase Tabs]
+        P2 --> U2[Active Placement Progress 460h]
+        P3 --> U3[Completed Tasks Dialog Modal]
+    end
 ```
 
 ---
@@ -105,10 +102,10 @@ sequenceDiagram
 
 | Entity / Logic | File Location | Purpose |
 | :--- | :--- | :--- |
-| **Main Page** | [`src/pages/student/StudentDashboard.tsx`](file:///c:/Users/johnd/Downloads/MainCode/src/pages/student/StudentDashboard.tsx) | Primary student dashboard component |
-| **Standard Page Wrapper** | [`src/components/compose/StudentDocumentPage.tsx`](file:///c:/Users/johnd/Downloads/MainCode/src/components/compose/StudentDocumentPage.tsx) | Uniform wrapper for all 13 requirement pages |
-| **Completed Tasks Dialog** | [`src/components/ui/dialog.tsx`](file:///c:/Users/johnd/Downloads/MainCode/src/components/ui/dialog.tsx) | Radix UI modal primitive for verified items |
-| **State & Persistence** | [`src/utils/submissionStorage.ts`](file:///c:/Users/johnd/Downloads/MainCode/src/utils/submissionStorage.ts) | Reads/writes student submission records |
+| **Main Page** | [`src/pages/student/StudentDashboard.tsx`](https://github.com/s5condlast-cmd/Capstone-2-Official-CloudHosting/blob/feature/landing-page-fixes/src/pages/student/StudentDashboard.tsx) | Primary student dashboard component |
+| **Standard Page Wrapper** | [`src/components/compose/StudentDocumentPage.tsx`](https://github.com/s5condlast-cmd/Capstone-2-Official-CloudHosting/blob/feature/landing-page-fixes/src/components/compose/StudentDocumentPage.tsx) | Uniform wrapper for all 13 requirement pages |
+| **Completed Tasks Dialog** | [`src/components/ui/dialog.tsx`](https://github.com/s5condlast-cmd/Capstone-2-Official-CloudHosting/blob/feature/landing-page-fixes/src/components/ui/dialog.tsx) | Radix UI modal primitive for verified items |
+| **State & Persistence** | [`src/utils/submissionStorage.ts`](https://github.com/s5condlast-cmd/Capstone-2-Official-CloudHosting/blob/feature/landing-page-fixes/src/utils/submissionStorage.ts) | Reads/writes student submission records |
 
 ---
 
@@ -117,4 +114,3 @@ sequenceDiagram
 1. **Single Source of Truth**: Never mix hardcoded status arrays with live Supabase rows. Checklists must reflect the real status from `submissionStorage`.
 2. **Phase Gating**: Students cannot advance to Final clearance documents until In OJT attendance requirements (460 hours) are verified by the supervisor.
 3. **Responsive Sizing**: On mobile screens (`< 640px`), the 9/3 column grid collapses into a fluid single-column stack.
-
