@@ -4,29 +4,39 @@ Comprehensive architectural and functional documentation for every core feature 
 
 Each feature guide includes detailed visual dataflow diagrams (Mermaid and text), technical explanations of how it operates under the hood, user workflows, and state transitions.
 
-> 💡 **Notion Navigation Tip**: This documentation is optimized for reading on web browsers, Notion, and mobile devices. Click into any feature below to inspect its detailed visual diagrams, code locators, and under-the-hood dataflow.
-
 ---
 
 ## 🗺️ Feature Architecture Map
 
-```mermaid
-graph TD
-    subgraph Student Journey
-        F1["🎓 01. Student Portal & Checklist"] --> F2["📄 02. Document Pipeline"]
-        F2 --> F3["⏱️ 03. DTR & Digital Signatures"]
-    end
-
-    subgraph Faculty & Review
-        F3 --> F4["🤖 04. AI Grammar Review"]
-        F4 --> F5["👥 05. Review & Approvals Room"]
-        F5 --> F6["⚙️ 06. Admin Master Templates"]
-    end
-
-    subgraph Operations & Cloud
-        F7["📅 07. Calendar & Events"]
-        F8["🔒 08. Auth, OTP & OneDrive Sync"]
-    end
+```text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                       OJT SYSTEM FEATURE ECOSYSTEM                          │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  [01. Student Portal & Checklist] ───► [02. Digital Document Pipeline]      │
+│     • Dynamic stage progression          • 13 Official interactive templates│
+│     • Active placement summary           • In-browser DOCX/PDF preview      │
+│     • Completed tasks modal              • JSZip & easy-template-x engine   │
+│                │                                    │                       │
+│                ▼                                    ▼                       │
+│  [03. DTR & Digital Signature]        [04. AI Grammar Review Assistant]     │
+│     • Punch logs & hours tracking        • pdf-parse backend extraction     │
+│     • Supervisor signature canvas        • Groq Llama-3.3 + Gemini fallback │
+│     • ExcelJS luminance cropping         • Side-by-side adviser feedback    │
+│                │                                    │                       │
+│                ▼                                    ▼                       │
+│  [05. Review & Approvals Room]        [06. Admin Templates & Verification]  │
+│     • Dual-viewport inspection           • 4-button template action grid    │
+│     • Revision history & comments        • Institutional registrar queue    │
+│     • Role-based status transitions      • User & partner company admin     │
+│                │                                    │                       │
+│                ▼                                    ▼                       │
+│  [07. Calendar & Event Scheduler]     [08. Auth, OTP & OneDrive Sync]       │
+│     • Month, Week, Day, Agenda views     • Institutional STI email login    │
+│     • Add Event modal dialog             • 6-digit OTP verification         │
+│     • Multi-category event tagging       • Automated Graph API cloud backup │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---

@@ -2,8 +2,6 @@
 
 A complete technical breakdown of the **AI Document Auditing Assistant**, backend text extraction pipeline, and dual-model LLM architecture (Groq + Gemini fallback).
 
-> 💡 **Executive Summary**: AI-powered advisory assistant for coordinators. Automatically extracts PDF text on the backend and runs deterministic grammar and compliance audits using Groq Llama-3.3 with Gemini fallback.
-
 ---
 
 ## 🌟 Feature Overview

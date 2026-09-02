@@ -75,6 +75,11 @@ When referencing or creating UI for templates, always adhere to the three offici
    - Integration Paper Template
    - Performance Appraisal Template
 
+## Weekly Journal Speech-to-Text Invariant
+
+- **Strict Scope**: Speech-to-text (Web Speech API) voice dictation is strictly reserved for the **Weekly Journal reflection entry** (`WeeklyJournal.tsx`).
+- **Do Not Apply to Letter Templates**: Never inject speech-to-text controls into the other 12 institutional fill-in-the-blank document templates (such as Application Letter, MOA, Endorsement, and Consent Forms) as these require precise formal written text.
+
 ## Student Page Naming Conventions
 
 When creating or referencing React components and filenames for student document pages, ALWAYS use their explicit, descriptive names matching their template (e.g., use `ProposalLetterToTheIndustry.tsx` instead of `Proposal.tsx`). Avoid generic mockups like `DocumentSubmission.tsx` or `Requirements.tsx`; instead, use the `DocumentWorkflow` architecture for each specific document page.

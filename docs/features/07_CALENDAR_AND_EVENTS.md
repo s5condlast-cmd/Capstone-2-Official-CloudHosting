@@ -2,8 +2,6 @@
 
 A complete technical breakdown of the **Practicum Calendar & Scheduling System**, multi-view timeline engine, event creation modal, and compact widget integrations.
 
-> 💡 **Executive Summary**: Central practicum calendar supporting Month, Week, Day, and Agenda views. Includes a comprehensive Add Event modal with custom date and time pickers.
-
 ---
 
 ## 🌟 Feature Overview
