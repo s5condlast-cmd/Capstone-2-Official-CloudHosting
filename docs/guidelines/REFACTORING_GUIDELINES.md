@@ -179,6 +179,35 @@ import { submissionStorage } from '@/src/lib/submissionStorage';
 
 ---
 
+## 10. Git Branch Architecture & Release Protocol
+
+The repository implements a structured, role-based branching strategy designed for team scalability and capstone defense compliance:
+
+### Role & Domain Branch Matrix
+
+| Portal / Domain | Branch Name | Scope & Responsibilities |
+| :--- | :--- | :--- |
+| **Student Portal** | `feature/student` | Student dashboard, requirement checklists, document upload workflows, and Weekly Journal dictation. |
+| **Adviser Portal** | `feature/adviser` | Adviser review sessions, document approval/revision workflows, student roster, remarks, and feedback. |
+| **Supervisor Portal** | `feature/supervisor` | Supervisor attendance review, DTR digital signature approvals, intern evaluations, and company remarks. |
+| **Admin Portal** | `feature/admin` | Admin dashboard, user management, template configuration, API settings, and institutional controls. |
+| **Landing Page** | `feature/landing-page` | Public landing page, hero typography, 3D card carousel, ScrollStack motion, and practicum journey. |
+| **Backend & Cloud** | `backend/database` | Supabase schemas, Postgres RLS policies, migrations, serverless endpoints, and Microsoft OneDrive Graph sync. |
+| **Documentation** | `docs/capstone-panelist-guide` | Architecture specifications, API key runbooks, and panelist defense preparation guides. |
+
+### Core Git Rules
+
+1. **Evergreen Domain Naming**:
+   - Never name branches after temporary one-off bugs (e.g., avoid `-fixes`, `-cleanup`, `-refinements`, `-stats`).
+   - Use persistent domain names so future pushes to that branch remain clean and relevant.
+2. **Main Branch Protection (Option B)**:
+   - Direct pushes to `main` are strictly forbidden.
+   - All integrations into `main` must be performed through reviewed GitHub Pull Requests (PRs).
+3. **Zero-Deletion Policy**:
+   - Historical milestone branches (`phase-1-rendering-cleanup`, `supervisor-dtr-v2`, `rules` branches) are permanently preserved for auditability.
+
+---
+
 ## Related Documentation & Cross-References
 
 - [Document Workflows & Template Generation](../architecture/DOCUMENT_WORKFLOWS.md) — Student page patterns and AutoWidthInput rules

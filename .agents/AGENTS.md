@@ -177,10 +177,27 @@ When `/debug` (or legacy `/scan`/`/review`) is invoked, resolve the target in th
 - Execute `npm run lint` (`tsc --noEmit`) to verify 0 compiler/type errors.
 - Confirm all related components, styles, and document generation pipelines remain untouched and fully operational.
 
-## GitHub Repository Configuration
+## GitHub Repository & Branching Architecture
 
 - **Main Repository:** The primary remote repository (origin) for the project must always be set to `https://github.com/s5condlast-cmd/Capstone-2-Official-CloudHosting.git`.
-- **Branching Workflow:** When adding new code or features, always create and work on a dedicated branch. This ensures that multiple collaborators can safely add code and submit pull requests without directly altering the main branch.
+- **Role & Domain-Based Branching:** The repository enforces dedicated, evergreen branches structured around the 4 core portal roles and primary system layers:
+  - `feature/student`: Student Portal workflows, checklist, fillable templates, and Weekly Journal reflection.
+  - `feature/adviser`: Adviser Portal workflows, student submission reviews, feedback, and remarks.
+  - `feature/supervisor`: Supervisor Portal workflows, attendance review, and digital DTR signature approvals.
+  - `feature/admin`: Admin Portal workflows, student management, template configuration, and API settings.
+  - `feature/landing-page`: Public landing page, hero typography, 3D card carousel, and ScrollStack motion.
+  - `backend/database`: Supabase database schemas, Postgres RLS policies, migrations, and Microsoft OneDrive sync.
+  - `docs/capstone-panelist-guide`: Architecture guides, API key runbooks, and panelist defense preparation.
+- **Evergreen Branch Naming Standard:**
+  - Branch names must represent persistent system domains using `<type>/<description>` format.
+  - **Never** name branches after temporary one-off bugs (e.g. avoid `-fixes`, `-cleanup`, `-refinements`, `-stats`).
+  - Use evergreen names so any new push to that branch remains clean, relevant, and organized.
+- **Main Branch Protection (Option B):**
+  - Direct pushes to `main` are strictly forbidden.
+  - Local `main` must remain clean and untouched.
+  - All integrations into `main` must occur exclusively through GitHub Pull Requests (PRs) after review and verification.
+- **Zero-Deletion Preservation:**
+  - Historical branches (e.g. `phase-1-rendering-cleanup`, `supervisor-dtr-v2`, `rules` branches) are preserved for auditability and must never be deleted without explicit user authorization.
 
 ## Rendering State & Loading Lifecycles
 

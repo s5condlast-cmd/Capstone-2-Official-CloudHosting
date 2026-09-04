@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Project Documentation Hub"
 description: "Master Map of Content (MOC) and centralized technical documentation index for STI Marikina Practicum Management System."
 tags:
@@ -15,49 +15,51 @@ created: 2026-08-26
 updated: 2026-09-04
 ---
 
-# ðŸ“š Project Documentation Hub
+# 📚 Project Documentation Hub
 
-[←  Return to Project Overview](../README.md)
+[← Return to Project Overview](../README.md)
 
 Welcome to the **Capstone-2 CloudHosting OJT Management System** documentation center. This repository contains the complete architectural blueprints, database schemas, feature specifications, deployment guides, and developmental task history.
 
 ---
 
-## ðŸ—ºï¸ Master Documentation Map of Content (MOC)
+## 🗺️ Master Documentation Map of Content (MOC)
 
 ```text
-â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-â”‚                       DOCUMENTATION VAULT TOPOLOGY                          â”‚
-â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
-â”‚                                                                             â”‚
-â”‚   [Master README] â”€â”€â–º [docs/README.md (Documentation Hub)]                 â”‚
-â”‚                              â”‚                                              â”‚
-â”‚         â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”     â”‚
-â”‚         â–¼                    â–¼                    â–¼                   â–¼     â”‚
-â”‚   [ðŸŒŸ Features]       [ðŸ—ï¸ Architecture]     [🚀 Deployment]    [📋 Tasks]   â”‚
-â”‚   ”¢ 01 Checklist      ”¢ Architecture        ”¢ Vercel Guide     ”¢ Tasks      â”‚
-â”‚   ”¢ 02 Pipeline       ”¢ Backend & DB        ”¢ Cloudinary       ”¢ History    â”‚
-â”‚   ”¢ 03 DTR Fitting    ”¢ Document Workflows  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ â”‚
-â”‚   ”¢ 04 AI Audit       ”¢ System Map                                          â”‚
-â”‚   ”¢ 05 Review Room    â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€                                    â”‚
-â”‚   ”¢ 06 Admin Mgmt                                                           â”‚
-â”‚   ”¢ 07 Calendar       [ðŸ“ Guidelines]       [ðŸ•’ Sessions Archive]           â”‚
-â”‚   ”¢ 08 Auth & Sync    ”¢ Refactoring Rules   ”¢ All Sessions History          â”‚
-â”‚   â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€  ”¢ Main Proposal       ”¢ TypeScript Milestone Check    â”‚
-â”‚                                                                             â”‚
-â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
++-----------------------------------------------------------------------------+
+|                        DOCUMENTATION VAULT TOPOLOGY                         |
++-----------------------------------------------------------------------------+
+|                                                                             |
+|   [Master README] ---> [docs/README.md (Documentation Hub)]                 |
+|                               |                                             |
+|         +---------------------+---------------------+-----------------+     |
+|         |                     |                     |                 |     |
+|         v                     v                     v                 v     |
+|   [⭐ Features]        [🏗️ Architecture]     [🚀 Deployment]    [📋 Tasks]   |
+|   • 01 Checklist       • Architecture        • Vercel Guide     • Tasks     |
+|   • 02 Pipeline        • Backend & DB        • Cloudinary       • History   |
+|   • 03 DTR Fitting     • Document Workflows  +----------------- +-----------+
+|   • 04 AI Audit        • System Map                                         |
+|   • 05 Review Room     +-------------------                                 |
+|   • 06 Admin Mgmt                                                           |
+|   • 07 Calendar        [📏 Guidelines]       [🕒 Sessions Archive]          |
+|   • 08 Auth & Sync     • Refactoring Rules   • All Sessions History         |
+|   +------------------  • Git Branch Rules    • TypeScript Milestone Check   |
+|                        • Main Proposal                                      |
+|                                                                             |
++-----------------------------------------------------------------------------+
 ```
 
 ---
 
-## ðŸ“‚ Documentation Vault Structure
+## 📁 Documentation Vault Structure
 
 ### 📋 [Development Tasks & Roadmap](tasks/TASKS.md)
 
 - [Active Tasks & Roadmap](tasks/TASKS.md) — Ongoing sprints, UI polish items, voice dictation, and template digitization
 - [Task History & Changelog](tasks/TASK_HISTORY.md) — Chronological record of completed milestones and bug fixes
 
-### ðŸŒŸ [Feature Specifications & Deep Dives](features/README.md)
+### ⭐ [Feature Specifications & Deep Dives](features/README.md)
 
 - [Feature Documentation Hub](features/README.md) — Comprehensive dataflow diagrams and mechanics per feature
 - [01. Student Portal & Checklist](features/01_STUDENT_PORTAL_CHECKLIST.md) — Dynamic 3-stage progress checklist, placement card, and completed tasks modal
@@ -69,7 +71,7 @@ Welcome to the **Capstone-2 CloudHosting OJT Management System** documentation c
 - [07. Practicum Calendar & Scheduling](features/07_CALENDAR_AND_EVENTS.md) — Multi-view timeline engine, event modal, and date pickers
 - [08. Auth, OTP & OneDrive Sync](features/08_AUTH_AND_ONEDRIVE_SYNC.md) — Institutional security, OTP verification, and Microsoft Graph OneDrive sync
 
-### ðŸ—ï¸ [Architecture & Technical Specifications](architecture/ARCHITECTURE.md)
+### 🏗️ [Architecture & Technical Specifications](architecture/ARCHITECTURE.md)
 
 - [Architecture Overview](architecture/ARCHITECTURE.md) — System topology, client SPA, serverless Express backend, and Supabase integration
 - [System Map & Target Locator](architecture/SYSTEM_MAP.md) — Fast code locator, component route index, and problem-fix register
@@ -81,12 +83,13 @@ Welcome to the **Capstone-2 CloudHosting OJT Management System** documentation c
 - [Vercel Deployment Guide](deployment/DEPLOYMENT_AND_VERCEL.md) — Serverless configuration, environment checklist, and redeploy safeguards
 - [Cloudinary Storage Integration](deployment/CLOUDINARY_INTEGRATION_SUMMARY.md) — CDN media storage, signature upload handling, and document backups
 
-### ðŸ“ [Engineering Guidelines & Project Specs](guidelines/REFACTORING_GUIDELINES.md)
+### 📏 [Engineering Guidelines & Project Specs](guidelines/REFACTORING_GUIDELINES.md)
 
 - [Refactoring Guidelines](guidelines/REFACTORING_GUIDELINES.md) — Coding standards, component rules, theme tokens, and state conventions
+- [Git Branch Architecture & Release Protocol](guidelines/REFACTORING_GUIDELINES.md#10-git-branch-architecture--release-protocol) — Role and domain-based branching matrix and PR rules
 - [Main Capstone Proposal](guidelines/Main_Document.md) — Core academic project proposal and institutional specifications
 
-### ðŸ•’ [Work Sessions & Learnings Archive](sessions/ALL_SESSIONS_HISTORY.md)
+### 🕒 [Work Sessions & Learnings Archive](sessions/ALL_SESSIONS_HISTORY.md)
 
 - [All Sessions History](sessions/ALL_SESSIONS_HISTORY.md) — Complete multi-session archive and architectural evolution
 - [TypeScript Diagnosis & Prop Alignment](sessions/SESSION_SUMMARY_2026-08-26.md) — React 19 type alignment and component prop audit

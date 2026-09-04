@@ -17,15 +17,35 @@ updated: 2026-09-04
 
 # 📜 Task History & Changelog
 
-[←  Back to Active Tasks](TASKS.md) | [Documentation Hub](../README.md) | [All Sessions History](../sessions/ALL_SESSIONS_HISTORY.md)
+[←   Back to Active Tasks](TASKS.md) | [Documentation Hub](../README.md) | [All Sessions History](../sessions/ALL_SESSIONS_HISTORY.md)
 
 A historical record of completed tasks, refactors, bug fixes, and architectural milestones for the **Capstone-2 CloudHosting OJT Management System**.
 
 ---
 
+## 📅 September 4, 2026
+
+### 🌿 Git Branch Standardization & Role-Based Architecture
+
+- [x] **Evergreen Domain Naming Implementation**:
+  - Replaced temporary problem-specific branch names (`-fixes`, `-stats`, `-cleanup`, `-refinements`) with persistent domain branches.
+  - Renamed `feature/landing-page-fixes` to `feature/landing-page`.
+  - Renamed `fix-admin-dashboard-stats` to `feature/admin`.
+  - Renamed `feature/supervisor-dtr-refinements` to `feature/supervisor`.
+- [x] **Role & Domain Branch Creation**:
+  - Created `feature/student`, `feature/adviser`, and `backend/database` branching from latest HEAD with complete feature sets.
+  - Created and checked out active `docs/capstone-panelist-guide` branch for panelist defense documentation.
+- [x] **Branch Safety & Zero Deletions**:
+  - Preserved 100% of historical branches (`phase-1-rendering-cleanup`, `supervisor-dtr-v2`, `rules`) with zero deletions.
+  - Enforced Option B: `main` branch is protected from direct pushes; all merges require GitHub PRs.
+- [x] **Rule Codification**:
+  - Codified Git Branching Architecture in `AGENTS.md` and `REFACTORING_GUIDELINES.md`.
+
+---
+
 ## 📅 September 2, 2026
 
-### ðŸ—“ï¸ Add Event Modal & Date/Time Picker Polish
+### 🗓️ Add Event Modal & Date/Time Picker Polish
 
 - [x] **shadcn DatePickerSimple Integration**:
   - Connected shadcn `<Popover>` + `<Calendar mode="single" captionLayout="dropdown" />` to the Add Event form.
