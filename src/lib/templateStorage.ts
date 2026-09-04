@@ -95,6 +95,8 @@ export const templateStorage = {
       window.dispatchEvent(new CustomEvent('template_updated', { detail: { id } }));
     }
 
+    /*
+    // Preserved Cloudinary Template Upload (Commented out for future redesign)
     try {
       const formData = new FormData();
       formData.append('file', file);
@@ -109,6 +111,7 @@ export const templateStorage = {
     } catch (err) {
       console.warn('Cloudinary unreachable, saved to local store:', err);
     }
+    */
   },
 
   // Retrieve the raw file buffer from Cloudinary or local IndexedDB fallback
@@ -119,6 +122,8 @@ export const templateStorage = {
       return localBuf;
     }
 
+    /*
+    // Preserved Cloudinary Template Fetch (Commented out for future redesign)
     try {
       // Try fetching the Cloudinary URL from the backend
       const res = await fetch(`/api/cloudinary/url?publicId=${encodeURIComponent('practicum/templates/' + id)}`);
@@ -134,6 +139,7 @@ export const templateStorage = {
     } catch (e) {
       console.warn('Cloudinary fetch failed, trying Supabase fallback:', e);
     }
+    */
 
     // Legacy fallback: Supabase Storage
     try {
@@ -161,6 +167,8 @@ export const templateStorage = {
       return localBuf;
     }
 
+    /*
+    // Preserved Cloudinary PDF Backup Fetch (Commented out for future redesign)
     try {
       const res = await fetch(`/api/cloudinary/url?publicId=${encodeURIComponent('practicum/templates/' + backupKey)}`);
       if (res.ok) {
@@ -175,6 +183,7 @@ export const templateStorage = {
     } catch (e) {
       console.warn('Cloudinary fetch PDF backup failed, trying Supabase fallback:', e);
     }
+    */
 
     // Legacy fallback: Supabase Storage
     try {
@@ -295,6 +304,8 @@ export const templateStorage = {
       window.dispatchEvent(new CustomEvent('template_updated', { detail: { id } }));
     }
 
+    /*
+    // Preserved Cloudinary Delete (Commented out for future redesign)
     try {
       // Delete from Cloudinary
       await fetch('/api/cloudinary/delete', {
@@ -310,6 +321,7 @@ export const templateStorage = {
     } catch (e) {
       console.warn('Cloudinary delete template warning:', e);
     }
+    */
 
     try {
       // Legacy cleanup: Supabase Storage

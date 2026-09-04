@@ -27,7 +27,8 @@ export const submissionStorage = {
     let onedriveUrl: string | undefined = undefined;
 
     try {
-      // Upload file to Cloudinary via backend
+      /*
+      // Preserved Cloudinary Upload (Commented out for future redesign)
       const formData = new FormData();
       formData.append('file', file);
       const uploadRes = await fetch(`/api/cloudinary/upload?folder=practicum/submissions`, {
@@ -41,6 +42,7 @@ export const submissionStorage = {
         // Use the Cloudinary URL as file_path
         filePath = uploadData.url;
       }
+      */
 
       // Automatically archive signed letter to Microsoft OneDrive
       try {
@@ -158,7 +160,8 @@ export const submissionStorage = {
     } catch (e) {}
 
     try {
-      // Upload DTR to Cloudinary via backend
+      /*
+      // Preserved Cloudinary Upload for Signed DTR (Commented out for future redesign)
       const formData = new FormData();
       formData.append('file', new File([xlsxBlob], fileName, { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
       const uploadRes = await fetch(`/api/cloudinary/upload?folder=practicum/submissions`, {
@@ -172,6 +175,7 @@ export const submissionStorage = {
         filePath = uploadData.url;
         newDoc.file_path = uploadData.url;
       }
+      */
 
       // Automatically archive signed DTR to Microsoft OneDrive
       try {
