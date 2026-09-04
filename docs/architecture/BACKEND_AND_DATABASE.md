@@ -1,6 +1,28 @@
+﻿---
+title: "Backend, Database & AI Service Architecture"
+description: "Comprehensive specification of Supabase PostgreSQL schemas, storage security policies, offline fallbacks, and the AI document audit pipeline."
+tags:
+  - sti-ojt
+  - backend
+  - database
+  - supabase
+  - postgresql
+  - ai-review
+  - groq
+  - gemini
+aliases:
+  - "Backend Architecture"
+  - "Database Schema"
+  - "Supabase Configuration"
+created: 2026-08-26
+updated: 2026-09-04
+---
+
 # Backend, Database & AI Service Architecture
 
-This document describes every database table, storage bucket, the offline fallback system, and the AI document analysis pipeline — all verified against the actual codebase.
+[←  Back to Documentation Hub](../README.md) | [Architecture Overview](ARCHITECTURE.md) | [System Map](SYSTEM_MAP.md) | [Document Workflows](DOCUMENT_WORKFLOWS.md)
+
+This document describes every database table, storage bucket, offline fallback mechanism, and the AI document analysis pipeline — all verified against the actual codebase.
 
 ---
 
@@ -17,7 +39,7 @@ This document describes every database table, storage bucket, the offline fallba
 
 ### Client Initialization
 
-**Frontend** ([`src/lib/supabase.ts`](file:///c:/Users/johnd/Downloads/MainCode/src/lib/supabase.ts)):
+**Frontend** ([`src/lib/supabase.ts`](../../src/lib/supabase.ts)):
 
 ```typescript
 import { createClient } from '@supabase/supabase-js';
@@ -26,7 +48,7 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 ```
 
-**Backend** ([`backend/config/supabase.ts`](file:///c:/Users/johnd/Downloads/MainCode/backend/config/supabase.ts)):
+**Backend** ([`backend/config/supabase.ts`](../../backend/config/supabase.ts)):
 
 ```typescript
 import { createClient } from '@supabase/supabase-js';
@@ -79,13 +101,13 @@ Stores admin-managed template catalog entries.
 
 The database schema and policies are organized into two sequential migration scripts located in `supabase/migrations/`:
 
-1. **[`01_initial_schema.sql`](file:///c:/Users/johnd/Downloads/MainCode/supabase/migrations/01_initial_schema.sql)** (SQL Query: `01_initial_schema`):
+1. **[`01_initial_schema.sql`](../../supabase/migrations/01_initial_schema.sql)** (SQL Query: `01_initial_schema`):
    - Creates all tables: `document_templates`, `document_template_versions`, `document_instances`, `student_documents`, `template_metadata`.
    - Creates triggers: `update_updated_at_column`, `validate_document_instance_integrity` (with secure `SET search_path = public, pg_temp`).
    - Creates foreign keys and indexes.
    - Sets up InitPlan-optimized Row Level Security (RLS) policies for all tables.
 
-2. **[`02_storage_security_policies.sql`](file:///c:/Users/johnd/Downloads/MainCode/supabase/migrations/02_storage_security_policies.sql)** (SQL Query: `02_storage_security_policies`):
+2. **[`02_storage_security_policies.sql`](../../supabase/migrations/02_storage_security_policies.sql)** (SQL Query: `02_storage_security_policies`):
    - Initializes the 3 storage buckets: `templates`, `student_submissions`, `signed_dtrs`.
    - Configures public read/management policies for `templates`.
    - Configures upload policies (`INSERT` only) for `student_submissions` and `signed_dtrs`.
@@ -93,7 +115,7 @@ The database schema and policies are organized into two sequential migration scr
 
 ---
 
-### Migration-Defined Tables (from [`01_initial_schema.sql`](file:///c:/Users/johnd/Downloads/MainCode/supabase/migrations/01_initial_schema.sql))
+### Migration-Defined Tables (from `01_initial_schema.sql`)
 
 These tables support the structured document template system:
 
@@ -142,7 +164,7 @@ These tables support the structured document template system:
 - Trigger validates `template_version_id` belongs to stated `template_id`
 - Non-admin/adviser roles cannot modify `template_id`, `template_version_id`, or `student_id` on existing instances
 - Row Level Security (RLS) enabled on all tables
-- Security & Performance compliance (no user_metadata in RLS, (SELECT auth.uid()) optimization, immutable search_path on triggers)
+- Security & Performance compliance (no `user_metadata` in RLS, `(SELECT auth.uid())` optimization, immutable `search_path` on triggers)
 
 ---
 
@@ -158,26 +180,26 @@ These tables support the structured document template system:
 
 ```sql
 -- Allow public reading & listing of templates
-CREATE POLICY "templates_read_policy" ON storage.objects 
+CREATE POLICY "templates_read_policy" ON storage.objects
 FOR SELECT USING (bucket_id = 'templates');
 
 -- Allow managing templates
-CREATE POLICY "templates_write_policy" ON storage.objects 
+CREATE POLICY "templates_write_policy" ON storage.objects
 FOR INSERT WITH CHECK (bucket_id = 'templates');
 
-CREATE POLICY "templates_modify_policy" ON storage.objects 
+CREATE POLICY "templates_modify_policy" ON storage.objects
 FOR UPDATE USING (bucket_id = 'templates') WITH CHECK (bucket_id = 'templates');
 
-CREATE POLICY "templates_delete_policy" ON storage.objects 
+CREATE POLICY "templates_delete_policy" ON storage.objects
 FOR DELETE USING (bucket_id = 'templates');
 
 -- Allow file uploads for student submissions & signed DTRs
-CREATE POLICY "submissions_upload_policy" ON storage.objects 
+CREATE POLICY "submissions_upload_policy" ON storage.objects
 FOR INSERT WITH CHECK (bucket_id IN ('student_submissions', 'signed_dtrs'));
 
 -- Restrict listing student submissions to authenticated staff/advisers (prevents public file scraping)
-CREATE POLICY "submissions_select_policy" ON storage.objects 
-FOR SELECT TO authenticated 
+CREATE POLICY "submissions_select_policy" ON storage.objects
+FOR SELECT TO authenticated
 USING (
     bucket_id IN ('student_submissions', 'signed_dtrs')
     AND (
@@ -194,12 +216,14 @@ USING (
 
 When writing Supabase SQL migrations and RLS policies, adhere to these rules:
 
-1. **Never use `user_metadata` for authorization:** Always check `app_metadata` (`(SELECT auth.jwt()) -> 'app_metadata' ->> 'role'`) or `auth.uid()`. `user_metadata` can be tampered with by client users.
-2. **Wrap Auth calls for InitPlan query caching:** Always use `(SELECT auth.uid())` and `(SELECT auth.jwt())` inside RLS policy conditions so Postgres evaluates user identity once per query instead of per row.
-3. **Explicit Search Path on Functions:** All Postgres trigger functions must declare `SET search_path = public, pg_temp` and `SECURITY DEFINER` to prevent search path hijacking.
-4. **Index All Foreign Keys:** Every foreign key column (e.g. `template_id`, `current_version_id`) must have a dedicated index for optimal JOIN and constraint performance.
+1. **Never use `user_metadata` for authorization**: Always check `app_metadata` (`(SELECT auth.jwt()) -> 'app_metadata' ->> 'role'`) or `auth.uid()`. `user_metadata` can be tampered with by client users.
+2. **Wrap Auth calls for InitPlan query caching**: Always use `(SELECT auth.uid())` and `(SELECT auth.jwt())` inside RLS policy conditions so Postgres evaluates user identity once per query instead of per row.
+3. **Explicit Search Path on Functions**: All Postgres trigger functions must declare `SET search_path = public, pg_temp` and `SECURITY DEFINER` to prevent search path hijacking.
+4. **Index All Foreign Keys**: Every foreign key column (e.g. `template_id`, `current_version_id`) must have a dedicated index for optimal JOIN and constraint performance.
 
-## 4. Offline Fallback Architecture
+---
+
+## 5. Offline Fallback Architecture
 
 ### `submissionStorage.ts` Fallback Chain
 
@@ -210,34 +234,34 @@ When writing Supabase SQL migrations and RLS policies, adhere to these rules:
 
 ### `templateStorage.ts` Fallback Chain
 
-1. **File storage**: Supabase Storage → falls back to raw IndexedDB (`CapstoneTemplateDB`)
-2. **Metadata**: Supabase DB `template_metadata` → falls back to `localStorage`
+1. **File storage**: Supabase Storage ← ’ falls back to raw IndexedDB (`CapstoneTemplateDB`)
+2. **Metadata**: Supabase DB `template_metadata` ← ’ falls back to `localStorage`
 3. **IndexedDB implementation**: Uses native `indexedDB.open()` API with a single object store `templates_store`
 4. **File retrieval**: Handles `Blob`, `ArrayBuffer`, and typed array return types from IDB
 
 ---
 
-## 5. AI Review Assistant Pipeline
+## 6. AI Review Assistant Pipeline
 
-### Flow (Backend → Supabase → Client)
+### Flow (Backend ← ’ Supabase ← ’ Client)
 
 ```text
 Client: aiService.analyzeDocument(docId, pdfUrl, metadata)
-  │  POST /api/analyze
-  ▼
+  â”‚  POST /api/analyze
+  â–¼
 Backend: routes/analyze.ts
-  │
-  ├─ 1. UPDATE student_documents SET ai_status='Processing', ai_findings=null WHERE id=docId
-  ├─ 2. fetch(pdfUrl) → Buffer
-  ├─ 3. extractTextFromPdfBuffer(buffer) via pdf-parse
-  ├─ 4. analyzeDocumentText(text, metadata) via aiService.ts
-  │     ├─ Try Groq API (llama-3.3-70b-versatile, temp 0.1, JSON mode)
-  │     └─ Fallback: Gemini API (gemini-1.5-flash, temp 0.1, JSON MIME)
-  ├─ 5. UPDATE student_documents SET ai_status='Completed', ai_findings={...}
-  └─ 6. Return JSON findings to client
+  â”‚
+  â”œâ”€ 1. UPDATE student_documents SET ai_status='Processing', ai_findings=null WHERE id=docId
+  â”œâ”€ 2. fetch(pdfUrl) ← ’ Buffer
+  â”œâ”€ 3. extractTextFromPdfBuffer(buffer) via pdf-parse
+  â”œâ”€ 4. analyzeDocumentText(text, metadata) via aiService.ts
+  â”‚     â”œâ”€ Try Groq API (llama-3.3-70b-versatile, temp 0.1, JSON mode)
+  â”‚     â””â”€ Fallback: Gemini API (gemini-1.5-flash, temp 0.1, JSON MIME)
+  â”œâ”€ 5. UPDATE student_documents SET ai_status='Completed', ai_findings={...}
+  â””â”€ 6. Return JSON findings to client
 ```
 
-### Client-Side AI Service ([`src/lib/aiService.ts`](file:///c:/Users/johnd/Downloads/MainCode/src/lib/aiService.ts))
+### Client-Side AI Service ([`src/lib/aiService.ts`](../../src/lib/aiService.ts))
 
 - Simple proxy that calls `POST /api/analyze` with `{ docId, pdfUrl, studentName, course, docType, company }`
 - Returns typed `AiFindings` to the UI
@@ -258,9 +282,9 @@ interface AiFindings {
 
 ---
 
-## 6. `submissionStorage` API Reference
+## 7. `submissionStorage` API Reference
 
-All methods are on the exported `submissionStorage` object in [`src/lib/submissionStorage.ts`](file:///c:/Users/johnd/Downloads/MainCode/src/lib/submissionStorage.ts):
+All methods are on the exported `submissionStorage` object in [`src/lib/submissionStorage.ts`](../../src/lib/submissionStorage.ts):
 
 | Method | Returns | Description |
 | :--- | :--- | :--- |
@@ -275,3 +299,14 @@ All methods are on the exported `submissionStorage` object in [`src/lib/submissi
 | `updateDocumentStatus(id, status, feedback?)` | `Promise<void>` | Update status + optional feedback |
 | `postComment(id, author, msg)` | `Promise<void>` | Append comment to document |
 | `updateAiFindings(id, aiStatus, aiFindings)` | `Promise<void>` | Update AI analysis results |
+
+---
+
+## Related Documentation & Cross-References
+
+- [System Architecture Overview](ARCHITECTURE.md) — High-level architecture, client SPA, and serverless Express routes
+- [Document Workflows & Templates](DOCUMENT_WORKFLOWS.md) — 13-template inventory and dynamic generation pipeline
+- [04. AI Grammar & Document Audit](../features/04_AI_GRAMMAR_AUDIT.md) — Serverless AI review pipeline mechanics
+- [08. Auth, OTP & OneDrive Sync](../features/08_AUTH_AND_ONEDRIVE_SYNC.md) — Institutional security and Microsoft Graph backup
+- [Cloudinary Document Storage Integration](../deployment/CLOUDINARY_INTEGRATION_SUMMARY.md) — Blob storage and CDN routing
+- [Vercel Deployment Guide](../deployment/DEPLOYMENT_AND_VERCEL.md) — Serverless API configuration and environment checklist

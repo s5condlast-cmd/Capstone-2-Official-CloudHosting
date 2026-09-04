@@ -1,12 +1,33 @@
+﻿---
+title: "Authentication, OTP Verification & OneDrive Sync Documentation"
+description: "Institutional Authentication System, email-based One-Time Passcode (OTP) verification, and automated Microsoft OneDrive cloud synchronization via Microsoft Graph API."
+tags:
+  - sti-ojt
+  - authentication
+  - otp-verification
+  - onedrive-sync
+  - microsoft-graph
+  - security
+aliases:
+  - "Auth and OneDrive Sync"
+  - "OTP Verification"
+  - "Microsoft Graph Integration"
+created: 2026-08-26
+updated: 2026-09-04
+---
+
 # 🔒 Authentication, OTP Verification & OneDrive Sync Documentation
+
+[←  Back to Features Hub](README.md) | [Documentation Hub](../README.md) | [Backend Architecture](../architecture/BACKEND_AND_DATABASE.md) | [System Map](../architecture/SYSTEM_MAP.md) | [Deployment Guide](../deployment/DEPLOYMENT_AND_VERCEL.md)
 
 A technical breakdown of the **Institutional Authentication System**, email-based One-Time Passcode (OTP) verification, and automated Microsoft OneDrive cloud synchronization via Microsoft Graph API.
 
-> 💡 **Executive Summary**: Enterprise security and cloud storage. Enforces institutional @marikina.sti.edu.ph logins, 6-digit OTP verification, and automated Microsoft Graph OneDrive archival with automatic token rotation.
+> [!NOTE]
+> **Executive Summary**: Enterprise security and cloud storage. Enforces institutional `@marikina.sti.edu.ph` logins, 6-digit OTP verification, and automated Microsoft Graph OneDrive archival with automatic token rotation.
 
 ---
 
-## 🌟 Feature Overview
+## ðŸŒŸ Feature Overview
 
 To ensure academic data integrity and compliance with STI College Marikina practicum policies, the system implements an enterprise-grade cloud backup and security infrastructure:
 
@@ -16,7 +37,7 @@ To ensure academic data integrity and compliance with STI College Marikina pract
 
 ---
 
-## 🏗️ Architecture & Security Dataflow
+## ðŸ—ï¸ Architecture & Security Dataflow
 
 ```mermaid
 sequenceDiagram
@@ -30,7 +51,7 @@ sequenceDiagram
 
     User->>UI: Uploads Signed Letter / Consent / DTR
     UI->>Backend: POST /api/onedrive/upload (Multipart stream)
-    
+
     note over Backend,Graph: Auto-Token Refresh Validation
     Backend->>Backend: Check token expiry (Date.now() >= expiresAt - 120s)
     alt Token Expired or Near Expiry
@@ -44,12 +65,12 @@ sequenceDiagram
     OneDrive-->>Graph: File created (id, size, webUrl)
     Graph-->>Backend: Return upload metadata & webUrl
     Backend-->>UI: Return HTTP 200 { success: true, file }
-    UI-->>User: Display "✓ Signed copy archived to Microsoft OneDrive"
+    UI-->>User: Display "âœ“ Signed copy archived to Microsoft OneDrive"
 ```
 
 ---
 
-## 📘 Step-by-Step OneDrive Setup Guide (Never Get Lost)
+## ðŸ“˜ Step-by-Step OneDrive Setup Guide (Never Get Lost)
 
 Follow this complete step-by-step procedure if you ever need to inspect, recreate, or reconfigure the Microsoft connection:
 
@@ -110,14 +131,14 @@ Follow this complete step-by-step procedure if you ever need to inspect, recreat
 
 ---
 
-## 🔑 Tokens, Expirations & Lifespans Explained
+## ðŸ”‘ Tokens, Expirations & Lifespans Explained
 
 Understanding the token lifecycle ensures you know exactly when and how the system remains active:
 
 ### 1. Access Token (60 to 90 Minutes — Fully Automated)
 
 - **Lifespan**: Access tokens expire every **3,600 seconds (1 hour)** for security.
-- **How It Works**: You **never** have to manually refresh this. [`backend/services/onedriveService.ts`](file:///c:/Users/johnd/Downloads/MainCode/backend/services/onedriveService.ts) runs an automatic interceptor:
+- **How It Works**: You **never** have to manually refresh this. [`backend/services/onedriveService.ts`](../../backend/services/onedriveService.ts) runs an automatic interceptor:
 
   ```typescript
   // Checks before every operation; renews 2 minutes before expiration
@@ -159,30 +180,30 @@ If the project sits completely idle for over 90 days (e.g. during summer vacatio
 
 ---
 
-## 📂 Structured Directory Hierarchy on OneDrive
+## ðŸ“‚ Structured Directory Hierarchy on OneDrive
 
 All uploaded files are automatically filed into structured institutional directories:
 
 ```text
 STI_Practicum_Archive/
-└── Practicum_AY_2025_2026/
-    └── BSIT_402/
-        └── John_Dwayne_B._Guaniso/
-            ├── Student_Application_Letter/
-            │   └── John_Dwayne_B._Guaniso_Student_Application_Letter_17883581.pdf
-            ├── Parent_Consent/
-            │   └── John_Dwayne_B._Guaniso_Parent_Consent_17883592.pdf
-            ├── Endorsement_Letter/
-            │   └── John_Dwayne_B._Guaniso_Endorsement_Letter_17883604.pdf
-            ├── MOA_Documents/
-            │   └── John_Dwayne_B._Guaniso_MOA_Template_17883610.pdf
-            └── Signed_DTR/
-                └── DTR_March_2026_Signed.xlsx
+â””â”€â”€ Practicum_AY_2025_2026/
+    â””â”€â”€ BSIT_402/
+        â””â”€â”€ John_Dwayne_B._Guaniso/
+            â”œâ”€â”€ Student_Application_Letter/
+            â”‚   â””â”€â”€ John_Dwayne_B._Guaniso_Student_Application_Letter_17883581.pdf
+            â”œâ”€â”€ Parent_Consent/
+            â”‚   â””â”€â”€ John_Dwayne_B._Guaniso_Parent_Consent_17883592.pdf
+            â”œâ”€â”€ Endorsement_Letter/
+            â”‚   â””â”€â”€ John_Dwayne_B._Guaniso_Endorsement_Letter_17883604.pdf
+            â”œâ”€â”€ MOA_Documents/
+            â”‚   â””â”€â”€ John_Dwayne_B._Guaniso_MOA_Template_17883610.pdf
+            â””â”€â”€ Signed_DTR/
+                â””â”€â”€ DTR_March_2026_Signed.xlsx
 ```
 
 ---
 
-## 🛠️ API Endpoints Reference
+## ðŸ› ï¸ API Endpoints Reference
 
 The Express backend exposes the following endpoints under `/api`:
 
@@ -201,11 +222,11 @@ The Express backend exposes the following endpoints under `/api`:
 
 | Entity / Logic | File Location | Purpose |
 | :--- | :--- | :--- |
-| **OneDrive Service** | [`backend/services/onedriveService.ts`](file:///c:/Users/johnd/Downloads/MainCode/backend/services/onedriveService.ts) | Microsoft Graph API client, auto-token refresh, upload engine |
-| **OneDrive Routes** | [`backend/routes/onedrive.ts`](file:///c:/Users/johnd/Downloads/MainCode/backend/routes/onedrive.ts) | Express REST endpoints for OAuth, status, and file uploads |
-| **Submission Storage** | [`src/lib/submissionStorage.ts`](file:///c:/Users/johnd/Downloads/MainCode/src/lib/submissionStorage.ts) | Triggers automatic OneDrive archive on letter and DTR submissions |
-| **Student UI** | [`src/components/compose/StudentDocumentPage.tsx`](file:///c:/Users/johnd/Downloads/MainCode/src/components/compose/StudentDocumentPage.tsx) | Renders upload cards with live OneDrive cloud sync indicator |
-| **Server Entry** | [`backend/server.ts`](file:///c:/Users/johnd/Downloads/MainCode/backend/server.ts) | Mounts `/api` routers with Express |
+| **OneDrive Service** | [`backend/services/onedriveService.ts`](../../backend/services/onedriveService.ts) | Microsoft Graph API client, auto-token refresh, upload engine |
+| **OneDrive Routes** | [`backend/routes/onedrive.ts`](../../backend/routes/onedrive.ts) | Express REST endpoints for OAuth, status, and file uploads |
+| **Submission Storage** | [`src/lib/submissionStorage.ts`](../../src/lib/submissionStorage.ts) | Triggers automatic OneDrive archive on letter and DTR submissions |
+| **Student UI** | [`src/components/compose/StudentDocumentPage.tsx`](../../src/components/compose/StudentDocumentPage.tsx) | Renders upload cards with live OneDrive cloud sync indicator |
+| **Server Entry** | [`backend/server.ts`](../../backend/server.ts) | Mounts `/api` routers with Express |
 
 ---
 
@@ -214,3 +235,12 @@ The Express backend exposes the following endpoints under `/api`:
 1. **Token Security Isolation**: Tokens stored in `backend/config/onedrive-token.json` and `.env` are strictly excluded from git tracking via `.gitignore`.
 2. **Offline Fallback**: If network connectivity fails during submission, documents are preserved in IndexedDB / local storage and queued for background synchronization.
 3. **Dual Storage Redundancy**: Files are uploaded to Cloudinary for high-speed web browser PDF rendering while simultaneously archiving to Microsoft OneDrive for official compliance and school backups.
+
+---
+
+## Related Documentation & Cross-References
+
+- [Backend, Database & AI Architecture](../architecture/BACKEND_AND_DATABASE.md) — Database schemas and storage security
+- [System Architecture Overview](../architecture/ARCHITECTURE.md) — System structure and Express endpoints
+- [Deployment & Vercel Guide](../deployment/DEPLOYMENT_AND_VERCEL.md) — Serverless functions and deployment gotchas
+- [System Map & Code Locator](../architecture/SYSTEM_MAP.md) — Problem-fix register and risk matrix

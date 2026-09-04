@@ -1,4 +1,24 @@
+﻿---
+title: "Cloudinary Document Storage Integration Summary"
+description: "Integration of Cloudinary CDN for Document, PDF, and Spreadsheet Blob Storage alongside Supabase PostgreSQL."
+tags:
+  - sti-ojt
+  - cloudinary
+  - blob-storage
+  - cdn
+  - document-pipeline
+  - backend
+aliases:
+  - "Cloudinary Integration"
+  - "Cloud Document Storage"
+  - "Blob Storage Architecture"
+created: 2026-08-26
+updated: 2026-09-04
+---
+
 # Cloudinary Document Storage Integration Summary
+
+[←  Back to Documentation Hub](../README.md) | [Vercel Deployment](DEPLOYMENT_AND_VERCEL.md) | [Document Workflows Spec](../architecture/DOCUMENT_WORKFLOWS.md) | [Backend Architecture](../architecture/BACKEND_AND_DATABASE.md)
 
 **Date:** August 25–26, 2026
 **Project:** STI Marikina — Web-Based Practicum Management System with AI
@@ -21,7 +41,7 @@ During this session, we integrated **Cloudinary** as the primary cloud file stor
 
 ## 2. Environment & Credentials Configuration
 
-The following environment variables were configured in [`.env`](file:///c:/Users/johnd/Downloads/MainCode/.env):
+The following environment variables were configured in [`.env`](../../.env):
 
 ```env
 # Cloudinary Credentials
@@ -56,33 +76,33 @@ sequenceDiagram
 
 ## 4. Summary of Code Changes
 
-### A. Dependencies Added ([`package.json`](file:///c:/Users/johnd/Downloads/MainCode/package.json))
+### A. Dependencies Added ([`package.json`](../../package.json))
 
 - `cloudinary` (`^2.5.0`): Server-side Cloudinary Node.js SDK.
 - `multer` (`^1.4.5-lts.1`) & `@types/multer` (`^1.4.7`): Multipart/form-data middleware for file uploads.
 
 ### B. Backend Implementation
 
-1. **[`backend/config/cloudinaryConfig.ts`](file:///c:/Users/johnd/Downloads/MainCode/backend/config/cloudinaryConfig.ts)** *(New)*:
+1. **[`backend/config/cloudinaryConfig.ts`](../../backend/config/cloudinaryConfig.ts)** *(New)*:
    - Initialized `cloudinary.v2` using environment variables.
    - Ensures `dotenv.config()` is executed before configuration evaluation.
 
-2. **[`backend/routes/cloudinary.ts`](file:///c:/Users/johnd/Downloads/MainCode/backend/routes/cloudinary.ts)** *(New)*:
+2. **[`backend/routes/cloudinary.ts`](../../backend/routes/cloudinary.ts)** *(New)*:
    - `POST /api/cloudinary/upload`: Accepts file uploads, categorizes by folder (e.g. `practicum/submissions` or `practicum/templates`), supports custom or unique timestamped public IDs, preserves file extensions, and cleans up temporary local files upon completion.
    - `DELETE /api/cloudinary/delete`: Deletes assets from Cloudinary by `publicId`.
    - `GET /api/cloudinary/url`: Generates secure CDN URLs deterministically via the Cloudinary SDK.
 
-3. **[`backend/server.ts`](file:///c:/Users/johnd/Downloads/MainCode/backend/server.ts)** *(Modified)*:
+3. **[`backend/server.ts`](../../backend/server.ts)** *(Modified)*:
    - Mounted `cloudinaryRouter` under `/api` alongside the existing `/api/analyze` AI route.
 
 ### C. Frontend Storage Layer Migration
 
-1. **[`src/lib/submissionStorage.ts`](file:///c:/Users/johnd/Downloads/MainCode/src/lib/submissionStorage.ts)** *(Modified)*:
+1. **[`src/lib/submissionStorage.ts`](../../src/lib/submissionStorage.ts)** *(Modified)*:
    - `uploadSubmission()`: Routes document submissions (`.pdf`, `.docx`) through `/api/cloudinary/upload?folder=practicum/submissions` and persists the Cloudinary HTTPS URL in Supabase DB.
    - `publishSignedDTR()`: Converts supervisor-signed Excel timesheets (`.xlsx`) to a Blob, uploads to Cloudinary, and saves the CDN URL.
    - `getFileUrl()`: Returns direct Cloudinary URLs when `filePath.startsWith('http')`, preserving Supabase Storage compatibility for legacy entries.
 
-2. **[`src/lib/templateStorage.ts`](file:///c:/Users/johnd/Downloads/MainCode/src/lib/templateStorage.ts)** *(Modified)*:
+2. **[`src/lib/templateStorage.ts`](../../src/lib/templateStorage.ts)** *(Modified)*:
    - `saveTemplateFile()`: Uploads custom master templates (`.docx`, `.pdf`, `.xlsx`) to Cloudinary under `practicum/templates/` while keeping local IndexedDB for zero-latency preview caching.
    - `getTemplateFile()` & `getTemplatePdfBackup()`: Resolves files from IndexedDB cache first, then fetches from Cloudinary CDN URL, falling back to legacy Supabase Storage.
    - `deleteTemplate()`: Purges template files from Cloudinary, Supabase Storage, and IndexedDB simultaneously.
@@ -109,3 +129,13 @@ An end-to-end verification script was executed against the live Cloudinary serve
 - Ran `npm run dev` concurrently:
   - **Frontend (Vite):** Running on `http://localhost:3000/`
   - **Backend (Express + Cloudinary + AI Review):** Running on `http://localhost:3001/`
+
+---
+
+## Related Documentation & Cross-References
+
+- [Vercel Deployment Guide](DEPLOYMENT_AND_VERCEL.md) — Serverless backend and environment configuration
+- [02. Digital Document Generation Pipeline](../features/02_DOCUMENT_PIPELINE.md) — Student document upload and preview
+- [03. DTR Attendance & Signature Fitting](../features/03_DTR_ATTENDANCE_SIGNATURE.md) — Signed timesheet spreadsheet storage
+- [Document Workflows Spec](../architecture/DOCUMENT_WORKFLOWS.md) — Template storage and fallbacks
+- [Backend, Database & AI Architecture](../architecture/BACKEND_AND_DATABASE.md) — Supabase PostgreSQL schema and storage buckets

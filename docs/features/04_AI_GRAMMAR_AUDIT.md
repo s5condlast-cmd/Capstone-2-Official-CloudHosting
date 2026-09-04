@@ -1,10 +1,30 @@
+﻿---
+title: "AI-Assisted Document & Grammar Review Documentation"
+description: "AI Document Auditing Assistant, backend text extraction pipeline, and dual-model LLM architecture (Groq llama-3.3 + Gemini fallback)."
+tags:
+  - sti-ojt
+  - ai-review
+  - groq
+  - gemini
+  - llama-3.3
+  - grammar-audit
+aliases:
+  - "AI Grammar Audit"
+  - "AI Review Assistant"
+  - "Document Auditor"
+created: 2026-08-26
+updated: 2026-09-04
+---
+
 # 🤖 AI-Assisted Document & Grammar Review Documentation
+
+[←  Back to Features Hub](README.md) | [Documentation Hub](../README.md) | [Adviser Review Rooms](05_ADVISER_SUPERVISOR_REVIEW.md) | [Backend Architecture](../architecture/BACKEND_AND_DATABASE.md)
 
 A complete technical breakdown of the **AI Document Auditing Assistant**, backend text extraction pipeline, and dual-model LLM architecture (Groq + Gemini fallback).
 
 ---
 
-## 🌟 Feature Overview
+## ðŸŒŸ Feature Overview
 
 To assist practicum coordinators and faculty advisers in reviewing hundreds of student documents and weekly journals, the system features an automated AI compliance and grammar auditor:
 
@@ -14,7 +34,7 @@ To assist practicum coordinators and faculty advisers in reviewing hundreds of s
 
 ---
 
-## 🏗️ Architecture & AI Pipeline Dataflow
+## ðŸ—ï¸ Architecture & AI Pipeline Dataflow
 
 ```mermaid
 sequenceDiagram
@@ -33,7 +53,7 @@ sequenceDiagram
     Backend->>Backend: Download PDF array buffer from CDN
     Backend->>Parser: Extract raw plain text from PDF
     Parser-->>Backend: Return document text content
-    
+
     alt Primary Provider (Groq)
         Backend->>Groq: Prompt with strict JSON schema (temp 0.1)
         Groq-->>Backend: Return structured grammar & audit findings
@@ -49,7 +69,7 @@ sequenceDiagram
 
 ---
 
-## 🔍 How It Works Under the Hood
+## ðŸ” How It Works Under the Hood
 
 ### 1. Text Extraction (`pdf-parse`)
 
@@ -64,12 +84,12 @@ const documentText = pdfData.text;
 
 ### 2. Dual-Model Evaluation (`aiService.ts`)
 
-* **Primary Engine: Groq (`llama-3.3-70b-versatile`)**:
-  * Temperature: `0.1` (low temperature for deterministic, hallucination-free grammar checks).
-  * Response Format: `json_object` enforcing structured feedback.
-* **Secondary Fallback: Google Gemini (`gemini-1.5-flash`)**:
-  * Activated automatically if Groq experiences API rate limits (HTTP 429), timeouts, or network outages.
-  * Ensures 100% audit uptime for academic faculty.
+- **Primary Engine: Groq (`llama-3.3-70b-versatile`)**:
+  - Temperature: `0.1` (low temperature for deterministic, hallucination-free grammar checks).
+  - Response Format: `json_object` enforcing structured feedback.
+- **Secondary Fallback: Google Gemini (`gemini-1.5-flash`)**:
+  - Activated automatically if Groq experiences API rate limits (HTTP 429), timeouts, or network outages.
+  - Ensures 100% audit uptime for academic faculty.
 
 ---
 
@@ -98,8 +118,8 @@ The AI returns a normalized JSON object that the frontend renders into interacti
 
 ### 4. Interactive Review Panel (`GrammarReviewPanel.tsx`)
 
-* Displays side-by-side comparisons of the original student text and recommended fixes.
-* Advisers can click **"Apply Suggestion"** to insert the feedback directly into the adviser remarks comment box.
+- Displays side-by-side comparisons of the original student text and recommended fixes.
+- Advisers can click **"Apply Suggestion"** to insert the feedback directly into the adviser remarks comment box.
 
 ---
 
@@ -107,10 +127,10 @@ The AI returns a normalized JSON object that the frontend renders into interacti
 
 | Entity / Logic | File Location | Purpose |
 | :--- | :--- | :--- |
-| **API Route** | [`backend/routes/analyze.ts`](https://github.com/s5condlast-cmd/Capstone-2-Official-CloudHosting/blob/feature/landing-page-fixes/backend/routes/analyze.ts) | Express route `POST /api/analyze` |
-| **AI Service Provider** | [`backend/services/aiService.ts`](https://github.com/s5condlast-cmd/Capstone-2-Official-CloudHosting/blob/feature/landing-page-fixes/backend/services/aiService.ts) | Groq and Gemini SDK orchestrator |
-| **Review Panel Component** | [`src/components/review/GrammarReviewPanel.tsx`](https://github.com/s5condlast-cmd/Capstone-2-Official-CloudHosting/blob/feature/landing-page-fixes/src/components/review/GrammarReviewPanel.tsx) | Interactive suggestion UI for faculty |
-| **Adviser Review Page** | [`src/pages/adviser/ReviewDocuments.tsx`](https://github.com/s5condlast-cmd/Capstone-2-Official-CloudHosting/blob/feature/landing-page-fixes/src/pages/adviser/ReviewDocuments.tsx) | Split-view document inspection room |
+| **API Route** | [`backend/routes/analyze.ts`](../../backend/routes/analyze.ts) | Express route `POST /api/analyze` |
+| **AI Service Provider** | [`backend/services/aiService.ts`](../../backend/services/aiService.ts) | Groq and Gemini SDK orchestrator |
+| **Review Panel Component** | [`src/components/review/AiAssistantPanel.tsx`](../../src/components/review/AiAssistantPanel.tsx) | Interactive suggestion UI for faculty |
+| **Adviser Review Page** | [`src/pages/adviser/ReviewDocs.tsx`](../../src/pages/adviser/ReviewDocs.tsx) | Split-view document inspection room |
 
 ---
 
@@ -119,3 +139,12 @@ The AI returns a normalized JSON object that the frontend renders into interacti
 1. **Non-Destructive**: The AI never alters the student's document automatically. It only provides advisory suggestions to the faculty member.
 2. **Environment Variable Safeguards**: The backend gracefully checks for `VITE_GROQ_API_KEY` and `GEMINI_API_KEY`. If keys are missing, it returns a helpful diagnostic error instead of crashing.
 3. **Database Audit Trail**: All audit findings are stored in Supabase under `student_documents.ai_findings` for historical review.
+
+---
+
+## Related Documentation & Cross-References
+
+- [05. Adviser & Supervisor Review Rooms](05_ADVISER_SUPERVISOR_REVIEW.md) — Review room and audit interface
+- [Backend, Database & AI Architecture](../architecture/BACKEND_AND_DATABASE.md) — Serverless AI routes and table schemas
+- [System Architecture Overview](../architecture/ARCHITECTURE.md) — High-level architecture and API services
+- [System Map & Code Locator](../architecture/SYSTEM_MAP.md) — Problem-fix register and direct routes

@@ -1,6 +1,26 @@
+﻿---
+title: "Deployment & Vercel Configuration"
+description: "Vercel serverless configuration, Express backend gotchas, environment variables checklist, and redeploy safeguards."
+tags:
+  - sti-ojt
+  - deployment
+  - vercel
+  - serverless
+  - environment-variables
+  - vite
+aliases:
+  - "Vercel Deployment"
+  - "Deployment Guide"
+  - "Vercel Serverless"
+created: 2026-08-26
+updated: 2026-09-04
+---
+
 # Deployment & Vercel Configuration
 
-Verified against actual [`vercel.json`](file:///c:/Users/johnd/Downloads/MainCode/vercel.json), [`backend/server.ts`](file:///c:/Users/johnd/Downloads/MainCode/backend/server.ts), [`api/server.ts`](file:///c:/Users/johnd/Downloads/MainCode/api/server.ts), and [`vite.config.ts`](file:///c:/Users/johnd/Downloads/MainCode/vite.config.ts).
+[←  Back to Documentation Hub](../README.md) | [Cloudinary Integration](CLOUDINARY_INTEGRATION_SUMMARY.md) | [System Architecture](../architecture/ARCHITECTURE.md) | [Backend Architecture](../architecture/BACKEND_AND_DATABASE.md)
+
+Verified against actual [`vercel.json`](../../vercel.json), [`backend/server.ts`](../../backend/server.ts), [`api/server.ts`](../../api/server.ts), and [`vite.config.ts`](../../vite.config.ts).
 
 ---
 
@@ -24,8 +44,8 @@ Verified against actual [`vercel.json`](file:///c:/Users/johnd/Downloads/MainCod
 | Key | Value | Purpose |
 | :--- | :--- | :--- |
 | `outputDirectory` | `"dist"` | **Must be explicit**. Prevents Vercel from searching `public/` if framework preset is misconfigured. |
-| Rewrite 1 | `/api/:path*` → `/api/server` | All API calls route to the serverless function at `api/server.ts` |
-| Rewrite 2 | `/(.*)` → `/index.html` | SPA client-side routing fallback |
+| Rewrite 1 | `/api/:path*` ← ’ `/api/server` | All API calls route to the serverless function at `api/server.ts` |
+| Rewrite 2 | `/(.*)` ← ’ `/index.html` | SPA client-side routing fallback |
 
 ---
 
@@ -74,7 +94,8 @@ export default app;
 | `CLOUDINARY_API_KEY` | Cloudinary API key |
 | `CLOUDINARY_API_SECRET` | Cloudinary API secret |
 
-> **Note**: Vite only exposes `VITE_*` prefixed env vars to the frontend build. `GEMINI_API_KEY` is explicitly passed via `vite.config.ts` `define` block.
+> [!NOTE]
+> Vite only exposes `VITE_*` prefixed env vars to the frontend build. `GEMINI_API_KEY` is explicitly passed via `vite.config.ts` `define` block.
 
 ---
 
@@ -87,7 +108,7 @@ Runs **concurrently**:
 1. Vite frontend on `http://localhost:3000` (default Vite port)
 2. Express backend on `http://localhost:3001`
 
-API proxying in [`vite.config.ts`](file:///c:/Users/johnd/Downloads/MainCode/vite.config.ts):
+API proxying in [`vite.config.ts`](../../vite.config.ts):
 
 ```typescript
 server: {
@@ -115,18 +136,18 @@ watch: { ignored: ['**/Templates-*/**'] }
 ## 5. Build Pipeline
 
 ```bash
-npm run build   # → vite build → outputs to dist/
+npm run build   # ← ’ vite build ← ’ outputs to dist/
 ```
 
 Vercel runs this automatically. The output is:
 
 ```plaintext
 dist/
-├── index.html
-├── assets/
-│   ├── index-[hash].js
-│   └── index-[hash].css
-└── ... (static assets from public/)
+â”œâ”€â”€ index.html
+â”œâ”€â”€ assets/
+â”‚   â”œâ”€â”€ index-[hash].js
+â”‚   â””â”€â”€ index-[hash].css
+â””â”€â”€ ... (static assets from public/)
 ```
 
 ---
@@ -135,7 +156,7 @@ dist/
 
 ### 1. The "Redeploy" Trap
 
-**Problem**: User pushes a fix but clicks "Redeploy" in the Vercel dashboard → Vercel re-runs the **same old commit**.  
+**Problem**: User pushes a fix but clicks "Redeploy" in the Vercel dashboard ← ’ Vercel re-runs the **same old commit**.
 **Solution**: Push an empty commit to trigger a fresh webhook:
 
 ```bash
@@ -144,12 +165,12 @@ git commit --allow-empty -m "force vercel update" && git push
 
 ### 2. Missing `outputDirectory`
 
-**Problem**: If `outputDirectory` is removed from `vercel.json`, Vercel may look for a `public/` directory instead of `dist/`.  
+**Problem**: If `outputDirectory` is removed from `vercel.json`, Vercel may look for a `public/` directory instead of `dist/`.
 **Solution**: Always keep `"outputDirectory": "dist"` explicitly in `vercel.json`.
 
 ### 3. Port Collision
 
-**Problem**: `app.listen()` runs inside Vercel serverless → silent crash.  
+**Problem**: `app.listen()` runs inside Vercel serverless ← ’ silent crash.
 **Solution**: The `if (!process.env.VERCEL)` guard is already in place. Never remove it.
 
 ### 4. Git Push Protocol
@@ -166,3 +187,12 @@ git commit --allow-empty -m "force vercel update" && git push
 | :--- | :--- |
 | Remote origin | `https://github.com/s5condlast-cmd/Capstone-2-Official-CloudHosting.git` |
 | Branching strategy | Always create feature branches. Never commit directly to `main`. |
+
+---
+
+## Related Documentation & Cross-References
+
+- [Cloudinary Document Storage Integration](CLOUDINARY_INTEGRATION_SUMMARY.md) — Cloud document storage and CDN delivery
+- [08. Auth, OTP & OneDrive Sync](../features/08_AUTH_AND_ONEDRIVE_SYNC.md) — Institutional security and Microsoft Graph backup
+- [Backend, Database & AI Architecture](../architecture/BACKEND_AND_DATABASE.md) — Supabase PostgreSQL schema and AI routes
+- [System Architecture Overview](../architecture/ARCHITECTURE.md) — High-level architecture and directory map

@@ -1,4 +1,24 @@
+---
+title: "DTR Attendance & Signature Fitting Documentation"
+description: "Daily Time Record (DTR) tracking toward 460 hours, supervisor canvas signature capture, and ExcelJS luminance stroke cropping."
+tags:
+  - sti-ojt
+  - dtr
+  - attendance
+  - signatures
+  - exceljs
+  - luminance-filter
+aliases:
+  - "DTR Attendance"
+  - "Daily Time Record"
+  - "Signature Fitting"
+created: 2026-08-26
+updated: 2026-09-04
+---
+
 # ⏱️ DTR Attendance & Signature Fitting Documentation
+
+[← Back to Features Hub](README.md) | [Documentation Hub](../README.md) | [Student Checklist](01_STUDENT_PORTAL_CHECKLIST.md) | [Supervisor Review](05_ADVISER_SUPERVISOR_REVIEW.md) | [Document Workflows Spec](../architecture/DOCUMENT_WORKFLOWS.md)
 
 A technical guide on the **Daily Time Record (DTR)** tracking system, work hour computation toward 460 hours, supervisor digital canvas signing, and Excel spreadsheet signature embedding.
 
@@ -36,19 +56,19 @@ graph TD
 
 ### 1. Cumulative Hour Tracking (`DailyTimeRecord.tsx`)
 
-* Automatically calculates daily work duration based on 4 punch timestamps:
+- Automatically calculates daily work duration based on 4 punch timestamps:
   $$\text{Rendered Hours} = (\text{TimeOut}_{\text{AM}} - \text{TimeIn}_{\text{AM}}) + (\text{TimeOut}_{\text{PM}} - \text{TimeIn}_{\text{PM}})$$
-* Enforces standard work shifts (typically 8 hours/day).
-* Aggregates total completed hours against the 460-hour graduation requirement:
+- Enforces standard work shifts (typically 8 hours/day).
+- Aggregates total completed hours against the 460-hour graduation requirement:
   $$\text{Progress \%} = \left(\frac{\text{Total Hours Logged}}{460}\right) \times 100$$
 
 ---
 
-### 2. Supervisor Canvas Signature Capture (`SignatureCanvas.tsx`)
+### 2. Supervisor Canvas Signature Capture (`DTRApproval.tsx`)
 
-* Supervisors draw their signature using mouse or touchscreen inputs.
-* Signatures can also be uploaded as transparent PNG images.
-* Captured as a high-resolution data URI string (`data:image/png;base64,...`).
+- Supervisors draw their signature using mouse or touchscreen inputs.
+- Signatures can also be uploaded as transparent PNG images.
+- Captured as a high-resolution data URI string (`data:image/png;base64,...`).
 
 ---
 
@@ -88,10 +108,9 @@ Embedding raw signature drawings into Excel spreadsheets often causes alignment 
 
 | Component / Utility | File Location | Purpose |
 | :--- | :--- | :--- |
-| **Student DTR Page** | [`src/pages/student/DailyTimeRecord.tsx`](https://github.com/s5condlast-cmd/Capstone-2-Official-CloudHosting/blob/feature/landing-page-fixes/src/pages/student/DailyTimeRecord.tsx) | Daily time entry, punch logs, progress tracker |
-| **Supervisor Approval** | [`src/pages/supervisor/DTRApproval.tsx`](https://github.com/s5condlast-cmd/Capstone-2-Official-CloudHosting/blob/feature/landing-page-fixes/src/pages/supervisor/DTRApproval.tsx) | Supervisor inspection and signature canvas |
-| **Canvas Signature Primitive** | [`src/components/review/SignatureCanvas.tsx`](https://github.com/s5condlast-cmd/Capstone-2-Official-CloudHosting/blob/feature/landing-page-fixes/src/components/review/SignatureCanvas.tsx) | Touch/mouse drawing component |
-| **Excel Generation Engine** | [`src/utils/excelGenerator.ts`](https://github.com/s5condlast-cmd/Capstone-2-Official-CloudHosting/blob/feature/landing-page-fixes/src/utils/excelGenerator.ts) | ExcelJS workbook creation and signature fitting |
+| **Student DTR Page** | [`src/pages/student/DTR.tsx`](../../src/pages/student/DTR.tsx) | Daily time entry, punch logs, progress tracker |
+| **Supervisor Approval** | [`src/pages/supervisor/DTRApproval.tsx`](../../src/pages/supervisor/DTRApproval.tsx) | Supervisor inspection and signature canvas |
+| **Excel Generation Engine** | [`src/lib/excelGenerator.ts`](../../src/lib/excelGenerator.ts) | ExcelJS workbook creation and signature fitting |
 
 ---
 
@@ -100,3 +119,12 @@ Embedding raw signature drawings into Excel spreadsheets often causes alignment 
 1. **Integer Column Anchors**: Always anchor column 6.0 to 7.0. Never use fractional numbers like 6.2.
 2. **Strict Scope**: Luminance signature cropping must only be applied to DTR Approval (`DTRApproval.tsx`) and spreadsheet generation (`excelGenerator.ts`); do not alter other review pages like Weekly Journal Review.
 3. **No Overwrite Without Approval**: Once signed by the supervisor, attendance rows are locked from student edits.
+
+---
+
+## Related Documentation & Cross-References
+
+- [01. Student Portal & Checklist](01_STUDENT_PORTAL_CHECKLIST.md) — Student journey and requirements tracking
+- [05. Adviser & Supervisor Review Rooms](05_ADVISER_SUPERVISOR_REVIEW.md) — Supervisor approval workflow and sign-offs
+- [Document Workflows Architecture](../architecture/DOCUMENT_WORKFLOWS.md) — Excel DTR signature fitting protocol
+- [Cloudinary Document Storage Integration](../deployment/CLOUDINARY_INTEGRATION_SUMMARY.md) — Supervisor-signed DTR spreadsheet CDN storage

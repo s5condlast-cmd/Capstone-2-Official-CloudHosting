@@ -1,4 +1,23 @@
+---
+title: "Task History & Changelog"
+description: "Chronological record of completed tasks, refactors, bug fixes, and architectural milestones."
+tags:
+  - sti-ojt
+  - task-history
+  - changelog
+  - milestones
+  - sprint-history
+aliases:
+  - "Task History"
+  - "Changelog"
+  - "Completed Tasks"
+created: 2026-08-26
+updated: 2026-09-04
+---
+
 # 📜 Task History & Changelog
+
+[←  Back to Active Tasks](TASKS.md) | [Documentation Hub](../README.md) | [All Sessions History](../sessions/ALL_SESSIONS_HISTORY.md)
 
 A historical record of completed tasks, refactors, bug fixes, and architectural milestones for the **Capstone-2 CloudHosting OJT Management System**.
 
@@ -6,7 +25,7 @@ A historical record of completed tasks, refactors, bug fixes, and architectural 
 
 ## 📅 September 2, 2026
 
-### 🗓️ Add Event Modal & Date/Time Picker Polish
+### ðŸ—“ï¸ Add Event Modal & Date/Time Picker Polish
 
 - [x] **shadcn DatePickerSimple Integration**:
   - Connected shadcn `<Popover>` + `<Calendar mode="single" captionLayout="dropdown" />` to the Add Event form.
@@ -35,7 +54,7 @@ A historical record of completed tasks, refactors, bug fixes, and architectural 
 
 ---
 
-### ☁️ Microsoft OneDrive & Graph API Cloud Archival Integration
+### â˜ï¸ Microsoft OneDrive & Graph API Cloud Archival Integration
 
 - [x] **Credit-Card-Free Azure Activation**:
   - Unlocked free Microsoft Entra ID directory via **Azure for Students** academic verification (`@marikina.sti.edu.ph`) with \$0 cost and zero payment information required.
@@ -43,13 +62,13 @@ A historical record of completed tasks, refactors, bug fixes, and architectural 
   - Registered confidential client application (`fbe81653-8deb-44da-a644-3cff2e4696a4`) supporting both organizational and personal accounts.
   - Configured `Files.ReadWrite.All` application permissions and OAuth2 Web redirect URIs (`http://localhost:3001/api/onedrive/auth/callback`).
 - [x] **Automated Auto-Refreshing Backend Engine**:
-  - Created [`backend/services/onedriveService.ts`](file:///c:/Users/johnd/Downloads/MainCode/backend/services/onedriveService.ts) with silent token rotation refreshing 2 minutes prior to expiration (`offline_access`).
+  - Created [`backend/services/onedriveService.ts`](../../backend/services/onedriveService.ts) with silent token rotation refreshing 2 minutes prior to expiration (`offline_access`).
   - Implemented `testOneDriveConnection()` for live quota and storage health diagnostics.
 - [x] **OneDrive REST API Routes**:
-  - Implemented [`backend/routes/onedrive.ts`](file:///c:/Users/johnd/Downloads/MainCode/backend/routes/onedrive.ts) providing `GET /api/onedrive/auth/login`, callback handler, `GET /api/onedrive/status`, and multipart `POST /api/onedrive/upload`.
+  - Implemented [`backend/routes/onedrive.ts`](../../backend/routes/onedrive.ts) providing `GET /api/onedrive/auth/login`, callback handler, `GET /api/onedrive/status`, and multipart `POST /api/onedrive/upload`.
   - Mounted router on `/api` in `backend/server.ts`.
 - [x] **Automated Signed Letter & DTR Archiving**:
-  - Integrated student document uploads in [`src/lib/submissionStorage.ts`](file:///c:/Users/johnd/Downloads/MainCode/src/lib/submissionStorage.ts) to automatically mirror signed Application Letters, Consent Forms, and DTR spreadsheets into structured OneDrive paths (`STI_Practicum_Archive/<AY>/<Section>/<Student>/...`).
+  - Integrated student document uploads in [`src/lib/submissionStorage.ts`](../../src/lib/submissionStorage.ts) to automatically mirror signed Application Letters, Consent Forms, and DTR spreadsheets into structured OneDrive paths (`STI_Practicum_Archive/<AY>/<Section>/<Student>/...`).
   - Added live OneDrive sync indicators to the student upload interface in `StudentDocumentPage.tsx`.
 - [x] **Zero-Leak Security Hardening**:
   - Protected `.env` and `backend/config/onedrive-token.json` via `.gitignore`.
@@ -60,7 +79,7 @@ A historical record of completed tasks, refactors, bug fixes, and architectural 
 
 ## 📅 September 1, 2026
 
-### 🎨 Calendar Page Alignment & UI Restoration
+### ðŸŽ¨ Calendar Page Alignment & UI Restoration
 
 - [x] **Restored Sidebar Mini Calendar**: Re-implemented standard shadcn `<Calendar />` in sidebar.
 - [x] **Circular Category Check Badges**: Converted rectangular badges to clean circular check chips matching shadcn design tokens.
@@ -96,3 +115,11 @@ A historical record of completed tasks, refactors, bug fixes, and architectural 
   - [ ] Authentication & Security (Microsoft 365 SSO + Institutional OTP)
   - [ ] Automated Emailing System (Microsoft Graph Outlook Mail `Mail.Send`)
   - [x] Microsoft OneDrive Integration (Microsoft Graph API, cloud document sync & backup)
+
+---
+
+## Related Documentation & Cross-References
+
+- [Active Tasks & Roadmap](TASKS.md) — Ongoing sprints and backlog
+- [All Sessions History](../sessions/ALL_SESSIONS_HISTORY.md) — Comprehensive session archive
+- [Master Documentation Hub](../README.md) — Central documentation portal
