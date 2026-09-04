@@ -1,161 +1,95 @@
-# WEB‑BASED PRACTICUM SYSTEM WITH AI‑ASSISTED VALIDATION AND COMPLIANCE MONITORING
+---
+title: "Web-Based Practicum System with AI-Assisted Validation and Compliance Monitoring"
+description: "Official Capstone Project Proposal document and structural outline for STI College Marikina."
+tags:
+  - sti-ojt
+  - capstone-proposal
+  - academic-spec
+  - proposal-defense
+aliases:
+  - "Capstone Proposal"
+  - "Main Proposal Document"
+created: 2026-05-23
+updated: 2026-09-04
+---
 
-FOR STI MARIKINA
+# Web-Based Practicum System with AI-Assisted Validation and Compliance Monitoring for STI Marikina
 
-A Capstone Project Proposal
+[←  Back to Documentation Hub](../README.md) | [Refactoring Guidelines](REFACTORING_GUIDELINES.md) | [System Architecture](../architecture/ARCHITECTURE.md)
 
-Presented to the Faculty of the
-
-Information and Communications Technology Program
-
+**A Capstone Project Proposal**
+Presented to the Faculty of the Information and Communications Technology Program
 STI College Marikina
 
-In Partial Fulfilment
+In Partial Fulfillment of the Requirements for the Degree of **Bachelor of Science in Information Technology**
 
-of the Requirements for the Degree
+**Proponents:**
+- Kerin Gabriel del Rosario
+- John Dwayne Guaniso
+- Jiro Salvan
 
-Bachelor of Science in Information Technology
+**Date:** May 23, 2026
 
-Kerin Gabriel del Rosario
+---
 
-John Dwayne Guaniso
+## Endorsement Form for Proposal Defense
 
-Jiro Salvan
+- **Title of Research**: Web-Based Practicum System with AI-Assisted Validation and Compliance Monitoring for STI Marikina
+- **Proponents**: Kerin Gabriel del Rosario, John Dwayne Guaniso, Jiro Salvan
+- **Degree**: Bachelor of Science in Information Technology
+- **Status**: Examined and recommended for Proposal Defense
 
-May 23, 2026
+**Endorsed by:**
+- Dave Lord Rubaya — *Capstone Project Adviser*
 
-ENDORSEMENT FORM FOR PROPOSAL DEFENSE
+**Approved for Proposal Defense:**
+- Dr. Frederic D. Yulo — *Capstone Project Coordinator*
 
-TITLE OF RESEARCH:  Web‑Based Practicum System with AI‑Assisted Validation and Compliance Monitoring for STI Marikina
+**Noted by:**
+- Mr. Dave Lord Rubaya — *Program Head*
 
-NAME OF PROPONENTS: Kerin Gabriel del Rosario
+---
 
-John Dwayne Guaniso
+## Approval Sheet
 
-Jiro Salvan  
+This capstone project proposal titled *Web-Based Practicum System with AI-Assisted Validation and Compliance Monitoring for STI Marikina*, prepared and submitted by Kerin Gabriel B. del Rosario, John Dwayne Guaniso, and Jiro Salvan in partial fulfillment of the requirements for the degree of Bachelor of Science in Information Technology, has been examined and is recommended for acceptance and approval.
 
-In Partial Fulfilment of the Requirements  
+**Adviser:**
+- Dave Lord Rubaya — *Capstone Project Adviser*
 
-for the degree Bachelor of Science in Information Technology
+**Capstone Project Review Panel:**
+- Mr. Mark Saledio — *Lead Panelist*
+- Dr. Frederic D. Yulo — *Panel Member / Capstone Project Coordinator*
+- Mr. Warren Marklou Rosqueta — *Panel Member*
 
-has been examined and is recommended for Proposal Defense.
+**Noted:**
+- Mr. Dave Lord Rubaya — *Program Head*
 
-ENDORSED BY:
+---
 
-Dave Lord Rubaya
+## Table of Contents
 
-Capstone Project Adviser
+| Section | Page |
+| :--- | :--- |
+| Title Page | i |
+| Endorsement Form for Proposal Defense | ii |
+| Approval Sheet | iii |
+| Table of Contents | iv |
+| Introduction | 1 |
+| Project Context | 4 |
+| Purpose and Description | 4 |
+| Objectives | 6 |
+| Scope and Limitations | 6 |
+| Review of Related Literature/Studies/Systems | 7 |
+| Technical Background | 18 |
+| Requirements Analysis & Documentation | 20 |
+| Design of Software, System, Product, and/or Processes | 24 |
+| References & Appendices | 30 |
 
-APPROVED FOR PROPOSAL DEFENSE:
+---
 
-Dr. Frederic D. Yulo
+## Related Documentation & Cross-References
 
-Capstone Project Coordinator
-
-NOTED BY:
-
-Mr. Dave Lord Rubaya
-
-Program Head
-
-MAY 23, 2026
-
-APPROVAL SHEET
-
-This capstone project proposal titled Web‑Based Practicum System with AI‑Assisted Validation and Compliance Monitoring for STI Marikina, prepared and submitted by Kerin Gabriel B. del Rosario, John Dwayne Guaniso, and Jiro Salvan in partial fulfillment of the requirements for the degree of Bachelor of Science in Information Technology, has been examined and is recommended for acceptance and approval.
-
-Dave Lord Rubaya
-
-Capstone Project Adviser
-
-Accepted and approved by the Capstone Project Review Panel
-
-in partial fulfillment of the requirements for the degree of  
-
-Bachelor of Science in Information Technology
-
-Dr. Frederic D. Yulo
-
-Mr. Warren Marklou Rosqueta
-
-Panel Member
-
-Panel Member
-
-Mr. Mark Saledio
-
-Lead Panelist
-
-Noted:
-
-Dr Frederic D. Yulo
-
-Mr. Dave Lord Rubaya
-
-Capstone Project Coordinator
-
-Program Head
-
-May 23, 2026
-
-Table of Contents
-
-Page
-
-Title Page
-
-i
-
-Endorsement form for Proposal Defense
-
-ii
-
-Approval Sheet
-
-iii
-
-Table of Contents
-
-iv
-
-Introduction
-
-1
-
-Project Context
-
-4
-
-Purpose and Description
-
-4
-
-Objectives
-
-6
-
-Scope and Limitations
-
-Review of Related Literature/Studies/Systems
-
-7
-
-Methodology
-
-Technical Background
-
-18
-
-Requirements Analysis
-
-Requirements Documentation
-
-Design of Software, System, Product, and/or Processes
-
-References
-
-Appendices
-
-Resource Persons
-
-Personal Technical Vitae
+- [Refactoring & Development Guidelines](REFACTORING_GUIDELINES.md) — Technical standards and engineering conventions
+- [System Architecture Specification](../architecture/ARCHITECTURE.md) — Full-stack system architecture and component models
+- [Master Documentation Hub](../README.md) — Central index of all project features and technical guides
