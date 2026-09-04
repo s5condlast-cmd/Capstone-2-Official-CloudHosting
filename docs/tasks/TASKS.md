@@ -122,8 +122,35 @@ updated: 2026-09-04
 
 ---
 
-## Next Promt
+## 🎓 Capstone Manuscript & Paper Alignment (Main_Document.md)
 
-- [ ] all add a md that explains api keys, naming convesion the follows the everything and how it works how you did the codes everything no missing for my capstone if the panelist answer make it simple and easy to understand
+- [ ] **Task 1: Institutional Templates Matrix Alignment (Scope & Limitations)**
+  - [ ] Update Section 1.4 & 1.5 in `Main_Document.md` from generic document mentions to the official **13 Institutional Templates Matrix**
+  - [ ] Structure by Practicum Phase: Phase 1: Before OJT (8 templates), Phase 2: In OJT (3 templates), Phase 3: Finals (2 templates)
+  - [ ] Detail document format (.docx, .xlsx, .pdf), state gates, and compliance approval sequence
+- [ ] **Task 2: Technical Background & Software Resources Rectification**
+  - [ ] Replace `React 18 / Next.js 15 API routes` with **React 19.0 + Vite 6.0 + Express.js REST API Server** (`backend/server.ts`) with Vercel serverless proxy
+  - [ ] Replace `Tailwind v3.4.4` with **Tailwind CSS v4.0** and theme variables (`--theme-primary`)
+  - [ ] Replace `Groq Whisper` with browser native **Web Speech API** for zero-latency reflection dictation
+  - [ ] Document **Dual-Model Fallback AI Architecture**: Primary Groq Llama-3.3-70B with automatic failover to Google Gemini 1.5 Flash
+  - [ ] Document **Cloudinary CDN** for raw document blob storage and **Microsoft Graph API** for institutional OneDrive sync
+- [ ] **Task 3: System Innovations & Advanced Algorithms Documentation**
+  - [ ] Document the **In-Browser DOCX Editing & Generation Pipeline** (`docx-preview` DOM TreeWalker placeholder parsing + `JSZip` XML surgery + `easy-template-x` tagged substitution without MS Office)
+  - [ ] Document the **DTR Attendance & Signature Fitting Engine** (HTML5 Canvas + Dark-Ink Stroke Luminance Filtering `alpha > 30 && (r < 200 || g < 200 || b < 200)` + ExcelJS 1:1 cell border anchoring)
+  - [ ] Document the **Automated OneDrive Archival Directory Structure** (`STI_Practicum_Archive / AY_YYYY_YYYY / Section / Student_ID / Phase`)
+- [ ] **Task 4: Figure & Diagram Numbering De-Collision**
+  - [ ] Resolve duplicate Figure 15: Preserve `Figure 15: Web-based Practicum System ERD Diagram`
+  - [ ] Renumber `Figure 15. Landing Page StoryBoard` to `Figure 17. Landing Page Storyboard` and increment subsequent storyboard figures (Figures 18–31)
+- [ ] **Task 5: Appendices Population (Empty Appendix Pages)**
+  - [ ] Populate **Appendix A (Resource Persons)**: Formal table of resource persons and interviewed faculty (Dave Lord Rubaya, Emilou Magnaye, Regina Kate Dominguez, Michael Sayson)
+  - [ ] Populate **Appendix B (Personal Technical Vitae)**: Complete curriculum vitae for proponents Kerin Gabriel del Rosario, John Dwayne Guaniso, and Jiro Salvan using standard STI CV format
+  - [ ] Link survey charts and adviser interview transcripts to functional requirements matrix
 
+---
 
+## 📚 Completed Milestone: Panelist Defense Manual & System Guide
+
+- [x] **Master Capstone Defense Guide & API Keys Manual**:
+  - [x] Created [`docs/PANELIST_DEFENSE_AND_SYSTEM_GUIDE.md`](../PANELIST_DEFENSE_AND_SYSTEM_GUIDE.md) covering all 11 API keys, universal naming conventions, end-to-end code mechanics, and plain-language Q&A cheatsheet
+  - [x] Linked into `README.md` and `docs/README.md`
+  - [x] Cleaned repository-wide UTF-8 mojibake across 10 markdown documentation files

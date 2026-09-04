@@ -25,6 +25,17 @@ A historical record of completed tasks, refactors, bug fixes, and architectural 
 
 ## 📅 September 4, 2026
 
+### 🎓 Capstone Panelist Defense Manual & Master Technical System Runbook
+
+- [x] **Master Capstone Defense Guide & API Keys Manual**:
+  - Authored comprehensive [`docs/PANELIST_DEFENSE_AND_SYSTEM_GUIDE.md`](../PANELIST_DEFENSE_AND_SYSTEM_GUIDE.md) tailored specifically for proponents Kerin Gabriel del Rosario, John Dwayne Guaniso, and Jiro Salvan.
+  - Documented all 11 API keys & secrets (`GEMINI_API_KEY`, `VITE_GROQ_API_KEY`, `VITE_SUPABASE_*`, `CLOUDINARY_*`, `MICROSOFT_*`), their plain-English purposes, code usage, and zero-trust security model.
+  - Codified universal naming conventions across components, hooks, database schemas, and evergreen Git branches.
+  - Documented end-to-end code mechanics: in-browser DOCX DOM editing without Word, DTR Excel dark-ink luminance signature fitting, dual-model AI review (Groq + Gemini), and Microsoft OneDrive archival.
+  - Compiled 11-question Capstone Panelist Defense Q&A Cheatsheet with simple 1-sentence answers and deep technical explanations.
+  - Integrated into root `README.md` and `docs/README.md`.
+  - Cleaned up repository-wide UTF-8 mojibake encoding corruption across 10 markdown documentation files.
+
 ### 🌿 Git Branch Standardization & Role-Based Architecture
 
 - [x] **Evergreen Domain Naming Implementation**:
