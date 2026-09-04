@@ -2,7 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import analyzeRouter from './routes/analyze';
-import cloudinaryRouter from './routes/cloudinary';
+// Cloudinary router preserved in comments for future reactivation/redesign
+// import cloudinaryRouter from './routes/cloudinary';
 import onedriveRouter from './routes/onedrive';
 
 // Load environment variables from CWD .env
@@ -16,7 +17,7 @@ app.use(express.json());
 
 // Mount the API Routers
 app.use('/api', analyzeRouter);
-app.use('/api', cloudinaryRouter);
+// app.use('/api', cloudinaryRouter); // Cloudinary file storage (preserved for future use)
 app.use('/api', onedriveRouter);
 
 if (!process.env.VERCEL) {
