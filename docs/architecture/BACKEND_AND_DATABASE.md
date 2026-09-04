@@ -308,5 +308,5 @@ All methods are on the exported `submissionStorage` object in [`src/lib/submissi
 - [Document Workflows & Templates](DOCUMENT_WORKFLOWS.md) — 13-template inventory and dynamic generation pipeline
 - [04. AI Grammar & Document Audit](../features/04_AI_GRAMMAR_AUDIT.md) — Serverless AI review pipeline mechanics
 - [08. Auth, OTP & OneDrive Sync](../features/08_AUTH_AND_ONEDRIVE_SYNC.md) — Institutional security and Microsoft Graph backup
-- [Cloudinary Document Storage Integration](../deployment/CLOUDINARY_INTEGRATION_SUMMARY.md) — Blob storage and CDN routing
-- [Vercel Deployment Guide](../deployment/DEPLOYMENT_AND_VERCEL.md) — Serverless API configuration and environment checklist
+- [Cloudinary Document Storage Integration](CLOUDINARY_INTEGRATION_SUMMARY.md) — Blob storage and CDN routing
+- [Vercel Deployment Guide](DEPLOYMENT_AND_VERCEL.md) — Serverless API configuration and environment checklist

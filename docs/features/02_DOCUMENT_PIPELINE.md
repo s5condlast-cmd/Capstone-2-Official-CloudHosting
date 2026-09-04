@@ -155,4 +155,4 @@ When the student clicks "Save & Generate Document":
 - [Document Workflows & Template Generation](../architecture/DOCUMENT_WORKFLOWS.md) — 13-template inventory and field specifications
 - [01. Student Portal & Checklist](01_STUDENT_PORTAL_CHECKLIST.md) — Student requirement progression
 - [06. Admin Master Templates & Verification](06_ADMIN_MANAGEMENT.md) — Master template upload and distribution
-- [Cloudinary Document Storage Integration](../deployment/CLOUDINARY_INTEGRATION_SUMMARY.md) — Document blob storage and CDN delivery
+- [Cloudinary Document Storage Integration](../architecture/CLOUDINARY_INTEGRATION_SUMMARY.md) — Document blob storage and CDN delivery

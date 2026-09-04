@@ -307,5 +307,5 @@ When troubleshooting an issue, follow this 3-step diagnostic sequence:
 - [Backend & Database Architecture](BACKEND_AND_DATABASE.md) — Supabase schemas and RLS policies
 - [Document Workflows & Template Generation](DOCUMENT_WORKFLOWS.md) — 13-template inventory and DOCX pipeline
 - [Feature Guides Index](../features/README.md) — Visual dataflow documentation for all 8 core features
-- [Vercel Deployment Guide](../deployment/DEPLOYMENT_AND_VERCEL.md) — Serverless backend compatibility
-- [Cloudinary Document Storage Integration](../deployment/CLOUDINARY_INTEGRATION_SUMMARY.md) — Cloud document storage and CDN
+- [Vercel Deployment Guide](DEPLOYMENT_AND_VERCEL.md) — Serverless backend compatibility
+- [Cloudinary Document Storage Integration](CLOUDINARY_INTEGRATION_SUMMARY.md) — Cloud document storage and CDN

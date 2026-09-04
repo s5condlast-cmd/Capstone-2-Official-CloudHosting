@@ -18,7 +18,7 @@ updated: 2026-09-04
 
 # Cloudinary Document Storage Integration Summary
 
-[←  Back to Documentation Hub](../README.md) | [Vercel Deployment](DEPLOYMENT_AND_VERCEL.md) | [Document Workflows Spec](../architecture/DOCUMENT_WORKFLOWS.md) | [Backend Architecture](../architecture/BACKEND_AND_DATABASE.md)
+[←   Back to Documentation Hub](../README.md) | [Vercel Deployment](DEPLOYMENT_AND_VERCEL.md) | [Document Workflows Spec](DOCUMENT_WORKFLOWS.md) | [Backend Architecture](BACKEND_AND_DATABASE.md)
 
 **Date:** August 25–26, 2026
 **Project:** STI Marikina — Web-Based Practicum Management System with AI
@@ -137,5 +137,5 @@ An end-to-end verification script was executed against the live Cloudinary serve
 - [Vercel Deployment Guide](DEPLOYMENT_AND_VERCEL.md) — Serverless backend and environment configuration
 - [02. Digital Document Generation Pipeline](../features/02_DOCUMENT_PIPELINE.md) — Student document upload and preview
 - [03. DTR Attendance & Signature Fitting](../features/03_DTR_ATTENDANCE_SIGNATURE.md) — Signed timesheet spreadsheet storage
-- [Document Workflows Spec](../architecture/DOCUMENT_WORKFLOWS.md) — Template storage and fallbacks
-- [Backend, Database & AI Architecture](../architecture/BACKEND_AND_DATABASE.md) — Supabase PostgreSQL schema and storage buckets
+- [Document Workflows Spec](DOCUMENT_WORKFLOWS.md) — Template storage and fallbacks
+- [Backend, Database & AI Architecture](BACKEND_AND_DATABASE.md) — Supabase PostgreSQL schema and storage buckets

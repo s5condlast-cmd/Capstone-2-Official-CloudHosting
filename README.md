@@ -124,7 +124,7 @@ Comprehensive architectural specifications, dataflow diagrams, and development r
 | **Refactoring Guidelines** | Coding standards, theme tokens, single-source-of-truth state, and Git rules | [REFACTORING_GUIDELINES.md](./docs/guidelines/REFACTORING_GUIDELINES.md) |
 | **Active Tasks & Roadmap** | Ongoing sprint checklist, speech-to-text dictation, and template digitization | [TASKS.md](./docs/tasks/TASKS.md) |
 | **Task History & Changelog**| Chronological record of completed milestones, refactors, and bug fixes | [TASK_HISTORY.md](./docs/tasks/TASK_HISTORY.md) |
-| **Deployment Guide** | Vercel serverless configuration, environment checklist, and redeploy safeguards | [DEPLOYMENT_AND_VERCEL.md](./docs/deployment/DEPLOYMENT_AND_VERCEL.md) |
+| **Deployment Guide** | Vercel serverless configuration, environment checklist, and redeploy safeguards | [DEPLOYMENT_AND_VERCEL.md](./docs/architecture/DEPLOYMENT_AND_VERCEL.md) |
 
 ---
 

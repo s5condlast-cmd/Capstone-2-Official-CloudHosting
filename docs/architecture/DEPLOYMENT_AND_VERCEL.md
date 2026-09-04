@@ -18,7 +18,7 @@ updated: 2026-09-04
 
 # Deployment & Vercel Configuration
 
-[←  Back to Documentation Hub](../README.md) | [Cloudinary Integration](CLOUDINARY_INTEGRATION_SUMMARY.md) | [System Architecture](../architecture/ARCHITECTURE.md) | [Backend Architecture](../architecture/BACKEND_AND_DATABASE.md)
+[←   Back to Documentation Hub](../README.md) | [Cloudinary Integration](CLOUDINARY_INTEGRATION_SUMMARY.md) | [System Architecture](ARCHITECTURE.md) | [Backend Architecture](BACKEND_AND_DATABASE.md)
 
 Verified against actual [`vercel.json`](../../vercel.json), [`backend/server.ts`](../../backend/server.ts), [`api/server.ts`](../../api/server.ts), and [`vite.config.ts`](../../vite.config.ts).
 
@@ -194,5 +194,5 @@ git commit --allow-empty -m "force vercel update" && git push
 
 - [Cloudinary Document Storage Integration](CLOUDINARY_INTEGRATION_SUMMARY.md) — Cloud document storage and CDN delivery
 - [08. Auth, OTP & OneDrive Sync](../features/08_AUTH_AND_ONEDRIVE_SYNC.md) — Institutional security and Microsoft Graph backup
-- [Backend, Database & AI Architecture](../architecture/BACKEND_AND_DATABASE.md) — Supabase PostgreSQL schema and AI routes
-- [System Architecture Overview](../architecture/ARCHITECTURE.md) — High-level architecture and directory map
+- [Backend, Database & AI Architecture](BACKEND_AND_DATABASE.md) — Supabase PostgreSQL schema and AI routes
+- [System Architecture Overview](ARCHITECTURE.md) — High-level architecture and directory map

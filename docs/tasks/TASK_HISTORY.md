@@ -17,7 +17,7 @@ updated: 2026-09-04
 
 # 📜 Task History & Changelog
 
-[←   Back to Active Tasks](TASKS.md) | [Documentation Hub](../README.md) | [All Sessions History](../sessions/ALL_SESSIONS_HISTORY.md)
+[←   Back to Active Tasks](TASKS.md) | [Documentation Hub](../README.md) | [All Sessions History](ALL_SESSIONS_HISTORY.md)
 
 A historical record of completed tasks, refactors, bug fixes, and architectural milestones for the **Capstone-2 CloudHosting OJT Management System**.
 
@@ -141,5 +141,5 @@ A historical record of completed tasks, refactors, bug fixes, and architectural 
 ## Related Documentation & Cross-References
 
 - [Active Tasks & Roadmap](TASKS.md) — Ongoing sprints and backlog
-- [All Sessions History](../sessions/ALL_SESSIONS_HISTORY.md) — Comprehensive session archive
+- [All Sessions History](ALL_SESSIONS_HISTORY.md) — Comprehensive session archive
 - [Master Documentation Hub](../README.md) — Central documentation portal

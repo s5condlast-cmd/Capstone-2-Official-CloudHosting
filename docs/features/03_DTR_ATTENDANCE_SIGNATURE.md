@@ -127,4 +127,4 @@ Embedding raw signature drawings into Excel spreadsheets often causes alignment 
 - [01. Student Portal & Checklist](01_STUDENT_PORTAL_CHECKLIST.md) — Student journey and requirements tracking
 - [05. Adviser & Supervisor Review Rooms](05_ADVISER_SUPERVISOR_REVIEW.md) — Supervisor approval workflow and sign-offs
 - [Document Workflows Architecture](../architecture/DOCUMENT_WORKFLOWS.md) — Excel DTR signature fitting protocol
-- [Cloudinary Document Storage Integration](../deployment/CLOUDINARY_INTEGRATION_SUMMARY.md) — Supervisor-signed DTR spreadsheet CDN storage
+- [Cloudinary Document Storage Integration](../architecture/CLOUDINARY_INTEGRATION_SUMMARY.md) — Supervisor-signed DTR spreadsheet CDN storage

@@ -118,4 +118,4 @@ The final institutional gate before a student receives academic practicum credit
 - [02. Digital Document Generation Pipeline](02_DOCUMENT_PIPELINE.md) — 13-template pipeline and dynamic generation
 - [Document Workflows Architecture](../architecture/DOCUMENT_WORKFLOWS.md) — Official OJT template inventory
 - [Backend & Database Architecture](../architecture/BACKEND_AND_DATABASE.md) — `template_metadata` table and storage policies
-- [Cloudinary Document Storage Integration](../deployment/CLOUDINARY_INTEGRATION_SUMMARY.md) — CDN media storage and master template assets
+- [Cloudinary Document Storage Integration](../architecture/CLOUDINARY_INTEGRATION_SUMMARY.md) — CDN media storage and master template assets

@@ -18,7 +18,7 @@ updated: 2026-09-04
 
 # 🔒 Authentication, OTP Verification & OneDrive Sync Documentation
 
-[←  Back to Features Hub](README.md) | [Documentation Hub](../README.md) | [Backend Architecture](../architecture/BACKEND_AND_DATABASE.md) | [System Map](../architecture/SYSTEM_MAP.md) | [Deployment Guide](../deployment/DEPLOYMENT_AND_VERCEL.md)
+[←   Back to Features Hub](README.md) | [Documentation Hub](../README.md) | [Backend Architecture](../architecture/BACKEND_AND_DATABASE.md) | [System Map](../architecture/SYSTEM_MAP.md) | [Deployment Guide](../architecture/DEPLOYMENT_AND_VERCEL.md)
 
 A technical breakdown of the **Institutional Authentication System**, email-based One-Time Passcode (OTP) verification, and automated Microsoft OneDrive cloud synchronization via Microsoft Graph API.
 
@@ -242,5 +242,5 @@ The Express backend exposes the following endpoints under `/api`:
 
 - [Backend, Database & AI Architecture](../architecture/BACKEND_AND_DATABASE.md) — Database schemas and storage security
 - [System Architecture Overview](../architecture/ARCHITECTURE.md) — System structure and Express endpoints
-- [Deployment & Vercel Guide](../deployment/DEPLOYMENT_AND_VERCEL.md) — Serverless functions and deployment gotchas
+- [Deployment & Vercel Guide](../architecture/DEPLOYMENT_AND_VERCEL.md) — Serverless functions and deployment gotchas
 - [System Map & Code Locator](../architecture/SYSTEM_MAP.md) — Problem-fix register and risk matrix

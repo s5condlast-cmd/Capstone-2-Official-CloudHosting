@@ -17,7 +17,7 @@ updated: 2026-09-04
 
 # 🎨 System UI / UX Review & Design System Audit
 
-[← Back to Documentation Hub](README.md) | [UI/UX Reviewer Standards](guidelines/UI_UX_REVIEWER.md) | [Refactoring Guidelines](guidelines/REFACTORING_GUIDELINES.md)
+[← Back to Documentation Hub](../README.md) | [UI/UX Reviewer Standards](UI_UX_REVIEWER.md) | [Refactoring Guidelines](REFACTORING_GUIDELINES.md)
 
 This review evaluates the project against our **Aesthetic Taste, Color Palettes, Typography, Micro-Interactions, and Theme-Aware Architecture**.
 
@@ -55,14 +55,14 @@ This review evaluates the project against our **Aesthetic Taste, Color Palettes,
 3. **High-Discipline Layout Engineering**:
    - Strict adherence to layout wrappers: `StudentDocumentPage` standardizes the student portal.
    - Zero layout shift (CLS = 0) safeguards on document viewers (`EmbedPdfWorkspace.tsx` and `DocxViewer.tsx`).
-   - Uniform empty states via [`src/components/ui/EmptyState.tsx`](../src/components/ui/EmptyState.tsx).
+   - Uniform empty states via [`src/components/ui/EmptyState.tsx`](../../src/components/ui/EmptyState.tsx).
 
 ---
 
 ## 🔍 Detailed Findings & Recommendations
 
 ### 1. [Medium] Redundant Animation Layering on Primitives
-- **Location**: [`src/components/ui/Button.tsx`](../src/components/ui/Button.tsx#L30-L38)
+- **Location**: [`src/components/ui/Button.tsx`](../../src/components/ui/Button.tsx#L30-L38)
 - **Current State**:
   ```tsx
   <motion.button
@@ -87,7 +87,7 @@ This review evaluates the project against our **Aesthetic Taste, Color Palettes,
 ---
 
 ### 2. [Low] Hardcoded Arbitrary Shadow in Button Variants
-- **Location**: [`src/components/ui/Button.tsx`](../src/components/ui/Button.tsx#L15-L20)
+- **Location**: [`src/components/ui/Button.tsx`](../../src/components/ui/Button.tsx#L15-L20)
 - **Current State**:
   ```tsx
   primary: '... shadow-[0_1px_2px_0_rgba(0,0,0,0.4)] border border-primary',
@@ -108,7 +108,7 @@ This review evaluates the project against our **Aesthetic Taste, Color Palettes,
 ## 🚀 Prioritized Action Plan
 
 ### Quick Wins (Immediate Polish)
-1. Clean up duplicate `whileTap` vs `active:scale-[0.98]` in [`Button.tsx`](../src/components/ui/Button.tsx).
+1. Clean up duplicate `whileTap` vs `active:scale-[0.98]` in [`Button.tsx`](../../src/components/ui/Button.tsx).
 2. Standardize button shadows using `.soft-shadow` utility classes.
 3. Audit all badge pills to guarantee `tracking-wider` and uppercase styling.
 

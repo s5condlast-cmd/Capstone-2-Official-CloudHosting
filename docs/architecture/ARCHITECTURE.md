@@ -339,5 +339,5 @@ interface AiFindings {
 - [Document Workflows & Template Generation](DOCUMENT_WORKFLOWS.md) — 13-template pipeline, preview, and generation
 - [System Map & Code Locator](SYSTEM_MAP.md) — Problem-fix register and direct component targets
 - [Feature Specifications Hub](../features/README.md) — Visual dataflow guides for all 8 core features
-- [Deployment & Vercel Guide](../deployment/DEPLOYMENT_AND_VERCEL.md) — Vercel serverless functions and environment variables
+- [Deployment & Vercel Guide](DEPLOYMENT_AND_VERCEL.md) — Vercel serverless functions and environment variables
 - [Active Tasks & Roadmap](../tasks/TASKS.md) — Current development tasks and milestones

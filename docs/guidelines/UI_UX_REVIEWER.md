@@ -18,7 +18,7 @@ updated: 2026-09-04
 
 # 🎨 UI / UX Reviewer & Design System Standards
 
-[← Back to Documentation Hub](../README.md) | [Refactoring Guidelines](REFACTORING_GUIDELINES.md) | [System Architecture](../architecture/ARCHITECTURE.md) | [Live UI Review](../UI_REVIEW.md)
+[← Back to Documentation Hub](../README.md) | [Refactoring Guidelines](REFACTORING_GUIDELINES.md) | [System Architecture](../architecture/ARCHITECTURE.md) | [Live UI Review](UI_REVIEW.md)
 
 This document establishes the official UI/UX review standards, aesthetic taste rules, and color palette architecture for the system. It also acts as the reference specification for the autonomous `ui_ux_reviewer` subagent and skill.
 
