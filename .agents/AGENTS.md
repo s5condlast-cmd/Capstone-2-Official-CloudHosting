@@ -187,7 +187,7 @@ When `/debug` (or legacy `/scan`/`/review`) is invoked, resolve the target in th
   - `feature/admin`: Admin Portal workflows, student management, template configuration, and API settings.
   - `feature/landing-page`: Public landing page, hero typography, 3D card carousel, and ScrollStack motion.
   - `backend/database`: Supabase database schemas, Postgres RLS policies, migrations, and Microsoft OneDrive sync.
-  - `docs/capstone-panelist-guide`: Architecture guides, API key runbooks, and panelist defense preparation.
+  - `docs/Documentation`: Architecture guides, API key runbooks, panelist defense preparation, and documentation suite.
 - **Evergreen Branch Naming Standard:**
   - Branch names must represent persistent system domains using `<type>/<description>` format.
   - **Never** name branches after temporary one-off bugs (e.g. avoid `-fixes`, `-cleanup`, `-refinements`, `-stats`).

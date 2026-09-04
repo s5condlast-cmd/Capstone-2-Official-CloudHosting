@@ -193,7 +193,7 @@ The repository implements a structured, role-based branching strategy designed f
 | **Admin Portal** | `feature/admin` | Admin dashboard, user management, template configuration, API settings, and institutional controls. |
 | **Landing Page** | `feature/landing-page` | Public landing page, hero typography, 3D card carousel, ScrollStack motion, and practicum journey. |
 | **Backend & Cloud** | `backend/database` | Supabase schemas, Postgres RLS policies, migrations, serverless endpoints, and Microsoft OneDrive Graph sync. |
-| **Documentation** | `docs/capstone-panelist-guide` | Architecture specifications, API key runbooks, and panelist defense preparation guides. |
+| **Documentation** | `docs/Documentation` | Architecture specifications, API key runbooks, panelist defense guides, and documentation suite. |
 
 ### Core Git Rules
 
