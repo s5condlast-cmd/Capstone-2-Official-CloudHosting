@@ -96,20 +96,39 @@ updated: 2026-09-04
 
 ---
 
-## 🔒 Core Backend, Security & Cloud Sync (Post-Dashboards)
+## 🔔 External Notifications & Inactivity Alerts (Off-Platform Communication)
 
-- [ ] **Authentication & Security (Microsoft 365 SSO + OTP Login)**:
-  - [ ] Modern login screen with institutional branding, 1-click Microsoft 365 Single Sign-On (SSO), and role-based redirection
-  - [ ] Institutional OTP (One-Time Password) generation and validation workflow
-  - [ ] Supabase Auth integration with secure RLS policies and JWT session handling
-- [ ] **Automated Emailing System (Microsoft Graph / Outlook Integration)**:
-  - [ ] Microsoft Graph API Outlook Mail integration (`Mail.Send`) using existing Microsoft Entra credentials
-  - [ ] Delivery of OTP verification codes directly via Outlook to school emails (`@marikina.sti.edu.ph`)
-  - [ ] Submission status notification emails (Document Approved, Revision Requested, DTR Signed) sent via Outlook
-- [x] **Microsoft OneDrive Integration**:
-  - [x] Microsoft Graph API / OneDrive cloud storage connection
-  - [x] Automated sync and backup of approved student documents, MOAs, and signed DTR forms to institutional OneDrive
-  - [x] Auto-refresh OAuth2 token engine and status/quota monitoring endpoint
+- [ ] **Email Notification Engine (Microsoft Graph Outlook Integration)**:
+  - [ ] Send automated emails to official school inboxes (`@marikina.sti.edu.ph`) when users are **not active on the website**:
+    - [ ] **Student Alerts**: Instant notification when an adviser Approves or Rejects a document with revision remarks
+    - [ ] **Supervisor Alerts**: Email notification when an intern submits a completed DTR waiting for supervisor digital signature
+    - [ ] **Adviser Alerts**: Daily digest or instant notification when new submissions are queued for review
+  - [ ] **Inactivity & Deadline Proactive Alerts**:
+    - [ ] Automated reminder to students if no Weekly Journal has been logged for 5+ days
+    - [ ] Approaching MOA submission deadline reminder alerts
+    - [ ] Missing requirement warning alerts before end of OJT phase
+  - [ ] **Browser Web Push Notifications (Optional Progressive Web App)**:
+    - [ ] Service Worker Web Push API integration for background desktop/mobile alerts even when website tab is closed
+
+---
+
+## 🔐 Authentication, OTP & Account Management (Account Opening + Password Reset)
+
+- [ ] **OTP-Based Account Opening & Initial Activation**:
+  - [ ] Self-service account opening / first-time activation flow for enrolled STI students
+  - [ ] Institutional domain validation: strictly restricts registration to `@marikina.sti.edu.ph` email addresses
+  - [ ] 6-digit OTP dispatch via Microsoft Graph Outlook Mail with 60-second countdown timer and resend cooldown
+  - [ ] 6-box auto-focusing numeric OTP input component (matching Storyboard Figure 16)
+  - [ ] Initial student profile setup upon successful OTP verification (Student ID, Program, Section, Contact Number)
+- [ ] **OTP-Based Self-Service Password Reset**:
+  - [ ] "Forgot Password" request interface (matching Storyboard Figure 17)
+  - [ ] Secure OTP generation and dispatch to registered email address
+  - [ ] Brute-force protection: Maximum 3 invalid OTP attempts before temporary 5-minute account lock
+  - [ ] Secure password reset submission with confirmation feedback and automatic redirect to login
+- [ ] **Core Authentication & Security Hardening**:
+  - [ ] Supabase Auth integration with secure JWT session tokens and PostgreSQL Row-Level Security (RLS)
+  - [ ] Role-based route guards (`/student`, `/adviser`, `/supervisor`, `/admin`) preventing cross-role privilege escalation
+  - [ ] 1-Click Microsoft 365 Single Sign-On (SSO) integration alongside email/password login
 
 ---
 
