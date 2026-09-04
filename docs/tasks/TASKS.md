@@ -1,6 +1,6 @@
 ---
-title: "Active Tasks & Development Roadmap"
-description: "Active development tasks, feature checklist, UI polish items, voice dictation, template digitization, and backend roadmap."
+title: Active Tasks & Development Roadmap
+description: Active development tasks, feature checklist, UI polish items, voice dictation, template digitization, and backend roadmap.
 tags:
   - sti-ojt
   - tasks
@@ -8,9 +8,9 @@ tags:
   - sprint-planning
   - backlog
 aliases:
-  - "Tasks"
-  - "Active Tasks"
-  - "Roadmap"
+  - Tasks
+  - Active Tasks
+  - Roadmap
 created: 2026-08-26
 updated: 2026-09-04
 ---
@@ -125,3 +125,5 @@ updated: 2026-09-04
 ## Next Promt
 
 - [ ] all add a md that explains api keys, naming convesion the follows the everything and how it works how you did the codes everything no missing for my capstone if the panelist answer make it simple and easy to understand
+
+
