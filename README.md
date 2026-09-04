@@ -23,6 +23,7 @@ updated: 2026-09-04
 
 <p align="center">
   <a href="#-quick-start"><b>Quick Start</b></a> •
+  <a href="docs/PANELIST_DEFENSE_AND_SYSTEM_GUIDE.md"><b>🎓 Panelist Defense Manual</b></a> •
   <a href="docs/README.md"><b>Documentation Hub</b></a> •
   <a href="docs/features/README.md"><b>Feature Specifications</b></a> •
   <a href="docs/architecture/ARCHITECTURE.md"><b>System Architecture</b></a> •

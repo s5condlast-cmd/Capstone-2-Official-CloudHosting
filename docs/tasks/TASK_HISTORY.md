@@ -99,7 +99,7 @@ A historical record of completed tasks, refactors, bug fixes, and architectural 
 
 ## 📅 September 1, 2026
 
-### ðŸŽ¨ Calendar Page Alignment & UI Restoration
+### 🎨 Calendar Page Alignment & UI Restoration
 
 - [x] **Restored Sidebar Mini Calendar**: Re-implemented standard shadcn `<Calendar />` in sidebar.
 - [x] **Circular Category Check Badges**: Converted rectangular badges to clean circular check chips matching shadcn design tokens.

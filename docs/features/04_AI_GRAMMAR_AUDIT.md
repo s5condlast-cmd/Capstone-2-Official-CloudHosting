@@ -1,4 +1,4 @@
-﻿---
+---
 title: "AI-Assisted Document & Grammar Review Documentation"
 description: "AI Document Auditing Assistant, backend text extraction pipeline, and dual-model LLM architecture (Groq llama-3.3 + Gemini fallback)."
 tags:
@@ -24,7 +24,7 @@ A complete technical breakdown of the **AI Document Auditing Assistant**, backen
 
 ---
 
-## ðŸŒŸ Feature Overview
+## 🌟 Feature Overview
 
 To assist practicum coordinators and faculty advisers in reviewing hundreds of student documents and weekly journals, the system features an automated AI compliance and grammar auditor:
 
@@ -34,7 +34,7 @@ To assist practicum coordinators and faculty advisers in reviewing hundreds of s
 
 ---
 
-## ðŸ—ï¸ Architecture & AI Pipeline Dataflow
+## 🏗️ Architecture & AI Pipeline Dataflow
 
 ```mermaid
 sequenceDiagram
@@ -69,7 +69,7 @@ sequenceDiagram
 
 ---
 
-## ðŸ” How It Works Under the Hood
+## 🔍 How It Works Under the Hood
 
 ### 1. Text Extraction (`pdf-parse`)
 

@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Authentication, OTP Verification & OneDrive Sync Documentation"
 description: "Institutional Authentication System, email-based One-Time Passcode (OTP) verification, and automated Microsoft OneDrive cloud synchronization via Microsoft Graph API."
 tags:
@@ -27,7 +27,7 @@ A technical breakdown of the **Institutional Authentication System**, email-base
 
 ---
 
-## ðŸŒŸ Feature Overview
+## 🌟 Feature Overview
 
 To ensure academic data integrity and compliance with STI College Marikina practicum policies, the system implements an enterprise-grade cloud backup and security infrastructure:
 
@@ -37,7 +37,7 @@ To ensure academic data integrity and compliance with STI College Marikina pract
 
 ---
 
-## ðŸ—ï¸ Architecture & Security Dataflow
+## 🏗️ Architecture & Security Dataflow
 
 ```mermaid
 sequenceDiagram
@@ -70,7 +70,7 @@ sequenceDiagram
 
 ---
 
-## ðŸ“˜ Step-by-Step OneDrive Setup Guide (Never Get Lost)
+## 📗 Step-by-Step OneDrive Setup Guide (Never Get Lost)
 
 Follow this complete step-by-step procedure if you ever need to inspect, recreate, or reconfigure the Microsoft connection:
 
@@ -131,7 +131,7 @@ Follow this complete step-by-step procedure if you ever need to inspect, recreat
 
 ---
 
-## ðŸ”‘ Tokens, Expirations & Lifespans Explained
+## 🔑 Tokens, Expirations & Lifespans Explained
 
 Understanding the token lifecycle ensures you know exactly when and how the system remains active:
 
@@ -180,30 +180,30 @@ If the project sits completely idle for over 90 days (e.g. during summer vacatio
 
 ---
 
-## ðŸ“‚ Structured Directory Hierarchy on OneDrive
+## 📂 Structured Directory Hierarchy on OneDrive
 
 All uploaded files are automatically filed into structured institutional directories:
 
 ```text
 STI_Practicum_Archive/
-â””â”€â”€ Practicum_AY_2025_2026/
-    â””â”€â”€ BSIT_402/
-        â””â”€â”€ John_Dwayne_B._Guaniso/
-            â”œâ”€â”€ Student_Application_Letter/
-            â”‚   â””â”€â”€ John_Dwayne_B._Guaniso_Student_Application_Letter_17883581.pdf
-            â”œâ”€â”€ Parent_Consent/
-            â”‚   â””â”€â”€ John_Dwayne_B._Guaniso_Parent_Consent_17883592.pdf
-            â”œâ”€â”€ Endorsement_Letter/
-            â”‚   â””â”€â”€ John_Dwayne_B._Guaniso_Endorsement_Letter_17883604.pdf
-            â”œâ”€â”€ MOA_Documents/
-            â”‚   â””â”€â”€ John_Dwayne_B._Guaniso_MOA_Template_17883610.pdf
-            â””â”€â”€ Signed_DTR/
-                â””â”€â”€ DTR_March_2026_Signed.xlsx
++-- Practicum_AY_2025_2026/
+    +-- BSIT_402/
+        +-- John_Dwayne_B._Guaniso/
+            â”œ-- Student_Application_Letter/
+            |   +-- John_Dwayne_B._Guaniso_Student_Application_Letter_17883581.pdf
+            â”œ-- Parent_Consent/
+            |   +-- John_Dwayne_B._Guaniso_Parent_Consent_17883592.pdf
+            â”œ-- Endorsement_Letter/
+            |   +-- John_Dwayne_B._Guaniso_Endorsement_Letter_17883604.pdf
+            â”œ-- MOA_Documents/
+            |   +-- John_Dwayne_B._Guaniso_MOA_Template_17883610.pdf
+            +-- Signed_DTR/
+                +-- DTR_March_2026_Signed.xlsx
 ```
 
 ---
 
-## ðŸ› ï¸ API Endpoints Reference
+## 🛡️ ï¸ API Endpoints Reference
 
 The Express backend exposes the following endpoints under `/api`:
 

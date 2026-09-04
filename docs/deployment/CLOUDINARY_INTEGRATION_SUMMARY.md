@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Cloudinary Document Storage Integration Summary"
 description: "Integration of Cloudinary CDN for Document, PDF, and Spreadsheet Blob Storage alongside Supabase PostgreSQL."
 tags:

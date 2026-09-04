@@ -54,6 +54,10 @@ Welcome to the **Capstone-2 CloudHosting OJT Management System** documentation c
 
 ## 📁 Documentation Vault Structure
 
+### 🎓 [Capstone Panelist Defense & System Manual](PANELIST_DEFENSE_AND_SYSTEM_GUIDE.md) ⭐ **(MUST READ FOR ORAL DEFENSE)**
+
+- [Master Panelist Defense & Technical System Manual](PANELIST_DEFENSE_AND_SYSTEM_GUIDE.md) — Complete defense preparation, master API keys manual, universal naming conventions, end-to-end code mechanics, and plain-language Q&A cheatsheet for panelists.
+
 ### 📋 [Development Tasks & Roadmap](tasks/TASKS.md)
 
 - [Active Tasks & Roadmap](tasks/TASKS.md) — Ongoing sprints, UI polish items, voice dictation, and template digitization
@@ -86,6 +90,7 @@ Welcome to the **Capstone-2 CloudHosting OJT Management System** documentation c
 ### 📏 [Engineering Guidelines & Project Specs](guidelines/REFACTORING_GUIDELINES.md)
 
 - [Refactoring Guidelines](guidelines/REFACTORING_GUIDELINES.md) — Coding standards, component rules, theme tokens, and state conventions
+- [UI / UX Reviewer & Design Standards](guidelines/UI_UX_REVIEWER.md) — Aesthetic taste rules, color palettes (Monochrome, Deep Sky, Amber), and audit rubric
 - [Git Branch Architecture & Release Protocol](guidelines/REFACTORING_GUIDELINES.md#10-git-branch-architecture--release-protocol) — Role and domain-based branching matrix and PR rules
 - [Main Capstone Proposal](guidelines/Main_Document.md) — Core academic project proposal and institutional specifications
 

@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Deployment & Vercel Configuration"
 description: "Vercel serverless configuration, Express backend gotchas, environment variables checklist, and redeploy safeguards."
 tags:
@@ -44,8 +44,8 @@ Verified against actual [`vercel.json`](../../vercel.json), [`backend/server.ts`
 | Key | Value | Purpose |
 | :--- | :--- | :--- |
 | `outputDirectory` | `"dist"` | **Must be explicit**. Prevents Vercel from searching `public/` if framework preset is misconfigured. |
-| Rewrite 1 | `/api/:path*` ← ’ `/api/server` | All API calls route to the serverless function at `api/server.ts` |
-| Rewrite 2 | `/(.*)` ← ’ `/index.html` | SPA client-side routing fallback |
+| Rewrite 1 | `/api/:path*` -> `/api/server` | All API calls route to the serverless function at `api/server.ts` |
+| Rewrite 2 | `/(.*)` -> `/index.html` | SPA client-side routing fallback |
 
 ---
 
@@ -136,18 +136,18 @@ watch: { ignored: ['**/Templates-*/**'] }
 ## 5. Build Pipeline
 
 ```bash
-npm run build   # ← ’ vite build ← ’ outputs to dist/
+npm run build   # -> vite build -> outputs to dist/
 ```
 
 Vercel runs this automatically. The output is:
 
 ```plaintext
 dist/
-â”œâ”€â”€ index.html
-â”œâ”€â”€ assets/
-â”‚   â”œâ”€â”€ index-[hash].js
-â”‚   â””â”€â”€ index-[hash].css
-â””â”€â”€ ... (static assets from public/)
+â”œ-- index.html
+â”œ-- assets/
+|   â”œ-- index-[hash].js
+|   +-- index-[hash].css
++-- ... (static assets from public/)
 ```
 
 ---
@@ -156,7 +156,7 @@ dist/
 
 ### 1. The "Redeploy" Trap
 
-**Problem**: User pushes a fix but clicks "Redeploy" in the Vercel dashboard ← ’ Vercel re-runs the **same old commit**.
+**Problem**: User pushes a fix but clicks "Redeploy" in the Vercel dashboard -> Vercel re-runs the **same old commit**.
 **Solution**: Push an empty commit to trigger a fresh webhook:
 
 ```bash
@@ -170,7 +170,7 @@ git commit --allow-empty -m "force vercel update" && git push
 
 ### 3. Port Collision
 
-**Problem**: `app.listen()` runs inside Vercel serverless ← ’ silent crash.
+**Problem**: `app.listen()` runs inside Vercel serverless -> silent crash.
 **Solution**: The `if (!process.env.VERCEL)` guard is already in place. Never remove it.
 
 ### 4. Git Push Protocol

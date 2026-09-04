@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Admin Master Templates & Clearance Verification Documentation"
 description: "Master Administrator Console, template distribution architecture, uniform 4-button action grid, and institutional clearance verification."
 tags:
@@ -23,7 +23,7 @@ A complete technical breakdown of the **Administrator Console**, master template
 
 ---
 
-## ðŸŒŸ Feature Overview
+## 🌟 Feature Overview
 
 The Administrator Console provides school administrators, program heads, and registrars with global oversight of the practicum system:
 
@@ -33,7 +33,7 @@ The Administrator Console provides school administrators, program heads, and reg
 
 ---
 
-## ðŸ—ï¸ Architecture & Template Distribution Dataflow
+## 🏗️ Architecture & Template Distribution Dataflow
 
 ```mermaid
 graph TD
@@ -52,27 +52,27 @@ graph TD
 
 ---
 
-## ðŸ” How It Works Under the Hood
+## 🔍 How It Works Under the Hood
 
 ### 1. The Uniform 4-Button Action Grid
 
 To eliminate hidden actions, ambiguous menus, and inconsistent card layouts, every template card in [`src/pages/admin/Templates.tsx`](../../src/pages/admin/Templates.tsx) exposes an identical 4-button action grid:
 
 ```text
-â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-â”‚                       MASTER TEMPLATE CARD ACTION GRID                      â”‚
-â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
-â”‚                                                                             â”‚
-â”‚  [Template Title: Student Application Letter]                               â”‚
-â”‚  Phase: Before OJT   |   File Type: DOCX + PDF Reference   |  Status: Activeâ”‚
-â”‚                                                                             â”‚
-â”‚  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”          â”‚
-â”‚  â”‚   â¬† Upload DOCX (Primary)     â”‚   â¬† Upload PDF (Primary)      â”‚          â”‚
-â”‚  â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤          â”‚
-â”‚  â”‚   â¬‡ Download DOCX (Outline)   â”‚   â¬‡ Download PDF (Outline)    â”‚          â”‚
-â”‚  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜          â”‚
-â”‚                                                                             â”‚
-â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
++-----------------------------------------------------------------------------â”
+|                       MASTER TEMPLATE CARD ACTION GRID                      |
+â”œ-----------------------------------------------------------------------------â”¤
+|                                                                             |
+|  [Template Title: Student Application Letter]                               |
+|  Phase: Before OJT   |   File Type: DOCX + PDF Reference   |  Status: Active|
+|                                                                             |
+|  +-------------------------------+-------------------------------â”          |
+|  |   â¬† Upload DOCX (Primary)     |   â¬† Upload PDF (Primary)      |          |
+|  â”œ-------------------------------â”¼-------------------------------â”¤          |
+|  |   â¬‡ Download DOCX (Outline)   |   â¬‡ Download PDF (Outline)    |          |
+|  +-------------------------------+-------------------------------+          |
+|                                                                             |
++-----------------------------------------------------------------------------+
 ```
 
 - **Upload DOCX**: Replaces the master document used by `documentGenerator.ts` to generate student submissions.

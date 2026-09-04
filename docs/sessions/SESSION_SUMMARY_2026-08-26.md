@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Session Summary — TypeScript Diagnosis & Component Type Alignments"
 description: "Resolving TypeScript compilation errors in React 19, devDependencies declarations, and UI component prop type alignments."
 tags:

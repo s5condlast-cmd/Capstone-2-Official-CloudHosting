@@ -97,7 +97,7 @@ Theme is initialized in `App.tsx` `useEffect()` and persisted in `localStorage` 
 ### Loading Lifecycle
 
 ```text
-Mount ← ’ loading = true ← ’ fetch from Supabase ← ’ loading = false ← ’ render data OR EmptyState
+Mount -> loading = true -> fetch from Supabase -> loading = false -> render data OR EmptyState
 ```
 
 - **Never** use `setTimeout()` to simulate loading delays
@@ -159,7 +159,7 @@ import { submissionStorage } from '@/src/lib/submissionStorage';
 | `npm run vite` | Start Vite only (port 3000) |
 | `npm run backend` | Start Express backend only (`tsx backend/server.ts`) |
 | `npm run lint` | TypeScript check: `tsc --noEmit` |
-| `npm run build` | Production bundle: `vite build` ← ’ `dist/` |
+| `npm run build` | Production bundle: `vite build` -> `dist/` |
 | `npm run clean` | Remove `dist/` directory (cross-platform) |
 | `npm run preview` | Preview production build locally |
 

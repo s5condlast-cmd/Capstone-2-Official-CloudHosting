@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Backend, Database & AI Service Architecture"
 description: "Comprehensive specification of Supabase PostgreSQL schemas, storage security policies, offline fallbacks, and the AI document audit pipeline."
 tags:
@@ -234,8 +234,8 @@ When writing Supabase SQL migrations and RLS policies, adhere to these rules:
 
 ### `templateStorage.ts` Fallback Chain
 
-1. **File storage**: Supabase Storage ← ’ falls back to raw IndexedDB (`CapstoneTemplateDB`)
-2. **Metadata**: Supabase DB `template_metadata` ← ’ falls back to `localStorage`
+1. **File storage**: Supabase Storage -> falls back to raw IndexedDB (`CapstoneTemplateDB`)
+2. **Metadata**: Supabase DB `template_metadata` -> falls back to `localStorage`
 3. **IndexedDB implementation**: Uses native `indexedDB.open()` API with a single object store `templates_store`
 4. **File retrieval**: Handles `Blob`, `ArrayBuffer`, and typed array return types from IDB
 
@@ -243,22 +243,22 @@ When writing Supabase SQL migrations and RLS policies, adhere to these rules:
 
 ## 6. AI Review Assistant Pipeline
 
-### Flow (Backend ← ’ Supabase ← ’ Client)
+### Flow (Backend -> Supabase -> Client)
 
 ```text
 Client: aiService.analyzeDocument(docId, pdfUrl, metadata)
-  â”‚  POST /api/analyze
-  â–¼
+  |  POST /api/analyze
+  v
 Backend: routes/analyze.ts
-  â”‚
-  â”œâ”€ 1. UPDATE student_documents SET ai_status='Processing', ai_findings=null WHERE id=docId
-  â”œâ”€ 2. fetch(pdfUrl) ← ’ Buffer
-  â”œâ”€ 3. extractTextFromPdfBuffer(buffer) via pdf-parse
-  â”œâ”€ 4. analyzeDocumentText(text, metadata) via aiService.ts
-  â”‚     â”œâ”€ Try Groq API (llama-3.3-70b-versatile, temp 0.1, JSON mode)
-  â”‚     â””â”€ Fallback: Gemini API (gemini-1.5-flash, temp 0.1, JSON MIME)
-  â”œâ”€ 5. UPDATE student_documents SET ai_status='Completed', ai_findings={...}
-  â””â”€ 6. Return JSON findings to client
+  |
+  â”œ- 1. UPDATE student_documents SET ai_status='Processing', ai_findings=null WHERE id=docId
+  â”œ- 2. fetch(pdfUrl) -> Buffer
+  â”œ- 3. extractTextFromPdfBuffer(buffer) via pdf-parse
+  â”œ- 4. analyzeDocumentText(text, metadata) via aiService.ts
+  |     â”œ- Try Groq API (llama-3.3-70b-versatile, temp 0.1, JSON mode)
+  |     +- Fallback: Gemini API (gemini-1.5-flash, temp 0.1, JSON MIME)
+  â”œ- 5. UPDATE student_documents SET ai_status='Completed', ai_findings={...}
+  +- 6. Return JSON findings to client
 ```
 
 ### Client-Side AI Service ([`src/lib/aiService.ts`](../../src/lib/aiService.ts))
