@@ -290,12 +290,20 @@ export const UserManagement: React.FC = () => {
         localStorage.removeItem(`mfa_trusted_${prefixKey}`);
         localStorage.removeItem(`pwd_changed_${prefixKey}`);
       }
+      if (user.email.toLowerCase() === 'johndwayneguaniso.05242004@gmail.com') {
+        ['johndwayne', 'johndwayneguaniso', 'john.dwayne'].forEach((alias) => {
+          const aKey = alias.replace(/[^a-zA-Z0-9]/g, '');
+          localStorage.removeItem(`mfa_enrolled_${aKey}`);
+          localStorage.removeItem(`mfa_trusted_${aKey}`);
+          localStorage.removeItem(`pwd_changed_${aKey}`);
+        });
+      }
 
       // 2. Call backend reset endpoint to reset password to 123 and clear MFA
-      await fetch(`/api/users/${encodeURIComponent(user.id || user.email)}/reset-password`, {
+      await fetch(`/api/users/${encodeURIComponent(user.email || user.id)}/reset-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ newPassword: '123' }),
+        body: JSON.stringify({ newPassword: '123', email: user.email }),
       }).catch((e) => console.warn('[UserManagement] Reset API notice:', e));
 
       // 3. Safe UUID Supabase update
@@ -338,10 +346,19 @@ export const UserManagement: React.FC = () => {
         localStorage.removeItem(`mfa_enrolled_${prefixKey}`);
         localStorage.removeItem(`mfa_trusted_${prefixKey}`);
       }
+      if (user.email.toLowerCase() === 'johndwayneguaniso.05242004@gmail.com') {
+        ['johndwayne', 'johndwayneguaniso', 'john.dwayne'].forEach((alias) => {
+          const aKey = alias.replace(/[^a-zA-Z0-9]/g, '');
+          localStorage.removeItem(`mfa_enrolled_${aKey}`);
+          localStorage.removeItem(`mfa_trusted_${aKey}`);
+        });
+      }
 
       // Call backend reset MFA endpoint
-      await fetch(`/api/users/${encodeURIComponent(user.id || user.email)}/reset-mfa`, {
+      await fetch(`/api/users/${encodeURIComponent(user.email || user.id)}/reset-mfa`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: user.email }),
       }).catch((e) => console.warn('[UserManagement] Reset MFA API notice:', e));
 
       // Safe UUID Supabase update
