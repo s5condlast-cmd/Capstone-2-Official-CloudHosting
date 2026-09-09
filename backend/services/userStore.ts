@@ -64,6 +64,75 @@ export function verifyPassword(enteredPassword: string, storedHashOrPlain: strin
   return enteredPassword === storedHashOrPlain;
 }
 
+export const DEFAULT_SYSTEM_SEEDS: ProvisionedUser[] = [
+  {
+    id: 'admin-main-001',
+    email: 'johndwayneguaniso.05242004@gmail.com',
+    name: 'John Dwayne Guaniso',
+    role: 'admin',
+    dept: 'System Administration',
+    status: 'Active',
+    passwordHash: hashPassword('123'),
+    requiresPasswordChange: false,
+    mfaEnrolled: false,
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+  },
+  {
+    id: 'admin-role-002',
+    email: 'admin@practicum.edu',
+    name: 'Administrator',
+    role: 'admin',
+    dept: 'System Administration',
+    status: 'Active',
+    passwordHash: hashPassword('123'),
+    requiresPasswordChange: false,
+    mfaEnrolled: true,
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+  },
+  {
+    id: 'adviser-role-003',
+    email: 'adviser@practicum.edu',
+    name: 'Dr. Sarah Johnson',
+    role: 'adviser',
+    dept: 'College of Computer Studies',
+    status: 'Active',
+    passwordHash: hashPassword('123'),
+    requiresPasswordChange: false,
+    mfaEnrolled: true,
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+  },
+  {
+    id: 'supervisor-role-004',
+    email: 'supervisor@practicum.edu',
+    name: 'Engr. Paolo Reyes',
+    role: 'supervisor',
+    dept: 'InnoTech Labs',
+    status: 'Active',
+    passwordHash: hashPassword('123'),
+    requiresPasswordChange: false,
+    mfaEnrolled: true,
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+  },
+  {
+    id: 'student-role-005',
+    email: 'student@practicum.edu',
+    name: 'John Dwayne B. Guaniso',
+    role: 'student',
+    studentId: '02000249822',
+    dept: 'BSIT 402',
+    status: 'Active',
+    passwordHash: hashPassword('123'),
+    requiresPasswordChange: false,
+    mfaEnrolled: true,
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+  },
+];
+
 /**
  * Loads all provisioned users from the persistent JSON file or in-memory cache.
  */
@@ -72,24 +141,46 @@ export function loadAllUsers(): ProvisionedUser[] {
     return memoryUsersCache;
   }
 
+  let users: ProvisionedUser[] = [];
+
   try {
     ensureDirExists();
-    if (!fs.existsSync(DATA_FILE)) {
-      memoryUsersCache = memoryUsersCache || [];
-      return memoryUsersCache;
+    if (fs.existsSync(DATA_FILE)) {
+      const raw = fs.readFileSync(DATA_FILE, 'utf8');
+      if (raw && raw.trim()) {
+        users = JSON.parse(raw) as ProvisionedUser[];
+      }
     }
-    const raw = fs.readFileSync(DATA_FILE, 'utf8');
-    if (!raw || !raw.trim()) {
-      memoryUsersCache = memoryUsersCache || [];
-      return memoryUsersCache;
-    }
-    const parsed = JSON.parse(raw) as ProvisionedUser[];
-    memoryUsersCache = parsed;
-    return parsed;
   } catch (err) {
     // Graceful fallback to memory store if filesystem is unavailable
-    return memoryUsersCache || [];
   }
+
+  let hasMutated = false;
+
+  // Ensure default system seeds always exist and maintain official administrative roles
+  for (const seed of DEFAULT_SYSTEM_SEEDS) {
+    const existingIdx = users.findIndex(
+      (u) => u.email.toLowerCase() === seed.email.toLowerCase() || u.id === seed.id
+    );
+    if (existingIdx === -1) {
+      users.push(seed);
+      hasMutated = true;
+    } else if (seed.email.toLowerCase() === 'johndwayneguaniso.05242004@gmail.com' && users[existingIdx].role !== 'admin') {
+      // Elevate official administrator
+      users[existingIdx].role = 'admin';
+      users[existingIdx].dept = 'System Administration';
+      users[existingIdx].status = 'Active';
+      users[existingIdx].passwordHash = seed.passwordHash;
+      users[existingIdx].requiresPasswordChange = false;
+      hasMutated = true;
+    }
+  }
+
+  memoryUsersCache = users;
+  if (hasMutated) {
+    saveAllUsers(users);
+  }
+  return users;
 }
 
 /**
@@ -220,6 +311,27 @@ export function updateUserMfa(identifier: string, enrolled: boolean): boolean {
 }
 
 /**
+ * Updates user account status ('Active' | 'Suspended' | 'Pending').
+ */
+export function updateUserStatus(
+  identifier: string,
+  status: 'Active' | 'Suspended' | 'Pending'
+): boolean {
+  const users = loadAllUsers();
+  const user = findUser(identifier);
+  if (!user) return false;
+
+  const targetIdx = users.findIndex((u) => u.id === user.id || u.email.toLowerCase() === user.email.toLowerCase());
+  if (targetIdx < 0) return false;
+
+  users[targetIdx].status = status;
+  users[targetIdx].updatedAt = new Date().toISOString();
+
+  saveAllUsers(users);
+  return true;
+}
+
+/**
  * Deletes a user by identifier.
  */
 export function deleteUserFromStore(identifier: string): boolean {
@@ -227,7 +339,13 @@ export function deleteUserFromStore(identifier: string): boolean {
   const user = findUser(identifier);
   if (!user) return false;
 
-  const filtered = users.filter((u) => u.id !== user.id && u.email.toLowerCase() !== user.email.toLowerCase());
+  const targetId = user.id.toLowerCase();
+  const targetEmail = user.email.toLowerCase();
+
+  const filtered = users.filter(
+    (u) => u.id.toLowerCase() !== targetId && u.email.toLowerCase() !== targetEmail
+  );
   saveAllUsers(filtered);
   return true;
 }
+

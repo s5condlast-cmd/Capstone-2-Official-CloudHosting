@@ -7,10 +7,12 @@ import {
   upsertUser,
   updateUserPassword,
   updateUserMfa,
+  updateUserStatus,
   deleteUserFromStore,
   verifyPassword,
   hashPassword,
   loadAllUsers,
+  DEFAULT_SYSTEM_SEEDS,
 } from '../services/userStore';
 
 const router = Router();
@@ -53,23 +55,57 @@ const deletedUsersSet = new Set<string>();
 async function initUserStoreFromDatabase() {
   try {
     const { data: profiles } = await supabase.from('profiles').select('*');
+    const existingEmails = new Set<string>();
+
     if (profiles && profiles.length > 0) {
       for (const p of profiles) {
         if (!p.email) continue;
-        const existing = findUser(p.email);
+        const normalized = p.email.toLowerCase().trim();
+        existingEmails.add(normalized);
+        const existing = findUser(normalized);
         if (!existing) {
           upsertUser({
             id: p.id,
-            email: p.email,
-            name: p.full_name || p.email.split('@')[0],
+            email: normalized,
+            name: p.full_name || normalized.split('@')[0],
             role: (p.role?.toLowerCase() as any) || 'student',
             studentId: p.student_id,
-            dept: p.section || p.department || p.program || 'BSIT 402',
-            status: p.is_activated === false ? 'Suspended' : 'Active',
+            dept: p.section || p.department || p.company_name || p.program || 'BSIT 402',
+            status: p.status || (p.is_activated === false ? 'Suspended' : 'Active'),
             passwordHash: hashPassword('123'),
-            requiresPasswordChange: true,
-            mfaEnrolled: false,
+            requiresPasswordChange: p.requires_password_change ?? false,
+            mfaEnrolled: p.mfa_enrolled ?? false,
           });
+        }
+      }
+    }
+
+    // Auto-seed official institutional accounts into Supabase profiles if missing
+    for (const seed of DEFAULT_SYSTEM_SEEDS) {
+      const normalizedSeedEmail = seed.email.toLowerCase().trim();
+      if (!existingEmails.has(normalizedSeedEmail)) {
+        try {
+          await supabase.from('profiles').upsert(
+            {
+              id: seed.id,
+              email: normalizedSeedEmail,
+              full_name: seed.name,
+              role: seed.role,
+              student_id: seed.studentId || null,
+              department: seed.role === 'admin' || seed.role === 'adviser' ? seed.dept : null,
+              company_name: seed.role === 'supervisor' ? seed.dept : null,
+              section: seed.role === 'student' ? seed.dept : null,
+              program: seed.role === 'student' ? 'BSIT' : null,
+              is_activated: seed.status === 'Active',
+              status: seed.status,
+              requires_password_change: seed.requiresPasswordChange,
+              mfa_enrolled: seed.mfaEnrolled,
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: 'email' }
+          );
+        } catch (dbErr) {
+          // Graceful fallback if database permissions restrict insertion
         }
       }
     }
@@ -634,7 +670,14 @@ router.post('/auth/login', async (req: Request, res: Response) => {
 
     const normalized = email.toLowerCase().trim();
 
-    // 1. Built-in quick switch accounts (admin, adviser, supervisor, student) for instant presentations
+    // Check deleted blacklist
+    if (deletedUsersSet.has(normalized) || deletedUsersSet.has(normalized.split('@')[0])) {
+      return res.status(401).json({
+        error: 'Invalid credentials. This account has been removed from the directory.',
+      });
+    }
+
+    // 1. Built-in quick switch accounts (admin, adviser, supervisor, student) backed by production seeds
     const isBuiltInDemo =
       password === '123' &&
       (normalized === 'admin' ||
@@ -653,9 +696,41 @@ router.post('/auth/login', async (req: Request, res: Response) => {
       else if (normalized.startsWith('supervisor')) matchedRole = 'supervisor';
 
       const rolePrefix = matchedRole;
+      const seedUser = findUser(normalized) || findUser(`${rolePrefix}@practicum.edu`);
+
+      if (seedUser) {
+        if (seedUser.status === 'Suspended') {
+          return res.status(403).json({
+            error: 'Your account has been suspended by the administrator. Please contact IT support.',
+          });
+        }
+
+        const isPwdValid = verifyPassword(password, seedUser.passwordHash);
+        if (!isPwdValid) {
+          return res.status(401).json({
+            error: 'The password you entered is incorrect. Please try again.',
+          });
+        }
+
+        const user = {
+          id: seedUser.id,
+          username: seedUser.email.split('@')[0],
+          name: seedUser.name,
+          role: seedUser.role,
+          email: seedUser.email,
+          studentId: seedUser.studentId || (seedUser.role === 'student' ? '02000249822' : undefined),
+          course: seedUser.dept,
+          mfaEnrolled: seedUser.mfaEnrolled ?? true,
+          isNewAccount: false,
+          requiresPasswordChange: seedUser.requiresPasswordChange ?? false,
+        };
+
+        return res.json({ success: true, user });
+      }
+
       const displayName = `${matchedRole.charAt(0).toUpperCase() + matchedRole.slice(1)} User`;
       const user = {
-        id: crypto.randomUUID(),
+        id: `seed-${rolePrefix}`,
         username: rolePrefix,
         name: displayName,
         role: matchedRole,
@@ -684,6 +759,12 @@ router.post('/auth/login', async (req: Request, res: Response) => {
           .select('*')
           .eq('id', data.user.id)
           .maybeSingle();
+
+        if (profile?.status === 'Suspended' || profile?.is_activated === false) {
+          return res.status(403).json({
+            error: 'Your account has been suspended by the administrator. Please contact IT support.',
+          });
+        }
 
         const stored = findUser(normalized) || findUser(data.user.id);
         const userRole = profile?.role || data.user.app_metadata?.role || data.user.user_metadata?.role || 'student';
@@ -730,10 +811,10 @@ router.post('/auth/login', async (req: Request, res: Response) => {
             role: roleLower,
             studentId: dbProfile.student_id,
             dept: dbProfile.section || dbProfile.program || dbProfile.department || 'BSIT 402',
-            status: dbProfile.is_activated === false ? 'Suspended' : 'Active',
+            status: dbProfile.status || (dbProfile.is_activated === false ? 'Suspended' : 'Active'),
             passwordHash: hashPassword('123'),
-            requiresPasswordChange: true,
-            mfaEnrolled: false,
+            requiresPasswordChange: dbProfile.requires_password_change ?? false,
+            mfaEnrolled: dbProfile.mfa_enrolled ?? false,
           });
         }
       } catch (dbErr) {
@@ -759,7 +840,7 @@ router.post('/auth/login', async (req: Request, res: Response) => {
           dept: seedMatch.dept,
           status: seedMatch.status,
           passwordHash: hashPassword('123'),
-          requiresPasswordChange: true,
+          requiresPasswordChange: false,
           mfaEnrolled: false,
         });
       }
@@ -767,6 +848,13 @@ router.post('/auth/login', async (req: Request, res: Response) => {
 
     // Dynamic password verification
     if (userRecord) {
+      // Check account suspension status
+      if (userRecord.status === 'Suspended') {
+        return res.status(403).json({
+          error: 'Your account has been suspended by the administrator. Please contact IT support.',
+        });
+      }
+
       const isPasswordValid = verifyPassword(password, userRecord.passwordHash);
 
       if (!isPasswordValid) {
@@ -804,6 +892,11 @@ router.post('/auth/login', async (req: Request, res: Response) => {
  * Default Institutional Seed Users (Figure 25: Admin Accounts)
  */
 const defaultSeedUsers = [
+  { id: 'admin-main-001', name: 'John Dwayne Guaniso', role: 'Admin' as const, email: 'johndwayneguaniso.05242004@gmail.com', status: 'Active' as const, dept: 'System Administration' },
+  { id: 'admin-role-002', name: 'Administrator', role: 'Admin' as const, email: 'admin@practicum.edu', status: 'Active' as const, dept: 'System Administration' },
+  { id: 'adviser-role-003', name: 'Dr. Sarah Johnson', role: 'Adviser' as const, email: 'adviser@practicum.edu', status: 'Active' as const, dept: 'College of Computer Studies' },
+  { id: 'supervisor-role-004', name: 'Engr. Paolo Reyes', role: 'Supervisor' as const, email: 'supervisor@practicum.edu', status: 'Active' as const, dept: 'InnoTech Labs' },
+  { id: 'student-role-005', name: 'John Dwayne B. Guaniso', role: 'Student' as const, email: 'student@practicum.edu', status: 'Active' as const, dept: 'BSIT 402', studentId: '02000249822' },
   { id: '1', name: 'Alice Brown', role: 'Student' as const, email: 'alice.b@edu.ph', status: 'Active' as const, dept: '__BSIT 402_401__' },
   { id: '2', name: 'Dr. Sarah Johnson', role: 'Adviser' as const, email: 's.johnson@edu.ph', status: 'Active' as const, dept: 'BSIT 402' },
   { id: '3', name: 'Charlie Davis', role: 'Student' as const, email: 'c.davis@edu.ph', status: 'Active' as const, dept: '__BSIT 402_401__', resetRequested: true },
@@ -1346,7 +1439,9 @@ router.patch('/users/:id/status', async (req: Request, res: Response) => {
     // Update persistent userStore
     const storedUser = findUser(normalized) || findUser(id);
     if (storedUser) {
-      upsertUser({ email: storedUser.email, status });
+      updateUserStatus(storedUser.email, status);
+    } else {
+      updateUserStatus(normalized, status);
     }
 
     // Update in memory store

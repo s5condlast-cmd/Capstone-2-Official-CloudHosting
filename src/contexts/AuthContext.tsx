@@ -116,24 +116,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem(STORAGE_KEY, JSON.stringify(newUser));
   }, []);
 
-  // Demo 1-Click Login for Thesis Defense & Panel Testing
+  // 1-Click Role Switcher for Thesis Defense & Testing (Backed by production seed records)
   const loginWithDemo = useCallback((role: Role, username?: string) => {
     const defaultUsername = username || role;
-    const defaultName =
-      role === 'student'
-        ? 'John Dwayne B. Guaniso'
-        : `${role.charAt(0).toUpperCase() + role.slice(1)} User`;
+    const seedInfo: Record<Role, { id: string; name: string; dept: string; studentId?: string }> = {
+      student: { id: 'student-role-005', name: 'John Dwayne B. Guaniso', dept: 'BSIT 402', studentId: '02000249822' },
+      admin: { id: 'admin-role-002', name: 'Administrator', dept: 'System Administration' },
+      adviser: { id: 'adviser-role-003', name: 'Dr. Sarah Johnson', dept: 'College of Computer Studies' },
+      supervisor: { id: 'supervisor-role-004', name: 'Engr. Paolo Reyes', dept: 'InnoTech Labs' },
+    };
+
+    const targetSeed = seedInfo[role] || {
+      id: `seed-${role}`,
+      name: `${role.charAt(0).toUpperCase() + role.slice(1)} User`,
+      dept: 'College of Computer Studies',
+    };
 
     const newUser: User = {
-      id: `demo-${role}-${Math.random().toString(36).substring(2, 7)}`,
+      id: targetSeed.id,
       username: defaultUsername,
-      name: defaultName,
+      name: targetSeed.name,
       role,
       email: `${defaultUsername}@practicum.edu`,
-      studentId: role === 'student' ? '02000249822' : undefined,
+      studentId: targetSeed.studentId,
       course: role === 'student' ? 'BSIT 402' : undefined,
       section: role === 'student' ? 'BSIT 402' : undefined,
-      department: 'College of Computer Studies',
+      department: targetSeed.dept,
     };
 
     setSessionUser(newUser);

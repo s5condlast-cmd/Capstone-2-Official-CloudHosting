@@ -72,10 +72,30 @@ export const UserManagement: React.FC = () => {
   const [formSubmitting, setFormSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
 
-  // ── Fetch Users from Supabase Database on mount ──
+  // ── Fetch Users from Supabase Database and backend directory on mount ──
   const fetchUsers = async () => {
     try {
       setIsLoading(true);
+
+      // 1. Fetch from unified API endpoint (auto-seeds institutional users and synchronizes persistent stores)
+      try {
+        const res = await fetch('/api/users');
+        if (res.ok) {
+          const contentType = res.headers.get('content-type') || '';
+          if (contentType.includes('application/json')) {
+            const data = await res.json();
+            if (data?.users && Array.isArray(data.users) && data.users.length > 0) {
+              setUsers(data.users);
+              setIsLoading(false);
+              return;
+            }
+          }
+        }
+      } catch {
+        // Non-blocking fallback to direct Supabase query
+      }
+
+      // 2. Direct Supabase Database query fallback
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -355,35 +375,59 @@ export const UserManagement: React.FC = () => {
     }
   };
 
-  // ── Handle Delete User directly from Supabase ──
+  // ── Handle Delete User from Directory and Persistent Stores ──
   const handleDeleteUser = async (user: UserRecord) => {
     if (!confirm(`Are you sure you want to delete ${user.name} from the directory?`)) return;
     try {
+      // 1. Call backend delete API (removes from userStore, session blacklist, and Supabase Auth admin)
+      await fetch(`/api/users/${encodeURIComponent(user.id || user.email)}`, {
+        method: 'DELETE',
+      }).catch((e) => console.warn('[UserManagement] Backend delete notice:', e));
+
+      // 2. Direct Supabase delete fallback
       const { error } = await supabase
         .from('profiles')
         .delete()
-        .eq('id', user.id);
+        .or(`id.eq.${user.id},email.eq.${user.email}`);
 
-      if (error) throw error;
-      setUsers(prev => prev.filter(u => u.id !== user.id));
-      toast.success(`User ${user.name} deleted from database.`);
+      if (error && !error.message?.includes('JSON object requested')) {
+        console.warn('[UserManagement] Supabase delete note:', error);
+      }
+
+      setUsers(prev => prev.filter(u => u.id !== user.id && u.email.toLowerCase() !== user.email.toLowerCase()));
+      toast.success(`User ${user.name} removed from directory.`);
     } catch (err: any) {
-      toast.error('Failed to delete user from database.');
+      toast.error('Failed to delete user from directory.');
     }
   };
 
-  // ── Handle Status Toggle directly in Supabase ──
+  // ── Handle Status Toggle across Database and Backend Stores ──
   const handleToggleStatus = async (user: UserRecord) => {
     const nextStatus = user.status === 'Active' ? 'Suspended' : 'Active';
     const nextIsActivated = nextStatus === 'Active';
     setUsers(prev => prev.map(u => u.id === user.id ? { ...u, status: nextStatus } : u));
     try {
+      // 1. Call backend status PATCH API (updates userStore and in-memory store)
+      await fetch(`/api/users/${encodeURIComponent(user.id || user.email)}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: nextStatus }),
+      }).catch((e) => console.warn('[UserManagement] Backend status notice:', e));
+
+      // 2. Update Supabase profiles
       const { error } = await supabase
         .from('profiles')
-        .update({ is_activated: nextIsActivated, updated_at: new Date().toISOString() })
-        .eq('id', user.id);
+        .update({ 
+          status: nextStatus,
+          is_activated: nextIsActivated, 
+          updated_at: new Date().toISOString() 
+        })
+        .or(`id.eq.${user.id},email.eq.${user.email}`);
 
-      if (error) throw error;
+      if (error && !error.message?.includes('JSON object requested')) {
+        console.warn('[UserManagement] Supabase status update note:', error);
+      }
+
       toast.info(`${user.name} status updated to ${nextStatus}`);
     } catch (err: any) {
       setUsers(prev => prev.map(u => u.id === user.id ? { ...u, status: user.status } : u));
