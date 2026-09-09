@@ -119,16 +119,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // 1-Click Role Switcher for Thesis Defense & Testing (Backed by production seed records)
   const loginWithDemo = useCallback((role: Role, username?: string) => {
     const defaultUsername = username || role;
-    const seedInfo: Record<Role, { id: string; name: string; dept: string; studentId?: string }> = {
-      student: { id: 'student-role-005', name: 'John Dwayne B. Guaniso', dept: 'BSIT 402', studentId: '02000249822' },
-      admin: { id: 'admin-role-002', name: 'Administrator', dept: 'System Administration' },
-      adviser: { id: 'adviser-role-003', name: 'Dr. Sarah Johnson', dept: 'College of Computer Studies' },
-      supervisor: { id: 'supervisor-role-004', name: 'Engr. Paolo Reyes', dept: 'InnoTech Labs' },
+    const seedInfo: Record<Role, { id: string; name: string; email?: string; dept: string; studentId?: string }> = {
+      student: { id: 'student-role-005', name: 'John Dwayne B. Guaniso', email: 'student@practicum.edu', dept: 'BSIT 402', studentId: '02000249822' },
+      admin: { id: 'admin-main-001', name: 'John Dwayne Guaniso', email: 'johndwayneguaniso.05242004@gmail.com', dept: 'System Administration' },
+      adviser: { id: 'adviser-role-003', name: 'Dr. Sarah Johnson', email: 'adviser@practicum.edu', dept: 'College of Computer Studies' },
+      supervisor: { id: 'supervisor-role-004', name: 'Engr. Paolo Reyes', email: 'supervisor@practicum.edu', dept: 'InnoTech Labs' },
     };
 
     const targetSeed = seedInfo[role] || {
       id: `seed-${role}`,
       name: `${role.charAt(0).toUpperCase() + role.slice(1)} User`,
+      email: `${defaultUsername}@practicum.edu`,
       dept: 'College of Computer Studies',
     };
 
@@ -137,7 +138,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       username: defaultUsername,
       name: targetSeed.name,
       role,
-      email: `${defaultUsername}@practicum.edu`,
+      email: targetSeed.email || `${defaultUsername}@practicum.edu`,
       studentId: targetSeed.studentId,
       course: role === 'student' ? 'BSIT 402' : undefined,
       section: role === 'student' ? 'BSIT 402' : undefined,
@@ -145,7 +146,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     setSessionUser(newUser);
-    toast.success(`Logged in as ${role.toUpperCase()}`);
+    toast.success(`Logged in as ${targetSeed.name} (${role.toUpperCase()})`);
   }, [setSessionUser]);
 
   // Credentials Login (via API / Supabase)
