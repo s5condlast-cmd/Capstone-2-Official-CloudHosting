@@ -10,7 +10,10 @@ import {
   listOneDriveFolder,
 } from '../services/onedriveService';
 
-const upload = multer({ dest: 'tmp/' });
+import os from 'os';
+import path from 'path';
+
+const upload = multer({ dest: path.join(os.tmpdir(), 'uploads') });
 const router = Router();
 
 /**

@@ -3,9 +3,13 @@ import fs from 'fs/promises';
 import path from 'path';
 import dotenv from 'dotenv';
 
+import os from 'os';
+
 dotenv.config();
 
-const TOKEN_FILE_PATH = path.resolve(process.cwd(), 'backend', 'config', 'onedrive-token.json');
+const TOKEN_FILE_PATH = process.env.VERCEL
+  ? path.join(os.tmpdir(), 'onedrive-token.json')
+  : path.resolve(process.cwd(), 'backend', 'config', 'onedrive-token.json');
 
 interface TokenData {
   accessToken: string;
