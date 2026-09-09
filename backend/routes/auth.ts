@@ -1209,7 +1209,7 @@ router.post('/users/:id/reset-password', async (req: Request, res: Response) => 
     const { newPassword = '123', email } = req.body || {};
 
     const normalized = decodeURIComponent(id).toLowerCase().trim();
-    const targetEmail = (email || id || '').toLowerCase().trim();
+    let targetEmail = (email || id || '').toLowerCase().trim();
     let targetName = 'User';
 
     // Update persistent userStore
@@ -1328,7 +1328,7 @@ router.post('/users/:id/reset-mfa', async (req: Request, res: Response) => {
     const { id } = req.params;
     const { email } = req.body || {};
     const normalized = decodeURIComponent(id).toLowerCase().trim();
-    const targetEmail = (email || id || '').toLowerCase().trim();
+    let targetEmail = (email || id || '').toLowerCase().trim();
 
     let targetName = 'User';
 
