@@ -330,3 +330,12 @@ When developing, modifying, or refactoring user authentication, password resets,
 4. **Supabase PostgREST Schema Resilience (PGRST204 Prevention)**:
    - When registering or upserting user profiles in Supabase (`public.profiles`), query only the guaranteed institutional core columns (`id, email, full_name, role, student_id, program, section, contact_number, department, company_name, is_activated, updated_at`).
    - Extended lifecycle columns (`requires_password_change, mfa_enrolled, status`) must be updated in a separate, isolated `try / catch` block. This guarantees that user creation never fails even if optional columns are absent from the live Supabase schema cache.
+
+## Temporary Testing & Scratch File Hygiene
+
+When creating temporary files, scratch scripts, mock data, or test outputs in `tmp/`, `/tmp`, or local test directories during debugging or verification:
+
+1. **Mandatory Post-Test Cleanup**: Always clean up and delete all temporary files, scripts, or output buffers immediately once the verification step or command execution is finished.
+2. **Zero Lingering Artifacts**: Never leave one-off test files (e.g. `tmp/test-*.js`, `tmp/*.json`, dummy uploads) sitting in the project tree.
+3. **Pristine Git Working Tree**: Before completing a turn or reporting results to the user, ensure that temporary testing files do not appear in `git status` as untracked files.
+
