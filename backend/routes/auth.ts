@@ -542,7 +542,8 @@ router.post('/auth/register-student', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Missing required registration fields.' });
     }
 
-    const normalizedEmail = email.toLowerCase().trim();
+    const trimmedEmail = email.toLowerCase().trim();
+    const normalizedEmail = trimmedEmail.includes('@') ? trimmedEmail : `${trimmedEmail}@practicum.edu`;
 
     // Verify token unless in demo bypass
     const record = memoryOtpStore.get(normalizedEmail);
@@ -755,10 +756,14 @@ router.post('/auth/login', async (req: Request, res: Response) => {
       return res.json({ success: true, user });
     }
 
+    // Resolve alias, username prefix, or student ID from persistent store
+    const mappedUser = findUser(normalized);
+    const authEmail = mappedUser?.email || (normalized.includes('@') ? normalized : `${normalized}@practicum.edu`);
+
     // 2. Official Supabase Auth attempt
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: normalized,
+        email: authEmail,
         password,
       });
 
@@ -776,17 +781,17 @@ router.post('/auth/login', async (req: Request, res: Response) => {
           });
         }
 
-        const stored = findUser(normalized) || findUser(data.user.id);
+        const stored = mappedUser || findUser(authEmail) || findUser(data.user.id);
         const userRole = profile?.role || data.user.app_metadata?.role || data.user.user_metadata?.role || 'student';
         const isMfaEnrolled = stored?.mfaEnrolled ?? profile?.mfa_enrolled ?? false;
         const needsPwdChange = stored?.requiresPasswordChange ?? profile?.requires_password_change ?? false;
 
         const user = {
           id: data.user.id,
-          username: normalized.split('@')[0],
+          username: authEmail.split('@')[0],
           name: profile?.full_name || data.user.user_metadata?.full_name || 'Practicum User',
           role: userRole,
-          email: normalized,
+          email: authEmail,
           studentId: profile?.student_id || stored?.studentId,
           course: profile?.section || profile?.program || stored?.dept,
           mfaEnrolled: isMfaEnrolled,
@@ -801,7 +806,7 @@ router.post('/auth/login', async (req: Request, res: Response) => {
     }
 
     // 3. Persistent credentials store check (dynamic verification, NO hardcoding)
-    let userRecord = findUser(normalized);
+    let userRecord = mappedUser || findUser(authEmail) || findUser(normalized);
 
     // If not in persistent store yet, check official Supabase profiles
     if (!userRecord) {
@@ -809,7 +814,7 @@ router.post('/auth/login', async (req: Request, res: Response) => {
         const { data: dbProfile } = await supabase
           .from('profiles')
           .select('*')
-          .or(`email.ilike.${normalized},student_id.eq.${normalized}`)
+          .or(`email.ilike.${authEmail},email.ilike.${normalized}@%,student_id.eq.${normalized}`)
           .maybeSingle();
 
         if (dbProfile) {
@@ -1027,14 +1032,17 @@ router.post('/users', async (req: Request, res: Response) => {
     if (!name || typeof name !== 'string' || !name.trim()) {
       return res.status(400).json({ error: 'Full name is required.' });
     }
-    if (!email || typeof email !== 'string' || !email.includes('@')) {
-      return res.status(400).json({ error: 'A valid email address is required.' });
+    if (!email || typeof email !== 'string' || !email.trim()) {
+      return res.status(400).json({ error: 'A valid username, student ID, or email address is required.' });
     }
     if (!role) {
       return res.status(400).json({ error: 'User role is required.' });
     }
 
-    const normalized = email.toLowerCase().trim();
+    const trimmedInput = email.toLowerCase().trim();
+    const normalized = trimmedInput.includes('@')
+      ? trimmedInput
+      : `${trimmedInput}@practicum.edu`;
     const newId = crypto.randomUUID();
     const roleCapitalized = (role.charAt(0).toUpperCase() + role.slice(1).toLowerCase()) as 'Student' | 'Adviser' | 'Supervisor' | 'Admin';
     const roleLower = role.toLowerCase() as 'student' | 'adviser' | 'supervisor' | 'admin';

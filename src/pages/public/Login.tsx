@@ -541,7 +541,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
     const trimmed = emailOrUser.trim();
     if (!trimmed) {
-      setSignInError('Enter a valid email address or phone number.');
+      setSignInError('Enter a valid username, student ID, or email address.');
       return;
     }
 
@@ -587,6 +587,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
             lower === 'adviser@practicum.edu' ||
             lower === 'student' ||
             lower === 'student@practicum.edu' ||
+            lower === '02000249822' ||
             lower === 'supervisor' ||
             lower === 'supervisor@practicum.edu');
 
@@ -609,13 +610,14 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
           else if (lower.startsWith('supervisor')) detectedRole = 'supervisor';
 
           const rolePrefix = detectedRole;
-          const displayName = `${detectedRole.charAt(0).toUpperCase() + detectedRole.slice(1)} User`;
+          const displayName = detectedRole === 'student' ? 'John Dwayne B. Guaniso' : `${detectedRole.charAt(0).toUpperCase() + detectedRole.slice(1)} User`;
           user = {
             id: `seed-${rolePrefix}`,
             name: displayName,
             username: rolePrefix,
             role: detectedRole,
             email: `${rolePrefix}@practicum.edu`,
+            studentId: detectedRole === 'student' ? '02000249822' : undefined,
             contactNumber: '09171234589',
             requiresPasswordChange: false,
             mfaEnrolled: true,
@@ -666,11 +668,13 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
     e.preventDefault();
     setRegError('');
 
-    const normalized = regEmail.toLowerCase().trim();
+    const trimmedInput = regEmail.toLowerCase().trim();
+    const normalized = trimmedInput.includes('@') ? trimmedInput : `${trimmedInput}@practicum.edu`;
     const isDomainValid =
       normalized.endsWith('@marikina.sti.edu.ph') ||
       normalized.endsWith('.edu.ph') ||
       normalized.endsWith('@gmail.com') ||
+      normalized.endsWith('@practicum.edu') ||
       normalized.endsWith('@outlook.com') ||
       normalized.endsWith('@outlook.ph') ||
       normalized.endsWith('@hotmail.com') ||
@@ -686,7 +690,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
     if (!isDomainValid) {
       setRegError(
-        'Institutional domain error: Please use your official @marikina.sti.edu.ph Outlook, Microsoft account, or registered student email.'
+        'Please enter a valid student ID, username, or institutional email address.'
       );
       return;
     }
@@ -912,7 +916,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                     )}
                     <input
                       type="text"
-                      placeholder="Email or phone"
+                      placeholder="Email, username, or student ID"
                       value={emailOrUser}
                       onChange={(e) => {
                         setEmailOrUser(e.target.value);
@@ -1721,11 +1725,11 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 <form onSubmit={handleActivationCredentialsSubmit} className="space-y-4">
                   <div>
                     <label className="text-[11px] font-medium text-[#767676] dark:text-[#999] uppercase tracking-wider block mb-1">
-                      Institutional / Microsoft Email
+                      Student ID, Username, or Email
                     </label>
                     <input
-                      type="email"
-                      placeholder="e.g. j.guaniso@marikina.sti.edu.ph or your Microsoft account"
+                      type="text"
+                      placeholder="e.g. 02000249822 or student@practicum.edu"
                       value={regEmail}
                       onChange={(e) => {
                         setRegEmail(e.target.value);

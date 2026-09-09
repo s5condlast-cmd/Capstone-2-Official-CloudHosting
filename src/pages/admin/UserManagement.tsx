@@ -185,14 +185,17 @@ export const UserManagement: React.FC = () => {
       setFormError('Please enter the user\'s full name.');
       return;
     }
-    if (!formEmail.trim() || !formEmail.includes('@')) {
-      setFormError('Please enter a valid email address.');
+    if (!formEmail.trim()) {
+      setFormError('Please enter a username or institutional email address.');
       return;
     }
 
     setFormSubmitting(true);
     try {
-      const normalizedEmail = formEmail.trim().toLowerCase();
+      const trimmedInput = formEmail.trim().toLowerCase();
+      const normalizedEmail = trimmedInput.includes('@')
+        ? trimmedInput
+        : `${trimmedInput}@practicum.edu`;
       const roleLower = formRole.toLowerCase();
       const initialPassword = formPassword.trim() || '123';
       const assignedStudentId = formRole === 'Student' ? (formStudentId.trim() || undefined) : undefined;
@@ -752,19 +755,22 @@ export const UserManagement: React.FC = () => {
                   />
                 </div>
 
-                {/* Email Address */}
+                {/* Email Address / Username */}
                 <div>
                   <label className="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider block mb-1">
-                    Email Address (Microsoft / Institutional)
+                    Username, Student ID, or Institutional Email
                   </label>
                   <input
-                    type="email"
+                    type="text"
                     required
-                    placeholder="e.g. j.guaniso@outlook.com or student@marikina.sti.edu.ph"
+                    placeholder="e.g. carlos, 02000249822, or student@practicum.edu"
                     value={formEmail}
                     onChange={(e) => setFormEmail(e.target.value)}
                     className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl px-3.5 py-2 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:border-zinc-900 dark:focus:border-zinc-100 transition-all placeholder:text-zinc-400"
                   />
+                  <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-1">
+                    No Gmail required. You can enter a simple username, student ID, or institutional email.
+                  </p>
                 </div>
 
                 {/* Role Specific Fields */}
