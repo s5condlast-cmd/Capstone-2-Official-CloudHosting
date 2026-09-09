@@ -53,6 +53,19 @@ const tabs: { key: TabKey; label: string; icon: React.ElementType; roleFilter?: 
   { key: 'admins', label: 'Admins', icon: Shield, roleFilter: 'Admin' },
 ];
 
+const isUuid = (val?: string): boolean =>
+  typeof val === 'string' &&
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(val.trim());
+
+async function safeParseJson(res: Response): Promise<any> {
+  const contentType = res.headers.get('content-type') || '';
+  if (contentType.includes('application/json')) {
+    return res.json();
+  }
+  const text = await res.text();
+  return { error: `Server error (${res.status}): ${text.slice(0, 120)}` };
+}
+
 export const UserManagement: React.FC = () => {
   const [users, setUsers] = useState<UserRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -72,10 +85,30 @@ export const UserManagement: React.FC = () => {
   const [formSubmitting, setFormSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
 
-  // ── Fetch Users from Supabase Database on mount ──
+  // ── Fetch Users from Supabase Database and backend directory on mount ──
   const fetchUsers = async () => {
     try {
       setIsLoading(true);
+
+      // 1. Fetch from unified API endpoint (auto-seeds institutional users and synchronizes persistent stores)
+      try {
+        const res = await fetch('/api/users');
+        if (res.ok) {
+          const contentType = res.headers.get('content-type') || '';
+          if (contentType.includes('application/json')) {
+            const data = await res.json();
+            if (data?.users && Array.isArray(data.users) && data.users.length > 0) {
+              setUsers(data.users);
+              setIsLoading(false);
+              return;
+            }
+          }
+        }
+      } catch {
+        // Non-blocking fallback to direct Supabase query
+      }
+
+      // 2. Direct Supabase Database query fallback
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -143,7 +176,7 @@ export const UserManagement: React.FC = () => {
 
   const getCounts = (role?: UserRole) => users.filter(u => !role || u.role === role).length;
 
-  // ── Handle Add User Submission directly into Supabase ──
+  // ── Handle Add User Submission directly into Supabase & Persistent Backend ──
   const handleAddUserSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError('');
@@ -167,45 +200,8 @@ export const UserManagement: React.FC = () => {
         ? formDept.trim() 
         : (formRole === 'Supervisor' ? formCompanyName.trim() : formDept.trim());
 
-      // 1. Register in Supabase Auth (best-effort / handles new account credentials)
-      try {
-        await supabase.auth.signUp({
-          email: normalizedEmail,
-          password: initialPassword,
-          options: {
-            data: {
-              full_name: formName.trim(),
-              role: roleLower,
-              student_id: assignedStudentId || null,
-            },
-          },
-        });
-      } catch (authErr: any) {
-        console.warn('[UserManagement] Supabase auth notice:', authErr?.message);
-      }
-
-      // 2. Insert/Upsert into public.profiles matching confirmed Supabase table schema
-      const coreProfile: any = {
-        email: normalizedEmail,
-        full_name: formName.trim(),
-        role: roleLower,
-        student_id: assignedStudentId || null,
-        program: roleLower === 'student' ? (deptInfo.split(' ')[0] || 'BSIT') : null,
-        section: roleLower === 'student' ? deptInfo : null,
-        department: roleLower === 'adviser' ? deptInfo : null,
-        company_name: roleLower === 'supervisor' ? deptInfo : null,
-        is_activated: true,
-        updated_at: new Date().toISOString(),
-      };
-
-      // Clear any previous local storage verification for this email
-      const cleanKey = normalizedEmail.replace(/[^a-zA-Z0-9]/g, '');
-      localStorage.removeItem(`pwd_changed_${cleanKey}`);
-      localStorage.removeItem(`mfa_enrolled_${cleanKey}`);
-      localStorage.removeItem(`mfa_trusted_${cleanKey}`);
-
-      // Call backend provisioning API so credentials and requiresPasswordChange are persisted to userStore
-      await fetch('/api/users', {
+      // 1. Call backend provisioning API as the primary authority (persists to userStore, memory cache, and Supabase)
+      const res = await fetch('/api/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -217,28 +213,39 @@ export const UserManagement: React.FC = () => {
           companyName: formRole === 'Supervisor' ? formCompanyName.trim() : undefined,
           password: initialPassword,
         }),
-      }).catch((e) => console.warn('[UserManagement] Backend sync notice:', e));
+      });
 
-      const { error: insertError } = await supabase
-        .from('profiles')
-        .upsert(coreProfile, { onConflict: 'email' });
-
-      if (insertError) {
-        throw new Error(insertError.message || 'Failed to save user profile in database.');
+      const data = await safeParseJson(res);
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to create user in directory.');
       }
 
-      // Best-effort update if extended columns (status, requires_password_change, mfa_enrolled) exist in schema
+      // Clear any previous local storage verification for this email
+      const cleanKey = normalizedEmail.replace(/[^a-zA-Z0-9]/g, '');
+      localStorage.removeItem(`pwd_changed_${cleanKey}`);
+      localStorage.removeItem(`mfa_enrolled_${cleanKey}`);
+      localStorage.removeItem(`mfa_trusted_${cleanKey}`);
+
+      // 2. Direct best-effort Supabase client sync (non-blocking)
       try {
-        await supabase
-          .from('profiles')
-          .update({
-            status: 'Active',
-            requires_password_change: true,
-            mfa_enrolled: false,
-          })
-          .eq('email', normalizedEmail);
-      } catch {
-        // Non-blocking: table does not have extended columns yet
+        const coreProfile: any = {
+          email: normalizedEmail,
+          full_name: formName.trim(),
+          role: roleLower,
+          student_id: assignedStudentId || null,
+          program: roleLower === 'student' ? (deptInfo.split(' ')[0] || 'BSIT') : null,
+          section: roleLower === 'student' ? deptInfo : null,
+          department: roleLower === 'adviser' ? deptInfo : null,
+          company_name: roleLower === 'supervisor' ? deptInfo : null,
+          is_activated: true,
+          status: 'Active',
+          requires_password_change: true,
+          mfa_enrolled: false,
+          updated_at: new Date().toISOString(),
+        };
+        await supabase.from('profiles').upsert(coreProfile, { onConflict: 'email' });
+      } catch (clientSyncErr) {
+        console.warn('[UserManagement] Client-side Supabase sync note:', clientSyncErr);
       }
 
       toast.success(`User ${formName.trim()} created! Initial password: ${initialPassword}`);
@@ -253,7 +260,7 @@ export const UserManagement: React.FC = () => {
       setFormCompanyName('');
       setFormPassword('123');
 
-      // Refresh database list
+      // Refresh directory list
       await fetchUsers();
     } catch (err: any) {
       setFormError(err.message || 'An error occurred while creating user.');
@@ -281,8 +288,19 @@ export const UserManagement: React.FC = () => {
         localStorage.removeItem(`pwd_changed_${prefixKey}`);
       }
 
-      // 2. Direct Supabase update (best-effort for extended columns)
+      // 2. Call backend reset endpoint to reset password to 123 and clear MFA
+      await fetch(`/api/users/${encodeURIComponent(user.id || user.email)}/reset-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ newPassword: '123' }),
+      }).catch((e) => console.warn('[UserManagement] Reset API notice:', e));
+
+      // 3. Safe UUID Supabase update
       try {
+        const filter = isUuid(user.id)
+          ? `id.eq.${user.id},email.ilike.${user.email}`
+          : `email.ilike.${user.email}`;
+
         await supabase
           .from('profiles')
           .update({ 
@@ -290,25 +308,12 @@ export const UserManagement: React.FC = () => {
             mfa_enrolled: false, 
             updated_at: new Date().toISOString() 
           })
-          .or(`id.eq.${user.id},email.ilike.${user.email}`);
-      } catch {
-        // Fallback to core columns if extended columns don't exist yet
-        try {
-          await supabase
-            .from('profiles')
-            .update({ updated_at: new Date().toISOString() })
-            .or(`id.eq.${user.id},email.ilike.${user.email}`);
-        } catch {}
+          .or(filter);
+      } catch (dbErr) {
+        console.warn('[UserManagement] Supabase reset update notice:', dbErr);
       }
 
-      // 3. Call backend reset endpoint to reset password to 123 and clear MFA
-      await fetch(`/api/users/${encodeURIComponent(user.id || user.email)}/reset-password`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ newPassword: '123' }),
-      }).catch(() => {});
-
-      setUsers(prev => prev.map(u => u.id === user.id ? { ...u, resetRequested: true, mfaEnrolled: false } : u));
+      setUsers(prev => prev.map(u => (u.id === user.id || u.email.toLowerCase() === user.email.toLowerCase()) ? { ...u, resetRequested: true, mfaEnrolled: false } : u));
       toast.success(`Reset complete for ${user.name}! Password set to '123' and Google Authenticator reset.`);
     } catch {
       toast.error('Failed to reset user credentials.');
@@ -331,59 +336,98 @@ export const UserManagement: React.FC = () => {
         localStorage.removeItem(`mfa_trusted_${prefixKey}`);
       }
 
-      // Direct Supabase update (best-effort)
+      // Call backend reset MFA endpoint
+      await fetch(`/api/users/${encodeURIComponent(user.id || user.email)}/reset-mfa`, {
+        method: 'POST',
+      }).catch((e) => console.warn('[UserManagement] Reset MFA API notice:', e));
+
+      // Safe UUID Supabase update
       try {
+        const filter = isUuid(user.id)
+          ? `id.eq.${user.id},email.ilike.${user.email}`
+          : `email.ilike.${user.email}`;
+
         await supabase
           .from('profiles')
           .update({ 
             mfa_enrolled: false, 
             updated_at: new Date().toISOString() 
           })
-          .or(`id.eq.${user.id},email.ilike.${user.email}`);
-      } catch {
-        // Non-blocking if column not in schema
+          .or(filter);
+      } catch (dbErr) {
+        console.warn('[UserManagement] Supabase MFA update notice:', dbErr);
       }
 
-      await fetch(`/api/users/${encodeURIComponent(user.id || user.email)}/reset-mfa`, {
-        method: 'POST',
-      }).catch(() => {});
-
-      setUsers(prev => prev.map(u => u.id === user.id ? { ...u, mfaEnrolled: false } : u));
+      setUsers(prev => prev.map(u => (u.id === user.id || u.email.toLowerCase() === user.email.toLowerCase()) ? { ...u, mfaEnrolled: false } : u));
       toast.success(`Google Authenticator reset for ${user.name}!`);
     } catch {
       toast.error('Failed to reset Google Authenticator.');
     }
   };
 
-  // ── Handle Delete User directly from Supabase ──
+  // ── Handle Delete User from Directory and Persistent Stores ──
   const handleDeleteUser = async (user: UserRecord) => {
+    if (user.email.toLowerCase() === 'johndwayneguaniso.05242004@gmail.com') {
+      toast.error('The primary system administrator account cannot be deleted.');
+      return;
+    }
+
     if (!confirm(`Are you sure you want to delete ${user.name} from the directory?`)) return;
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', user.id);
+      // 1. Call backend delete API (removes from userStore, persistent blacklist, and Supabase Auth admin)
+      await fetch(`/api/users/${encodeURIComponent(user.id || user.email)}`, {
+        method: 'DELETE',
+      }).catch((e) => console.warn('[UserManagement] Backend delete notice:', e));
 
-      if (error) throw error;
-      setUsers(prev => prev.filter(u => u.id !== user.id));
-      toast.success(`User ${user.name} deleted from database.`);
+      // 2. Safe UUID Supabase delete
+      try {
+        const filter = isUuid(user.id)
+          ? `id.eq.${user.id},email.ilike.${user.email}`
+          : `email.ilike.${user.email}`;
+
+        await supabase.from('profiles').delete().or(filter);
+      } catch (dbErr) {
+        console.warn('[UserManagement] Supabase delete note:', dbErr);
+      }
+
+      setUsers(prev => prev.filter(u => u.id !== user.id && u.email.toLowerCase() !== user.email.toLowerCase()));
+      toast.success(`User ${user.name} removed from directory.`);
     } catch (err: any) {
-      toast.error('Failed to delete user from database.');
+      toast.error('Failed to delete user from directory.');
     }
   };
 
-  // ── Handle Status Toggle directly in Supabase ──
+  // ── Handle Status Toggle across Database and Backend Stores ──
   const handleToggleStatus = async (user: UserRecord) => {
     const nextStatus = user.status === 'Active' ? 'Suspended' : 'Active';
     const nextIsActivated = nextStatus === 'Active';
     setUsers(prev => prev.map(u => u.id === user.id ? { ...u, status: nextStatus } : u));
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ is_activated: nextIsActivated, updated_at: new Date().toISOString() })
-        .eq('id', user.id);
+      // 1. Call backend status PATCH API (updates userStore and in-memory store)
+      await fetch(`/api/users/${encodeURIComponent(user.id || user.email)}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: nextStatus }),
+      }).catch((e) => console.warn('[UserManagement] Backend status notice:', e));
 
-      if (error) throw error;
+      // 2. Safe UUID Supabase profiles update
+      try {
+        const filter = isUuid(user.id)
+          ? `id.eq.${user.id},email.ilike.${user.email}`
+          : `email.ilike.${user.email}`;
+
+        await supabase
+          .from('profiles')
+          .update({ 
+            status: nextStatus,
+            is_activated: nextIsActivated, 
+            updated_at: new Date().toISOString() 
+          })
+          .or(filter);
+      } catch (dbErr) {
+        console.warn('[UserManagement] Supabase status update note:', dbErr);
+      }
+
       toast.info(`${user.name} status updated to ${nextStatus}`);
     } catch (err: any) {
       setUsers(prev => prev.map(u => u.id === user.id ? { ...u, status: user.status } : u));

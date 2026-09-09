@@ -556,50 +556,58 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
     try {
       const lower = emailOrUser.toLowerCase().trim();
-      const cleanKey = lower.replace(/[^a-zA-Z0-9]/g, '');
-      const trustedUntil = localStorage.getItem(`mfa_trusted_${cleanKey}`);
-      const isDeviceTrusted = trustedUntil && parseInt(trustedUntil, 10) > Date.now();
 
-      // Quick demo switch bypass (password '123') for primary test roles
-      const isDemoRole =
-        password === '123' &&
-        (lower === 'admin' ||
-          lower === 'admin@practicum.edu' ||
-          lower === 'adviser' ||
-          lower === 'adviser@practicum.edu' ||
-          lower === 'student' ||
-          lower === 'student@practicum.edu' ||
-          lower === 'supervisor' ||
-          lower === 'supervisor@practicum.edu');
+      // 1. Authenticate through the official backend API
+      let user: any = null;
+      try {
+        user = await login(emailOrUser, password);
+      } catch (loginErr: any) {
+        // If account is suspended or removed, do not bypass: display official server message
+        if (
+          loginErr.message?.toLowerCase().includes('suspended') ||
+          loginErr.message?.toLowerCase().includes('removed')
+        ) {
+          throw loginErr;
+        }
 
-      if (isDemoRole) {
-        let detectedRole: Role = 'student';
-        if (lower.startsWith('admin')) detectedRole = 'admin';
-        else if (lower.startsWith('adviser')) detectedRole = 'adviser';
-        else if (lower.startsWith('supervisor')) detectedRole = 'supervisor';
+        // Offline / network fallback for quick demo evaluation if server cannot be reached
+        const isDemoRole =
+          password === '123' &&
+          (lower === 'admin' ||
+            lower === 'admin@practicum.edu' ||
+            lower === 'adviser' ||
+            lower === 'adviser@practicum.edu' ||
+            lower === 'student' ||
+            lower === 'student@practicum.edu' ||
+            lower === 'supervisor' ||
+            lower === 'supervisor@practicum.edu');
 
-        const rolePrefix = detectedRole;
-        const displayName = `${detectedRole.charAt(0).toUpperCase() + detectedRole.slice(1)} User`;
-        const demoUser = {
-          id: `demo-${rolePrefix}`,
-          name: displayName,
-          username: rolePrefix,
-          role: detectedRole,
-          email: `${rolePrefix}@practicum.edu`,
-          contactNumber: '09171234589',
-          requiresPasswordChange: false,
-        };
-        setPendingUser(demoUser);
+        if (isDemoRole) {
+          let detectedRole: Role = 'student';
+          if (lower.startsWith('admin')) detectedRole = 'admin';
+          else if (lower.startsWith('adviser')) detectedRole = 'adviser';
+          else if (lower.startsWith('supervisor')) detectedRole = 'supervisor';
 
-        setSignInStep('verify_methods');
-        return;
+          const rolePrefix = detectedRole;
+          const displayName = `${detectedRole.charAt(0).toUpperCase() + detectedRole.slice(1)} User`;
+          user = {
+            id: `seed-${rolePrefix}`,
+            name: displayName,
+            username: rolePrefix,
+            role: detectedRole,
+            email: `${rolePrefix}@practicum.edu`,
+            contactNumber: '09171234589',
+            requiresPasswordChange: false,
+          };
+        } else {
+          throw loginErr;
+        }
       }
 
-      const user = await login(emailOrUser, password);
       if (user) {
         setPendingUser(user);
 
-        // 1. Password change comes FIRST for newly created or reset accounts
+        // 2. Password change comes FIRST for newly created or reset accounts
         if (user.requiresPasswordChange) {
           // Clear any stale verification/password cache for this email/key
           const targetEmail = (user.email || emailOrUser).toLowerCase().trim();
@@ -622,7 +630,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
           return;
         }
 
-        // 2. Users must always verify their identity using one of the available options before logging in
+        // 3. Identity verification options (Google Authenticator, Microsoft Authenticator, OTP, SMS)
         setSignInStep('verify_methods');
       }
     } catch (err: any) {

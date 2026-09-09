@@ -7,13 +7,21 @@ import {
   upsertUser,
   updateUserPassword,
   updateUserMfa,
+  updateUserStatus,
   deleteUserFromStore,
   verifyPassword,
   hashPassword,
   loadAllUsers,
+  isUserDeleted,
+  unmarkDeletedUser,
+  DEFAULT_SYSTEM_SEEDS,
 } from '../services/userStore';
 
 const router = Router();
+
+const isUuid = (val?: string): boolean =>
+  typeof val === 'string' &&
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(val.trim());
 
 // In-memory fallback cache for OTPs and rate-limiting
 interface OtpMemoryRecord {
@@ -53,23 +61,57 @@ const deletedUsersSet = new Set<string>();
 async function initUserStoreFromDatabase() {
   try {
     const { data: profiles } = await supabase.from('profiles').select('*');
+    const existingEmails = new Set<string>();
+
     if (profiles && profiles.length > 0) {
       for (const p of profiles) {
         if (!p.email) continue;
-        const existing = findUser(p.email);
+        const normalized = p.email.toLowerCase().trim();
+        existingEmails.add(normalized);
+        const existing = findUser(normalized);
         if (!existing) {
           upsertUser({
             id: p.id,
-            email: p.email,
-            name: p.full_name || p.email.split('@')[0],
+            email: normalized,
+            name: p.full_name || normalized.split('@')[0],
             role: (p.role?.toLowerCase() as any) || 'student',
             studentId: p.student_id,
-            dept: p.section || p.department || p.program || 'BSIT 402',
-            status: p.is_activated === false ? 'Suspended' : 'Active',
+            dept: p.section || p.department || p.company_name || p.program || 'BSIT 402',
+            status: p.status || (p.is_activated === false ? 'Suspended' : 'Active'),
             passwordHash: hashPassword('123'),
-            requiresPasswordChange: true,
-            mfaEnrolled: false,
+            requiresPasswordChange: p.requires_password_change ?? false,
+            mfaEnrolled: p.mfa_enrolled ?? false,
           });
+        }
+      }
+    }
+
+    // Auto-seed official institutional accounts into Supabase profiles if missing
+    for (const seed of DEFAULT_SYSTEM_SEEDS) {
+      const normalizedSeedEmail = seed.email.toLowerCase().trim();
+      if (!existingEmails.has(normalizedSeedEmail)) {
+        try {
+          await supabase.from('profiles').upsert(
+            {
+              id: seed.id,
+              email: normalizedSeedEmail,
+              full_name: seed.name,
+              role: seed.role,
+              student_id: seed.studentId || null,
+              department: seed.role === 'admin' || seed.role === 'adviser' ? seed.dept : null,
+              company_name: seed.role === 'supervisor' ? seed.dept : null,
+              section: seed.role === 'student' ? seed.dept : null,
+              program: seed.role === 'student' ? 'BSIT' : null,
+              is_activated: seed.status === 'Active',
+              status: seed.status,
+              requires_password_change: seed.requiresPasswordChange,
+              mfa_enrolled: seed.mfaEnrolled,
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: 'email' }
+          );
+        } catch (dbErr) {
+          // Graceful fallback if database permissions restrict insertion
         }
       }
     }
@@ -634,7 +676,18 @@ router.post('/auth/login', async (req: Request, res: Response) => {
 
     const normalized = email.toLowerCase().trim();
 
-    // 1. Built-in quick switch accounts (admin, adviser, supervisor, student) for instant presentations
+    // Check deleted blacklist
+    if (
+      isUserDeleted(normalized) ||
+      deletedUsersSet.has(normalized) ||
+      deletedUsersSet.has(normalized.split('@')[0])
+    ) {
+      return res.status(401).json({
+        error: 'Invalid credentials. This account has been removed from the directory.',
+      });
+    }
+
+    // 1. Built-in quick switch accounts (admin, adviser, supervisor, student) backed by production seeds
     const isBuiltInDemo =
       password === '123' &&
       (normalized === 'admin' ||
@@ -653,9 +706,41 @@ router.post('/auth/login', async (req: Request, res: Response) => {
       else if (normalized.startsWith('supervisor')) matchedRole = 'supervisor';
 
       const rolePrefix = matchedRole;
+      const seedUser = findUser(normalized) || findUser(`${rolePrefix}@practicum.edu`);
+
+      if (seedUser) {
+        if (seedUser.status === 'Suspended') {
+          return res.status(403).json({
+            error: 'Your account has been suspended by the administrator. Please contact IT support.',
+          });
+        }
+
+        const isPwdValid = verifyPassword(password, seedUser.passwordHash);
+        if (!isPwdValid) {
+          return res.status(401).json({
+            error: 'The password you entered is incorrect. Please try again.',
+          });
+        }
+
+        const user = {
+          id: seedUser.id,
+          username: seedUser.email.split('@')[0],
+          name: seedUser.name,
+          role: seedUser.role,
+          email: seedUser.email,
+          studentId: seedUser.studentId || (seedUser.role === 'student' ? '02000249822' : undefined),
+          course: seedUser.dept,
+          mfaEnrolled: seedUser.mfaEnrolled ?? true,
+          isNewAccount: false,
+          requiresPasswordChange: seedUser.requiresPasswordChange ?? false,
+        };
+
+        return res.json({ success: true, user });
+      }
+
       const displayName = `${matchedRole.charAt(0).toUpperCase() + matchedRole.slice(1)} User`;
       const user = {
-        id: crypto.randomUUID(),
+        id: `seed-${rolePrefix}`,
         username: rolePrefix,
         name: displayName,
         role: matchedRole,
@@ -684,6 +769,12 @@ router.post('/auth/login', async (req: Request, res: Response) => {
           .select('*')
           .eq('id', data.user.id)
           .maybeSingle();
+
+        if (profile?.status === 'Suspended' || profile?.is_activated === false) {
+          return res.status(403).json({
+            error: 'Your account has been suspended by the administrator. Please contact IT support.',
+          });
+        }
 
         const stored = findUser(normalized) || findUser(data.user.id);
         const userRole = profile?.role || data.user.app_metadata?.role || data.user.user_metadata?.role || 'student';
@@ -730,10 +821,10 @@ router.post('/auth/login', async (req: Request, res: Response) => {
             role: roleLower,
             studentId: dbProfile.student_id,
             dept: dbProfile.section || dbProfile.program || dbProfile.department || 'BSIT 402',
-            status: dbProfile.is_activated === false ? 'Suspended' : 'Active',
+            status: dbProfile.status || (dbProfile.is_activated === false ? 'Suspended' : 'Active'),
             passwordHash: hashPassword('123'),
-            requiresPasswordChange: true,
-            mfaEnrolled: false,
+            requiresPasswordChange: dbProfile.requires_password_change ?? false,
+            mfaEnrolled: dbProfile.mfa_enrolled ?? false,
           });
         }
       } catch (dbErr) {
@@ -759,7 +850,7 @@ router.post('/auth/login', async (req: Request, res: Response) => {
           dept: seedMatch.dept,
           status: seedMatch.status,
           passwordHash: hashPassword('123'),
-          requiresPasswordChange: true,
+          requiresPasswordChange: false,
           mfaEnrolled: false,
         });
       }
@@ -767,6 +858,13 @@ router.post('/auth/login', async (req: Request, res: Response) => {
 
     // Dynamic password verification
     if (userRecord) {
+      // Check account suspension status
+      if (userRecord.status === 'Suspended') {
+        return res.status(403).json({
+          error: 'Your account has been suspended by the administrator. Please contact IT support.',
+        });
+      }
+
       const isPasswordValid = verifyPassword(password, userRecord.passwordHash);
 
       if (!isPasswordValid) {
@@ -804,6 +902,11 @@ router.post('/auth/login', async (req: Request, res: Response) => {
  * Default Institutional Seed Users (Figure 25: Admin Accounts)
  */
 const defaultSeedUsers = [
+  { id: 'admin-main-001', name: 'John Dwayne Guaniso', role: 'Admin' as const, email: 'johndwayneguaniso.05242004@gmail.com', status: 'Active' as const, dept: 'System Administration' },
+  { id: 'admin-role-002', name: 'Administrator', role: 'Admin' as const, email: 'admin@practicum.edu', status: 'Active' as const, dept: 'System Administration' },
+  { id: 'adviser-role-003', name: 'Dr. Sarah Johnson', role: 'Adviser' as const, email: 'adviser@practicum.edu', status: 'Active' as const, dept: 'College of Computer Studies' },
+  { id: 'supervisor-role-004', name: 'Engr. Paolo Reyes', role: 'Supervisor' as const, email: 'supervisor@practicum.edu', status: 'Active' as const, dept: 'InnoTech Labs' },
+  { id: 'student-role-005', name: 'John Dwayne B. Guaniso', role: 'Student' as const, email: 'student@practicum.edu', status: 'Active' as const, dept: 'BSIT 402', studentId: '02000249822' },
   { id: '1', name: 'Alice Brown', role: 'Student' as const, email: 'alice.b@edu.ph', status: 'Active' as const, dept: '__BSIT 402_401__' },
   { id: '2', name: 'Dr. Sarah Johnson', role: 'Adviser' as const, email: 's.johnson@edu.ph', status: 'Active' as const, dept: 'BSIT 402' },
   { id: '3', name: 'Charlie Davis', role: 'Student' as const, email: 'c.davis@edu.ph', status: 'Active' as const, dept: '__BSIT 402_401__', resetRequested: true },
@@ -897,7 +1000,11 @@ router.get('/users', async (_req: Request, res: Response) => {
     });
 
     const filteredUsers = Array.from(map.values()).filter(
-      u => !deletedUsersSet.has(u.id?.toLowerCase()) && !deletedUsersSet.has(u.email?.toLowerCase())
+      (u) =>
+        !isUserDeleted(u.id) &&
+        !isUserDeleted(u.email) &&
+        !deletedUsersSet.has(u.id?.toLowerCase()) &&
+        !deletedUsersSet.has(u.email?.toLowerCase())
     );
 
     return res.json({
@@ -986,6 +1093,9 @@ router.post('/users', async (req: Request, res: Response) => {
       deletedUsersSet.delete(normalized.split('@')[0]);
     }
 
+    unmarkDeletedUser(normalized);
+    unmarkDeletedUser(newId);
+
     // 1. Official Supabase Auth user registration
     if (isServiceRoleAvailable) {
       try {
@@ -1023,6 +1133,7 @@ router.post('/users', async (req: Request, res: Response) => {
 
     // 2. Save complete profile to Supabase profiles table
     try {
+      const client = isServiceRoleAvailable ? supabaseAdmin : supabase;
       const profileRecord = {
         id: newId,
         email: normalized,
@@ -1039,7 +1150,7 @@ router.post('/users', async (req: Request, res: Response) => {
         mfa_enrolled: false,
         updated_at: new Date().toISOString(),
       };
-      let { error: profErr } = await supabase.from('profiles').upsert(profileRecord, { onConflict: 'email' });
+      let { error: profErr } = await client.from('profiles').upsert(profileRecord, { onConflict: 'email' });
       if (profErr && profErr.message.includes('Could not find')) {
         const baseRecord = {
           id: newId,
@@ -1054,7 +1165,7 @@ router.post('/users', async (req: Request, res: Response) => {
           is_activated: true,
           updated_at: new Date().toISOString(),
         };
-        await supabase.from('profiles').upsert(baseRecord, { onConflict: 'email' });
+        await client.from('profiles').upsert(baseRecord, { onConflict: 'email' });
       }
     } catch (dbErr: any) {
       console.warn('[Admin Create User] Profiles database sync notice:', dbErr.message);
@@ -1071,7 +1182,8 @@ router.post('/users', async (req: Request, res: Response) => {
         status: 'Active',
         dept: deptInfo,
         studentId: assignedStudentId,
-        resetRequested: false,
+        resetRequested: true,
+        mfaEnrolled: false,
       },
     });
   } catch (err: any) {
@@ -1093,7 +1205,46 @@ router.post('/users/:id/reset-password', async (req: Request, res: Response) => 
     let targetEmail = '';
 
     // Update persistent userStore
-    const storedUser = findUser(normalized) || findUser(id);
+    let storedUser = findUser(normalized) || findUser(id);
+    if (!storedUser) {
+      try {
+        const client = isServiceRoleAvailable ? supabaseAdmin : supabase;
+        const filter = isUuid(id) ? `id.eq.${id},email.ilike.${normalized}` : `email.ilike.${normalized}`;
+        const { data: dbProf } = await client.from('profiles').select('*').or(filter).maybeSingle();
+        if (dbProf) {
+          storedUser = upsertUser({
+            id: dbProf.id,
+            email: dbProf.email,
+            name: dbProf.full_name,
+            role: (dbProf.role ? dbProf.role.toLowerCase() : 'student') as any,
+            studentId: dbProf.student_id,
+            dept: dbProf.section || dbProf.department || dbProf.company_name || 'BSIT 402',
+            passwordHash: hashPassword(newPassword),
+            requiresPasswordChange: true,
+            mfaEnrolled: false,
+          });
+        }
+      } catch (e) {}
+
+      if (!storedUser) {
+        const seedMatch = defaultSeedUsers.find(
+          (u) => u.id.toLowerCase() === normalized || u.email.toLowerCase() === normalized
+        );
+        if (seedMatch) {
+          storedUser = upsertUser({
+            id: seedMatch.id,
+            email: seedMatch.email,
+            name: seedMatch.name,
+            role: seedMatch.role.toLowerCase() as any,
+            dept: seedMatch.dept,
+            passwordHash: hashPassword(newPassword),
+            requiresPasswordChange: true,
+            mfaEnrolled: false,
+          });
+        }
+      }
+    }
+
     if (storedUser) {
       updateUserPassword(storedUser.email, newPassword, true);
       updateUserMfa(storedUser.email, false);
@@ -1103,9 +1254,13 @@ router.post('/users/:id/reset-password', async (req: Request, res: Response) => 
 
     // Find and update in admin memory store
     for (const [email, user] of adminUsersStore.entries()) {
-      if (user.id === id || user.email.toLowerCase() === normalized) {
+      if (
+        user.id === id ||
+        user.email.toLowerCase() === normalized ||
+        (targetEmail && user.email.toLowerCase() === targetEmail.toLowerCase())
+      ) {
         user.password = newPassword;
-        user.resetRequested = false;
+        user.resetRequested = true;
         user.requiresPasswordChange = true;
         user.mfaEnrolled = false;
         targetName = user.name;
@@ -1117,17 +1272,31 @@ router.post('/users/:id/reset-password', async (req: Request, res: Response) => 
 
     // Sync to Supabase Auth & profiles
     try {
-      if (isServiceRoleAvailable && id) {
-        await supabaseAdmin.auth.admin.updateUserById(id, { password: newPassword }).catch(() => {});
+      const client = isServiceRoleAvailable ? supabaseAdmin : supabase;
+      if (isServiceRoleAvailable) {
+        let authId = isUuid(id) ? id : null;
+        if (!authId && targetEmail) {
+          const { data: authList } = await supabaseAdmin.auth.admin.listUsers();
+          const match = authList?.users?.find((u) => u.email?.toLowerCase() === targetEmail.toLowerCase());
+          if (match) authId = match.id;
+        }
+        if (authId) {
+          await supabaseAdmin.auth.admin.updateUserById(authId, { password: newPassword }).catch(() => {});
+        }
       }
-      await supabase
+
+      const filter = isUuid(id)
+        ? `id.eq.${id},email.ilike.${targetEmail || normalized}`
+        : `email.ilike.${targetEmail || normalized}`;
+
+      await client
         .from('profiles')
         .update({ 
           requires_password_change: true, 
-          mfa_enrolled: false,
+          mfa_enrolled: false, 
           updated_at: new Date().toISOString() 
         })
-        .or(`id.eq.${id},email.eq.${targetEmail || id}`);
+        .or(filter);
     } catch (dbErr) {
       console.warn('[Admin Reset Password] Supabase sync notice:', dbErr);
     }
@@ -1154,7 +1323,46 @@ router.post('/users/:id/reset-mfa', async (req: Request, res: Response) => {
     let targetName = 'User';
     let targetEmail = '';
 
-    const storedUser = findUser(normalized) || findUser(id);
+    let storedUser = findUser(normalized) || findUser(id);
+    if (!storedUser) {
+      try {
+        const client = isServiceRoleAvailable ? supabaseAdmin : supabase;
+        const filter = isUuid(id) ? `id.eq.${id},email.ilike.${normalized}` : `email.ilike.${normalized}`;
+        const { data: dbProf } = await client.from('profiles').select('*').or(filter).maybeSingle();
+        if (dbProf) {
+          storedUser = upsertUser({
+            id: dbProf.id,
+            email: dbProf.email,
+            name: dbProf.full_name,
+            role: (dbProf.role ? dbProf.role.toLowerCase() : 'student') as any,
+            studentId: dbProf.student_id,
+            dept: dbProf.section || dbProf.department || dbProf.company_name || 'BSIT 402',
+            passwordHash: hashPassword('123'),
+            requiresPasswordChange: false,
+            mfaEnrolled: false,
+          });
+        }
+      } catch (e) {}
+
+      if (!storedUser) {
+        const seedMatch = defaultSeedUsers.find(
+          (u) => u.id.toLowerCase() === normalized || u.email.toLowerCase() === normalized
+        );
+        if (seedMatch) {
+          storedUser = upsertUser({
+            id: seedMatch.id,
+            email: seedMatch.email,
+            name: seedMatch.name,
+            role: seedMatch.role.toLowerCase() as any,
+            dept: seedMatch.dept,
+            passwordHash: hashPassword('123'),
+            requiresPasswordChange: false,
+            mfaEnrolled: false,
+          });
+        }
+      }
+    }
+
     if (storedUser) {
       updateUserMfa(storedUser.email, false);
       targetName = storedUser.name;
@@ -1162,7 +1370,11 @@ router.post('/users/:id/reset-mfa', async (req: Request, res: Response) => {
     }
 
     for (const [email, user] of adminUsersStore.entries()) {
-      if (user.id === id || user.email.toLowerCase() === normalized) {
+      if (
+        user.id === id ||
+        user.email.toLowerCase() === normalized ||
+        (targetEmail && user.email.toLowerCase() === targetEmail.toLowerCase())
+      ) {
         user.mfaEnrolled = false;
         targetName = user.name;
         targetEmail = user.email;
@@ -1172,13 +1384,18 @@ router.post('/users/:id/reset-mfa', async (req: Request, res: Response) => {
     }
 
     try {
-      await supabase
+      const client = isServiceRoleAvailable ? supabaseAdmin : supabase;
+      const filter = isUuid(id)
+        ? `id.eq.${id},email.ilike.${targetEmail || normalized}`
+        : `email.ilike.${targetEmail || normalized}`;
+
+      await client
         .from('profiles')
         .update({ 
           mfa_enrolled: false, 
           updated_at: new Date().toISOString() 
         })
-        .or(`id.eq.${id},email.eq.${targetEmail || id}`);
+        .or(filter);
     } catch (dbErr) {
       console.warn('[Admin Reset MFA] Supabase sync notice:', dbErr);
     }
@@ -1346,7 +1563,9 @@ router.patch('/users/:id/status', async (req: Request, res: Response) => {
     // Update persistent userStore
     const storedUser = findUser(normalized) || findUser(id);
     if (storedUser) {
-      upsertUser({ email: storedUser.email, status });
+      updateUserStatus(storedUser.email, status);
+    } else {
+      updateUserStatus(normalized, status);
     }
 
     // Update in memory store
@@ -1359,14 +1578,19 @@ router.patch('/users/:id/status', async (req: Request, res: Response) => {
 
     // Update in Supabase profiles
     try {
-      await supabase
+      const client = isServiceRoleAvailable ? supabaseAdmin : supabase;
+      const filter = isUuid(id)
+        ? `id.eq.${id},email.ilike.${normalized}`
+        : `email.ilike.${normalized}`;
+
+      await client
         .from('profiles')
         .update({
           status,
           is_activated: status === 'Active',
           updated_at: new Date().toISOString(),
         })
-        .or(`id.eq.${id},email.eq.${normalized}`);
+        .or(filter);
     } catch (dbErr: any) {
       console.warn('[Update Status] Supabase update notice:', dbErr.message);
     }
@@ -1389,6 +1613,10 @@ router.delete('/users/:id', async (req: Request, res: Response) => {
     const { id } = req.params;
     const normalized = decodeURIComponent(id).toLowerCase().trim();
 
+    if (normalized === 'johndwayneguaniso.05242004@gmail.com') {
+      return res.status(400).json({ error: 'The primary system administrator account cannot be deleted.' });
+    }
+
     deleteUserFromStore(id);
     deleteUserFromStore(normalized);
 
@@ -1407,10 +1635,23 @@ router.delete('/users/:id', async (req: Request, res: Response) => {
     }
 
     try {
+      const client = isServiceRoleAvailable ? supabaseAdmin : supabase;
       if (isServiceRoleAvailable) {
-        await supabaseAdmin.auth.admin.deleteUser(id).catch(() => {});
+        if (isUuid(id)) {
+          await supabaseAdmin.auth.admin.deleteUser(id).catch(() => {});
+        } else {
+          const { data: authList } = await supabaseAdmin.auth.admin.listUsers();
+          const match = authList?.users?.find((u) => u.email?.toLowerCase() === normalized);
+          if (match) {
+            await supabaseAdmin.auth.admin.deleteUser(match.id).catch(() => {});
+          }
+        }
       }
-      await supabase.from('profiles').delete().or(`id.eq.${id},email.eq.${normalized}`);
+
+      const filter = isUuid(id)
+        ? `id.eq.${id},email.ilike.${normalized}`
+        : `email.ilike.${normalized}`;
+      await client.from('profiles').delete().or(filter);
     } catch (dbErr: any) {
       console.warn('[Admin Delete User] Supabase delete notice:', dbErr.message);
     }
