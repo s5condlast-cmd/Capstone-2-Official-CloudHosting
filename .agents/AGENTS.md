@@ -142,6 +142,25 @@ When configuring Vercel deployment for this Vite + Express full-stack project:
 - You must stage and commit the code locally (if appropriate), but you must then **STOP** and inform the user that the code is ready to be pushed.
 - You are strictly forbidden from executing a `git push` command until the user explicitly types the authorization code: `/push`.
 
+## Git Index & Process Integrity Protocol
+
+To prevent `.git/index` corruption (such as VS Code's `fatal: .git/index: index file smaller than expected`) and handle background lock collisions on Windows:
+
+1. **Never Abruptly Terminate Active Git Processes**:
+   - Never send kill signals or terminate background tasks while a Git command (`git add`, `git commit`, `git status`, `git checkout`) is actively executing. Allow sufficient timeout (`WaitMsBeforeAsync: 5000` to `10000`) for Git to finish flushing to disk and releasing `.git/index.lock`.
+2. **Sequential Git Operations**:
+   - Never run parallel commands that mutate `.git/index` simultaneously. Execute staging, committing, and status commands strictly sequentially.
+3. **Instant Non-Destructive Self-Healing**:
+   - If `.git/index: index file smaller than expected` occurs, immediately restore the index by removing the corrupted 0-byte index file and rebuilding it from `HEAD`:
+     ```powershell
+     Remove-Item .git/index -Force; git reset
+     ```
+   - If a stale lock error occurs (`fatal: Unable to create '.git/index.lock': File exists`), verify no Git process is active and safely clear the lock file:
+     ```powershell
+     Remove-Item .git/index.lock -Force
+     ```
+   - **Zero-Loss Rule**: Never run destructive commands (`git reset --hard` or `git checkout -- .`) to resolve index corruption. The working tree must always be preserved.
+
 ## Unified Debug Protocol (`/debug`)
 
 The `/debug` command is the master diagnostic and verification protocol that unifies **Architecture Scanning** (`/scan`), **Code & Quality Review** (`/review`), and **Systematic Root-Cause Debugging** (`/debug`) into a single command. It activates the **`systematic-debugging`** and **`alignment-auditor`** skills.
