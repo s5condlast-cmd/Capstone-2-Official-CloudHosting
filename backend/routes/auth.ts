@@ -117,7 +117,7 @@ function isValidStudentEmail(email: string): boolean {
  */
 router.post('/auth/send-otp', async (req: Request, res: Response) => {
   try {
-    const { email, purpose = 'account_activation' } = req.body;
+    const { email, purpose = 'account_activation' } = req.body || {};
 
     if (!email || typeof email !== 'string') {
       return res.status(400).json({ error: 'Please provide a valid email address.' });
@@ -249,7 +249,7 @@ router.post('/auth/send-otp', async (req: Request, res: Response) => {
  */
 router.post('/auth/verify-otp', async (req: Request, res: Response) => {
   try {
-    const { email, otp, purpose } = req.body;
+    const { email, otp, purpose } = req.body || {};
 
     if (!email || !otp) {
       return res.status(400).json({ error: 'Email and 6-digit OTP code are required.' });
@@ -384,7 +384,7 @@ function getTOTP(secretBase32: string, windowOffset = 0): string {
  */
 router.post('/auth/verify-totp', (req: Request, res: Response) => {
   try {
-    const { code, secret = 'JBSWY3DPEHPK3PXP' } = req.body;
+    const { code, secret = 'JBSWY3DPEHPK3PXP' } = req.body || {};
     if (!code) {
       return res.status(400).json({ error: 'Please enter the 6-digit code from Google Authenticator.' });
     }
@@ -419,7 +419,7 @@ router.post('/auth/verify-totp', (req: Request, res: Response) => {
  */
 router.post('/auth/enroll-mfa', async (req: Request, res: Response) => {
   try {
-    const { email, code = '123456', secret = 'JBSWY3DPEHPK3PXP' } = req.body;
+    const { email, code = '123456', secret = 'JBSWY3DPEHPK3PXP' } = req.body || {};
 
     const trimmed = (code || '123456').toString().trim();
     const validCodes = [
@@ -490,7 +490,7 @@ router.post('/auth/register-student', async (req: Request, res: Response) => {
       section,
       contactNumber,
       verificationToken,
-    } = req.body;
+    } = req.body || {};
 
     if (!email || !password || !fullName || !studentId) {
       return res.status(400).json({ error: 'Missing required registration fields.' });
@@ -580,7 +580,7 @@ router.post('/auth/register-student', async (req: Request, res: Response) => {
  */
 router.post('/auth/reset-password', async (req: Request, res: Response) => {
   try {
-    const { email, newPassword, verificationToken } = req.body;
+    const { email, newPassword, verificationToken } = req.body || {};
 
     if (!email || !newPassword) {
       return res.status(400).json({ error: 'Email and new password are required.' });
@@ -619,7 +619,7 @@ router.post('/auth/reset-password', async (req: Request, res: Response) => {
  */
 router.post('/auth/login', async (req: Request, res: Response) => {
   try {
-    const { email, password, role } = req.body;
+    const { email, password, role } = req.body || {};
 
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password are required.' });
@@ -908,7 +908,7 @@ router.get('/users', async (_req: Request, res: Response) => {
  */
 router.post('/users', async (req: Request, res: Response) => {
   try {
-    const { name, email, role, studentId, dept, companyName, password } = req.body;
+    const { name, email, role, studentId, dept, companyName, password } = req.body || {};
 
     if (!name || typeof name !== 'string' || !name.trim()) {
       return res.status(400).json({ error: 'Full name is required.' });
@@ -1079,7 +1079,7 @@ router.post('/users', async (req: Request, res: Response) => {
 router.post('/users/:id/reset-password', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { newPassword = '123' } = req.body;
+    const { newPassword = '123' } = req.body || {};
 
     const normalized = decodeURIComponent(id).toLowerCase().trim();
     let targetName = 'User';
@@ -1191,7 +1191,7 @@ router.post('/users/:id/reset-mfa', async (req: Request, res: Response) => {
  */
 router.post('/auth/update-initial-password', async (req: Request, res: Response) => {
   try {
-    const { email, currentPassword, newPassword } = req.body;
+    const { email, currentPassword, newPassword } = req.body || {};
 
     if (!email || !currentPassword || !newPassword) {
       return res.status(400).json({ error: 'Please provide both your current and new password.' });
@@ -1328,7 +1328,7 @@ router.post('/auth/update-initial-password', async (req: Request, res: Response)
 router.patch('/users/:id/status', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { status } = req.body;
+    const { status } = req.body || {};
 
     if (!status || !['Active', 'Suspended', 'Pending'].includes(status)) {
       return res.status(400).json({ error: 'Valid status is required (Active, Suspended, Pending).' });

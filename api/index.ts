@@ -8,4 +8,3 @@ export const config = {
 };
 
 export default app;
-

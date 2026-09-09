@@ -6,7 +6,7 @@ import { analyzeDocumentText } from '../services/aiService';
 const router = Router();
 
 router.post('/analyze', async (req, res) => {
-  const { docId, pdfUrl, studentName, course, docType, company } = req.body;
+  const { docId, pdfUrl, studentName, course, docType, company } = req.body || {};
 
   if (!docId || !pdfUrl) {
     return res.status(400).json({ error: 'Missing docId or pdfUrl in request body.' });
