@@ -134,6 +134,11 @@ When configuring Vercel deployment for this Vite + Express full-stack project:
 4. **Serverless Filesystem Invariant (Vercel / Lambda)**: Never write files or call `fs.mkdirSync` in project directories (such as `backend/data/`) at runtime. The Vercel serverless container is strictly read-only (`EROFS`). Always use in-memory stores as primary and restrict disk writes to `/tmp` with non-blocking error handling.
 5. **Crash-Proof Client & SDK Initialization**: Third-party SDK clients (such as `@supabase/supabase-js`) must never be initialized with unvalidated empty strings at module top level. Always provide safe fallback dummy URLs (e.g., `https://placeholder.supabase.co`) so missing environment variables log warnings instead of terminating the Node.js process on import. All top-level async initialization promises must attach `.catch()` handlers to prevent unhandled rejection crashes.
 6. **Defensive JSON Parsing Pattern**: Frontend and backend API consumers must never call `await res.json()` blindly. Always verify `res.headers.get('content-type')?.includes('application/json')` or use a safe parsing helper before parsing. If the server responds with an error status or plain text (e.g., `"A server error has occurred"`), read `res.text()` and throw a structured error to prevent `SyntaxError: Unexpected token 'A'`. Mount a global Express error handler to guarantee all API errors return valid JSON.
+7. **Strict Single-File Serverless Route Naming (`api/`)**: Vercel routes files in the root `api/` directory by their basename without file extension (e.g., `api/server.ts` maps to `/api/server`). Never create or compile duplicate `.js` and `.ts` files with the same basename in `api/` (such as `api/server.js` alongside `api/server.ts` or `api/index.js` alongside `api/index.ts`). Doing so triggers a fatal Vercel build error: `Error: Two or more files have conflicting paths or names`. In TypeScript projects, maintain strictly single `.ts` entrypoints (e.g., `api/server.ts`).
+8. **Serverless Cold-Start and Module Loading Invariants**:
+   - **Direct CLI Execution Guard**: `app.listen()` must verify that the process was executed directly (e.g., `process.argv[1]?.endsWith('backend/server.ts')`) so it never attempts to bind local TCP sockets when imported inside Vercel Serverless.
+   - **Lazy Initialization**: Never execute top-level asynchronous database queries or network requests during module import (e.g. `initUserStoreFromDatabase()`). Invoke initialization lazily inside request handlers to prevent cold-start timeouts and unhandled rejection terminations.
+   - **Lazy Dynamic Imports for Heavy/Native Dependencies**: Modules that depend on native binaries (like `pdf-parse` with `@napi-rs/canvas`) must be dynamically imported on demand (`const { PDFParse } = await import('pdf-parse')`) inside their specific route handler, ensuring they never crash unrelated endpoints (such as authentication or health checks) upon server startup.
 
 ## Git Push Authorization Protocol
 
@@ -160,6 +165,18 @@ To prevent `.git/index` corruption (such as VS Code's `fatal: .git/index: index 
      Remove-Item .git/index.lock -Force
      ```
    - **Zero-Loss Rule**: Never run destructive commands (`git reset --hard` or `git checkout -- .`) to resolve index corruption. The working tree must always be preserved.
+4. **Windows File Watcher & Auto-Refresh Isolation (`.vscode/settings.json`)**:
+   - To prevent VS Code's background Git watcher from locking `.git/index` and corrupting it to 0 bytes during concurrent operations, `.vscode/settings.json` must strictly configure:
+     ```json
+     "git.autorefresh": false,
+     "git.autofetch": false,
+     "files.watcherExclude": {
+       "**/.git/**": true,
+       "**/node_modules/**": true,
+       "**/dist/**": true
+     }
+     ```
+   - This isolates Git operations from background file locks and permanently eliminates the repetitive `Git: fatal: .git/index: index file smaller than expected` popup dialog in VS Code.
 
 ## Unified Debug Protocol (`/debug`)
 
