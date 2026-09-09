@@ -206,7 +206,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
       setGoogleAuthValues(Array(OTP_LENGTH).fill(''));
       setGoogleAuthError('');
       const cleanKey = (pendingUser?.email || emailOrUser).toLowerCase().replace(/[^a-zA-Z0-9]/g, '');
-      const isAlreadyEnrolled = pendingUser?.mfaEnrolled === true || localStorage.getItem(`mfa_enrolled_${cleanKey}`) === 'true';
+      const isAlreadyEnrolled = pendingUser?.mfaEnrolled === true && localStorage.getItem(`mfa_enrolled_${cleanKey}`) === 'true';
       setGoogleAuthStage(isAlreadyEnrolled ? 'verify' : 'scan');
       setSignInStep('mfa_setup');
       return;
@@ -509,8 +509,12 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
         console.warn('[Password Update] Supabase update notice:', dbErr);
       }
 
-      // Do NOT push directly to Google Authenticator: let the user choose their method!
-      setSignInStep('verify_methods');
+      // Prompt directly for Google Authenticator QR Code scan on reset or new account
+      setGoogleAuthStage('scan');
+      setGoogleAuthError('');
+      setGoogleAuthValues(Array(OTP_LENGTH).fill(''));
+      setAuthenticatorCode('');
+      setSignInStep('mfa_setup');
     } catch (err: any) {
       const isConnectionError =
         !navigator.onLine ||
@@ -591,6 +595,10 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
             lower === 'supervisor' ||
             lower === 'supervisor@practicum.edu');
 
+        const targetCleanKey = lower.replace(/[^a-zA-Z0-9]/g, '');
+        const isPwdChangedLocally = localStorage.getItem(`pwd_changed_${targetCleanKey}`) === 'true';
+        const isMfaEnrolledLocally = localStorage.getItem(`mfa_enrolled_${targetCleanKey}`) === 'true';
+
         if (isJohnDwayneAdmin) {
           user = {
             id: 'admin-main-001',
@@ -600,8 +608,8 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
             email: 'johndwayneguaniso.05242004@gmail.com',
             department: 'System Administration',
             contactNumber: '09171234589',
-            requiresPasswordChange: false,
-            mfaEnrolled: true,
+            requiresPasswordChange: !isPwdChangedLocally,
+            mfaEnrolled: isMfaEnrolledLocally,
           };
         } else if (isDemoRole) {
           let detectedRole: Role = 'student';
@@ -653,7 +661,17 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
           return;
         }
 
-        // 3. Identity verification options (Google Authenticator, Microsoft Authenticator, OTP, SMS)
+        // 3. If MFA was reset or not enrolled: DIRECTLY show Google Authenticator QR Code scanner!
+        if (user.mfaEnrolled === false) {
+          setGoogleAuthStage('scan');
+          setGoogleAuthError('');
+          setGoogleAuthValues(Array(OTP_LENGTH).fill(''));
+          setAuthenticatorCode('');
+          setSignInStep('mfa_setup');
+          return;
+        }
+
+        // 4. Identity verification options (Google Authenticator, Microsoft Authenticator, OTP, SMS)
         setSignInStep('verify_methods');
       }
     } catch (err: any) {

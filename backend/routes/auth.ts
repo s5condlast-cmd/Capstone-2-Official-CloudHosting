@@ -1206,14 +1206,14 @@ router.post('/users', async (req: Request, res: Response) => {
 router.post('/users/:id/reset-password', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { newPassword = '123' } = req.body || {};
+    const { newPassword = '123', email } = req.body || {};
 
     const normalized = decodeURIComponent(id).toLowerCase().trim();
+    let targetEmail = (email || id || '').toLowerCase().trim();
     let targetName = 'User';
-    let targetEmail = '';
 
     // Update persistent userStore
-    let storedUser = findUser(normalized) || findUser(id);
+    let storedUser = (email ? findUser(email) : undefined) || findUser(targetEmail) || findUser(normalized) || findUser(id);
     if (!storedUser) {
       try {
         const client = isServiceRoleAvailable ? supabaseAdmin : supabase;
@@ -1326,12 +1326,13 @@ router.post('/users/:id/reset-password', async (req: Request, res: Response) => 
 router.post('/users/:id/reset-mfa', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+    const { email } = req.body || {};
     const normalized = decodeURIComponent(id).toLowerCase().trim();
+    let targetEmail = (email || id || '').toLowerCase().trim();
 
     let targetName = 'User';
-    let targetEmail = '';
 
-    let storedUser = findUser(normalized) || findUser(id);
+    let storedUser = (email ? findUser(email) : undefined) || findUser(targetEmail) || findUser(normalized) || findUser(id);
     if (!storedUser) {
       try {
         const client = isServiceRoleAvailable ? supabaseAdmin : supabase;
