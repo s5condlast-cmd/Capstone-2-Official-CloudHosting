@@ -1,23 +1,6 @@
----
-title: "Capstone 2 Cloud Hosting Platform — All Sessions History & Learnings"
-description: "Master chronological log of all engineering sessions, architectural milestones, commit history, and permanent learned guidelines."
-tags:
-  - sti-ojt
-  - session-history
-  - changelog
-  - milestones
-  - learned-rules
-aliases:
-  - "Session History"
-  - "All Sessions"
-  - "Work Logs"
-created: 2026-08-26
-updated: 2026-09-04
----
-
 # Capstone 2 Cloud Hosting Platform — All Sessions History & Learnings
 
-[← Back to Documentation Hub](../README.md) | [August 26 Session Summary](SESSION_SUMMARY_2026-08-26.md) | [Task History](../tasks/TASK_HISTORY.md) | [Active Tasks](../tasks/TASKS.md)
+[← Back to Documentation Hub](../README.md) | [August 26 Session Summary](SESSION_SUMMARY_2026-08-26.md) | [Task History](TASK_HISTORY.md) | [Active Tasks](TASKS.md)
 
 - **Project**: Web-Based Practicum System with AI-Assisted Validation and Compliance Monitoring for STI Marikina
 - **Repository**: `https://github.com/s5condlast-cmd/Capstone-2-Official-CloudHosting.git`
@@ -113,6 +96,6 @@ Always run `npm run lint` (`tsc --noEmit`) to verify that the entire codebase co
 ## Related Documentation & Cross-References
 
 - [August 26 Session Summary Checkpoint](SESSION_SUMMARY_2026-08-26.md) — Detailed TypeScript diagnosis and root cause analysis
-- [Task History & Changelog](../tasks/TASK_HISTORY.md) — Milestone breakdown by feature
-- [Active Tasks & Roadmap](../tasks/TASKS.md) — Current sprint roadmap
+- [Task History & Changelog](TASK_HISTORY.md) — Milestone breakdown by feature
+- [Active Tasks & Roadmap](TASKS.md) — Current sprint roadmap
 - [Master Documentation Hub](../README.md) — Central documentation portal

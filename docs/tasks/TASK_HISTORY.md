@@ -1,29 +1,23 @@
----
-title: "Task History & Changelog"
-description: "Chronological record of completed tasks, refactors, bug fixes, and architectural milestones."
-tags:
-  - sti-ojt
-  - task-history
-  - changelog
-  - milestones
-  - sprint-history
-aliases:
-  - "Task History"
-  - "Changelog"
-  - "Completed Tasks"
-created: 2026-08-26
-updated: 2026-09-04
----
-
 # 📜 Task History & Changelog
 
-[←   Back to Active Tasks](TASKS.md) | [Documentation Hub](../README.md) | [All Sessions History](../sessions/ALL_SESSIONS_HISTORY.md)
+[←   Back to Active Tasks](TASKS.md) | [Documentation Hub](../README.md) | [All Sessions History](ALL_SESSIONS_HISTORY.md)
 
 A historical record of completed tasks, refactors, bug fixes, and architectural milestones for the **Capstone-2 CloudHosting OJT Management System**.
 
 ---
 
 ## 📅 September 4, 2026
+
+### 🎓 Capstone Panelist Defense Manual & Master Technical System Runbook
+
+- [x] **Master Capstone Defense Guide & API Keys Manual**:
+  - Authored comprehensive [`docs/PANELIST_DEFENSE_AND_SYSTEM_GUIDE.md`](../PANELIST_DEFENSE_AND_SYSTEM_GUIDE.md) tailored specifically for proponents Kerin Gabriel del Rosario, John Dwayne Guaniso, and Jiro Salvan.
+  - Documented all 11 API keys & secrets (`GEMINI_API_KEY`, `VITE_GROQ_API_KEY`, `VITE_SUPABASE_*`, `CLOUDINARY_*`, `MICROSOFT_*`), their plain-English purposes, code usage, and zero-trust security model.
+  - Codified universal naming conventions across components, hooks, database schemas, and evergreen Git branches.
+  - Documented end-to-end code mechanics: in-browser DOCX DOM editing without Word, DTR Excel dark-ink luminance signature fitting, dual-model AI review (Groq + Gemini), and Microsoft OneDrive archival.
+  - Compiled 11-question Capstone Panelist Defense Q&A Cheatsheet with simple 1-sentence answers and deep technical explanations.
+  - Integrated into root `README.md` and `docs/README.md`.
+  - Cleaned up repository-wide UTF-8 mojibake encoding corruption across 10 markdown documentation files.
 
 ### 🌿 Git Branch Standardization & Role-Based Architecture
 
@@ -74,7 +68,7 @@ A historical record of completed tasks, refactors, bug fixes, and architectural 
 
 ---
 
-### â˜ï¸ Microsoft OneDrive & Graph API Cloud Archival Integration
+### ☁️ Microsoft OneDrive & Graph API Cloud Archival Integration
 
 - [x] **Credit-Card-Free Azure Activation**:
   - Unlocked free Microsoft Entra ID directory via **Azure for Students** academic verification (`@marikina.sti.edu.ph`) with \$0 cost and zero payment information required.
@@ -99,7 +93,7 @@ A historical record of completed tasks, refactors, bug fixes, and architectural 
 
 ## 📅 September 1, 2026
 
-### ðŸŽ¨ Calendar Page Alignment & UI Restoration
+### 🎨 Calendar Page Alignment & UI Restoration
 
 - [x] **Restored Sidebar Mini Calendar**: Re-implemented standard shadcn `<Calendar />` in sidebar.
 - [x] **Circular Category Check Badges**: Converted rectangular badges to clean circular check chips matching shadcn design tokens.
@@ -141,5 +135,5 @@ A historical record of completed tasks, refactors, bug fixes, and architectural 
 ## Related Documentation & Cross-References
 
 - [Active Tasks & Roadmap](TASKS.md) — Ongoing sprints and backlog
-- [All Sessions History](../sessions/ALL_SESSIONS_HISTORY.md) — Comprehensive session archive
+- [All Sessions History](ALL_SESSIONS_HISTORY.md) — Comprehensive session archive
 - [Master Documentation Hub](../README.md) — Central documentation portal

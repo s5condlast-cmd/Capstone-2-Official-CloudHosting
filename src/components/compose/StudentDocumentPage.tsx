@@ -23,6 +23,7 @@ import { DocumentWorkflow } from '@/src/components/compose/DocumentWorkflow';
 import { templateFields, getTemplateFilename } from '@/src/components/review/templateFields';
 import { submissionStorage } from '@/src/lib/submissionStorage';
 import { aiService } from '@/src/lib/aiService';
+import { useAuth } from '@/src/contexts/AuthContext';
 
 
 export interface DocumentTemplate {
@@ -229,6 +230,10 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
   ].filter(g => g.options.length > 0) : [];
 
   // Dynamic status/feedback state from Supabase
+  const { user } = useAuth();
+  const studentName = user?.name || 'John Dwayne B. Guaniso';
+  const studentCourse = user?.course || user?.section || 'BSIT 402';
+
   const [dbDoc, setDbDoc] = useState<any>(null);
   const [currentStatus, setCurrentStatus] = useState<'Pending' | 'Approved' | 'Returned'>(status);
   const [currentFeedback, setCurrentFeedback] = useState<string>(adviserFeedback);
@@ -237,7 +242,7 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
   React.useEffect(() => {
     async function loadLatest() {
       try {
-        const doc = await submissionStorage.getLatestDocumentByType('John Dwayne B. Guaniso', selectedTemplate.title);
+        const doc = await submissionStorage.getLatestDocumentByType(studentName, selectedTemplate.title);
         if (doc) {
           setDbDoc(doc);
           if (doc.status === 'Approved') {
@@ -280,8 +285,8 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
     try {
       const doc = await submissionStorage.uploadSubmission(
         selectedFile,
-        'John Dwayne B. Guaniso',
-        'BSIT 402',
+        studentName,
+        studentCourse,
         selectedTemplate.title,
         isUrgent ? 'high' : 'medium'
       );

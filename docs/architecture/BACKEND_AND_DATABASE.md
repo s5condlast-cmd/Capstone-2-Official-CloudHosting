@@ -1,23 +1,3 @@
-﻿---
-title: "Backend, Database & AI Service Architecture"
-description: "Comprehensive specification of Supabase PostgreSQL schemas, storage security policies, offline fallbacks, and the AI document audit pipeline."
-tags:
-  - sti-ojt
-  - backend
-  - database
-  - supabase
-  - postgresql
-  - ai-review
-  - groq
-  - gemini
-aliases:
-  - "Backend Architecture"
-  - "Database Schema"
-  - "Supabase Configuration"
-created: 2026-08-26
-updated: 2026-09-04
----
-
 # Backend, Database & AI Service Architecture
 
 [←  Back to Documentation Hub](../README.md) | [Architecture Overview](ARCHITECTURE.md) | [System Map](SYSTEM_MAP.md) | [Document Workflows](DOCUMENT_WORKFLOWS.md)
@@ -234,8 +214,8 @@ When writing Supabase SQL migrations and RLS policies, adhere to these rules:
 
 ### `templateStorage.ts` Fallback Chain
 
-1. **File storage**: Supabase Storage ← ’ falls back to raw IndexedDB (`CapstoneTemplateDB`)
-2. **Metadata**: Supabase DB `template_metadata` ← ’ falls back to `localStorage`
+1. **File storage**: Supabase Storage -> falls back to raw IndexedDB (`CapstoneTemplateDB`)
+2. **Metadata**: Supabase DB `template_metadata` -> falls back to `localStorage`
 3. **IndexedDB implementation**: Uses native `indexedDB.open()` API with a single object store `templates_store`
 4. **File retrieval**: Handles `Blob`, `ArrayBuffer`, and typed array return types from IDB
 
@@ -243,22 +223,22 @@ When writing Supabase SQL migrations and RLS policies, adhere to these rules:
 
 ## 6. AI Review Assistant Pipeline
 
-### Flow (Backend ← ’ Supabase ← ’ Client)
+### Flow (Backend -> Supabase -> Client)
 
 ```text
 Client: aiService.analyzeDocument(docId, pdfUrl, metadata)
-  â”‚  POST /api/analyze
-  â–¼
+  |  POST /api/analyze
+  v
 Backend: routes/analyze.ts
-  â”‚
-  â”œâ”€ 1. UPDATE student_documents SET ai_status='Processing', ai_findings=null WHERE id=docId
-  â”œâ”€ 2. fetch(pdfUrl) ← ’ Buffer
-  â”œâ”€ 3. extractTextFromPdfBuffer(buffer) via pdf-parse
-  â”œâ”€ 4. analyzeDocumentText(text, metadata) via aiService.ts
-  â”‚     â”œâ”€ Try Groq API (llama-3.3-70b-versatile, temp 0.1, JSON mode)
-  â”‚     â””â”€ Fallback: Gemini API (gemini-1.5-flash, temp 0.1, JSON MIME)
-  â”œâ”€ 5. UPDATE student_documents SET ai_status='Completed', ai_findings={...}
-  â””â”€ 6. Return JSON findings to client
+  |
+  |-- 1. UPDATE student_documents SET ai_status='Processing', ai_findings=null WHERE id=docId
+  |-- 2. fetch(pdfUrl) -> Buffer
+  |-- 3. extractTextFromPdfBuffer(buffer) via pdf-parse
+  |-- 4. analyzeDocumentText(text, metadata) via aiService.ts
+  |     |-- Try Groq API (llama-3.3-70b-versatile, temp 0.1, JSON mode)
+  |     +- Fallback: Gemini API (gemini-1.5-flash, temp 0.1, JSON MIME)
+  |-- 5. UPDATE student_documents SET ai_status='Completed', ai_findings={...}
+  +- 6. Return JSON findings to client
 ```
 
 ### Client-Side AI Service ([`src/lib/aiService.ts`](../../src/lib/aiService.ts))
@@ -308,5 +288,5 @@ All methods are on the exported `submissionStorage` object in [`src/lib/submissi
 - [Document Workflows & Templates](DOCUMENT_WORKFLOWS.md) — 13-template inventory and dynamic generation pipeline
 - [04. AI Grammar & Document Audit](../features/04_AI_GRAMMAR_AUDIT.md) — Serverless AI review pipeline mechanics
 - [08. Auth, OTP & OneDrive Sync](../features/08_AUTH_AND_ONEDRIVE_SYNC.md) — Institutional security and Microsoft Graph backup
-- [Cloudinary Document Storage Integration](../deployment/CLOUDINARY_INTEGRATION_SUMMARY.md) — Blob storage and CDN routing
-- [Vercel Deployment Guide](../deployment/DEPLOYMENT_AND_VERCEL.md) — Serverless API configuration and environment checklist
+- [Cloudinary Document Storage Integration](CLOUDINARY_INTEGRATION_SUMMARY.md) — Blob storage and CDN routing
+- [Vercel Deployment Guide](DEPLOYMENT_AND_VERCEL.md) — Serverless API configuration and environment checklist

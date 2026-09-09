@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { Agentation } from 'agentation';
 import { Toaster } from 'sonner';
 import { LandingPage } from './pages/public/LandingPage';
@@ -51,6 +51,7 @@ import { WeeklyJournalReview } from './pages/supervisor/WeeklyJournalReview';
 import { InternshipCompletion } from './pages/supervisor/InternshipCompletion';
 
 import { Profile } from './pages/shared/Profile';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { User, Role } from './types';
 
 // Mock simple sub-pages for this prototype
@@ -61,9 +62,9 @@ const Placeholder = ({ name }: { name: string }) => (
   </div>
 );
 
-export default function App() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+function AppRoutes() {
+  const { user, loading, loginWithDemo, logout } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Initialize Theme - Default to Monochrome (Black & White)
@@ -84,37 +85,18 @@ export default function App() {
         }
       });
     } catch (e) { }
-
-    try {
-      const saved = localStorage.getItem('practicum_session');
-      if (saved) {
-        setUser(JSON.parse(saved));
-      }
-    } catch (e) {
-      console.error('Failed to parse session', e);
-      localStorage.removeItem('practicum_session');
-    }
-    setLoading(false);
   }, []);
 
   const handleLogin = (role: Role, username: string) => {
-    const newUser: User = {
-      id: Math.random().toString(36).substr(2, 9),
-      username,
-      name: role === 'student' ? 'John Dwayne B. Guaniso' : role.charAt(0).toUpperCase() + role.slice(1) + ' User',
-      role,
-      email: `${username}@practicum.edu`
-    };
-    localStorage.setItem('practicum_session', JSON.stringify(newUser));
-    setUser(newUser);
+    loginWithDemo(role, username);
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('practicum_session');
-    setUser(null);
+    logout();
+    navigate('/', { replace: true });
   };
 
-  if (loading) {
+  if (loading && !user) {
     return (
       <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex flex-col items-center justify-center">
         <div className="flex flex-col items-center gap-6">
@@ -141,7 +123,7 @@ export default function App() {
   }
 
   return (
-    <BrowserRouter>
+    <>
       <Toaster position="bottom-right" toastOptions={{
         className: 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 border-none font-sans font-medium',
         style: { borderRadius: '8px' }
@@ -150,7 +132,7 @@ export default function App() {
         <Route path="/" element={<LandingPage userRole={user?.role} />} />
         <Route
           path="/login"
-          element={!user ? <Login onLogin={handleLogin} /> : <Navigate to={`/${user.role}`} replace />}
+          element={!user ? <Login /> : <Navigate to={`/${user.role}`} replace />}
         />
         <Route path="/forgot-password" element={<ForgotPassword />} />
 
@@ -239,6 +221,16 @@ export default function App() {
       </Routes>
       {/* @ts-ignore */}
       {import.meta.env.DEV && <Agentation />}
+    </>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
     </BrowserRouter>
   );
 }

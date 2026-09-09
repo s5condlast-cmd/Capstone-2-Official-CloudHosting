@@ -1,20 +1,3 @@
----
-title: "Project Documentation Hub"
-description: "Master Map of Content (MOC) and centralized technical documentation index for STI Marikina Practicum Management System."
-tags:
-  - sti-ojt
-  - documentation-hub
-  - map-of-content
-  - obsidian-moc
-  - architecture
-aliases:
-  - "Documentation Hub"
-  - "Docs MOC"
-  - "Docs Center"
-created: 2026-08-26
-updated: 2026-09-04
----
-
 # 📚 Project Documentation Hub
 
 [← Return to Project Overview](../README.md)
@@ -35,17 +18,11 @@ Welcome to the **Capstone-2 CloudHosting OJT Management System** documentation c
 |         +---------------------+---------------------+-----------------+     |
 |         |                     |                     |                 |     |
 |         v                     v                     v                 v     |
-|   [⭐ Features]        [🏗️ Architecture]     [🚀 Deployment]    [📋 Tasks]   |
-|   • 01 Checklist       • Architecture        • Vercel Guide     • Tasks     |
-|   • 02 Pipeline        • Backend & DB        • Cloudinary       • History   |
-|   • 03 DTR Fitting     • Document Workflows  +----------------- +-----------+
-|   • 04 AI Audit        • System Map                                         |
-|   • 05 Review Room     +-------------------                                 |
-|   • 06 Admin Mgmt                                                           |
-|   • 07 Calendar        [📏 Guidelines]       [🕒 Sessions Archive]          |
-|   • 08 Auth & Sync     • Refactoring Rules   • All Sessions History         |
-|   +------------------  • Git Branch Rules    • TypeScript Milestone Check   |
-|                        • Main Proposal                                      |
+|   [⭐ Features]        [🏗️ Architecture]     [📏 Guidelines]    [📋 Tasks]   |
+|   • 01-08 Specs        • System Topology     • Refactoring      • Roadmap   |
+|   • Workflows          • Cloud & Vercel      • UI/UX Reviewer   • Changelog |
+|   • Approvals          • Cloudinary CDN      • UI System Audit  • History   |
+|                        • DB & AI Routes      • Proposal         • Learnings |
 |                                                                             |
 +-----------------------------------------------------------------------------+
 ```
@@ -54,10 +31,16 @@ Welcome to the **Capstone-2 CloudHosting OJT Management System** documentation c
 
 ## 📁 Documentation Vault Structure
 
-### 📋 [Development Tasks & Roadmap](tasks/TASKS.md)
+### 🎓 [Capstone Panelist Defense & System Manual](PANELIST_DEFENSE_AND_SYSTEM_GUIDE.md) ⭐ **(MUST READ FOR ORAL DEFENSE)**
+
+- [Master Panelist Defense & Technical System Manual](PANELIST_DEFENSE_AND_SYSTEM_GUIDE.md) — Complete defense preparation, master API keys manual, universal naming conventions, end-to-end code mechanics, and plain-language Q&A cheatsheet for panelists.
+
+### 📋 [Development Tasks, Roadmap & Session Archive](tasks/TASKS.md)
 
 - [Active Tasks & Roadmap](tasks/TASKS.md) — Ongoing sprints, UI polish items, voice dictation, and template digitization
 - [Task History & Changelog](tasks/TASK_HISTORY.md) — Chronological record of completed milestones and bug fixes
+- [All Sessions History & Learnings](tasks/ALL_SESSIONS_HISTORY.md) — Complete multi-session archive and architectural evolution
+- [TypeScript Diagnosis & Prop Alignment](tasks/SESSION_SUMMARY_2026-08-26.md) — React 19 type alignment and component prop audit
 
 ### ⭐ [Feature Specifications & Deep Dives](features/README.md)
 
@@ -71,25 +54,20 @@ Welcome to the **Capstone-2 CloudHosting OJT Management System** documentation c
 - [07. Practicum Calendar & Scheduling](features/07_CALENDAR_AND_EVENTS.md) — Multi-view timeline engine, event modal, and date pickers
 - [08. Auth, OTP & OneDrive Sync](features/08_AUTH_AND_ONEDRIVE_SYNC.md) — Institutional security, OTP verification, and Microsoft Graph OneDrive sync
 
-### 🏗️ [Architecture & Technical Specifications](architecture/ARCHITECTURE.md)
+### 🏗️ [Architecture & Cloud Infrastructure](architecture/ARCHITECTURE.md)
 
 - [Architecture Overview](architecture/ARCHITECTURE.md) — System topology, client SPA, serverless Express backend, and Supabase integration
 - [System Map & Target Locator](architecture/SYSTEM_MAP.md) — Fast code locator, component route index, and problem-fix register
 - [Backend, Database & AI](architecture/BACKEND_AND_DATABASE.md) — Supabase PostgreSQL schema, RLS policies, storage buckets, and AI routes
 - [Document Workflows](architecture/DOCUMENT_WORKFLOWS.md) — 3-phase template inventory, `StudentDocumentPage` architecture, and DOCX/PDF workflows
+- [Vercel Deployment Guide](architecture/DEPLOYMENT_AND_VERCEL.md) — Serverless configuration, environment checklist, and redeploy safeguards
+- [Cloudinary Storage Integration](architecture/CLOUDINARY_INTEGRATION_SUMMARY.md) — CDN media storage, signature upload handling, and document backups
+- [Microsoft OneDrive Integration](architecture/ONEDRIVE_INTEGRATION_SUMMARY.md) — Microsoft Graph API integration, automated document archival, and token lifecycle
 
-### 🚀 [Deployment & Cloud Infrastructure](deployment/DEPLOYMENT_AND_VERCEL.md)
-
-- [Vercel Deployment Guide](deployment/DEPLOYMENT_AND_VERCEL.md) — Serverless configuration, environment checklist, and redeploy safeguards
-- [Cloudinary Storage Integration](deployment/CLOUDINARY_INTEGRATION_SUMMARY.md) — CDN media storage, signature upload handling, and document backups
-
-### 📏 [Engineering Guidelines & Project Specs](guidelines/REFACTORING_GUIDELINES.md)
+### 📏 [Engineering Guidelines & Design Standards](guidelines/REFACTORING_GUIDELINES.md)
 
 - [Refactoring Guidelines](guidelines/REFACTORING_GUIDELINES.md) — Coding standards, component rules, theme tokens, and state conventions
+- [UI / UX Reviewer & Design Standards](guidelines/UI_UX_REVIEWER.md) — Aesthetic taste rules, color palettes (Monochrome, Deep Sky, Amber), and audit rubric
+- [System UI / UX Audit](guidelines/UI_REVIEW.md) — Baseline audit and scorecard of system components against taste rules
 - [Git Branch Architecture & Release Protocol](guidelines/REFACTORING_GUIDELINES.md#10-git-branch-architecture--release-protocol) — Role and domain-based branching matrix and PR rules
 - [Main Capstone Proposal](guidelines/Main_Document.md) — Core academic project proposal and institutional specifications
-
-### 🕒 [Work Sessions & Learnings Archive](sessions/ALL_SESSIONS_HISTORY.md)
-
-- [All Sessions History](sessions/ALL_SESSIONS_HISTORY.md) — Complete multi-session archive and architectural evolution
-- [TypeScript Diagnosis & Prop Alignment](sessions/SESSION_SUMMARY_2026-08-26.md) — React 19 type alignment and component prop audit

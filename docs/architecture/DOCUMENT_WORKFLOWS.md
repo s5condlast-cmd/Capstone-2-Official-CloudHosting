@@ -1,21 +1,3 @@
-﻿---
-title: "Document Workflows & Template Generation Pipeline"
-description: "Master 3-phase OJT template inventory (13 documents), DOCX TreeWalker scan, JSZip injection, ExcelJS signature fitting, and print CSS rules."
-tags:
-  - sti-ojt
-  - templates
-  - docx-generation
-  - exceljs
-  - signature-fitting
-  - easy-template-x
-aliases:
-  - "Document Workflows"
-  - "Template Pipeline"
-  - "DOCX Generator Architecture"
-created: 2026-08-26
-updated: 2026-09-04
----
-
 # Document Workflows & Template Generation Pipeline
 
 [←  Back to Documentation Hub](../README.md) | [Architecture Overview](ARCHITECTURE.md) | [System Map](SYSTEM_MAP.md) | [Backend & Database](BACKEND_AND_DATABASE.md)
@@ -56,7 +38,7 @@ All template names, generation steps, and signature protocols verified against a
 | 2 | Performance Appraisal Template | PDF | `FT-CRD-133-02` | `PerformanceAppraisal.tsx` |
 
 > [!NOTE]
-> Templates are stored in **Supabase Storage** (bucket: `templates`) and **Cloudinary** (`practicum/templates`), with local IndexedDB fallback. Student pages reference `/templates/FT-CRD-*` paths which are resolved dynamically at runtime by `templateStorage.ts`.
+> Templates are stored in **Supabase Storage** (bucket: `templates`) with local IndexedDB fallback (with modular Cloudinary template routing preserved in backend comments). Student pages reference `/templates/FT-CRD-*` paths which are resolved dynamically at runtime by `templateStorage.ts`.
 
 ---
 
@@ -99,9 +81,9 @@ After `renderAsync()` from `docx-preview`:
 1. Remove all `<header>` elements from container
 2. TreeWalker scans all text nodes for regex: `/(\[.*?\]|_{3,}|<.*?>|^\s*Date\s*:?\s*$)/g`
 3. Wraps matches in `<span class="editable-placeholder">`:
-   - `_{3,}` ← ’ gets `data-blank-index` (sequential counter)
-   - `^\s*Date\s*:?\s*$` ← ’ gets `data-date-index` (sequential counter)
-   - `[brackets]` or `<angles>` ← ’ gets `data-original` attribute
+   - `_{3,}` -> gets `data-blank-index` (sequential counter)
+   - `^\s*Date\s*:?\s*$` -> gets `data-date-index` (sequential counter)
+   - `[brackets]` or `<angles>` -> gets `data-original` attribute
 
 ### Step 2: DocumentWorkflow Form Extraction
 
@@ -125,11 +107,11 @@ documentGenerator.generateDocx(templateUrl, formData, blankEdits, angleData, squ
 Pipeline:
 
 1. Fetch DOCX template buffer (from Supabase via `templateStorage` or direct URL)
-2. **JSZip** (static import): Open `.docx` ← ’ read `word/document.xml`
+2. **JSZip** (static import): Open `.docx` -> read `word/document.xml`
 3. **Inject blanks**: Replace `/_{3,}/g` matches sequentially with `blankEdits[]`
 4. **Inject dates**: Replace `/>(\s*Date\s*:?\s*)</g` sequentially with `dateEdits[]`
-5. **Repackage JSZip** ← ’ output modified ArrayBuffer
-6. **easy-template-x**: `new TemplateHandler({ delimiters: { tagStart: "<", tagEnd: ">" } })` ← ’ merge `angleData` to replace `<TAG>` placeholders even when split across XML runs
+5. **Repackage JSZip** -> output modified ArrayBuffer
+6. **easy-template-x**: `new TemplateHandler({ delimiters: { tagStart: "<", tagEnd: ">" } })` -> merge `angleData` to replace `<TAG>` placeholders even when split across XML runs
 7. **Signature blocks** (for Application/Proposal letters): Built programmatically using the `docx` library with zero-border `Table` wrapper:
    - Cell width: `2800 DXA` for 24-underscore lines
    - Cell margins cleared: `{ left: 0, right: 0 }`

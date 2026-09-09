@@ -1,21 +1,4 @@
-﻿---
-title: "Admin Master Templates & Clearance Verification Documentation"
-description: "Master Administrator Console, template distribution architecture, uniform 4-button action grid, and institutional clearance verification."
-tags:
-  - sti-ojt
-  - admin-console
-  - template-management
-  - clearance-verification
-  - user-management
-aliases:
-  - "Admin Management"
-  - "Template Management"
-  - "Clearance Verification"
-created: 2026-08-26
-updated: 2026-09-04
----
-
-# âš™ï¸ Admin Master Templates & Clearance Verification Documentation
+# ⚙️ Admin Master Templates & Clearance Verification Documentation
 
 [←  Back to Features Hub](README.md) | [Documentation Hub](../README.md) | [Document Pipeline](02_DOCUMENT_PIPELINE.md) | [Document Workflows Spec](../architecture/DOCUMENT_WORKFLOWS.md) | [Backend Architecture](../architecture/BACKEND_AND_DATABASE.md)
 
@@ -23,7 +6,7 @@ A complete technical breakdown of the **Administrator Console**, master template
 
 ---
 
-## ðŸŒŸ Feature Overview
+## 🌟 Feature Overview
 
 The Administrator Console provides school administrators, program heads, and registrars with global oversight of the practicum system:
 
@@ -33,7 +16,7 @@ The Administrator Console provides school administrators, program heads, and reg
 
 ---
 
-## ðŸ—ï¸ Architecture & Template Distribution Dataflow
+## 🏗️ Architecture & Template Distribution Dataflow
 
 ```mermaid
 graph TD
@@ -43,7 +26,7 @@ graph TD
     C --> E[Upload PDF Reference / Backup]
     C --> F[Download DOCX Master]
     C --> G[Download PDF Reference]
-    D --> H[Store in Cloudinary / Supabase templates Bucket]
+    D --> H[Store in Supabase templates Bucket & Cache in IndexedDB]
     E --> H
     H --> I[Available Instantly Across All Student Workflows]
     I --> J[Student Opens StudentDocumentPage.tsx]
@@ -52,27 +35,27 @@ graph TD
 
 ---
 
-## ðŸ” How It Works Under the Hood
+## 🔍 How It Works Under the Hood
 
 ### 1. The Uniform 4-Button Action Grid
 
 To eliminate hidden actions, ambiguous menus, and inconsistent card layouts, every template card in [`src/pages/admin/Templates.tsx`](../../src/pages/admin/Templates.tsx) exposes an identical 4-button action grid:
 
 ```text
-â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-â”‚                       MASTER TEMPLATE CARD ACTION GRID                      â”‚
-â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
-â”‚                                                                             â”‚
-â”‚  [Template Title: Student Application Letter]                               â”‚
-â”‚  Phase: Before OJT   |   File Type: DOCX + PDF Reference   |  Status: Activeâ”‚
-â”‚                                                                             â”‚
-â”‚  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”          â”‚
-â”‚  â”‚   â¬† Upload DOCX (Primary)     â”‚   â¬† Upload PDF (Primary)      â”‚          â”‚
-â”‚  â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤          â”‚
-â”‚  â”‚   â¬‡ Download DOCX (Outline)   â”‚   â¬‡ Download PDF (Outline)    â”‚          â”‚
-â”‚  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜          â”‚
-â”‚                                                                             â”‚
-â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
++-----------------------------------------------------------------------------+
+|                       MASTER TEMPLATE CARD ACTION GRID                      |
+|-----------------------------------------------------------------------------+
+|                                                                             |
+|  [Template Title: Student Application Letter]                               |
+|  Phase: Before OJT   |   File Type: DOCX + PDF Reference   |  Status: Active|
+|                                                                             |
+|  +-------------------------------+-------------------------------+          |
+|  |   ↑ Upload DOCX (Primary)     |   ↑ Upload PDF (Primary)      |          |
+|  |-------------------------------+-------------------------------+          |
+|  |   ↓ Download DOCX (Outline)   |   ↓ Download PDF (Outline)    |          |
+|  +-------------------------------+-------------------------------+          |
+|                                                                             |
++-----------------------------------------------------------------------------+
 ```
 
 - **Upload DOCX**: Replaces the master document used by `documentGenerator.ts` to generate student submissions.
@@ -118,4 +101,4 @@ The final institutional gate before a student receives academic practicum credit
 - [02. Digital Document Generation Pipeline](02_DOCUMENT_PIPELINE.md) — 13-template pipeline and dynamic generation
 - [Document Workflows Architecture](../architecture/DOCUMENT_WORKFLOWS.md) — Official OJT template inventory
 - [Backend & Database Architecture](../architecture/BACKEND_AND_DATABASE.md) — `template_metadata` table and storage policies
-- [Cloudinary Document Storage Integration](../deployment/CLOUDINARY_INTEGRATION_SUMMARY.md) — CDN media storage and master template assets
+- [Cloudinary Document Storage Integration](../architecture/CLOUDINARY_INTEGRATION_SUMMARY.md) — CDN media storage and master template assets

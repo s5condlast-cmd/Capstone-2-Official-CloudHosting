@@ -1,21 +1,3 @@
----
-title: "DTR Attendance & Signature Fitting Documentation"
-description: "Daily Time Record (DTR) tracking toward 460 hours, supervisor canvas signature capture, and ExcelJS luminance stroke cropping."
-tags:
-  - sti-ojt
-  - dtr
-  - attendance
-  - signatures
-  - exceljs
-  - luminance-filter
-aliases:
-  - "DTR Attendance"
-  - "Daily Time Record"
-  - "Signature Fitting"
-created: 2026-08-26
-updated: 2026-09-04
----
-
 # ⏱️ DTR Attendance & Signature Fitting Documentation
 
 [← Back to Features Hub](README.md) | [Documentation Hub](../README.md) | [Student Checklist](01_STUDENT_PORTAL_CHECKLIST.md) | [Supervisor Review](05_ADVISER_SUPERVISOR_REVIEW.md) | [Document Workflows Spec](../architecture/DOCUMENT_WORKFLOWS.md)
@@ -127,4 +109,4 @@ Embedding raw signature drawings into Excel spreadsheets often causes alignment 
 - [01. Student Portal & Checklist](01_STUDENT_PORTAL_CHECKLIST.md) — Student journey and requirements tracking
 - [05. Adviser & Supervisor Review Rooms](05_ADVISER_SUPERVISOR_REVIEW.md) — Supervisor approval workflow and sign-offs
 - [Document Workflows Architecture](../architecture/DOCUMENT_WORKFLOWS.md) — Excel DTR signature fitting protocol
-- [Cloudinary Document Storage Integration](../deployment/CLOUDINARY_INTEGRATION_SUMMARY.md) — Supervisor-signed DTR spreadsheet CDN storage
+- [Cloudinary Document Storage Integration](../architecture/CLOUDINARY_INTEGRATION_SUMMARY.md) — Supervisor-signed DTR spreadsheet CDN storage

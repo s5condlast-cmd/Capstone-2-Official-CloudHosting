@@ -1,11 +1,3 @@
----
-title: STI Marikina Practicum Management System
-tags: [sti-ojt, practicum-system, react19, supabase, onedrive, tailwindcss]
-aliases: [Main-README, Project-Root]
-created: 2026-08-26
-updated: 2026-09-04
----
-
 <div align="center">
 
 <img src="public/images/Landing Page Icons/Logo.svg" alt="STI Practicum Management System Logo" width="100" height="100" />
@@ -23,6 +15,7 @@ updated: 2026-09-04
 
 <p align="center">
   <a href="#-quick-start"><b>Quick Start</b></a> •
+  <a href="docs/PANELIST_DEFENSE_AND_SYSTEM_GUIDE.md"><b>🎓 Panelist Defense Manual</b></a> •
   <a href="docs/README.md"><b>Documentation Hub</b></a> •
   <a href="docs/features/README.md"><b>Feature Specifications</b></a> •
   <a href="docs/architecture/ARCHITECTURE.md"><b>System Architecture</b></a> •
@@ -122,8 +115,9 @@ Comprehensive architectural specifications, dataflow diagrams, and development r
 | **Feature Deep Dives** | Complete mechanics and dataflow diagrams for all 8 core platform features | [features/README.md](./docs/features/README.md) |
 | **Refactoring Guidelines** | Coding standards, theme tokens, single-source-of-truth state, and Git rules | [REFACTORING_GUIDELINES.md](./docs/guidelines/REFACTORING_GUIDELINES.md) |
 | **Active Tasks & Roadmap** | Ongoing sprint checklist, speech-to-text dictation, and template digitization | [TASKS.md](./docs/tasks/TASKS.md) |
-| **Task History & Changelog**| Chronological record of completed milestones, refactors, and bug fixes | [TASK_HISTORY.md](./docs/tasks/TASK_HISTORY.md) |
-| **Deployment Guide** | Vercel serverless configuration, environment checklist, and redeploy safeguards | [DEPLOYMENT_AND_VERCEL.md](./docs/deployment/DEPLOYMENT_AND_VERCEL.md) |
+| **Task History & Changelog** | Chronological record of completed milestones, refactors, and bug fixes | [TASK_HISTORY.md](./docs/tasks/TASK_HISTORY.md) |
+| **Deployment Guide** | Vercel serverless configuration, environment checklist, and redeploy safeguards | [DEPLOYMENT_AND_VERCEL.md](./docs/architecture/DEPLOYMENT_AND_VERCEL.md) |
+| **OneDrive Integration** | Microsoft Graph API cloud storage, automated document archival, and token lifecycle | [ONEDRIVE_INTEGRATION_SUMMARY.md](./docs/architecture/ONEDRIVE_INTEGRATION_SUMMARY.md) |
 
 ---
 

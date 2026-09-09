@@ -1,21 +1,3 @@
----
-title: "Refactoring & Development Guidelines"
-description: "Engineering rules, styling standards, single-source-of-truth state conventions, and file management protocols."
-tags:
-  - sti-ojt
-  - guidelines
-  - refactoring
-  - code-standards
-  - conventions
-  - styling
-aliases:
-  - "Refactoring Guidelines"
-  - "Development Guidelines"
-  - "Code Standards"
-created: 2026-08-26
-updated: 2026-09-04
----
-
 # Refactoring & Development Guidelines
 
 [←  Back to Documentation Hub](../README.md) | [Main Document](Main_Document.md) | [Document Workflows Spec](../architecture/DOCUMENT_WORKFLOWS.md) | [System Map](../architecture/SYSTEM_MAP.md)
@@ -97,7 +79,7 @@ Theme is initialized in `App.tsx` `useEffect()` and persisted in `localStorage` 
 ### Loading Lifecycle
 
 ```text
-Mount ← ’ loading = true ← ’ fetch from Supabase ← ’ loading = false ← ’ render data OR EmptyState
+Mount -> loading = true -> fetch from Supabase -> loading = false -> render data OR EmptyState
 ```
 
 - **Never** use `setTimeout()` to simulate loading delays
@@ -159,7 +141,7 @@ import { submissionStorage } from '@/src/lib/submissionStorage';
 | `npm run vite` | Start Vite only (port 3000) |
 | `npm run backend` | Start Express backend only (`tsx backend/server.ts`) |
 | `npm run lint` | TypeScript check: `tsc --noEmit` |
-| `npm run build` | Production bundle: `vite build` ← ’ `dist/` |
+| `npm run build` | Production bundle: `vite build` -> `dist/` |
 | `npm run clean` | Remove `dist/` directory (cross-platform) |
 | `npm run preview` | Preview production build locally |
 

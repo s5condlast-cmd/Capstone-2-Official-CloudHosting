@@ -1,20 +1,3 @@
----
-title: "Student Portal & Practicum Checklist Documentation"
-description: "Detailed architecture, dataflow, and component breakdown for the Student Dashboard, progress checklist, and completed tasks modal."
-tags:
-  - sti-ojt
-  - student-portal
-  - checklist
-  - dashboard
-  - progress-tracking
-aliases:
-  - "Student Portal"
-  - "Student Dashboard"
-  - "Practicum Checklist"
-created: 2026-08-26
-updated: 2026-09-04
----
-
 # 🎓 Student Portal & Practicum Checklist Documentation
 
 [← Back to Features Hub](README.md) | [Documentation Hub](../README.md) | [Document Pipeline](02_DOCUMENT_PIPELINE.md) | [DTR Attendance](03_DTR_ATTENDANCE_SIGNATURE.md)
@@ -53,11 +36,11 @@ graph TD
 │                    STUDENT DASHBOARD DATAFLOW PIPELINE                      │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
-│   1. Mount Lifecycle:                                                       │
-│      StudentDashboard.tsx ───► submissionStorage.ts (Supabase DB)           │
-│                                ├─ Fetches active student profile            │
-│                                ├─ Queries submitted documents for student   │
-│                                └─ Calculates requirement phase completion % │
+│   1. Architecture & State Model:                                            │
+│      StudentDashboard.tsx ───► Interactive Checklist & Phase Tabs           │
+│                                ├─ Displays multi-phase requirements stepper │
+│                                ├─ Connected to StudentDocumentPage pages    │
+│                                └─ (Individual pages query Supabase DB)      │
 │                                                                             │
 │   2. Requirement State Evaluation:                                          │
 │      ┌────────────────────────┬──────────────────────┬──────────────────┐   │
