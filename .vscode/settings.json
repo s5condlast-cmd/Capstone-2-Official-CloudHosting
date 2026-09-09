@@ -18,6 +18,7 @@
     "**/build": true
   },
   "git.autofetch": false,
+  "git.autorefresh": false,
   "files.watcherExclude": {
     "**/.git/**": true,
     "**/node_modules/**": true,
