@@ -77,9 +77,13 @@ async function initUserStoreFromDatabase() {
     console.warn('[UserStore Init] Notice:', err);
   }
 }
-initUserStoreFromDatabase().catch((err) => {
-  console.warn('[UserStore Init] Background task caught:', err);
-});
+
+let hasInitUserStoreRun = false;
+export async function ensureUserStoreInitialized() {
+  if (hasInitUserStoreRun) return;
+  hasInitUserStoreRun = true;
+  await initUserStoreFromDatabase();
+}
 
 /**
  * Validates whether an email is valid for student account registration.
@@ -624,6 +628,9 @@ router.post('/auth/login', async (req: Request, res: Response) => {
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password are required.' });
     }
+
+    // Lazy initialization of user store on demand without blocking server boot
+    await ensureUserStoreInitialized().catch(() => {});
 
     const normalized = email.toLowerCase().trim();
 

@@ -80,7 +80,8 @@ app.use((err: any, _req: express.Request, res: express.Response, _next: express.
   }
 });
 
-if (!process.env.VERCEL) {
+const isDirectRun = process.argv[1] && process.argv[1].replace(/\\/g, '/').endsWith('backend/server.ts');
+if (!process.env.VERCEL && isDirectRun) {
   app.listen(PORT, () => {
     console.log(`[Backend Server] AI Review Assistant backend running on http://localhost:${PORT}`);
   });
