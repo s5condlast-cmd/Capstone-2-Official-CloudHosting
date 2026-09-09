@@ -571,6 +571,14 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
         }
 
         // Offline / network fallback for quick demo evaluation if server cannot be reached
+        const isJohnDwayneAdmin =
+          password === '123' &&
+          (lower === 'johndwayne' ||
+            lower === 'johndwayneguaniso' ||
+            lower === 'johndwayne.guaniso' ||
+            lower === 'johndwayneguaniso.05242004' ||
+            lower === 'johndwayneguaniso.05242004@gmail.com');
+
         const isDemoRole =
           password === '123' &&
           (lower === 'admin' ||
@@ -582,7 +590,19 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
             lower === 'supervisor' ||
             lower === 'supervisor@practicum.edu');
 
-        if (isDemoRole) {
+        if (isJohnDwayneAdmin) {
+          user = {
+            id: 'admin-main-001',
+            name: 'John Dwayne Guaniso',
+            username: 'johndwayneguaniso.05242004',
+            role: 'admin',
+            email: 'johndwayneguaniso.05242004@gmail.com',
+            department: 'System Administration',
+            contactNumber: '09171234589',
+            requiresPasswordChange: false,
+            mfaEnrolled: true,
+          };
+        } else if (isDemoRole) {
           let detectedRole: Role = 'student';
           if (lower.startsWith('admin')) detectedRole = 'admin';
           else if (lower.startsWith('adviser')) detectedRole = 'adviser';
@@ -598,6 +618,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
             email: `${rolePrefix}@practicum.edu`,
             contactNumber: '09171234589',
             requiresPasswordChange: false,
+            mfaEnrolled: true,
           };
         } else {
           throw loginErr;

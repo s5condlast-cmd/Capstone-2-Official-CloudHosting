@@ -315,7 +315,15 @@ export function findUser(identifier: string): ProvisionedUser | undefined {
     const uId = u.id.toLowerCase();
     const uStudentId = u.studentId ? u.studentId.toLowerCase() : '';
 
+    const isJohnDwayneAlias =
+      uEmail === 'johndwayneguaniso.05242004@gmail.com' &&
+      (normalized === 'johndwayne' ||
+        normalized === 'johndwayneguaniso' ||
+        normalized === 'john.dwayne' ||
+        normalized === 'johndwayne.guaniso');
+
     return (
+      isJohnDwayneAlias ||
       uEmail === normalized ||
       uEmail === `${normalized}@practicum.edu` ||
       uEmail === `${normalized}@marikina.sti.edu.ph` ||

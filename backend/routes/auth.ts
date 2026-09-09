@@ -1277,7 +1277,7 @@ router.post('/users/:id/reset-password', async (req: Request, res: Response) => 
         let authId = isUuid(id) ? id : null;
         if (!authId && targetEmail) {
           const { data: authList } = await supabaseAdmin.auth.admin.listUsers();
-          const match = authList?.users?.find((u) => u.email?.toLowerCase() === targetEmail.toLowerCase());
+          const match = (authList as any)?.users?.find((u: any) => u.email?.toLowerCase() === targetEmail.toLowerCase());
           if (match) authId = match.id;
         }
         if (authId) {
@@ -1641,7 +1641,7 @@ router.delete('/users/:id', async (req: Request, res: Response) => {
           await supabaseAdmin.auth.admin.deleteUser(id).catch(() => {});
         } else {
           const { data: authList } = await supabaseAdmin.auth.admin.listUsers();
-          const match = authList?.users?.find((u) => u.email?.toLowerCase() === normalized);
+          const match = (authList as any)?.users?.find((u: any) => u.email?.toLowerCase() === normalized);
           if (match) {
             await supabaseAdmin.auth.admin.deleteUser(match.id).catch(() => {});
           }
