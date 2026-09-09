@@ -13,6 +13,16 @@ type ResetStep = 'email' | 'otp' | 'new_password' | 'success';
 const OTP_LENGTH = 6;
 const RESEND_COOLDOWN = 60; // 60 seconds
 
+async function safeParseJson(res: Response): Promise<any> {
+  const contentType = res.headers.get('content-type') || '';
+  if (contentType.includes('application/json')) {
+    return res.json();
+  }
+  const text = await res.text();
+  console.warn('[Password Reset API] Non-JSON API response received:', text);
+  return { error: `Server error (${res.status}). Please check your connection.` };
+}
+
 export const ForgotPassword = () => {
   const [step, setStep] = useState<ResetStep>('email');
   const [email, setEmail] = useState('');
@@ -83,7 +93,7 @@ export const ForgotPassword = () => {
         }),
       });
 
-      const data = await res.json();
+      const data = await safeParseJson(res);
 
       if (!res.ok) {
         if (data.locked) {
@@ -121,7 +131,7 @@ export const ForgotPassword = () => {
         }),
       });
 
-      const data = await res.json();
+      const data = await safeParseJson(res);
 
       if (!res.ok) {
         if (data.locked) {
@@ -165,7 +175,7 @@ export const ForgotPassword = () => {
         }),
       });
 
-      const data = await res.json();
+      const data = await safeParseJson(res);
 
       if (!res.ok) {
         if (data.locked) {
@@ -217,7 +227,7 @@ export const ForgotPassword = () => {
         }),
       });
 
-      const data = await res.json();
+      const data = await safeParseJson(res);
 
       if (!res.ok) {
         throw new Error(data.error || 'Failed to update password.');
