@@ -1,20 +1,3 @@
----
-title: "Task History & Changelog"
-description: "Chronological record of completed tasks, refactors, bug fixes, and architectural milestones."
-tags:
-  - sti-ojt
-  - task-history
-  - changelog
-  - milestones
-  - sprint-history
-aliases:
-  - "Task History"
-  - "Changelog"
-  - "Completed Tasks"
-created: 2026-08-26
-updated: 2026-09-04
----
-
 # 📜 Task History & Changelog
 
 [←   Back to Active Tasks](TASKS.md) | [Documentation Hub](../README.md) | [All Sessions History](ALL_SESSIONS_HISTORY.md)
@@ -85,7 +68,7 @@ A historical record of completed tasks, refactors, bug fixes, and architectural 
 
 ---
 
-### â˜ï¸ Microsoft OneDrive & Graph API Cloud Archival Integration
+### ☁️ Microsoft OneDrive & Graph API Cloud Archival Integration
 
 - [x] **Credit-Card-Free Azure Activation**:
   - Unlocked free Microsoft Entra ID directory via **Azure for Students** academic verification (`@marikina.sti.edu.ph`) with \$0 cost and zero payment information required.

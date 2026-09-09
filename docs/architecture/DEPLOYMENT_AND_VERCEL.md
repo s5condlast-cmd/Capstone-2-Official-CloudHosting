@@ -1,21 +1,3 @@
----
-title: "Deployment & Vercel Configuration"
-description: "Vercel serverless configuration, Express backend gotchas, environment variables checklist, and redeploy safeguards."
-tags:
-  - sti-ojt
-  - deployment
-  - vercel
-  - serverless
-  - environment-variables
-  - vite
-aliases:
-  - "Vercel Deployment"
-  - "Deployment Guide"
-  - "Vercel Serverless"
-created: 2026-08-26
-updated: 2026-09-04
----
-
 # Deployment & Vercel Configuration
 
 [←   Back to Documentation Hub](../README.md) | [Cloudinary Integration](CLOUDINARY_INTEGRATION_SUMMARY.md) | [System Architecture](ARCHITECTURE.md) | [Backend Architecture](BACKEND_AND_DATABASE.md)
@@ -143,9 +125,9 @@ Vercel runs this automatically. The output is:
 
 ```plaintext
 dist/
-â”œ-- index.html
-â”œ-- assets/
-|   â”œ-- index-[hash].js
+|-- index.html
+|-- assets/
+|   |-- index-[hash].js
 |   +-- index-[hash].css
 +-- ... (static assets from public/)
 ```

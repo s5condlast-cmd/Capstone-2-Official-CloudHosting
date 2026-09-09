@@ -1,21 +1,3 @@
----
-title: "Digital Document Generation Pipeline Documentation"
-description: "Interactive fill-in-the-blank document pipeline, in-browser DOCX preview, easy-template-x tag interpolation, and programmatic signature tables."
-tags:
-  - sti-ojt
-  - document-generation
-  - docx-preview
-  - easy-template-x
-  - jszip
-  - templates
-aliases:
-  - "Document Generation Pipeline"
-  - "DOCX Generation Pipeline"
-  - "Digital Document Workflow"
-created: 2026-08-26
-updated: 2026-09-04
----
-
 # 📄 Digital Document Generation Pipeline Documentation
 
 [← Back to Features Hub](README.md) | [Documentation Hub](../README.md) | [Student Checklist](01_STUDENT_PORTAL_CHECKLIST.md) | [Admin Management](06_ADMIN_MANAGEMENT.md) | [Document Workflows Spec](../architecture/DOCUMENT_WORKFLOWS.md)
@@ -155,4 +137,4 @@ When the student clicks "Save & Generate Document":
 - [Document Workflows & Template Generation](../architecture/DOCUMENT_WORKFLOWS.md) — 13-template inventory and field specifications
 - [01. Student Portal & Checklist](01_STUDENT_PORTAL_CHECKLIST.md) — Student requirement progression
 - [06. Admin Master Templates & Verification](06_ADMIN_MANAGEMENT.md) — Master template upload and distribution
-- [Cloudinary Document Storage Integration](../architecture/CLOUDINARY_INTEGRATION_SUMMARY.md) — Document blob storage and CDN delivery
+- [Cloudinary Integration Summary (Preserved)](../architecture/CLOUDINARY_INTEGRATION_SUMMARY.md) — Modular document blob storage and CDN delivery

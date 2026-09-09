@@ -1,21 +1,3 @@
----
-title: "Cloudinary Document Storage Integration Summary"
-description: "Integration of Cloudinary CDN for Document, PDF, and Spreadsheet Blob Storage alongside Supabase PostgreSQL."
-tags:
-  - sti-ojt
-  - cloudinary
-  - blob-storage
-  - cdn
-  - document-pipeline
-  - backend
-aliases:
-  - "Cloudinary Integration"
-  - "Cloud Document Storage"
-  - "Blob Storage Architecture"
-created: 2026-08-26
-updated: 2026-09-04
----
-
 # Cloudinary Document Storage Integration Summary
 
 [←   Back to Documentation Hub](../README.md) | [Vercel Deployment](DEPLOYMENT_AND_VERCEL.md) | [Document Workflows Spec](DOCUMENT_WORKFLOWS.md) | [Backend Architecture](BACKEND_AND_DATABASE.md)
@@ -28,7 +10,11 @@ updated: 2026-09-04
 
 ## 1. Executive Summary
 
-During this session, we integrated **Cloudinary** as the primary cloud file storage provider for student submissions, supervisor-signed Daily Time Records (DTRs), and administrator document templates.
+> [!IMPORTANT]
+> **Current Status: Preserved in Comments (Dormant)**  
+> The Cloudinary integration was implemented and validated during development, but is currently **commented out / preserved in comments** in `backend/server.ts`, `backend/config/cloudinaryConfig.ts`, and `src/lib/submissionStorage.ts` for future reactivation or redesign. The active system currently relies on **Supabase Storage** (`student_submissions`, `templates`) and **Microsoft OneDrive (via Microsoft Graph API)** for official institutional cloud backups.
+
+During this session, we integrated **Cloudinary** as a cloud file storage provider for student submissions, supervisor-signed Daily Time Records (DTRs), and administrator document templates.
 
 ### Key Architecture Decisions
 

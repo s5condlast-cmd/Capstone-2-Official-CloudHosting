@@ -1,20 +1,3 @@
----
-title: "System Features & Functional Documentation Hub"
-description: "Map of Content (MOC) and visual dataflow guides for all 8 core features of the STI Practicum Management System."
-tags:
-  - sti-ojt
-  - features-hub
-  - map-of-content
-  - architecture
-  - workflows
-aliases:
-  - "Features Hub"
-  - "Feature Guides"
-  - "Features MOC"
-created: 2026-08-26
-updated: 2026-09-04
----
-
 # 🌟 System Features & Functional Documentation Hub
 
 [←  Back to Documentation Hub](../README.md) | [Architecture Overview](../architecture/ARCHITECTURE.md) | [System Map](../architecture/SYSTEM_MAP.md)
@@ -28,11 +11,11 @@ Each feature guide includes detailed visual dataflow diagrams (Mermaid and text)
 ## 🗺️ Feature Architecture Map
 
 ```text
-+-----------------------------------------------------------------------------â”
++-----------------------------------------------------------------------------+
 |                       OJT SYSTEM FEATURE ECOSYSTEM                          |
-â”œ-----------------------------------------------------------------------------â”¤
+|-----------------------------------------------------------------------------+
 |                                                                             |
-|  [01. Student Portal & Checklist] ---â–º [02. Digital Document Pipeline]      |
+|  [01. Student Portal & Checklist] ----> [02. Digital Document Pipeline]      |
 |     • Dynamic stage progression          • 13 Official interactive templates|
 |     • Active placement summary           • In-browser DOCX/PDF preview      |
 |     • Completed tasks modal              • JSZip & easy-template-x engine   |
@@ -74,7 +57,7 @@ Each feature guide includes detailed visual dataflow diagrams (Mermaid and text)
 - **Key Components**: `documentGenerator.ts`, `DocxViewer.tsx`, `AutoWidthInput.tsx`, `easy-template-x`.
 - [Read Complete Feature Guide](02_DOCUMENT_PIPELINE.md)
 
-### â±ï¸ 3. [DTR Attendance & Signature Fitting](03_DTR_ATTENDANCE_SIGNATURE.md)
+### ⏱️ 3. [DTR Attendance & Signature Fitting](03_DTR_ATTENDANCE_SIGNATURE.md)
 
 - **What it does**: Tracks student daily work hours, calculates totals toward 460 hours, captures digital canvas signatures, and fits signatures into Excel spreadsheets.
 - **Key Components**: `DailyTimeRecord.tsx`, `DTRApproval.tsx`, `excelGenerator.ts`, `SignatureCanvas.tsx`.
@@ -92,7 +75,7 @@ Each feature guide includes detailed visual dataflow diagrams (Mermaid and text)
 - **Key Components**: `ReviewDocuments.tsx`, `Approvals.tsx`, `WeeklyJournalReview.tsx`.
 - [Read Complete Feature Guide](05_ADVISER_SUPERVISOR_REVIEW.md)
 
-### âš™ï¸ 6. [Admin Master Templates & Clearance Verification](06_ADMIN_MANAGEMENT.md)
+### ⚙️ 6. [Admin Master Templates & Clearance Verification](06_ADMIN_MANAGEMENT.md)
 
 - **What it does**: Master administrative console with uniform 4-button template action grids, student verification queues, user role management, and company partner directory.
 - **Key Components**: `TemplateManagement.tsx`, `DocumentVerification.tsx`, `UserManagement.tsx`.

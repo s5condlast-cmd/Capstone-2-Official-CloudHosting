@@ -1,21 +1,3 @@
----
-title: "Adviser & Supervisor Review Rooms Documentation"
-description: "Faculty Adviser and Industry Supervisor Review Workflows, dual-viewport document inspection, revision cycles, and official sign-offs."
-tags:
-  - sti-ojt
-  - adviser-portal
-  - supervisor-portal
-  - document-review
-  - approvals
-  - review-room
-aliases:
-  - "Adviser Review Rooms"
-  - "Supervisor Review"
-  - "Review Documents"
-created: 2026-08-26
-updated: 2026-09-04
----
-
 # 👥 Adviser & Supervisor Review Rooms Documentation
 
 [←  Back to Features Hub](README.md) | [Documentation Hub](../README.md) | [AI Grammar Audit](04_AI_GRAMMAR_AUDIT.md) | [DTR Attendance](03_DTR_ATTENDANCE_SIGNATURE.md) | [Document Workflows Spec](../architecture/DOCUMENT_WORKFLOWS.md)
@@ -53,7 +35,7 @@ stateDiagram-v2
 
 ## 🔍 How It Works Under the Hood
 
-### 1. Dual-Viewport Layout (`ReviewDocuments.tsx`)
+### 1. Dual-Viewport Layout (`ReviewDocs.tsx` / `DocumentReviewSession.tsx`)
 
 To avoid opening external PDF viewers or downloading files to the desktop:
 
@@ -73,23 +55,23 @@ To avoid opening external PDF viewers or downloading files to the desktop:
 ### 2. Multi-Role Permissions & Responsibilities
 
 ```text
-+-----------------------------------------------------------------------------â”
++-----------------------------------------------------------------------------+
 |                          REVIEW WORKFLOW BY ROLE                            |
-â”œ-----------------------+-------------------------+---------------------------â”¤
+|-----------------------+-------------------------+---------------------------+
 | User Role             | Supervised Scope        | Key Decision Documents    |
-â”œ-----------------------â”¼-------------------------â”¼---------------------------â”¤
+|-----------------------+-------------------------+---------------------------+
 | Academic Adviser      | Entire student section  | • Application Letter      |
 |                       | (40–50 students)        | • Consent Forms           |
 |                       |                         | • Industry MOA            |
 |                       |                         | • Proposal Letter         |
 |                       |                         | • Endorsement Letter      |
-â”œ-----------------------â”¼-------------------------â”¼---------------------------â”¤
+|-----------------------+-------------------------+---------------------------+
 | Company Supervisor    | Host company interns    | • Daily Time Records (DTR)|
 |                       | (1–5 students)          | • Weekly Journals         |
 |                       |                         | • Training Plan Form      |
 |                       |                         | • Performance Appraisal   |
 |                       |                         | • Certificate of Complete |
-â”œ-----------------------â”¼-------------------------â”¼---------------------------â”¤
+|-----------------------+-------------------------+---------------------------+
 | Admin / Registrar     | Entire institution      | • Final Practicum Clearance|
 |                       | (All programs)          | • Grade Endorsement       |
 +-----------------------+-------------------------+---------------------------+

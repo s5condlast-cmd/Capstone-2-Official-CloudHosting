@@ -5,6 +5,7 @@ import analyzeRouter from './routes/analyze';
 // Cloudinary router preserved in comments for future reactivation/redesign
 // import cloudinaryRouter from './routes/cloudinary';
 import onedriveRouter from './routes/onedrive';
+import authRouter from './routes/auth';
 
 // Load environment variables from CWD .env
 dotenv.config();
@@ -19,6 +20,7 @@ app.use(express.json());
 app.use('/api', analyzeRouter);
 // app.use('/api', cloudinaryRouter); // Cloudinary file storage (preserved for future use)
 app.use('/api', onedriveRouter);
+app.use('/api', authRouter);
 
 if (!process.env.VERCEL) {
   app.listen(PORT, () => {

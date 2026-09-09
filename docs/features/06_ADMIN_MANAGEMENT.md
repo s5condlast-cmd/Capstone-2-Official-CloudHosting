@@ -1,21 +1,4 @@
----
-title: "Admin Master Templates & Clearance Verification Documentation"
-description: "Master Administrator Console, template distribution architecture, uniform 4-button action grid, and institutional clearance verification."
-tags:
-  - sti-ojt
-  - admin-console
-  - template-management
-  - clearance-verification
-  - user-management
-aliases:
-  - "Admin Management"
-  - "Template Management"
-  - "Clearance Verification"
-created: 2026-08-26
-updated: 2026-09-04
----
-
-# âš™ï¸ Admin Master Templates & Clearance Verification Documentation
+# ⚙️ Admin Master Templates & Clearance Verification Documentation
 
 [←  Back to Features Hub](README.md) | [Documentation Hub](../README.md) | [Document Pipeline](02_DOCUMENT_PIPELINE.md) | [Document Workflows Spec](../architecture/DOCUMENT_WORKFLOWS.md) | [Backend Architecture](../architecture/BACKEND_AND_DATABASE.md)
 
@@ -43,7 +26,7 @@ graph TD
     C --> E[Upload PDF Reference / Backup]
     C --> F[Download DOCX Master]
     C --> G[Download PDF Reference]
-    D --> H[Store in Cloudinary / Supabase templates Bucket]
+    D --> H[Store in Supabase templates Bucket & Cache in IndexedDB]
     E --> H
     H --> I[Available Instantly Across All Student Workflows]
     I --> J[Student Opens StudentDocumentPage.tsx]
@@ -59,17 +42,17 @@ graph TD
 To eliminate hidden actions, ambiguous menus, and inconsistent card layouts, every template card in [`src/pages/admin/Templates.tsx`](../../src/pages/admin/Templates.tsx) exposes an identical 4-button action grid:
 
 ```text
-+-----------------------------------------------------------------------------â”
++-----------------------------------------------------------------------------+
 |                       MASTER TEMPLATE CARD ACTION GRID                      |
-â”œ-----------------------------------------------------------------------------â”¤
+|-----------------------------------------------------------------------------+
 |                                                                             |
 |  [Template Title: Student Application Letter]                               |
 |  Phase: Before OJT   |   File Type: DOCX + PDF Reference   |  Status: Active|
 |                                                                             |
-|  +-------------------------------+-------------------------------â”          |
-|  |   â¬† Upload DOCX (Primary)     |   â¬† Upload PDF (Primary)      |          |
-|  â”œ-------------------------------â”¼-------------------------------â”¤          |
-|  |   â¬‡ Download DOCX (Outline)   |   â¬‡ Download PDF (Outline)    |          |
+|  +-------------------------------+-------------------------------+          |
+|  |   ↑ Upload DOCX (Primary)     |   ↑ Upload PDF (Primary)      |          |
+|  |-------------------------------+-------------------------------+          |
+|  |   ↓ Download DOCX (Outline)   |   ↓ Download PDF (Outline)    |          |
 |  +-------------------------------+-------------------------------+          |
 |                                                                             |
 +-----------------------------------------------------------------------------+

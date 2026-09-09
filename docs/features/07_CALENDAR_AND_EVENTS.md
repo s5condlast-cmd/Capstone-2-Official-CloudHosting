@@ -1,20 +1,3 @@
----
-title: "Interactive Practicum Calendar & Events Documentation"
-description: "Practicum Calendar & Scheduling System, 4-view timeline engine, event creation modal, and compact widget integrations."
-tags:
-  - sti-ojt
-  - calendar
-  - events
-  - scheduling
-  - date-picker
-aliases:
-  - "Calendar & Events"
-  - "Practicum Calendar"
-  - "Event Scheduler"
-created: 2026-08-26
-updated: 2026-09-04
----
-
 # 📅 Interactive Practicum Calendar & Events Documentation
 
 [← Back to Features Hub](README.md) | [Documentation Hub](../README.md) | [Student Checklist](01_STUDENT_PORTAL_CHECKLIST.md) | [System Map](../architecture/SYSTEM_MAP.md) | [Tasks & Roadmap](../tasks/TASKS.md)
@@ -37,7 +20,7 @@ The Calendar provides students, faculty advisers, and supervisors with a shared 
 
 ```mermaid
 graph TD
-    A[User Opens CalendarPage.tsx] --> B[Fetch Practicum Events from Supabase]
+    A[User Opens CalendarPage.tsx] --> B[Load Practicum Milestones & Schedule]
     B --> C[Compute Active Date & View Mode]
     C --> D{Selected View}
     D -->|Month| E[Render 7x5 or 7x6 Day Cell Grid]
@@ -47,8 +30,8 @@ graph TD
     A --> I[Click Add Event Button]
     I --> J[Open Radix Dialog with Event Form]
     J --> K[Pick Date via date-picker-simple.tsx]
-    K --> L[Save Event to Supabase calendar_events]
-    L --> M[Refetch & Optimistically Update Views]
+    K --> L[Save Event to Dynamic Event State]
+    L --> M[Update Calendar View with New Milestone]
 ```
 
 ---

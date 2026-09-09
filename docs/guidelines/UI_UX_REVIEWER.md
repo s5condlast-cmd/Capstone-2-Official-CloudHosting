@@ -1,21 +1,3 @@
----
-title: "UI / UX Reviewer & Design System Standards"
-description: "Aesthetic taste, color palettes (Monochrome, Deep Sky & Warm Amber), theme-aware rules, Geist/Inter typography, and UI audit rubric."
-tags:
-  - sti-ojt
-  - ui-ux
-  - design-system
-  - color-palette
-  - typography
-  - reviewer
-aliases:
-  - "UI UX Reviewer"
-  - "Design Standards"
-  - "UI Review Guidelines"
-created: 2026-09-04
-updated: 2026-09-04
----
-
 # 🎨 UI / UX Reviewer & Design System Standards
 
 [← Back to Documentation Hub](../README.md) | [Refactoring Guidelines](REFACTORING_GUIDELINES.md) | [System Architecture](../architecture/ARCHITECTURE.md) | [Live UI Review](UI_REVIEW.md)
@@ -29,6 +11,7 @@ This document establishes the official UI/UX review standards, aesthetic taste r
 The project enforces an intentional, editorial, and tactile design philosophy. We avoid generic, uninspired AI-generated layouts in favor of intentional hierarchy, thoughtful typography, and physical micro-feedback.
 
 ### The 60-30-10 Rule
+
 1. **60% Neutral Canvas / Base**:
    - **Light Mode**: Crisp, high-clarity background (`oklch(0.988 0.002 240)` / `#FFFFFF`).
    - **Dark Mode**: Deep zinc backdrop (`oklch(0.145 0 0)` / `#09090B`).
@@ -71,6 +54,7 @@ All theme tokens are defined in [`src/index.css`](../../src/index.css) and switc
 ```
 
 ### ⚠️ The Theme-Aware Invariant
+
 - **NEVER hardcode raw Tailwind color classes** like `bg-blue-600`, `text-blue-500`, or `border-indigo-500` on interactive components or primary highlights.
 - **ALWAYS use theme-aware classes**:
   - `bg-primary`, `text-primary`, `border-primary`, `ring-primary`
@@ -98,9 +82,11 @@ All theme tokens are defined in [`src/index.css`](../../src/index.css) and switc
 ## 4. Tactile Micro-Interactions & Physics
 
 1. **Active Tap Feedback**: Every interactive button, pill, or card link must feel physically responsive:
+
    ```tsx
    className="active:scale-[0.98] transition-transform duration-100"
    ```
+
 2. **Subtle Hover Scaling**: Gentle hover lift (`hover:scale-[1.01]` or `hover:scale-[1.02]`) paired with soft ambient shadows.
 3. **Soft Ambient Shadows**: Avoid harsh, pitch-black drop shadows. Use the system's low-opacity ambient shadows:
    - `.soft-shadow` (subtle cards)
@@ -130,6 +116,7 @@ Audits conducted by developers or the `ui_ux_reviewer` subagent are scored acros
 ## 6. How to Run a UI / UX Review
 
 You can run an automated UI/UX review at any time:
+
 1. **Via Subagent**: Ask Antigravity to *"Run a UI review on [Component/Page] using the `ui_ux_reviewer` subagent"*.
 2. **Via Skill**: The `ui-ux-reviewer` skill is permanently located in `.agents/skills/ui-ux-reviewer/SKILL.md`.
 3. **Report Output**: Findings will follow the standard scorecard structure with exact file paths, before/after code fixes, and a prioritized action plan.

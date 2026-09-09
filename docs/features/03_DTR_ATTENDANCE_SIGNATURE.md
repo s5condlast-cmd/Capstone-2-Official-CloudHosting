@@ -1,21 +1,3 @@
----
-title: "DTR Attendance & Signature Fitting Documentation"
-description: "Daily Time Record (DTR) tracking toward 460 hours, supervisor canvas signature capture, and ExcelJS luminance stroke cropping."
-tags:
-  - sti-ojt
-  - dtr
-  - attendance
-  - signatures
-  - exceljs
-  - luminance-filter
-aliases:
-  - "DTR Attendance"
-  - "Daily Time Record"
-  - "Signature Fitting"
-created: 2026-08-26
-updated: 2026-09-04
----
-
 # ⏱️ DTR Attendance & Signature Fitting Documentation
 
 [← Back to Features Hub](README.md) | [Documentation Hub](../README.md) | [Student Checklist](01_STUDENT_PORTAL_CHECKLIST.md) | [Supervisor Review](05_ADVISER_SUPERVISOR_REVIEW.md) | [Document Workflows Spec](../architecture/DOCUMENT_WORKFLOWS.md)

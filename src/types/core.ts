@@ -9,10 +9,15 @@ export interface User {
   department?: string;
   studentId?: string;
   course?: string;
+  section?: string;
+  contactNumber?: string;
   adviserId?: string;
   companyName?: string;
   companyId?: string;
   supervisorId?: string;
+  isNewAccount?: boolean;
+  mfaEnrolled?: boolean;
+  requiresPasswordChange?: boolean;
 }
 
 export interface Document {

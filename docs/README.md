@@ -1,20 +1,3 @@
----
-title: "Project Documentation Hub"
-description: "Master Map of Content (MOC) and centralized technical documentation index for STI Marikina Practicum Management System."
-tags:
-  - sti-ojt
-  - documentation-hub
-  - map-of-content
-  - obsidian-moc
-  - architecture
-aliases:
-  - "Documentation Hub"
-  - "Docs MOC"
-  - "Docs Center"
-created: 2026-08-26
-updated: 2026-09-04
----
-
 # 📚 Project Documentation Hub
 
 [← Return to Project Overview](../README.md)
@@ -79,6 +62,7 @@ Welcome to the **Capstone-2 CloudHosting OJT Management System** documentation c
 - [Document Workflows](architecture/DOCUMENT_WORKFLOWS.md) — 3-phase template inventory, `StudentDocumentPage` architecture, and DOCX/PDF workflows
 - [Vercel Deployment Guide](architecture/DEPLOYMENT_AND_VERCEL.md) — Serverless configuration, environment checklist, and redeploy safeguards
 - [Cloudinary Storage Integration](architecture/CLOUDINARY_INTEGRATION_SUMMARY.md) — CDN media storage, signature upload handling, and document backups
+- [Microsoft OneDrive Integration](architecture/ONEDRIVE_INTEGRATION_SUMMARY.md) — Microsoft Graph API integration, automated document archival, and token lifecycle
 
 ### 📏 [Engineering Guidelines & Design Standards](guidelines/REFACTORING_GUIDELINES.md)
 

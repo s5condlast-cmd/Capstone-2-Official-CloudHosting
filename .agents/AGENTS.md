@@ -299,3 +299,31 @@ When integrating or troubleshooting Microsoft Graph API and OneDrive cloud stora
 4. **Institutional Consent Lockdown**: School domains (`@marikina.sti.edu.ph`) strictly block student accounts from granting OAuth permissions to third-party apps (`Need admin approval`). For developer testing and demonstrations, advise using personal Microsoft accounts where the user has full self-consent authority.
 5. **Web Platform Redirect URIs**: Always register callback endpoints (e.g. `http://localhost:3001/api/onedrive/auth/callback`) under the **Web** platform in the Azure Portal (never SPA or Mobile) to avoid `invalid_request: redirect_uri` errors.
 6. **Token Leak Protection Invariant**: Token cache files (`backend/config/*token.json` and `*-token.json`) must remain permanently listed in `.gitignore`. Never commit or stage raw access or refresh tokens.
+
+## Authentication, MFA & User Lifecycle Standards
+
+When developing, modifying, or refactoring user authentication, password resets, 2FA workflows, and admin user management:
+
+1. **First-Time Login & Verification Method Choice**:
+   - For newly created or reset accounts, the temporary password is `'123'` and `requires_password_change: true`.
+   - On first login, the user must update their password first.
+   - **Never Force Direct 2FA Enrollment**: After updating their password, users must **NEVER** be pushed directly into Google Authenticator or any specific MFA method. They must always land on the **"Verify your identity"** screen (`verify_methods`) to freely choose between Google Authenticator, Microsoft Authenticator, Email OTP, SMS, or Phone Call.
+
+2. **Google Authenticator (TOTP) 2-Stage Enrollment Pattern**:
+   - **Clean Header**: Use simple identity titles (e.g., `"Google Authenticator"`). Avoid action phrases like `"Set up Google Authenticator"`.
+   - **Universal Device Reminder**: Omit vendor-specific warnings (e.g. Samsung Camera notes) or numbered step-by-step guides. Use a single universal reminder:
+     > *"Reminder for any device: Open your Authenticator app on your phone or device, then scan this QR code or enter the secret key below."*
+   - **Strict Two-Stage Separation**:
+     - **Stage 1 (Scan & Setup Key)**: Displays only the QR code, setup key, reminder, and a primary **"Next"** button. The 6-digit OTP code input boxes must be **strictly hidden** during Stage 1.
+     - **Stage 2 (Enter 6-Digit Code)**: ONLY rendered after the user has scanned or configured their key and clicked **"Next"** (or on subsequent logins if already enrolled). Displays the 6-digit OTP input boxes and "Verify & Complete Sign-in", with a *"Back to QR code / setup key"* link to return to Stage 1.
+   - **30-Day Device Trust**: Successful verification stores a 30-day client trust token (`mfa_trusted_${cleanKey}`) so returning users on the same device log in seamlessly without repeated 2FA challenges.
+
+3. **Admin User Management & 2FA Reset Capabilities**:
+   - User table rows must display real-time 2FA enrollment status badges (`Authenticator Verified` vs. `Authenticator Required`).
+   - The admin must always have two distinct reset actions:
+     - **Reset Password & 2FA** (`KeyRound` icon): Resets credentials to `'123'`, sets `requires_password_change: true`, sets `mfa_enrolled: false`, and clears client cache.
+     - **Reset Authenticator Only** (`QrCode` icon): Sets `mfa_enrolled: false` and clears client cache **without** altering the user's password, allowing students to re-enroll if their phone or authenticator app is lost/replaced.
+
+4. **Supabase PostgREST Schema Resilience (PGRST204 Prevention)**:
+   - When registering or upserting user profiles in Supabase (`public.profiles`), query only the guaranteed institutional core columns (`id, email, full_name, role, student_id, program, section, contact_number, department, company_name, is_activated, updated_at`).
+   - Extended lifecycle columns (`requires_password_change, mfa_enrolled, status`) must be updated in a separate, isolated `try / catch` block. This guarantees that user creation never fails even if optional columns are absent from the live Supabase schema cache.

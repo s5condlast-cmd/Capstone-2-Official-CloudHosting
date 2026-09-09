@@ -1,21 +1,3 @@
----
-title: "Refactoring & Development Guidelines"
-description: "Engineering rules, styling standards, single-source-of-truth state conventions, and file management protocols."
-tags:
-  - sti-ojt
-  - guidelines
-  - refactoring
-  - code-standards
-  - conventions
-  - styling
-aliases:
-  - "Refactoring Guidelines"
-  - "Development Guidelines"
-  - "Code Standards"
-created: 2026-08-26
-updated: 2026-09-04
----
-
 # Refactoring & Development Guidelines
 
 [←  Back to Documentation Hub](../README.md) | [Main Document](Main_Document.md) | [Document Workflows Spec](../architecture/DOCUMENT_WORKFLOWS.md) | [System Map](../architecture/SYSTEM_MAP.md)

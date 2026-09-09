@@ -1,21 +1,3 @@
----
-title: "AI-Assisted Document & Grammar Review Documentation"
-description: "AI Document Auditing Assistant, backend text extraction pipeline, and dual-model LLM architecture (Groq llama-3.3 + Gemini fallback)."
-tags:
-  - sti-ojt
-  - ai-review
-  - groq
-  - gemini
-  - llama-3.3
-  - grammar-audit
-aliases:
-  - "AI Grammar Audit"
-  - "AI Review Assistant"
-  - "Document Auditor"
-created: 2026-08-26
-updated: 2026-09-04
----
-
 # 🤖 AI-Assisted Document & Grammar Review Documentation
 
 [←  Back to Features Hub](README.md) | [Documentation Hub](../README.md) | [Adviser Review Rooms](05_ADVISER_SUPERVISOR_REVIEW.md) | [Backend Architecture](../architecture/BACKEND_AND_DATABASE.md)
@@ -40,7 +22,7 @@ To assist practicum coordinators and faculty advisers in reviewing hundreds of s
 sequenceDiagram
     autonumber
     actor Adviser
-    participant UI as ReviewDocuments.tsx / GrammarReviewPanel.tsx
+    participant UI as ReviewDocs.tsx / AiAssistantPanel.tsx
     participant Backend as Express Server (/api/analyze)
     participant Parser as pdf-parse
     participant Groq as Groq API (llama-3.3-70b)
@@ -95,31 +77,34 @@ const documentText = pdfData.text;
 
 ### 3. Structured Audit Output Schema
 
-The AI returns a normalized JSON object that the frontend renders into interactive suggestion pills:
+The AI returns a normalized JSON object (`AiFindings` in `src/types/core.ts`) that the frontend renders into interactive assessment cards and checklists:
 
 ```json
 {
-  "overallScore": 88,
-  "complianceStatus": "Satisfactory",
-  "grammarIssues": [
-    {
-      "originalText": "We was assigned to configure the router.",
-      "suggestedText": "We were assigned to configure the router.",
-      "explanation": "Subject-verb agreement error with plural pronoun 'We'.",
-      "severity": "High"
-    }
+  "overallAssessment": "Needs Attention",
+  "grammarIssues": 2,
+  "missingInformation": [
+    "Signature line for host company supervisor is unverified",
+    "Missing target completion date"
   ],
-  "missingSections": [],
-  "adviserRecommendation": "Approve with minor grammatical revisions."
+  "consistencyIssues": [
+    "Company name in text (InnoTech Solutions) differs slightly from recorded partner (InnoTech Labs)"
+  ],
+  "recommendations": [
+    "Clarify host company registered business name",
+    "Ensure supervisor signature is applied before submitting for final clearance"
+  ],
+  "confidence": "High"
 }
 ```
 
 ---
 
-### 4. Interactive Review Panel (`GrammarReviewPanel.tsx`)
+### 4. Interactive Review Panel (`AiAssistantPanel.tsx`)
 
-- Displays side-by-side comparisons of the original student text and recommended fixes.
-- Advisers can click **"Apply Suggestion"** to insert the feedback directly into the adviser remarks comment box.
+- Displays overall assessment badge (`Good`, `Needs Attention`, `Critical Issues`), confidence level badge, and grammar error count metric.
+- Renders itemized checklists of missing information and consistency discrepancies so advisers can review issues at a glance without reading through dense documents.
+- Presents actionable recommendations that advisers can reference when drafting official feedback remarks.
 
 ---
 

@@ -1,21 +1,3 @@
----
-title: "Document Workflows & Template Generation Pipeline"
-description: "Master 3-phase OJT template inventory (13 documents), DOCX TreeWalker scan, JSZip injection, ExcelJS signature fitting, and print CSS rules."
-tags:
-  - sti-ojt
-  - templates
-  - docx-generation
-  - exceljs
-  - signature-fitting
-  - easy-template-x
-aliases:
-  - "Document Workflows"
-  - "Template Pipeline"
-  - "DOCX Generator Architecture"
-created: 2026-08-26
-updated: 2026-09-04
----
-
 # Document Workflows & Template Generation Pipeline
 
 [←  Back to Documentation Hub](../README.md) | [Architecture Overview](ARCHITECTURE.md) | [System Map](SYSTEM_MAP.md) | [Backend & Database](BACKEND_AND_DATABASE.md)
@@ -56,7 +38,7 @@ All template names, generation steps, and signature protocols verified against a
 | 2 | Performance Appraisal Template | PDF | `FT-CRD-133-02` | `PerformanceAppraisal.tsx` |
 
 > [!NOTE]
-> Templates are stored in **Supabase Storage** (bucket: `templates`) and **Cloudinary** (`practicum/templates`), with local IndexedDB fallback. Student pages reference `/templates/FT-CRD-*` paths which are resolved dynamically at runtime by `templateStorage.ts`.
+> Templates are stored in **Supabase Storage** (bucket: `templates`) with local IndexedDB fallback (with modular Cloudinary template routing preserved in backend comments). Student pages reference `/templates/FT-CRD-*` paths which are resolved dynamically at runtime by `templateStorage.ts`.
 
 ---
 

@@ -1,21 +1,3 @@
----
-title: "Authentication, OTP Verification & OneDrive Sync Documentation"
-description: "Institutional Authentication System, email-based One-Time Passcode (OTP) verification, and automated Microsoft OneDrive cloud synchronization via Microsoft Graph API."
-tags:
-  - sti-ojt
-  - authentication
-  - otp-verification
-  - onedrive-sync
-  - microsoft-graph
-  - security
-aliases:
-  - "Auth and OneDrive Sync"
-  - "OTP Verification"
-  - "Microsoft Graph Integration"
-created: 2026-08-26
-updated: 2026-09-04
----
-
 # 🔒 Authentication, OTP Verification & OneDrive Sync Documentation
 
 [←   Back to Features Hub](README.md) | [Documentation Hub](../README.md) | [Backend Architecture](../architecture/BACKEND_AND_DATABASE.md) | [System Map](../architecture/SYSTEM_MAP.md) | [Deployment Guide](../architecture/DEPLOYMENT_AND_VERCEL.md)
@@ -65,7 +47,7 @@ sequenceDiagram
     OneDrive-->>Graph: File created (id, size, webUrl)
     Graph-->>Backend: Return upload metadata & webUrl
     Backend-->>UI: Return HTTP 200 { success: true, file }
-    UI-->>User: Display "âœ“ Signed copy archived to Microsoft OneDrive"
+    UI-->>User: Display "✓ Signed copy archived to Microsoft OneDrive"
 ```
 
 ---
@@ -189,13 +171,13 @@ STI_Practicum_Archive/
 +-- Practicum_AY_2025_2026/
     +-- BSIT_402/
         +-- John_Dwayne_B._Guaniso/
-            â”œ-- Student_Application_Letter/
+            |-- Student_Application_Letter/
             |   +-- John_Dwayne_B._Guaniso_Student_Application_Letter_17883581.pdf
-            â”œ-- Parent_Consent/
+            |-- Parent_Consent/
             |   +-- John_Dwayne_B._Guaniso_Parent_Consent_17883592.pdf
-            â”œ-- Endorsement_Letter/
+            |-- Endorsement_Letter/
             |   +-- John_Dwayne_B._Guaniso_Endorsement_Letter_17883604.pdf
-            â”œ-- MOA_Documents/
+            |-- MOA_Documents/
             |   +-- John_Dwayne_B._Guaniso_MOA_Template_17883610.pdf
             +-- Signed_DTR/
                 +-- DTR_March_2026_Signed.xlsx
@@ -234,7 +216,7 @@ The Express backend exposes the following endpoints under `/api`:
 
 1. **Token Security Isolation**: Tokens stored in `backend/config/onedrive-token.json` and `.env` are strictly excluded from git tracking via `.gitignore`.
 2. **Offline Fallback**: If network connectivity fails during submission, documents are preserved in IndexedDB / local storage and queued for background synchronization.
-3. **Dual Storage Redundancy**: Files are uploaded to Cloudinary for high-speed web browser PDF rendering while simultaneously archiving to Microsoft OneDrive for official compliance and school backups.
+3. **Dual Storage Redundancy**: Active working files are managed via Supabase Storage and client-side IndexedDB caching for fast web browser PDF rendering, while simultaneously archiving finalized files to Microsoft OneDrive via Microsoft Graph API for official compliance and school backups (with optional Cloudinary CDN integration preserved in backend comments for modular scaling).
 
 ---
 

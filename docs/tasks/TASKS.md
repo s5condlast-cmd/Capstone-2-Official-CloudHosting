@@ -1,20 +1,3 @@
----
-title: Active Tasks & Development Roadmap
-description: Active development tasks, feature checklist, UI polish items, voice dictation, template digitization, and backend roadmap.
-tags:
-  - sti-ojt
-  - tasks
-  - roadmap
-  - sprint-planning
-  - backlog
-aliases:
-  - Tasks
-  - Active Tasks
-  - Roadmap
-created: 2026-08-26
-updated: 2026-09-04
----
-
 # Active Tasks & Development Roadmap
 
 [←  Back to Documentation Hub](../README.md) | [Task History & Completed Logs](TASK_HISTORY.md) | [System Map](../architecture/SYSTEM_MAP.md) | [Feature Guides](../features/README.md)
@@ -141,33 +124,36 @@ updated: 2026-09-04
 
 ---
 
-## 🚀 System Implementation Gaps from Main Document (To Reach 100% Alignment)
+## 🎓 Capstone Manuscript & Paper Alignment (Main_Document.md)
 
-- [ ] **Activate Dedicated Student Progress Tracker Route (`/student/progress`)**:
-  - [ ] Replace `<Placeholder name="Progress Tracker" />` in [`src/App.tsx`](../src/App.tsx) with a dedicated visual progress timeline component (Module 3.8: Practicum Compliance Tracking)
-  - [ ] Display student milestone progress across all 3 phases (Before OJT, In OJT, Finals) with real-time hours count towards the 460-hour target
-- [ ] **Admin 1-Click Database Backup Download**:
-  - [ ] In [`src/pages/admin/Settings.tsx`](../src/pages/admin/Settings.tsx) (under the Backup & Recovery tab), add a functional 1-click "Download Database Backup (JSON)" button to fulfill Module 1.8 (Database Backup and Recovery Management)
-- [ ] **Admin Batch Section Assignment to Advisers**:
-  - [ ] In [`src/pages/admin/UserManagement.tsx`](../src/pages/admin/UserManagement.tsx), add a 1-click action to assign an entire section (e.g., all BSIT 4A interns) to a selected adviser to fulfill Module 1.4 (Adviser Assignment Management)
-- [ ] **Admin Accreditation Report Export**:
-  - [ ] In [`src/pages/admin/Reports.tsx`](../src/pages/admin/Reports.tsx), add an exportable printable/PDF summary report for official CHED & STI Practicum accreditation to fulfill Module 1.7 (Report Generation)
-- [ ] **Supervisor Password-Less Magic Link Access**:
-  - [ ] Provide a tokenized direct access magic link option for external company mentors to review DTR and journals without requiring full school account registration (Module 4.4: Supervisor Access Control)
+- [ ] **Task 1: Institutional Templates Matrix Alignment (Scope & Limitations)**
+  - [ ] Update Section 1.4 & 1.5 in `Main_Document.md` from generic document mentions to the official **13 Institutional Templates Matrix**
+  - [ ] Structure by Practicum Phase: Phase 1: Before OJT (8 templates), Phase 2: In OJT (3 templates), Phase 3: Finals (2 templates)
+  - [ ] Detail document format (.docx, .xlsx, .pdf), state gates, and compliance approval sequence
+- [ ] **Task 2: Technical Background & Software Resources Rectification**
+  - [ ] Replace `React 18 / Next.js 15 API routes` with **React 19.0 + Vite 6.0 + Express.js REST API Server** (`backend/server.ts`) with Vercel serverless proxy
+  - [ ] Replace `Tailwind v3.4.4` with **Tailwind CSS v4.0** and theme variables (`--theme-primary`)
+  - [ ] Replace `Groq Whisper` with browser native **Web Speech API** for zero-latency reflection dictation
+  - [ ] Document **Dual-Model Fallback AI Architecture**: Primary Groq Llama-3.3-70B with automatic failover to Google Gemini 1.5 Flash
+  - [ ] Document **Cloudinary CDN** for raw document blob storage and **Microsoft Graph API** for institutional OneDrive sync
+- [ ] **Task 3: System Innovations & Advanced Algorithms Documentation**
+  - [ ] Document the **In-Browser DOCX Editing & Generation Pipeline** (`docx-preview` DOM TreeWalker placeholder parsing + `JSZip` XML surgery + `easy-template-x` tagged substitution without MS Office)
+  - [ ] Document the **DTR Attendance & Signature Fitting Engine** (HTML5 Canvas + Dark-Ink Stroke Luminance Filtering `alpha > 30 && (r < 200 || g < 200 || b < 200)` + ExcelJS 1:1 cell border anchoring)
+  - [ ] Document the **Automated OneDrive Archival Directory Structure** (`STI_Practicum_Archive / AY_YYYY_YYYY / Section / Student_ID / Phase`)
+- [ ] **Task 4: Figure & Diagram Numbering De-Collision**
+  - [ ] Resolve duplicate Figure 15: Preserve `Figure 15: Web-based Practicum System ERD Diagram`
+  - [ ] Renumber `Figure 15. Landing Page StoryBoard` to `Figure 17. Landing Page Storyboard` and increment subsequent storyboard figures (Figures 18–31)
+- [ ] **Task 5: Appendices Population (Empty Appendix Pages)**
+  - [ ] Populate **Appendix A (Resource Persons)**: Formal table of resource persons and interviewed faculty (Dave Lord Rubaya, Emilou Magnaye, Regina Kate Dominguez, Michael Sayson)
+  - [ ] Populate **Appendix B (Personal Technical Vitae)**: Complete curriculum vitae for proponents Kerin Gabriel del Rosario, John Dwayne Guaniso, and Jiro Salvan using standard STI CV format
+  - [ ] Link survey charts and adviser interview transcripts to functional requirements matrix
 
 ---
 
-## 📚 Completed Milestones
+## 📚 Completed Milestone: Panelist Defense Manual & System Guide
 
 - [x] **Master Capstone Defense Guide & API Keys Manual**:
   - [x] Created [`docs/PANELIST_DEFENSE_AND_SYSTEM_GUIDE.md`](../PANELIST_DEFENSE_AND_SYSTEM_GUIDE.md) covering all 11 API keys, universal naming conventions, end-to-end code mechanics, and plain-language Q&A cheatsheet
   - [x] Linked into `README.md` and `docs/README.md`
-  - [x] Cleaned repository-wide UTF-8 mojibake across all markdown documentation files (preserving `Main_Document.md` intact)
-- [x] **OTP Authentication & Password Reset Implementation**:
-  - [x] 6-digit OTP email dispatch via Microsoft Graph Outlook Mail
-  - [x] Self-service "Forgot Password" flow with rate-limiting and countdown timer
-  - [x] First-time student account activation with domain validation (`@marikina.sti.edu.ph`)
+  - [x] Cleaned repository-wide UTF-8 mojibake across 10 markdown documentation files
 
----
-
-- [ ] Clarification of registration for account - Kerin

@@ -1,20 +1,3 @@
----
-title: "System Map, Code Locator & Problem-Fix Register"
-description: "Comprehensive engineering map, quick code locator for all routes and components, and pre-emptive solutions for known risks."
-tags:
-  - sti-ojt
-  - system-map
-  - code-locator
-  - problem-register
-  - troubleshooting
-aliases:
-  - "System Map"
-  - "Code Locator"
-  - "Problem-Fix Register"
-created: 2026-08-26
-updated: 2026-09-04
----
-
 # 🗺️ System Map, Code Locator & Problem-Fix Register
 
 [← Back to Documentation Hub](../README.md) | [Architecture Overview](ARCHITECTURE.md) | [Backend & Database](BACKEND_AND_DATABASE.md) | [Document Workflows](DOCUMENT_WORKFLOWS.md)
@@ -303,9 +286,9 @@ When troubleshooting an issue, follow this 3-step diagnostic sequence:
 
 ## Related Documentation & Cross-References
 
-- [System Architecture Overview](ARCHITECTURE.md) — High-level architecture and directory map
-- [Backend & Database Architecture](BACKEND_AND_DATABASE.md) — Supabase schemas and RLS policies
-- [Document Workflows & Template Generation](DOCUMENT_WORKFLOWS.md) — 13-template inventory and DOCX pipeline
-- [Feature Guides Index](../features/README.md) — Visual dataflow documentation for all 8 core features
-- [Vercel Deployment Guide](DEPLOYMENT_AND_VERCEL.md) — Serverless backend compatibility
-- [Cloudinary Document Storage Integration](CLOUDINARY_INTEGRATION_SUMMARY.md) — Cloud document storage and CDN
+* [System Architecture Overview](ARCHITECTURE.md) — High-level architecture and directory map
+* [Backend & Database Architecture](BACKEND_AND_DATABASE.md) — Supabase schemas and RLS policies
+* [Document Workflows & Template Generation](DOCUMENT_WORKFLOWS.md) — 13-template inventory and DOCX pipeline
+* [Feature Guides Index](../features/README.md) — Visual dataflow documentation for all 8 core features
+* [Vercel Deployment Guide](DEPLOYMENT_AND_VERCEL.md) — Serverless backend compatibility
+* [Cloudinary Document Storage Integration](CLOUDINARY_INTEGRATION_SUMMARY.md) — Cloud document storage and CDN

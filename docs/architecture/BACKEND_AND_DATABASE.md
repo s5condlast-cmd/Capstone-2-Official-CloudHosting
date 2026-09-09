@@ -1,23 +1,3 @@
----
-title: "Backend, Database & AI Service Architecture"
-description: "Comprehensive specification of Supabase PostgreSQL schemas, storage security policies, offline fallbacks, and the AI document audit pipeline."
-tags:
-  - sti-ojt
-  - backend
-  - database
-  - supabase
-  - postgresql
-  - ai-review
-  - groq
-  - gemini
-aliases:
-  - "Backend Architecture"
-  - "Database Schema"
-  - "Supabase Configuration"
-created: 2026-08-26
-updated: 2026-09-04
----
-
 # Backend, Database & AI Service Architecture
 
 [←  Back to Documentation Hub](../README.md) | [Architecture Overview](ARCHITECTURE.md) | [System Map](SYSTEM_MAP.md) | [Document Workflows](DOCUMENT_WORKFLOWS.md)
@@ -251,13 +231,13 @@ Client: aiService.analyzeDocument(docId, pdfUrl, metadata)
   v
 Backend: routes/analyze.ts
   |
-  â”œ- 1. UPDATE student_documents SET ai_status='Processing', ai_findings=null WHERE id=docId
-  â”œ- 2. fetch(pdfUrl) -> Buffer
-  â”œ- 3. extractTextFromPdfBuffer(buffer) via pdf-parse
-  â”œ- 4. analyzeDocumentText(text, metadata) via aiService.ts
-  |     â”œ- Try Groq API (llama-3.3-70b-versatile, temp 0.1, JSON mode)
+  |-- 1. UPDATE student_documents SET ai_status='Processing', ai_findings=null WHERE id=docId
+  |-- 2. fetch(pdfUrl) -> Buffer
+  |-- 3. extractTextFromPdfBuffer(buffer) via pdf-parse
+  |-- 4. analyzeDocumentText(text, metadata) via aiService.ts
+  |     |-- Try Groq API (llama-3.3-70b-versatile, temp 0.1, JSON mode)
   |     +- Fallback: Gemini API (gemini-1.5-flash, temp 0.1, JSON MIME)
-  â”œ- 5. UPDATE student_documents SET ai_status='Completed', ai_findings={...}
+  |-- 5. UPDATE student_documents SET ai_status='Completed', ai_findings={...}
   +- 6. Return JSON findings to client
 ```
 

@@ -1,20 +1,3 @@
----
-title: "System UI / UX Review & Design System Audit"
-description: "Comprehensive baseline UI/UX evaluation based on the project's aesthetic taste: Monochrome foundation, Deep Sky & Warm Amber accents, Geist typography, and tactile physics."
-tags:
-  - sti-ojt
-  - ui-ux
-  - audit
-  - design-system
-  - scorecard
-aliases:
-  - "UI Review"
-  - "UX Audit"
-  - "Design System Review"
-created: 2026-09-04
-updated: 2026-09-04
----
-
 # 🎨 System UI / UX Review & Design System Audit
 
 [← Back to Documentation Hub](../README.md) | [UI/UX Reviewer Standards](UI_UX_REVIEWER.md) | [Refactoring Guidelines](REFACTORING_GUIDELINES.md)
@@ -62,8 +45,10 @@ This review evaluates the project against our **Aesthetic Taste, Color Palettes,
 ## 🔍 Detailed Findings & Recommendations
 
 ### 1. [Medium] Redundant Animation Layering on Primitives
+
 - **Location**: [`src/components/ui/Button.tsx`](../../src/components/ui/Button.tsx#L30-L38)
 - **Current State**:
+
   ```tsx
   <motion.button
     whileTap={{ scale: 0.98 }}
@@ -73,9 +58,11 @@ This review evaluates the project against our **Aesthetic Taste, Color Palettes,
     )}
   >
   ```
+
 - **Aesthetic & UX Impact**: Both Framer Motion's `whileTap` and Tailwind's `active:scale-[0.98]` are applied simultaneously with `transition-all`. This can cause micro-stutters during rapid clicks as CSS transitions fight Framer Motion's inline transforms.
 - **Recommended Fix**:
   Use lightweight CSS transform transitions for standard button primitives, reserving Framer Motion for complex choreographed gestures:
+
   ```tsx
   // Clean, high-performance tactile feedback
   className={cn(
@@ -87,18 +74,22 @@ This review evaluates the project against our **Aesthetic Taste, Color Palettes,
 ---
 
 ### 2. [Low] Hardcoded Arbitrary Shadow in Button Variants
+
 - **Location**: [`src/components/ui/Button.tsx`](../../src/components/ui/Button.tsx#L15-L20)
 - **Current State**:
+
   ```tsx
   primary: '... shadow-[0_1px_2px_0_rgba(0,0,0,0.4)] border border-primary',
   secondary: '... shadow-[0_1px_2px_0_rgba(0,0,0,0.05)]'
   ```
+
 - **Aesthetic Impact**: While subtle, hardcoding arbitrary RGBA shadows bypasses the project's utility tokens.
 - **Recommended Fix**: Replace with the system utility `.soft-shadow` or define `--shadow-button-primary` in `src/index.css` for centralized token management.
 
 ---
 
 ### 3. [Medium] Ensure Heading Tracking Uniformity
+
 - **Location**: Dashboard headers & Modal titles across `src/pages/`
 - **Standard**: Display headlines must enforce `tracking-tight` (`-0.02em`) with upright posture (no italicization).
 - **Audit Result**: Most headings comply, but several secondary subheaders lack explicit `tracking-tight` classes, leading to slightly loose letter spacing on Geist Variable.
@@ -108,14 +99,17 @@ This review evaluates the project against our **Aesthetic Taste, Color Palettes,
 ## 🚀 Prioritized Action Plan
 
 ### Quick Wins (Immediate Polish)
+
 1. Clean up duplicate `whileTap` vs `active:scale-[0.98]` in [`Button.tsx`](../../src/components/ui/Button.tsx).
 2. Standardize button shadows using `.soft-shadow` utility classes.
 3. Audit all badge pills to guarantee `tracking-wider` and uppercase styling.
 
 ### Medium Improvements
+
 1. Add explicit `aria-label` tags to icon-only buttons across document action toolbars.
 2. Implement skeleton height presets for student checklist cards to guarantee zero CLS during Supabase queries.
 
 ### Long-Term Vision
+
 1. Centralize Deep Sky Blue and Warm Amber accent states as first-class component variant aliases (e.g. `variant="amber"` or `variant="sky"`).
 2. Continuously audit pull requests using the autonomous `ui_ux_reviewer` subagent.
