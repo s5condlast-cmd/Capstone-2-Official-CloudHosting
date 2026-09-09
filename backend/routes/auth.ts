@@ -12,10 +12,16 @@ import {
   verifyPassword,
   hashPassword,
   loadAllUsers,
+  isUserDeleted,
+  unmarkDeletedUser,
   DEFAULT_SYSTEM_SEEDS,
 } from '../services/userStore';
 
 const router = Router();
+
+const isUuid = (val?: string): boolean =>
+  typeof val === 'string' &&
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(val.trim());
 
 // In-memory fallback cache for OTPs and rate-limiting
 interface OtpMemoryRecord {
@@ -671,7 +677,11 @@ router.post('/auth/login', async (req: Request, res: Response) => {
     const normalized = email.toLowerCase().trim();
 
     // Check deleted blacklist
-    if (deletedUsersSet.has(normalized) || deletedUsersSet.has(normalized.split('@')[0])) {
+    if (
+      isUserDeleted(normalized) ||
+      deletedUsersSet.has(normalized) ||
+      deletedUsersSet.has(normalized.split('@')[0])
+    ) {
       return res.status(401).json({
         error: 'Invalid credentials. This account has been removed from the directory.',
       });
@@ -990,7 +1000,11 @@ router.get('/users', async (_req: Request, res: Response) => {
     });
 
     const filteredUsers = Array.from(map.values()).filter(
-      u => !deletedUsersSet.has(u.id?.toLowerCase()) && !deletedUsersSet.has(u.email?.toLowerCase())
+      (u) =>
+        !isUserDeleted(u.id) &&
+        !isUserDeleted(u.email) &&
+        !deletedUsersSet.has(u.id?.toLowerCase()) &&
+        !deletedUsersSet.has(u.email?.toLowerCase())
     );
 
     return res.json({
@@ -1079,6 +1093,9 @@ router.post('/users', async (req: Request, res: Response) => {
       deletedUsersSet.delete(normalized.split('@')[0]);
     }
 
+    unmarkDeletedUser(normalized);
+    unmarkDeletedUser(newId);
+
     // 1. Official Supabase Auth user registration
     if (isServiceRoleAvailable) {
       try {
@@ -1116,6 +1133,7 @@ router.post('/users', async (req: Request, res: Response) => {
 
     // 2. Save complete profile to Supabase profiles table
     try {
+      const client = isServiceRoleAvailable ? supabaseAdmin : supabase;
       const profileRecord = {
         id: newId,
         email: normalized,
@@ -1132,7 +1150,7 @@ router.post('/users', async (req: Request, res: Response) => {
         mfa_enrolled: false,
         updated_at: new Date().toISOString(),
       };
-      let { error: profErr } = await supabase.from('profiles').upsert(profileRecord, { onConflict: 'email' });
+      let { error: profErr } = await client.from('profiles').upsert(profileRecord, { onConflict: 'email' });
       if (profErr && profErr.message.includes('Could not find')) {
         const baseRecord = {
           id: newId,
@@ -1147,7 +1165,7 @@ router.post('/users', async (req: Request, res: Response) => {
           is_activated: true,
           updated_at: new Date().toISOString(),
         };
-        await supabase.from('profiles').upsert(baseRecord, { onConflict: 'email' });
+        await client.from('profiles').upsert(baseRecord, { onConflict: 'email' });
       }
     } catch (dbErr: any) {
       console.warn('[Admin Create User] Profiles database sync notice:', dbErr.message);
@@ -1164,7 +1182,8 @@ router.post('/users', async (req: Request, res: Response) => {
         status: 'Active',
         dept: deptInfo,
         studentId: assignedStudentId,
-        resetRequested: false,
+        resetRequested: true,
+        mfaEnrolled: false,
       },
     });
   } catch (err: any) {
@@ -1186,7 +1205,46 @@ router.post('/users/:id/reset-password', async (req: Request, res: Response) => 
     let targetEmail = '';
 
     // Update persistent userStore
-    const storedUser = findUser(normalized) || findUser(id);
+    let storedUser = findUser(normalized) || findUser(id);
+    if (!storedUser) {
+      try {
+        const client = isServiceRoleAvailable ? supabaseAdmin : supabase;
+        const filter = isUuid(id) ? `id.eq.${id},email.ilike.${normalized}` : `email.ilike.${normalized}`;
+        const { data: dbProf } = await client.from('profiles').select('*').or(filter).maybeSingle();
+        if (dbProf) {
+          storedUser = upsertUser({
+            id: dbProf.id,
+            email: dbProf.email,
+            name: dbProf.full_name,
+            role: (dbProf.role ? dbProf.role.toLowerCase() : 'student') as any,
+            studentId: dbProf.student_id,
+            dept: dbProf.section || dbProf.department || dbProf.company_name || 'BSIT 402',
+            passwordHash: hashPassword(newPassword),
+            requiresPasswordChange: true,
+            mfaEnrolled: false,
+          });
+        }
+      } catch (e) {}
+
+      if (!storedUser) {
+        const seedMatch = defaultSeedUsers.find(
+          (u) => u.id.toLowerCase() === normalized || u.email.toLowerCase() === normalized
+        );
+        if (seedMatch) {
+          storedUser = upsertUser({
+            id: seedMatch.id,
+            email: seedMatch.email,
+            name: seedMatch.name,
+            role: seedMatch.role.toLowerCase() as any,
+            dept: seedMatch.dept,
+            passwordHash: hashPassword(newPassword),
+            requiresPasswordChange: true,
+            mfaEnrolled: false,
+          });
+        }
+      }
+    }
+
     if (storedUser) {
       updateUserPassword(storedUser.email, newPassword, true);
       updateUserMfa(storedUser.email, false);
@@ -1196,9 +1254,13 @@ router.post('/users/:id/reset-password', async (req: Request, res: Response) => 
 
     // Find and update in admin memory store
     for (const [email, user] of adminUsersStore.entries()) {
-      if (user.id === id || user.email.toLowerCase() === normalized) {
+      if (
+        user.id === id ||
+        user.email.toLowerCase() === normalized ||
+        (targetEmail && user.email.toLowerCase() === targetEmail.toLowerCase())
+      ) {
         user.password = newPassword;
-        user.resetRequested = false;
+        user.resetRequested = true;
         user.requiresPasswordChange = true;
         user.mfaEnrolled = false;
         targetName = user.name;
@@ -1210,17 +1272,31 @@ router.post('/users/:id/reset-password', async (req: Request, res: Response) => 
 
     // Sync to Supabase Auth & profiles
     try {
-      if (isServiceRoleAvailable && id) {
-        await supabaseAdmin.auth.admin.updateUserById(id, { password: newPassword }).catch(() => {});
+      const client = isServiceRoleAvailable ? supabaseAdmin : supabase;
+      if (isServiceRoleAvailable) {
+        let authId = isUuid(id) ? id : null;
+        if (!authId && targetEmail) {
+          const { data: authList } = await supabaseAdmin.auth.admin.listUsers();
+          const match = (authList as any)?.users?.find((u: any) => u.email?.toLowerCase() === targetEmail.toLowerCase());
+          if (match) authId = match.id;
+        }
+        if (authId) {
+          await supabaseAdmin.auth.admin.updateUserById(authId, { password: newPassword }).catch(() => {});
+        }
       }
-      await supabase
+
+      const filter = isUuid(id)
+        ? `id.eq.${id},email.ilike.${targetEmail || normalized}`
+        : `email.ilike.${targetEmail || normalized}`;
+
+      await client
         .from('profiles')
         .update({ 
           requires_password_change: true, 
-          mfa_enrolled: false,
+          mfa_enrolled: false, 
           updated_at: new Date().toISOString() 
         })
-        .or(`id.eq.${id},email.eq.${targetEmail || id}`);
+        .or(filter);
     } catch (dbErr) {
       console.warn('[Admin Reset Password] Supabase sync notice:', dbErr);
     }
@@ -1247,7 +1323,46 @@ router.post('/users/:id/reset-mfa', async (req: Request, res: Response) => {
     let targetName = 'User';
     let targetEmail = '';
 
-    const storedUser = findUser(normalized) || findUser(id);
+    let storedUser = findUser(normalized) || findUser(id);
+    if (!storedUser) {
+      try {
+        const client = isServiceRoleAvailable ? supabaseAdmin : supabase;
+        const filter = isUuid(id) ? `id.eq.${id},email.ilike.${normalized}` : `email.ilike.${normalized}`;
+        const { data: dbProf } = await client.from('profiles').select('*').or(filter).maybeSingle();
+        if (dbProf) {
+          storedUser = upsertUser({
+            id: dbProf.id,
+            email: dbProf.email,
+            name: dbProf.full_name,
+            role: (dbProf.role ? dbProf.role.toLowerCase() : 'student') as any,
+            studentId: dbProf.student_id,
+            dept: dbProf.section || dbProf.department || dbProf.company_name || 'BSIT 402',
+            passwordHash: hashPassword('123'),
+            requiresPasswordChange: false,
+            mfaEnrolled: false,
+          });
+        }
+      } catch (e) {}
+
+      if (!storedUser) {
+        const seedMatch = defaultSeedUsers.find(
+          (u) => u.id.toLowerCase() === normalized || u.email.toLowerCase() === normalized
+        );
+        if (seedMatch) {
+          storedUser = upsertUser({
+            id: seedMatch.id,
+            email: seedMatch.email,
+            name: seedMatch.name,
+            role: seedMatch.role.toLowerCase() as any,
+            dept: seedMatch.dept,
+            passwordHash: hashPassword('123'),
+            requiresPasswordChange: false,
+            mfaEnrolled: false,
+          });
+        }
+      }
+    }
+
     if (storedUser) {
       updateUserMfa(storedUser.email, false);
       targetName = storedUser.name;
@@ -1255,7 +1370,11 @@ router.post('/users/:id/reset-mfa', async (req: Request, res: Response) => {
     }
 
     for (const [email, user] of adminUsersStore.entries()) {
-      if (user.id === id || user.email.toLowerCase() === normalized) {
+      if (
+        user.id === id ||
+        user.email.toLowerCase() === normalized ||
+        (targetEmail && user.email.toLowerCase() === targetEmail.toLowerCase())
+      ) {
         user.mfaEnrolled = false;
         targetName = user.name;
         targetEmail = user.email;
@@ -1265,13 +1384,18 @@ router.post('/users/:id/reset-mfa', async (req: Request, res: Response) => {
     }
 
     try {
-      await supabase
+      const client = isServiceRoleAvailable ? supabaseAdmin : supabase;
+      const filter = isUuid(id)
+        ? `id.eq.${id},email.ilike.${targetEmail || normalized}`
+        : `email.ilike.${targetEmail || normalized}`;
+
+      await client
         .from('profiles')
         .update({ 
           mfa_enrolled: false, 
           updated_at: new Date().toISOString() 
         })
-        .or(`id.eq.${id},email.eq.${targetEmail || id}`);
+        .or(filter);
     } catch (dbErr) {
       console.warn('[Admin Reset MFA] Supabase sync notice:', dbErr);
     }
@@ -1454,14 +1578,19 @@ router.patch('/users/:id/status', async (req: Request, res: Response) => {
 
     // Update in Supabase profiles
     try {
-      await supabase
+      const client = isServiceRoleAvailable ? supabaseAdmin : supabase;
+      const filter = isUuid(id)
+        ? `id.eq.${id},email.ilike.${normalized}`
+        : `email.ilike.${normalized}`;
+
+      await client
         .from('profiles')
         .update({
           status,
           is_activated: status === 'Active',
           updated_at: new Date().toISOString(),
         })
-        .or(`id.eq.${id},email.eq.${normalized}`);
+        .or(filter);
     } catch (dbErr: any) {
       console.warn('[Update Status] Supabase update notice:', dbErr.message);
     }
@@ -1484,6 +1613,10 @@ router.delete('/users/:id', async (req: Request, res: Response) => {
     const { id } = req.params;
     const normalized = decodeURIComponent(id).toLowerCase().trim();
 
+    if (normalized === 'johndwayneguaniso.05242004@gmail.com') {
+      return res.status(400).json({ error: 'The primary system administrator account cannot be deleted.' });
+    }
+
     deleteUserFromStore(id);
     deleteUserFromStore(normalized);
 
@@ -1502,10 +1635,23 @@ router.delete('/users/:id', async (req: Request, res: Response) => {
     }
 
     try {
+      const client = isServiceRoleAvailable ? supabaseAdmin : supabase;
       if (isServiceRoleAvailable) {
-        await supabaseAdmin.auth.admin.deleteUser(id).catch(() => {});
+        if (isUuid(id)) {
+          await supabaseAdmin.auth.admin.deleteUser(id).catch(() => {});
+        } else {
+          const { data: authList } = await supabaseAdmin.auth.admin.listUsers();
+          const match = (authList as any)?.users?.find((u: any) => u.email?.toLowerCase() === normalized);
+          if (match) {
+            await supabaseAdmin.auth.admin.deleteUser(match.id).catch(() => {});
+          }
+        }
       }
-      await supabase.from('profiles').delete().or(`id.eq.${id},email.eq.${normalized}`);
+
+      const filter = isUuid(id)
+        ? `id.eq.${id},email.ilike.${normalized}`
+        : `email.ilike.${normalized}`;
+      await client.from('profiles').delete().or(filter);
     } catch (dbErr: any) {
       console.warn('[Admin Delete User] Supabase delete notice:', dbErr.message);
     }

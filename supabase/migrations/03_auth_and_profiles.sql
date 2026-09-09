@@ -105,6 +105,11 @@ USING (
 )
 WITH CHECK (true);
 
+DROP POLICY IF EXISTS "profiles_delete_policy" ON public.profiles;
+CREATE POLICY "profiles_delete_policy" 
+ON public.profiles FOR DELETE TO authenticated, anon
+USING (true);
+
 -- Auth OTPs: Managed by API / backend
 DROP POLICY IF EXISTS "auth_otps_policy" ON public.auth_otps;
 CREATE POLICY "auth_otps_policy" 
