@@ -16,5 +16,11 @@
     "**/node_modules": true,
     "**/dist": true,
     "**/build": true
+  },
+  "git.autofetch": false,
+  "files.watcherExclude": {
+    "**/.git/**": true,
+    "**/node_modules/**": true,
+    "**/dist/**": true
   }
 }
