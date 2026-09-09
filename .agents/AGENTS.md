@@ -131,6 +131,9 @@ When configuring Vercel deployment for this Vite + Express full-stack project:
 1. **Explicit Output Directory**: Always ensure `"outputDirectory": "dist"` is explicitly set in `vercel.json` to prevent Vercel from searching for a `public/` directory if the user accidentally alters the framework preset.
 2. **Serverless Backend Compatibility**: Express backends must export the `app` instance by default, and `app.listen()` must be wrapped in `if (!process.env.VERCEL)` to prevent port collisions in Vercel's serverless runtime. Place a proxy entrypoint at `api/server.ts` that re-exports the backend app.
 3. **The "Redeploy" Trap**: If the user pushes a fix but Vercel still fails on the old commit, it is because clicking "Redeploy" in the Vercel dashboard re-runs the exact same commit hash. Do NOT assume the fix failed. Instead, instruct the user to force a fresh webhook trigger by pushing an empty commit: `git commit --allow-empty -m "force vercel update" && git push`.
+4. **Serverless Filesystem Invariant (Vercel / Lambda)**: Never write files or call `fs.mkdirSync` in project directories (such as `backend/data/`) at runtime. The Vercel serverless container is strictly read-only (`EROFS`). Always use in-memory stores as primary and restrict disk writes to `/tmp` with non-blocking error handling.
+5. **Crash-Proof Client & SDK Initialization**: Third-party SDK clients (such as `@supabase/supabase-js`) must never be initialized with unvalidated empty strings at module top level. Always provide safe fallback dummy URLs (e.g., `https://placeholder.supabase.co`) so missing environment variables log warnings instead of terminating the Node.js process on import. All top-level async initialization promises must attach `.catch()` handlers to prevent unhandled rejection crashes.
+6. **Defensive JSON Parsing Pattern**: Frontend and backend API consumers must never call `await res.json()` blindly. Always verify `res.headers.get('content-type')?.includes('application/json')` or use a safe parsing helper before parsing. If the server responds with an error status or plain text (e.g., `"A server error has occurred"`), read `res.text()` and throw a structured error to prevent `SyntaxError: Unexpected token 'A'`. Mount a global Express error handler to guarantee all API errors return valid JSON.
 
 ## Git Push Authorization Protocol
 
@@ -138,6 +141,25 @@ When configuring Vercel deployment for this Vite + Express full-stack project:
 - **NEVER** assume the user wants their code pushed to the remote repository, even if a task is fully complete and verified.
 - You must stage and commit the code locally (if appropriate), but you must then **STOP** and inform the user that the code is ready to be pushed.
 - You are strictly forbidden from executing a `git push` command until the user explicitly types the authorization code: `/push`.
+
+## Git Index & Process Integrity Protocol
+
+To prevent `.git/index` corruption (such as VS Code's `fatal: .git/index: index file smaller than expected`) and handle background lock collisions on Windows:
+
+1. **Never Abruptly Terminate Active Git Processes**:
+   - Never send kill signals or terminate background tasks while a Git command (`git add`, `git commit`, `git status`, `git checkout`) is actively executing. Allow sufficient timeout (`WaitMsBeforeAsync: 5000` to `10000`) for Git to finish flushing to disk and releasing `.git/index.lock`.
+2. **Sequential Git Operations**:
+   - Never run parallel commands that mutate `.git/index` simultaneously. Execute staging, committing, and status commands strictly sequentially.
+3. **Instant Non-Destructive Self-Healing**:
+   - If `.git/index: index file smaller than expected` occurs, immediately restore the index by removing the corrupted 0-byte index file and rebuilding it from `HEAD`:
+     ```powershell
+     Remove-Item .git/index -Force; git reset
+     ```
+   - If a stale lock error occurs (`fatal: Unable to create '.git/index.lock': File exists`), verify no Git process is active and safely clear the lock file:
+     ```powershell
+     Remove-Item .git/index.lock -Force
+     ```
+   - **Zero-Loss Rule**: Never run destructive commands (`git reset --hard` or `git checkout -- .`) to resolve index corruption. The working tree must always be preserved.
 
 ## Unified Debug Protocol (`/debug`)
 
@@ -327,3 +349,12 @@ When developing, modifying, or refactoring user authentication, password resets,
 4. **Supabase PostgREST Schema Resilience (PGRST204 Prevention)**:
    - When registering or upserting user profiles in Supabase (`public.profiles`), query only the guaranteed institutional core columns (`id, email, full_name, role, student_id, program, section, contact_number, department, company_name, is_activated, updated_at`).
    - Extended lifecycle columns (`requires_password_change, mfa_enrolled, status`) must be updated in a separate, isolated `try / catch` block. This guarantees that user creation never fails even if optional columns are absent from the live Supabase schema cache.
+
+## Temporary Testing & Scratch File Hygiene
+
+When creating temporary files, scratch scripts, mock data, or test outputs in `tmp/`, `/tmp`, or local test directories during debugging or verification:
+
+1. **Mandatory Post-Test Cleanup**: Always clean up and delete all temporary files, scripts, or output buffers immediately once the verification step or command execution is finished.
+2. **Zero Lingering Artifacts**: Never leave one-off test files (e.g. `tmp/test-*.js`, `tmp/*.json`, dummy uploads) sitting in the project tree.
+3. **Pristine Git Working Tree**: Before completing a turn or reporting results to the user, ensure that temporary testing files do not appear in `git status` as untracked files.
+

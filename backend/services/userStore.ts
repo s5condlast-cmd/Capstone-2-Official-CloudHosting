@@ -17,13 +17,23 @@ export interface ProvisionedUser {
   updatedAt: string;
 }
 
-const DATA_DIR = path.resolve(process.cwd(), 'backend', 'data');
+const isVercel = !!process.env.VERCEL;
+const DATA_DIR = isVercel
+  ? path.join('/tmp', 'data')
+  : path.resolve(process.cwd(), 'backend', 'data');
 const DATA_FILE = path.join(DATA_DIR, 'provisioned_users.json');
 
-// Ensure data directory exists
+// In-memory fallback cache to ensure zero crashes in serverless read-only environments
+let memoryUsersCache: ProvisionedUser[] | null = null;
+
+// Ensure data directory exists safely without crashing
 function ensureDirExists() {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
+  try {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+  } catch (err) {
+    // Non-blocking in read-only filesystems (memory cache will serve requests)
   }
 }
 
@@ -55,35 +65,47 @@ export function verifyPassword(enteredPassword: string, storedHashOrPlain: strin
 }
 
 /**
- * Loads all provisioned users from the persistent JSON file.
+ * Loads all provisioned users from the persistent JSON file or in-memory cache.
  */
 export function loadAllUsers(): ProvisionedUser[] {
+  if (memoryUsersCache && memoryUsersCache.length > 0) {
+    return memoryUsersCache;
+  }
+
   try {
     ensureDirExists();
     if (!fs.existsSync(DATA_FILE)) {
-      fs.writeFileSync(DATA_FILE, JSON.stringify([], null, 2), 'utf8');
-      return [];
+      memoryUsersCache = memoryUsersCache || [];
+      return memoryUsersCache;
     }
     const raw = fs.readFileSync(DATA_FILE, 'utf8');
-    if (!raw || !raw.trim()) return [];
-    return JSON.parse(raw) as ProvisionedUser[];
+    if (!raw || !raw.trim()) {
+      memoryUsersCache = memoryUsersCache || [];
+      return memoryUsersCache;
+    }
+    const parsed = JSON.parse(raw) as ProvisionedUser[];
+    memoryUsersCache = parsed;
+    return parsed;
   } catch (err) {
-    console.error('[UserStore] Error loading users from disk:', err);
-    return [];
+    // Graceful fallback to memory store if filesystem is unavailable
+    return memoryUsersCache || [];
   }
 }
 
 /**
- * Atomically writes provisioned users to the persistent JSON file.
+ * Atomically writes provisioned users to the persistent JSON file and in-memory cache.
  */
 export function saveAllUsers(users: ProvisionedUser[]): void {
+  // Always update in-memory cache first
+  memoryUsersCache = [...users];
+
   try {
     ensureDirExists();
     const tempFile = `${DATA_FILE}.tmp.${Date.now()}`;
     fs.writeFileSync(tempFile, JSON.stringify(users, null, 2), 'utf8');
     fs.renameSync(tempFile, DATA_FILE);
   } catch (err) {
-    console.error('[UserStore] Error saving users to disk:', err);
+    // Non-blocking in serverless environments (in-memory store preserves state for the invocation)
   }
 }
 

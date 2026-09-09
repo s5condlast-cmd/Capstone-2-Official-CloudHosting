@@ -36,6 +36,16 @@ type ActiveTab = 'signin' | 'activation';
 const OTP_LENGTH = 6;
 const RESEND_COOLDOWN = 60; // 60 seconds
 
+async function safeParseJson(res: Response): Promise<any> {
+  const contentType = res.headers.get('content-type') || '';
+  if (contentType.includes('application/json')) {
+    return res.json();
+  }
+  const text = await res.text();
+  console.warn('[Login API] Non-JSON API response received:', text);
+  return { error: `Server error (${res.status}). Please check network connection.` };
+}
+
 export const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -211,7 +221,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: targetEmail.toLowerCase().trim(), purpose: 'login_mfa' }),
         });
-        const data = await res.json();
+        const data = await safeParseJson(res);
         if (!res.ok) {
           toast.error(data.error || 'Failed to dispatch verification code.');
         } else {
@@ -261,7 +271,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
           }),
         });
 
-        const data = await res.json();
+        const data = await safeParseJson(res);
         if (!res.ok) {
           throw new Error(data.error || 'The code entered is incorrect or has expired.');
         }
@@ -374,7 +384,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
           }),
         });
 
-        const data = await res.json();
+        const data = await safeParseJson(res);
         if (!res.ok) {
           throw new Error(data.error || 'The verification code entered is incorrect or has expired.');
         }
@@ -471,7 +481,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
         }),
       });
 
-      const data = await res.json();
+      const data = await safeParseJson(res);
       if (!res.ok) {
         throw new Error(data.error || 'Failed to update password.');
       }
@@ -671,7 +681,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
         body: JSON.stringify({ email: normalized, purpose: 'account_activation' }),
       });
 
-      const data = await res.json();
+      const data = await safeParseJson(res);
       if (!res.ok) {
         if (data.locked) {
           setIsLocked(true);
@@ -710,7 +720,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
         }),
       });
 
-      const data = await res.json();
+      const data = await safeParseJson(res);
       if (!res.ok) {
         if (data.locked) {
           setIsLocked(true);
@@ -753,7 +763,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
         }),
       });
 
-      const data = await res.json();
+      const data = await safeParseJson(res);
       if (!res.ok) {
         if (data.locked) {
           setIsLocked(true);
@@ -807,7 +817,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
         }),
       });
 
-      const data = await res.json();
+      const data = await safeParseJson(res);
       if (!res.ok || !data.user) {
         throw new Error(data.error || 'Failed to complete registration.');
       }

@@ -77,8 +77,9 @@ async function initUserStoreFromDatabase() {
     console.warn('[UserStore Init] Notice:', err);
   }
 }
-
-initUserStoreFromDatabase();
+initUserStoreFromDatabase().catch((err) => {
+  console.warn('[UserStore Init] Background task caught:', err);
+});
 
 /**
  * Validates whether an email is valid for student account registration.
