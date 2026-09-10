@@ -407,8 +407,10 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
 
           <div className="flex-1 flex flex-col min-h-0">
             <DocumentWorkflow
+              key={selectedTemplate.id || selectedTemplate.title}
               title={selectedTemplate.title}
               docUrl={selectedTemplate.docUrl}
+              pdfUrl={selectedTemplate.pdfUrl}
               templateId={selectedTemplate.id}
               fields={templateFields[getTemplateFilename(selectedTemplate.pdfUrl)] || []}
             />

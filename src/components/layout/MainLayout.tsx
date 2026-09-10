@@ -61,18 +61,15 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ user, onLogout }) => {
         />
 
         <div className="flex-1 overflow-y-auto bg-background transition-colors duration-200">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={location.pathname}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.2 }}
-              className="px-4 md:px-6 py-5 md:py-6 w-full max-w-[1720px] mx-auto"
-            >
-              <Outlet />
-            </motion.div>
-          </AnimatePresence>
+          <motion.div
+            key={location.pathname}
+            initial={{ opacity: 0.95 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.1, ease: 'easeOut' }}
+            className="px-4 md:px-6 py-5 md:py-6 w-full max-w-[1720px] mx-auto"
+          >
+            <Outlet />
+          </motion.div>
         </div>
       </SidebarInset>
     </SidebarProvider>

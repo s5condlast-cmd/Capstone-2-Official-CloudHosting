@@ -27,6 +27,7 @@ import { EmptyState } from '@/src/components/ui/EmptyState';
 interface DocumentWorkflowProps {
   title: string;
   docUrl: string;
+  pdfUrl?: string;
   templateId?: string;
   fields: FormField[];
   previewComponent?: React.ComponentType<{
@@ -50,7 +51,9 @@ const AutoWidthInput: React.FC<AutoWidthInputProps> = ({
   className,
   ...props
 }) => {
-  const [inputWidth, setInputWidth] = useState<number | undefined>(undefined);
+  const [inputWidth, setInputWidth] = useState<number | undefined>(() => 
+    Math.max(48, Math.min(640, Math.ceil(activeText.length * 8.5) + 20))
+  );
   const measureRef = useRef<HTMLSpanElement>(null);
   const hasValue = Boolean(value && value.trim() !== '');
   const activeText = hasValue ? value : placeholder;
@@ -85,7 +88,7 @@ const AutoWidthInput: React.FC<AutoWidthInputProps> = ({
         size={1}
         placeholder={hasValue ? '' : placeholder}
         className={cn(
-          "w-full min-w-0 font-sans text-[11pt] px-2 py-0.5 font-normal text-black bg-zinc-100/80 border border-zinc-300 hover:border-zinc-400 focus:bg-white focus:border-black focus:ring-1 focus:ring-black rounded-md outline-none placeholder:text-zinc-500 transition-all shadow-2xs",
+          "w-full min-w-0 font-sans text-[11pt] px-2 py-0.5 font-normal text-black bg-zinc-100/80 border border-zinc-300 hover:border-zinc-400 focus:bg-white focus:border-black focus:ring-1 focus:ring-black rounded-md outline-none placeholder:text-zinc-500 transition-colors shadow-2xs",
           className
         )}
       />
@@ -96,6 +99,7 @@ const AutoWidthInput: React.FC<AutoWidthInputProps> = ({
 export const DocumentWorkflow: React.FC<DocumentWorkflowProps> = ({
   title,
   docUrl,
+  pdfUrl,
   templateId,
   fields,
   previewComponent: Preview,
@@ -104,7 +108,8 @@ export const DocumentWorkflow: React.FC<DocumentWorkflowProps> = ({
   const isApplicationLetter = title.toLowerCase().includes('application letter');
   const [docBuffer, setDocBuffer] = useState<ArrayBuffer | null>(null);
   const [pdfBuffer, setPdfBuffer] = useState<ArrayBuffer | null>(null);
-  const [viewMode, setViewMode] = useState<'preview' | 'form'>('preview');
+  const [isLoadingDoc, setIsLoadingDoc] = useState<boolean>(true);
+  const [viewMode, setViewMode] = useState<'preview' | 'form'>(isApplicationLetter ? 'form' : 'preview');
   const [zoomScale, setZoomScale] = useState<number>(1);
   const [isGeneratingDocx, setIsGeneratingDocx] = useState(false);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
@@ -172,7 +177,9 @@ export const DocumentWorkflow: React.FC<DocumentWorkflowProps> = ({
   };
 
   useEffect(() => {
+    let isCurrent = true;
     const fetchDoc = async () => {
+      setIsLoadingDoc(true);
       let targetId = templateId || TITLE_TO_TEMPLATE_ID[title.toLowerCase().trim()] || '';
 
       if (!targetId) {
@@ -190,7 +197,25 @@ export const DocumentWorkflow: React.FC<DocumentWorkflowProps> = ({
         pdfBuf = await templateStorage.getTemplatePdfBackup(targetId);
       }
 
-      // Fallback to fetching public docUrl if no custom upload exists in storage
+      // 1. Fallback to fetching public pdfUrl if no custom upload exists in storage
+      const resolvedPdfUrl = pdfUrl || (docUrl && docUrl.toLowerCase().endsWith('.docx') ? docUrl.replace(/\.docx$/i, '.pdf') : '');
+      if (!pdfBuf && resolvedPdfUrl) {
+        try {
+          const fetchPdf = resolvedPdfUrl.includes('?') ? `${resolvedPdfUrl}&t=${Date.now()}` : `${resolvedPdfUrl}?t=${Date.now()}`;
+          const res = await fetch(fetchPdf);
+          if (res.ok) {
+            const buf = await res.arrayBuffer();
+            const view = new Uint8Array(buf);
+            if (view.length > 4 && view[0] === 0x25 && view[1] === 0x50 && view[2] === 0x44 && view[3] === 0x46) {
+              pdfBuf = buf;
+            }
+          }
+        } catch (e) {
+          console.warn("Failed to fetch public pdfUrl", e);
+        }
+      }
+
+      // 2. Fallback to fetching public docUrl if no custom upload exists in storage
       if (!buffer && docUrl) {
         try {
           const fetchUrl = docUrl.includes('?') ? `${docUrl}&t=${Date.now()}` : `${docUrl}?t=${Date.now()}`;
@@ -219,8 +244,11 @@ export const DocumentWorkflow: React.FC<DocumentWorkflowProps> = ({
         }
       }
 
-      setDocBuffer(buffer || null);
-      setPdfBuffer(pdfBuf || null);
+      if (isCurrent) {
+        setDocBuffer(buffer || null);
+        setPdfBuffer(pdfBuf || null);
+        setIsLoadingDoc(false);
+      }
     };
 
     fetchDoc();
@@ -229,9 +257,10 @@ export const DocumentWorkflow: React.FC<DocumentWorkflowProps> = ({
     window.addEventListener('template_updated', handleUpdate);
 
     return () => {
+      isCurrent = false;
       window.removeEventListener('template_updated', handleUpdate);
     };
-  }, [docUrl, templateId, title]);
+  }, [docUrl, pdfUrl, templateId, title]);
 
   const pdfBlobUrl = React.useMemo(() => {
     if (!pdfBuffer) return null;
@@ -463,35 +492,46 @@ export const DocumentWorkflow: React.FC<DocumentWorkflowProps> = ({
 
       {/* Main Container: Document Paper Canvas */}
       <div className="flex-1 overflow-y-auto bg-zinc-100 dark:bg-zinc-900/50 p-4 sm:p-6 rounded-xl border border-zinc-200/80 dark:border-zinc-800 custom-scrollbar flex items-center justify-center min-h-[500px]">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={viewMode}
-            initial={{ opacity: 0, y: 4, scale: 0.995 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -4, scale: 0.995 }}
-            transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
-            className="w-full flex justify-center items-center my-auto"
-          >
-            {viewMode === 'preview' ? (
-              pdfBlobUrl ? (
-                <div
-                  style={zoomScale !== 1 ? { transform: `scale(${zoomScale})`, transformOrigin: 'center center' } : undefined}
-                  className="w-full max-w-[680px] h-[760px] transition-transform duration-150 my-auto"
-                >
-                  <iframe
-                    src={`${pdfBlobUrl}#toolbar=0&navpanes=0`}
-                    className="w-full h-full rounded-sm border border-zinc-200 shadow-md bg-white"
-                    title={`${title} PDF Preview`}
-                  />
+        <motion.div
+          key={viewMode}
+          initial={{ opacity: 0.95 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.12, ease: 'easeOut' }}
+          className="w-full flex justify-center items-center my-auto"
+        >
+          {viewMode === 'preview' ? (
+            isLoadingDoc ? (
+              <div
+                style={zoomScale !== 1 ? { transform: `scale(${zoomScale})`, transformOrigin: 'center center' } : undefined}
+                className="w-full max-w-[680px] h-[760px] bg-white dark:bg-zinc-950 rounded-xl border border-zinc-200/80 dark:border-zinc-800 shadow-md flex flex-col items-center justify-center gap-3 transition-transform duration-150 my-auto"
+              >
+                <div className="w-12 h-12 rounded-2xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 flex items-center justify-center animate-pulse">
+                  <FileText size={22} className="text-zinc-400 dark:text-zinc-500 animate-pulse" />
                 </div>
-              ) : (
-                <EmptyState
-                  icon={<Eye size={24} />}
-                  title="No PDF Template Uploaded"
-                  description={`No PDF file has been uploaded yet for ${title}. Upload a PDF in the Admin Portal to preview it here.`}
+                <div className="flex flex-col items-center gap-1">
+                  <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Loading document layout...</p>
+                  <p className="text-[11px] text-zinc-400 dark:text-zinc-500">Preparing preview workspace</p>
+                </div>
+              </div>
+            ) : pdfBlobUrl ? (
+              <div
+                style={zoomScale !== 1 ? { transform: `scale(${zoomScale})`, transformOrigin: 'center center' } : undefined}
+                className="w-full max-w-[680px] h-[760px] transition-transform duration-150 my-auto"
+              >
+                <iframe
+                  src={`${pdfBlobUrl}#toolbar=0&navpanes=0`}
+                  className="w-full h-full rounded-sm border border-zinc-200 shadow-md bg-white"
+                  title={`${title} PDF Preview`}
                 />
-              )
-            ) : !isApplicationLetter ? (
+              </div>
+            ) : (
+              <EmptyState
+                icon={<Eye size={24} />}
+                title="No PDF Template Uploaded"
+                description={`No PDF file has been uploaded yet for ${title}. Upload a PDF in the Admin Portal to preview it here.`}
+              />
+            )
+          ) : !isApplicationLetter ? (
               /* Non-Application Letter Interactive Form Card */
               <div
                 style={zoomScale !== 1 ? { transform: `scale(${zoomScale})`, transformOrigin: 'center center' } : undefined}
@@ -755,7 +795,6 @@ export const DocumentWorkflow: React.FC<DocumentWorkflowProps> = ({
               </div>
             )}
           </motion.div>
-        </AnimatePresence>
       </div>
 
       {/* Bottom Section: Actions */}
