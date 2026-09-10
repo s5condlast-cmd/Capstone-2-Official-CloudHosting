@@ -850,7 +850,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
         {/* ════════════════════════════════════════════════
              MAIN MICROSOFT SIGN-IN CARD
             ════════════════════════════════════════════════ */}
-        <div className="w-full bg-white dark:bg-[#1f1f1f] shadow-[0_2px_6px_rgba(0,0,0,0.2)] dark:shadow-[0_4px_16px_rgba(0,0,0,0.5)] border border-neutral-200/90 dark:border-neutral-800/80 px-[44px] py-[44px] rounded-none relative">
+        <div className="w-full bg-white dark:bg-[#1f1f1f] shadow-[0_2px_6px_rgba(0,0,0,0.2)] dark:shadow-[0_4px_16px_rgba(0,0,0,0.5)] border border-neutral-200/90 dark:border-neutral-800/80 px-[44px] py-[42px] rounded-none relative">
           
           {/* Official Microsoft 4-Color Logo */}
           <div className="mb-5 flex items-center gap-2.5">
@@ -917,7 +917,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                     </Link>
                   </div>
 
-                  <div className="flex justify-end mt-14">
+                  <div className="flex justify-end mt-16">
                     <button
                       type="submit"
                       className="bg-[#0067b8] hover:bg-[#005da6] active:bg-[#005293] text-white text-[15px] font-normal px-8 py-1.5 min-w-[108px] rounded-[2px] transition-colors cursor-pointer shadow-2xs"
@@ -996,7 +996,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                     </Link>
                   </div>
 
-                  <div className="flex justify-end mt-14">
+                  <div className="flex justify-end mt-16">
                     <button
                       type="submit"
                       disabled={isSubmitting}
