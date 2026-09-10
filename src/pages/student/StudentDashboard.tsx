@@ -260,7 +260,7 @@ export const StudentDashboard: React.FC = () => {
   return (
     <div className="space-y-4 pb-10 animate-in fade-in duration-300">
       {/* 1. Top Header: Simple, Clean & Compact */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/70 pb-3.5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-200/80 dark:border-zinc-800/80 pb-3.5">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">
             Practicum Overview
@@ -274,7 +274,7 @@ export const StudentDashboard: React.FC = () => {
         <button
           type="button"
           onClick={() => setIsCompletedModalOpen(true)}
-          className="bg-card border border-border/80 hover:border-border rounded-xl px-3 py-1.5 shadow-2xs flex items-center gap-2 shrink-0 transition-all cursor-pointer group select-none self-start sm:self-auto hover:bg-muted/40"
+          className="bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800/80 hover:border-zinc-300 dark:hover:border-zinc-700 rounded-xl px-3 py-1.5 shadow-2xs flex items-center gap-2 shrink-0 transition-all cursor-pointer group select-none self-start sm:self-auto hover:bg-zinc-50 dark:hover:bg-zinc-900"
         >
           <CheckCircle2 size={14} className="text-emerald-500 shrink-0" />
           <span className="text-xs font-semibold text-foreground">Completed Tasks</span>
@@ -288,7 +288,7 @@ export const StudentDashboard: React.FC = () => {
       {/* 2. Top Pulse Metrics Strip: 4 Sleek Compact Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {/* Metric 1: Hours Rendered */}
-        <div className="bg-card border border-border/80 rounded-xl p-3 px-3.5 shadow-2xs flex flex-col justify-between hover:border-border transition-colors">
+        <div className="bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-3 px-3.5 shadow-2xs flex flex-col justify-between hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
               Practicum Hours
@@ -303,7 +303,7 @@ export const StudentDashboard: React.FC = () => {
                 26.5%
               </span>
             </div>
-            <div className="w-full bg-muted rounded-full h-1 overflow-hidden">
+            <div className="w-full bg-zinc-100 dark:bg-zinc-900 rounded-full h-1 overflow-hidden">
               <div className="bg-primary h-full rounded-full" style={{ width: '26.5%' }} />
             </div>
             <p className="text-[10px] text-muted-foreground truncate">
@@ -313,7 +313,7 @@ export const StudentDashboard: React.FC = () => {
         </div>
 
         {/* Metric 2: Requirements */}
-        <div className="bg-card border border-border/80 rounded-xl p-3 px-3.5 shadow-2xs flex flex-col justify-between hover:border-border transition-colors">
+        <div className="bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-3 px-3.5 shadow-2xs flex flex-col justify-between hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
               Requirements
@@ -328,7 +328,7 @@ export const StudentDashboard: React.FC = () => {
                 1 Pending
               </span>
             </div>
-            <div className="w-full bg-muted rounded-full h-1 overflow-hidden flex">
+            <div className="w-full bg-zinc-100 dark:bg-zinc-900 rounded-full h-1 overflow-hidden flex">
               <div className="bg-emerald-500 h-full" style={{ width: '30%' }} />
               <div className="bg-amber-500 h-full" style={{ width: '10%' }} />
             </div>
@@ -339,7 +339,7 @@ export const StudentDashboard: React.FC = () => {
         </div>
 
         {/* Metric 3: Current Phase */}
-        <div className="bg-card border border-border/80 rounded-xl p-3 px-3.5 shadow-2xs flex flex-col justify-between hover:border-border transition-colors">
+        <div className="bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-3 px-3.5 shadow-2xs flex flex-col justify-between hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
               Current Stage
@@ -360,7 +360,7 @@ export const StudentDashboard: React.FC = () => {
         </div>
 
         {/* Metric 4: Placement */}
-        <div className="bg-card border border-border/80 rounded-xl p-3 px-3.5 shadow-2xs flex flex-col justify-between hover:border-border transition-colors">
+        <div className="bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-3 px-3.5 shadow-2xs flex flex-col justify-between hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
               Placement
@@ -386,8 +386,8 @@ export const StudentDashboard: React.FC = () => {
         {/* LEFT COLUMN: Main Practicum Workflows (9 cols) */}
         <div className="lg:col-span-9 space-y-4 min-w-0">
           {/* Active Deployment & Attendance Tracker Banner */}
-          <div className="bg-card border border-border/80 rounded-xl p-4 shadow-2xs space-y-3">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-border/60 pb-3">
+          <div className="bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-4 shadow-2xs space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-zinc-200/60 dark:border-zinc-800/60 pb-3">
               <div className="flex items-center gap-2.5">
                 <div className="size-8 rounded-lg bg-primary/10 text-primary border border-primary/20 flex items-center justify-center shrink-0">
                   <Briefcase size={16} />
@@ -431,7 +431,7 @@ export const StudentDashboard: React.FC = () => {
                 <span className="text-primary font-bold">26.5% Rendered</span>
               </div>
 
-              <div className="relative w-full bg-muted rounded-full h-2 overflow-hidden">
+              <div className="relative w-full bg-zinc-100 dark:bg-zinc-900 rounded-full h-2 overflow-hidden">
                 <div
                   className="bg-primary h-full rounded-full transition-all duration-500"
                   style={{ width: '26.5%' }}
@@ -447,8 +447,8 @@ export const StudentDashboard: React.FC = () => {
           </div>
 
           {/* Practicum Requirements Checklist */}
-          <div className="bg-card border border-border/80 rounded-xl p-4 sm:p-4.5 shadow-2xs space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/60 pb-3">
+          <div className="bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-4 sm:p-4.5 shadow-2xs space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-200/60 dark:border-zinc-800/60 pb-3">
               <div>
                 <h2 className="text-sm sm:text-base font-bold text-foreground tracking-tight flex items-center gap-2">
                   <ClipboardListIcon size={16} className="text-primary" />
@@ -460,22 +460,22 @@ export const StudentDashboard: React.FC = () => {
               </div>
 
               {/* Phase Segmented Buttons */}
-              <div className="bg-muted/60 border border-border/80 rounded-lg p-0.5 flex items-center gap-0.5 text-xs self-start sm:self-auto shrink-0">
+              <div className="bg-zinc-100/80 dark:bg-zinc-900/80 border border-zinc-200/80 dark:border-zinc-800/80 rounded-lg p-0.5 flex items-center gap-0.5 text-xs self-start sm:self-auto shrink-0">
                 <button
                   type="button"
                   onClick={() => setActivePhaseTab('before')}
                   className={cn(
                     "px-2.5 py-1 rounded-md font-bold transition-all flex items-center gap-1.5 cursor-pointer text-xs",
                     activePhaseTab === 'before'
-                      ? "bg-foreground text-background shadow-2xs"
-                      : "text-muted-foreground hover:text-foreground"
+                      ? "bg-zinc-950 dark:bg-zinc-100 text-white dark:text-zinc-950 shadow-2xs"
+                      : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
                   )}
                 >
                   <span>Before OJT</span>
                   <span
                     className={cn(
                       "px-1.5 py-0.2 rounded-full text-[9px] font-extrabold tabular-nums",
-                      activePhaseTab === 'before' ? "bg-background/20 text-background" : "bg-muted text-muted-foreground"
+                      activePhaseTab === 'before' ? "bg-white/20 dark:bg-zinc-950/20 text-white dark:text-zinc-950" : "bg-zinc-200/60 dark:bg-zinc-800/60 text-zinc-600 dark:text-zinc-400"
                     )}
                   >
                     4
@@ -488,15 +488,15 @@ export const StudentDashboard: React.FC = () => {
                   className={cn(
                     "px-2.5 py-1 rounded-md font-bold transition-all flex items-center gap-1.5 cursor-pointer text-xs",
                     activePhaseTab === 'in'
-                      ? "bg-foreground text-background shadow-2xs"
-                      : "text-muted-foreground hover:text-foreground"
+                      ? "bg-zinc-950 dark:bg-zinc-100 text-white dark:text-zinc-950 shadow-2xs"
+                      : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
                   )}
                 >
                   <span>In OJT</span>
                   <span
                     className={cn(
                       "px-1.5 py-0.2 rounded-full text-[9px] font-extrabold tabular-nums",
-                      activePhaseTab === 'in' ? "bg-background/20 text-background" : "bg-muted text-muted-foreground"
+                      activePhaseTab === 'in' ? "bg-white/20 dark:bg-zinc-950/20 text-white dark:text-zinc-950" : "bg-zinc-200/60 dark:bg-zinc-800/60 text-zinc-600 dark:text-zinc-400"
                     )}
                   >
                     3
@@ -509,15 +509,15 @@ export const StudentDashboard: React.FC = () => {
                   className={cn(
                     "px-2.5 py-1 rounded-md font-bold transition-all flex items-center gap-1.5 cursor-pointer text-xs",
                     activePhaseTab === 'final'
-                      ? "bg-foreground text-background shadow-2xs"
-                      : "text-muted-foreground hover:text-foreground"
+                      ? "bg-zinc-950 dark:bg-zinc-100 text-white dark:text-zinc-950 shadow-2xs"
+                      : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
                   )}
                 >
                   <span>Final Phase</span>
                   <span
                     className={cn(
                       "px-1.5 py-0.2 rounded-full text-[9px] font-extrabold tabular-nums",
-                      activePhaseTab === 'final' ? "bg-background/20 text-background" : "bg-muted text-muted-foreground"
+                      activePhaseTab === 'final' ? "bg-white/20 dark:bg-zinc-950/20 text-white dark:text-zinc-950" : "bg-zinc-200/60 dark:bg-zinc-800/60 text-zinc-600 dark:text-zinc-400"
                     )}
                   >
                     3
@@ -527,14 +527,14 @@ export const StudentDashboard: React.FC = () => {
             </div>
 
             {/* High-Level 3-Stage Progress Indicator */}
-            <div className="bg-muted/30 border border-border/50 rounded-lg p-2.5">
+            <div className="bg-zinc-50/80 dark:bg-zinc-900/50 border border-zinc-200/80 dark:border-zinc-800/80 rounded-lg p-2.5">
               <div className="grid grid-cols-3 gap-2 text-center text-xs">
                 <div
                   className={cn(
                     "p-1.5 rounded-md border transition-all",
                     activePhaseTab === 'before'
-                      ? "bg-card border-primary/40 shadow-2xs"
-                      : "border-transparent text-muted-foreground"
+                      ? "bg-white dark:bg-zinc-950 border-primary/40 shadow-2xs"
+                      : "border-transparent text-zinc-500 dark:text-zinc-400"
                   )}
                 >
                   <div className="flex items-center justify-center gap-1.5 font-bold text-xs">
@@ -550,8 +550,8 @@ export const StudentDashboard: React.FC = () => {
                   className={cn(
                     "p-1.5 rounded-md border transition-all",
                     activePhaseTab === 'in'
-                      ? "bg-card border-primary/40 shadow-2xs"
-                      : "border-transparent text-muted-foreground"
+                      ? "bg-white dark:bg-zinc-950 border-primary/40 shadow-2xs"
+                      : "border-transparent text-zinc-500 dark:text-zinc-400"
                   )}
                 >
                   <div className="flex items-center justify-center gap-1.5 font-bold text-xs">
@@ -567,12 +567,12 @@ export const StudentDashboard: React.FC = () => {
                   className={cn(
                     "p-1.5 rounded-md border transition-all",
                     activePhaseTab === 'final'
-                      ? "bg-card border-primary/40 shadow-2xs"
-                      : "border-transparent text-muted-foreground opacity-60"
+                      ? "bg-white dark:bg-zinc-950 border-primary/40 shadow-2xs"
+                      : "border-transparent text-zinc-500 dark:text-zinc-400 opacity-60"
                   )}
                 >
                   <div className="flex items-center justify-center gap-1.5 font-bold text-xs">
-                    <span className="size-3.5 rounded-full bg-muted-foreground/30 text-muted-foreground flex items-center justify-center text-[8px] font-black">
+                    <span className="size-3.5 rounded-full bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 flex items-center justify-center text-[8px] font-black">
                       <LockIcon size={7} />
                     </span>
                     <span>3. Final Phase</span>
@@ -595,11 +595,11 @@ export const StudentDashboard: React.FC = () => {
                   <div
                     key={req.label}
                     className={cn(
-                      "p-3 rounded-xl border transition-all flex flex-col justify-between gap-2.5 bg-card hover:border-border",
-                      isDone && "border-emerald-500/30 bg-emerald-500/[0.02]",
-                      isPending && "border-amber-500/30 bg-amber-500/[0.02]",
-                      isProgress && "border-primary/30 bg-primary/[0.02]",
-                      isLocked && "opacity-60 border-border/60 bg-muted/20"
+                      "p-3 rounded-xl border transition-all flex flex-col justify-between gap-2.5 bg-zinc-50/70 dark:bg-zinc-900/60 border-zinc-200/80 dark:border-zinc-800/80 hover:border-zinc-300 dark:hover:border-zinc-700 hover:bg-white dark:hover:bg-zinc-900",
+                      isDone && "border-emerald-500/30 bg-emerald-500/[0.03]",
+                      isPending && "border-amber-500/30 bg-amber-500/[0.03]",
+                      isProgress && "border-primary/30 bg-primary/[0.03]",
+                      isLocked && "opacity-60 border-dashed border-zinc-300/80 dark:border-zinc-800 bg-zinc-100/40 dark:bg-zinc-900/30"
                     )}
                   >
                     <div className="space-y-1.5">
@@ -611,7 +611,7 @@ export const StudentDashboard: React.FC = () => {
                               isDone && "bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400",
                               isPending && "bg-amber-500/10 border-amber-500/20 text-amber-600 dark:text-amber-400",
                               isProgress && "bg-primary/10 border-primary/20 text-primary",
-                              isLocked && "bg-muted border-border text-muted-foreground"
+                              isLocked && "bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400"
                             )}
                           >
                             <IconComponent size={14} />
@@ -638,7 +638,7 @@ export const StudentDashboard: React.FC = () => {
                           </span>
                         )}
                         {isLocked && (
-                          <span className="text-[9px] font-semibold px-1.5 py-0.2 rounded-md bg-muted text-muted-foreground border border-border">
+                          <span className="text-[9px] font-semibold px-1.5 py-0.2 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border border-zinc-200/80 dark:border-zinc-700">
                             Locked
                           </span>
                         )}
@@ -655,7 +655,7 @@ export const StudentDashboard: React.FC = () => {
                     </div>
 
                     {/* Action Footer */}
-                    <div className="pt-1.5 border-t border-border/50 flex items-center justify-between">
+                    <div className="pt-1.5 border-t border-zinc-200/60 dark:border-zinc-800/60 flex items-center justify-between">
                       <span className="text-[10px] font-medium text-muted-foreground">
                         {req.value}
                       </span>
@@ -681,9 +681,9 @@ export const StudentDashboard: React.FC = () => {
           </div>
 
           {/* Next Step Checklist Card */}
-          <div className="bg-card border border-border/80 rounded-xl p-3.5 sm:p-4 shadow-2xs space-y-3">
+          <div className="bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-3.5 sm:p-4 shadow-2xs space-y-3">
             <div className="flex gap-3 items-start">
-              <div className="size-9 shrink-0 rounded-xl bg-muted border border-border flex items-center justify-center text-foreground">
+              <div className="size-9 shrink-0 rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 flex items-center justify-center text-zinc-900 dark:text-zinc-100">
                 <FileTextIcon size={16} />
               </div>
               <div className="flex-1 space-y-0.5">
@@ -705,7 +705,7 @@ export const StudentDashboard: React.FC = () => {
             </div>
 
             {/* Sub-steps flow */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 border-t border-border/60">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 border-t border-zinc-200/60 dark:border-zinc-800/60">
               {[
                 { label: '1. Download Template', status: 'completed', desc: 'Template retrieved' },
                 { label: '2. Faculty Signature', status: 'completed', desc: 'Signed by coordinator' },
@@ -715,8 +715,8 @@ export const StudentDashboard: React.FC = () => {
                   key={idx}
                   className={cn(
                     "p-2 rounded-lg border text-xs transition-colors",
-                    step.status === 'completed' && "bg-muted/40 border-border/60 opacity-85",
-                    step.status === 'active' && "bg-card border-primary/40 shadow-2xs"
+                    step.status === 'completed' && "bg-zinc-100/70 dark:bg-zinc-900/50 border-zinc-200/80 dark:border-zinc-800/80 opacity-85",
+                    step.status === 'active' && "bg-white dark:bg-zinc-950 border-primary/40 shadow-2xs"
                   )}
                 >
                   <div className="flex items-center gap-1.5 font-bold mb-0.5">
@@ -752,7 +752,7 @@ export const StudentDashboard: React.FC = () => {
         <div className="lg:col-span-3 space-y-3.5">
           {/* Widget 1: Mini Calendar */}
           {!isCalendarHidden ? (
-            <div className="bg-card border border-border/80 rounded-xl p-3.5 shadow-2xs space-y-2">
+            <div className="bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-3.5 shadow-2xs space-y-2">
               {/* Header */}
               <div className="flex items-center justify-between px-0.5">
                 <div className="flex items-center gap-1.5 text-foreground font-bold text-xs">
@@ -763,7 +763,7 @@ export const StudentDashboard: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setCalendarMonth(new Date(calYear, calMonth - 1, 1))}
-                    className="p-1 hover:bg-muted rounded-md cursor-pointer transition-colors text-muted-foreground hover:text-foreground"
+                    className="p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md cursor-pointer transition-colors text-muted-foreground hover:text-foreground"
                     title="Previous month"
                   >
                     <ChevronLeft size={13} />
@@ -772,7 +772,7 @@ export const StudentDashboard: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setCalendarMonth(new Date(calYear, calMonth + 1, 1))}
-                    className="p-1 hover:bg-muted rounded-md cursor-pointer transition-colors text-muted-foreground hover:text-foreground"
+                    className="p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md cursor-pointer transition-colors text-muted-foreground hover:text-foreground"
                     title="Next month"
                   >
                     <ChevronRight size={13} />
@@ -781,7 +781,7 @@ export const StudentDashboard: React.FC = () => {
               </div>
 
               {/* Day headers: S M T W T F S */}
-              <div className="grid grid-cols-7 text-center text-[10px] font-bold text-muted-foreground/75 select-none py-0.5 border-b border-border/50">
+              <div className="grid grid-cols-7 text-center text-[10px] font-bold text-muted-foreground/75 select-none py-0.5 border-b border-zinc-200/60 dark:border-zinc-800/60">
                 <span>Su</span>
                 <span>Mo</span>
                 <span>Tu</span>
@@ -801,7 +801,7 @@ export const StudentDashboard: React.FC = () => {
                         d.isToday
                           ? "bg-primary text-primary-foreground font-bold shadow-2xs"
                           : d.currentMonth
-                          ? "text-foreground hover:bg-muted/70 cursor-pointer"
+                          ? "text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer"
                           : "text-muted-foreground/25"
                       )}
                     >
@@ -815,7 +815,7 @@ export const StudentDashboard: React.FC = () => {
               </div>
 
               {/* Footer Links: 'full calendar' on left, 'hide' on right */}
-              <div className="flex items-center justify-between pt-1.5 border-t border-border/60 text-[11px] font-semibold px-0.5">
+              <div className="flex items-center justify-between pt-1.5 border-t border-zinc-200/60 dark:border-zinc-800/60 text-[11px] font-semibold px-0.5">
                 <Link
                   to="/student/calendar"
                   className="text-primary hover:underline cursor-pointer flex items-center gap-1"
@@ -833,7 +833,7 @@ export const StudentDashboard: React.FC = () => {
               </div>
             </div>
           ) : (
-            <div className="bg-card border border-dashed border-border rounded-xl p-3 flex items-center justify-between text-xs text-muted-foreground">
+            <div className="bg-white dark:bg-zinc-950 border border-dashed border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-3 flex items-center justify-between text-xs text-muted-foreground">
               <span className="font-semibold text-xs">Calendar hidden</span>
               <button
                 type="button"
@@ -846,7 +846,7 @@ export const StudentDashboard: React.FC = () => {
           )}
 
           {/* Widget 2: Interactive To-Do List */}
-          <div className="bg-card border border-border/80 rounded-xl p-3.5 shadow-2xs space-y-2.5">
+          <div className="bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-3.5 shadow-2xs space-y-2.5">
             {/* Header */}
             <div className="flex items-center justify-between px-0.5">
               <div className="flex items-center gap-1.5 text-foreground font-bold text-xs">
@@ -861,7 +861,7 @@ export const StudentDashboard: React.FC = () => {
                   type="button"
                   onClick={() => setIsAddingTodo((prev) => !prev)}
                   title={isAddingTodo ? "Cancel" : "Add task"}
-                  className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors cursor-pointer"
+                  className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
                 >
                   {isAddingTodo ? <X size={12} /> : <Plus size={12} />}
                 </button>
@@ -877,7 +877,7 @@ export const StudentDashboard: React.FC = () => {
                   onChange={(e) => setNewTodoText(e.target.value)}
                   placeholder="Type new task..."
                   autoFocus
-                  className="w-full text-xs px-2.5 py-1.5 rounded-lg bg-muted/50 border border-border focus:outline-none focus:border-primary text-foreground"
+                  className="w-full text-xs px-2.5 py-1.5 rounded-lg bg-zinc-100/80 dark:bg-zinc-900/80 border border-zinc-200/80 dark:border-zinc-800/80 focus:outline-none focus:border-primary text-foreground"
                 />
                 <div className="flex justify-end gap-1.5">
                   <Button
@@ -914,8 +914,8 @@ export const StudentDashboard: React.FC = () => {
                   className={cn(
                     "flex items-start gap-2 p-2 px-2.5 rounded-lg border transition-all cursor-pointer group text-xs",
                     item.done
-                      ? "bg-muted/20 border-border/40 opacity-60"
-                      : "bg-muted/30 border-border/70 hover:bg-muted/60 hover:border-border"
+                      ? "bg-zinc-100/40 dark:bg-zinc-900/30 border-zinc-200/40 dark:border-zinc-800/40 opacity-60"
+                      : "bg-zinc-50/80 dark:bg-zinc-900/50 border-zinc-200/80 dark:border-zinc-800/80 hover:bg-zinc-100/80 dark:hover:bg-zinc-900/80 hover:border-zinc-300 dark:hover:border-zinc-700"
                   )}
                 >
                   <div
@@ -954,7 +954,7 @@ export const StudentDashboard: React.FC = () => {
           </div>
 
           {/* Widget 3: Practicum Announcements */}
-          <div className="bg-card border border-border/80 rounded-xl p-3.5 shadow-2xs space-y-2">
+          <div className="bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-3.5 shadow-2xs space-y-2">
             {/* Header */}
             <div className="flex items-center justify-between px-0.5">
               <div className="flex items-center gap-1.5 text-foreground font-bold text-xs">
@@ -968,7 +968,7 @@ export const StudentDashboard: React.FC = () => {
 
             {/* Announcement Bulletin */}
             <div className="space-y-1.5 pt-0.5">
-              <div className="p-2.5 rounded-lg bg-muted/40 border border-border/70 space-y-1 text-xs">
+              <div className="p-2.5 rounded-lg bg-zinc-50/80 dark:bg-zinc-900/50 border border-zinc-200/80 dark:border-zinc-800/80 space-y-1 text-xs">
                 <div className="flex items-center justify-between">
                   <span className="font-bold text-foreground">Practicum Midterm Cutoff</span>
                   <span className="text-[9px] text-muted-foreground font-medium">2h ago</span>
@@ -991,14 +991,14 @@ export const StudentDashboard: React.FC = () => {
           </div>
 
           {/* Widget 4: Practicum Support & Contacts Card */}
-          <div className="bg-card border border-border/80 rounded-xl p-3.5 shadow-2xs space-y-2">
+          <div className="bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-3.5 shadow-2xs space-y-2">
             <div className="flex items-center gap-1.5 text-foreground font-bold text-xs px-0.5">
               <UsersIcon className="size-3.5 text-primary" />
               <span>Practicum Support</span>
             </div>
 
             <div className="space-y-1.5 text-xs">
-              <div className="flex items-start gap-2 p-2 rounded-lg bg-muted/30 border border-border/60">
+              <div className="flex items-start gap-2 p-2 rounded-lg bg-zinc-50/80 dark:bg-zinc-900/50 border border-zinc-200/80 dark:border-zinc-800/80">
                 <div className="size-6 rounded-md bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5 font-bold text-[10px]">
                   SJ
                 </div>
@@ -1008,7 +1008,7 @@ export const StudentDashboard: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex items-start gap-2 p-2 rounded-lg bg-muted/30 border border-border/60">
+              <div className="flex items-start gap-2 p-2 rounded-lg bg-zinc-50/80 dark:bg-zinc-900/50 border border-zinc-200/80 dark:border-zinc-800/80">
                 <div className="size-6 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5 font-bold text-[10px]">
                   PR
                 </div>
@@ -1024,7 +1024,7 @@ export const StudentDashboard: React.FC = () => {
 
       {/* Completed Tasks Modal */}
       <Dialog open={isCompletedModalOpen} onOpenChange={setIsCompletedModalOpen}>
-        <DialogContent className="sm:max-w-lg rounded-2xl p-5 sm:p-6 bg-card border border-border shadow-2xl">
+        <DialogContent className="sm:max-w-lg rounded-2xl p-5 sm:p-6 bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800/80 shadow-2xl">
           <DialogHeader>
             <div className="flex items-center gap-3">
               <div className="size-9 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
@@ -1046,7 +1046,7 @@ export const StudentDashboard: React.FC = () => {
             {COMPLETED_TASKS.map((task) => (
               <div
                 key={task.id}
-                className="p-3 rounded-xl bg-muted/30 border border-border/60 hover:bg-muted/50 transition-colors flex items-start justify-between gap-3 text-xs"
+                className="p-3 rounded-xl bg-zinc-50/80 dark:bg-zinc-900/50 border border-zinc-200/80 dark:border-zinc-800/80 hover:bg-zinc-100/80 dark:hover:bg-zinc-900/80 transition-colors flex items-start justify-between gap-3 text-xs"
               >
                 <div className="flex items-start gap-2.5 min-w-0">
                   <div className="size-5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
@@ -1104,7 +1104,7 @@ export const StudentDashboard: React.FC = () => {
               ))}
           </div>
 
-          <div className="flex justify-end pt-3 border-t border-border">
+          <div className="flex justify-end pt-3 border-t border-zinc-200/60 dark:border-zinc-800/60">
             <Button
               variant="outline"
               size="sm"
