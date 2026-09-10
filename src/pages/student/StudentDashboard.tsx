@@ -381,10 +381,10 @@ export const StudentDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* 3. Main Dashboard Grid: Balanced 8:4 Ratio (lg:col-span-8 and lg:col-span-4) */}
+      {/* 3. Main Dashboard Grid: Standard 9:3 Ratio (lg:col-span-9 and lg:col-span-3) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-        {/* LEFT COLUMN: Main Practicum Workflows (8 cols) */}
-        <div className="lg:col-span-8 space-y-4 min-w-0">
+        {/* LEFT COLUMN: Main Practicum Workflows (9 cols) */}
+        <div className="lg:col-span-9 space-y-4 min-w-0">
           {/* Active Deployment & Attendance Tracker Banner */}
           <div className="bg-card border border-border/80 rounded-xl p-4 shadow-2xs space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-border/60 pb-3">
@@ -748,8 +748,8 @@ export const StudentDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* RIGHT COLUMN: Companion Sidebar Widgets (4 cols, ~360px wide) */}
-        <div className="lg:col-span-4 space-y-3.5">
+        {/* RIGHT COLUMN: Companion Sidebar Widgets (3 cols) */}
+        <div className="lg:col-span-3 space-y-3.5">
           {/* Widget 1: Mini Calendar */}
           {!isCalendarHidden ? (
             <div className="bg-card border border-border/80 rounded-xl p-3.5 shadow-2xs space-y-2">
