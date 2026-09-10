@@ -874,7 +874,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                         setSignInError('');
                       }}
                       className={cn(
-                        'w-full text-[15px] pb-2 pt-0.5 bg-transparent text-[#1b1b1b] dark:text-white placeholder:text-[#767676] dark:placeholder:text-[#999] outline-none transition-all rounded-none',
+                        'w-full text-[15px] px-1 py-1.5 bg-transparent text-[#1b1b1b] dark:text-white placeholder:text-[#767676] dark:placeholder:text-[#999] outline-none transition-all rounded-none',
                         signInError
                           ? 'border-b border-[#e81123] focus:border-[#e81123] focus:border-b-2'
                           : 'border-b border-[#606060] dark:border-[#8a8a8a] focus:border-[#0067b8] focus:border-b-2'
@@ -952,7 +952,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                         setSignInError('');
                       }}
                       className={cn(
-                        'w-full text-[15px] pb-2 pt-0.5 bg-transparent text-[#1b1b1b] dark:text-white placeholder:text-[#767676] dark:placeholder:text-[#999] outline-none transition-all rounded-none',
+                        'w-full text-[15px] px-1 py-1.5 bg-transparent text-[#1b1b1b] dark:text-white placeholder:text-[#767676] dark:placeholder:text-[#999] outline-none transition-all rounded-none',
                         signInError
                           ? 'border-b border-[#e81123] focus:border-[#e81123] focus:border-b-2'
                           : 'border-b border-[#606060] dark:border-[#8a8a8a] focus:border-[#0067b8] focus:border-b-2'
@@ -1478,7 +1478,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                       placeholder="Current password"
                       required
                       autoFocus
-                      className="w-full text-[15px] border-b border-neutral-400 dark:border-neutral-600 focus:border-[#0067b8] dark:focus:border-[#4da3ff] outline-none pb-2 pt-1 bg-transparent text-[#1b1b1b] dark:text-[#f3f3f3] placeholder-neutral-500 rounded-none transition-colors"
+                      className="w-full text-[15px] border-b border-neutral-400 dark:border-neutral-600 focus:border-[#0067b8] dark:focus:border-[#4da3ff] outline-none px-1 py-1.5 bg-transparent text-[#1b1b1b] dark:text-[#f3f3f3] placeholder-neutral-500 rounded-none transition-colors"
                     />
                   </div>
 
@@ -1495,7 +1495,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                       }}
                       placeholder="New password (min. 6 characters)"
                       required
-                      className="w-full text-[15px] border-b border-neutral-400 dark:border-neutral-600 focus:border-[#0067b8] dark:focus:border-[#4da3ff] outline-none pb-2 pt-1 bg-transparent text-[#1b1b1b] dark:text-[#f3f3f3] placeholder-neutral-500 rounded-none transition-colors"
+                      className="w-full text-[15px] border-b border-neutral-400 dark:border-neutral-600 focus:border-[#0067b8] dark:focus:border-[#4da3ff] outline-none px-1 py-1.5 bg-transparent text-[#1b1b1b] dark:text-[#f3f3f3] placeholder-neutral-500 rounded-none transition-colors"
                     />
                   </div>
 
@@ -1512,7 +1512,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                       }}
                       placeholder="Confirm new password"
                       required
-                      className="w-full text-[15px] border-b border-neutral-400 dark:border-neutral-600 focus:border-[#0067b8] dark:focus:border-[#4da3ff] outline-none pb-2 pt-1 bg-transparent text-[#1b1b1b] dark:text-[#f3f3f3] placeholder-neutral-500 rounded-none transition-colors"
+                      className="w-full text-[15px] border-b border-neutral-400 dark:border-neutral-600 focus:border-[#0067b8] dark:focus:border-[#4da3ff] outline-none px-1 py-1.5 bg-transparent text-[#1b1b1b] dark:text-[#f3f3f3] placeholder-neutral-500 rounded-none transition-colors"
                     />
                   </div>
 
@@ -1686,7 +1686,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                         setRegEmail(e.target.value);
                         setRegError('');
                       }}
-                      className="w-full text-[15px] pb-1.5 border-b border-[#606060] dark:border-[#8a8a8a] bg-transparent text-[#1b1b1b] dark:text-white placeholder:text-[#767676] dark:placeholder:text-[#999] outline-none focus:border-[#0067b8] focus:border-b-2 transition-all rounded-none"
+                      className="w-full text-[15px] px-1 py-1.5 border-b border-[#606060] dark:border-[#8a8a8a] bg-transparent text-[#1b1b1b] dark:text-white placeholder:text-[#767676] dark:placeholder:text-[#999] outline-none focus:border-[#0067b8] focus:border-b-2 transition-all rounded-none"
                       required
                       autoFocus
                     />
@@ -1704,7 +1704,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                         setRegPassword(e.target.value);
                         setRegError('');
                       }}
-                      className="w-full text-[15px] pb-1.5 border-b border-[#606060] dark:border-[#8a8a8a] bg-transparent text-[#1b1b1b] dark:text-white placeholder:text-[#767676] dark:placeholder:text-[#999] outline-none focus:border-[#0067b8] focus:border-b-2 transition-all rounded-none"
+                      className="w-full text-[15px] px-1 py-1.5 border-b border-[#606060] dark:border-[#8a8a8a] bg-transparent text-[#1b1b1b] dark:text-white placeholder:text-[#767676] dark:placeholder:text-[#999] outline-none focus:border-[#0067b8] focus:border-b-2 transition-all rounded-none"
                       required
                     />
                   </div>
@@ -1721,7 +1721,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                         setRegConfirmPassword(e.target.value);
                         setRegError('');
                       }}
-                      className="w-full text-[15px] pb-1.5 border-b border-[#606060] dark:border-[#8a8a8a] bg-transparent text-[#1b1b1b] dark:text-white placeholder:text-[#767676] dark:placeholder:text-[#999] outline-none focus:border-[#0067b8] focus:border-b-2 transition-all rounded-none"
+                      className="w-full text-[15px] px-1 py-1.5 border-b border-[#606060] dark:border-[#8a8a8a] bg-transparent text-[#1b1b1b] dark:text-white placeholder:text-[#767676] dark:placeholder:text-[#999] outline-none focus:border-[#0067b8] focus:border-b-2 transition-all rounded-none"
                       required
                     />
                   </div>
