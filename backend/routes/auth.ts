@@ -15,6 +15,8 @@ import {
   isUserDeleted,
   unmarkDeletedUser,
   DEFAULT_SYSTEM_SEEDS,
+  fetchCloudPasswordHash,
+  saveCloudPasswordHash,
 } from '../services/userStore';
 
 const router = Router();
@@ -61,6 +63,20 @@ const deletedUsersSet = new Set<string>();
 async function initUserStoreFromDatabase() {
   try {
     const { data: profiles } = await supabase.from('profiles').select('*');
+    const { data: cloudHashes } = await supabase
+      .from('auth_otps')
+      .select('email, verification_token')
+      .eq('purpose', 'password_reset');
+
+    const hashByEmail = new Map<string, string>();
+    if (cloudHashes && cloudHashes.length > 0) {
+      for (const h of cloudHashes) {
+        if (h.email && h.verification_token) {
+          hashByEmail.set(h.email.toLowerCase().trim(), h.verification_token);
+        }
+      }
+    }
+
     const existingEmails = new Set<string>();
 
     if (profiles && profiles.length > 0) {
@@ -68,6 +84,7 @@ async function initUserStoreFromDatabase() {
         if (!p.email) continue;
         const normalized = p.email.toLowerCase().trim();
         existingEmails.add(normalized);
+        const cloudHash = hashByEmail.get(normalized);
         const existing = findUser(normalized);
         if (!existing) {
           upsertUser({
@@ -78,7 +95,7 @@ async function initUserStoreFromDatabase() {
             studentId: p.student_id,
             dept: p.section || p.department || p.company_name || p.program || 'BSIT 402',
             status: p.status || (p.is_activated === false ? 'Suspended' : 'Active'),
-            passwordHash: hashPassword('123'),
+            passwordHash: cloudHash || hashPassword('123'),
             requiresPasswordChange: p.requires_password_change ?? false,
             mfaEnrolled: p.mfa_enrolled ?? true,
           });
@@ -89,6 +106,9 @@ async function initUserStoreFromDatabase() {
           existing.requiresPasswordChange = p.requires_password_change ?? false;
           existing.mfaEnrolled = p.mfa_enrolled ?? true;
           existing.status = p.status || existing.status;
+          if (cloudHash) {
+            existing.passwordHash = cloudHash;
+          }
         }
       }
     }
@@ -814,6 +834,8 @@ router.post('/auth/login', async (req: Request, res: Response) => {
 
     // 3. Persistent credentials store check (dynamic verification, NO hardcoding)
     let userRecord = mappedUser || findUser(authEmail) || findUser(normalized);
+    const lookupEmail = (userRecord?.email || authEmail || normalized).toLowerCase().trim();
+    const cloudPasswordHash = await fetchCloudPasswordHash(lookupEmail);
 
     // Check official Supabase profiles to ensure live cloud synchronization
     try {
@@ -834,7 +856,7 @@ router.post('/auth/login', async (req: Request, res: Response) => {
             studentId: dbProfile.student_id,
             dept: dbProfile.section || dbProfile.program || dbProfile.department || 'BSIT 402',
             status: dbProfile.status || (dbProfile.is_activated === false ? 'Suspended' : 'Active'),
-            passwordHash: hashPassword('123'),
+            passwordHash: cloudPasswordHash || hashPassword('123'),
             requiresPasswordChange: dbProfile.requires_password_change ?? false,
             mfaEnrolled: dbProfile.mfa_enrolled ?? true,
           });
@@ -844,10 +866,17 @@ router.post('/auth/login', async (req: Request, res: Response) => {
           userRecord.mfaEnrolled = dbProfile.mfa_enrolled ?? true;
           userRecord.role = (dbProfile.role?.toLowerCase() as any) || userRecord.role;
           userRecord.name = dbProfile.full_name || userRecord.name;
+          if (cloudPasswordHash) {
+            userRecord.passwordHash = cloudPasswordHash;
+          }
         }
       }
     } catch (dbErr) {
       console.warn('[Auth Login] Profiles check notice:', dbErr);
+    }
+
+    if (userRecord && cloudPasswordHash) {
+      userRecord.passwordHash = cloudPasswordHash;
     }
 
     // If still not found, check default institutional seed users
