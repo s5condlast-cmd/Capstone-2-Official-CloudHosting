@@ -509,12 +509,16 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
         console.warn('[Password Update] Supabase update notice:', dbErr);
       }
 
-      // Prompt directly for Google Authenticator QR Code scan on reset or new account
-      setGoogleAuthStage('scan');
-      setGoogleAuthError('');
-      setGoogleAuthValues(Array(OTP_LENGTH).fill(''));
-      setAuthenticatorCode('');
-      setSignInStep('mfa_setup');
+      // If MFA is already enrolled, prompt for verification code; if new/reset, show QR Code
+      if (pendingUser?.mfaEnrolled) {
+        setSignInStep('verify_methods');
+      } else {
+        setGoogleAuthStage('scan');
+        setGoogleAuthError('');
+        setGoogleAuthValues(Array(OTP_LENGTH).fill(''));
+        setAuthenticatorCode('');
+        setSignInStep('mfa_setup');
+      }
     } catch (err: any) {
       const isConnectionError =
         !navigator.onLine ||
