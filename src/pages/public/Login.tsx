@@ -3,6 +3,7 @@ import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
   Key,
+  KeyRound,
   ShieldCheck,
   CheckCircle2,
   AlertCircle,
@@ -842,11 +843,11 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
   return (
     <div className="min-h-screen bg-[#f2f4f8] dark:bg-[#121212] flex flex-col justify-between items-center font-sans selection:bg-[#0067b8] selection:text-white relative">
-      <div className="w-full flex-1 flex flex-col items-center justify-center max-w-[500px] sm:max-w-[520px] px-4 py-8 my-auto">
+      <div className="w-full flex-1 flex flex-col items-center justify-center max-w-[440px] px-4 py-8 my-auto">
         {/* ════════════════════════════════════════════════
              MAIN MICROSOFT SIGN-IN CARD
             ════════════════════════════════════════════════ */}
-        <div className="w-full bg-white dark:bg-[#1f1f1f] shadow-[0_2px_16px_rgba(0,0,0,0.08)] dark:shadow-[0_2px_16px_rgba(0,0,0,0.5)] border border-neutral-200/90 dark:border-neutral-800 px-8 sm:px-11 py-7 sm:py-8 rounded-xs relative">
+        <div className="w-full bg-white dark:bg-[#1f1f1f] shadow-[0_2px_6px_rgba(0,0,0,0.2)] dark:shadow-[0_4px_16px_rgba(0,0,0,0.5)] border border-neutral-200/90 dark:border-neutral-800/80 px-[44px] py-[40px] rounded-none relative">
           
           {/* Official Microsoft 4-Color Logo */}
           <div className="mb-4 sm:mb-5 flex items-center gap-2.5">
@@ -913,7 +914,14 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                     </Link>
                   </div>
 
-                  <div className="flex justify-end pt-4">
+                  <div className="flex justify-end gap-1.5 pt-6">
+                    <button
+                      type="button"
+                      onClick={() => navigate('/')}
+                      className="bg-[#cccccc] dark:bg-[#3b3b3b] hover:bg-[#b8b8b8] dark:hover:bg-[#4a4a4a] text-[#1b1b1b] dark:text-white text-[15px] font-normal px-8 py-1.5 min-w-[108px] rounded-[2px] transition-colors cursor-pointer"
+                    >
+                      Back
+                    </button>
                     <button
                       type="submit"
                       className="bg-[#0067b8] hover:bg-[#005da6] active:bg-[#005293] text-white text-[15px] font-normal px-8 py-1.5 min-w-[108px] rounded-[2px] transition-colors cursor-pointer shadow-2xs"
@@ -1983,15 +1991,15 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
         {/* ════════════════════════════════════════════════
              AUTHENTIC MICROSOFT "SIGN-IN OPTIONS" CARD
             ════════════════════════════════════════════════ */}
-        <div className="w-full mt-4">
-          <div className="bg-white dark:bg-[#1f1f1f] border border-neutral-200/90 dark:border-neutral-800 shadow-[0_2px_8px_rgba(0,0,0,0.04)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.3)] rounded-xs overflow-hidden">
+        <div className="w-full mt-5">
+          <div className="bg-white dark:bg-[#1f1f1f] border border-neutral-200/90 dark:border-neutral-800/80 shadow-[0_2px_6px_rgba(0,0,0,0.1)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.3)] rounded-none overflow-hidden">
             <button
               type="button"
               onClick={() => setShowSignInOptions((prev) => !prev)}
-              className="w-full px-8 sm:px-11 py-3.5 flex items-center gap-3.5 text-[14.5px] text-[#1b1b1b] dark:text-[#f3f3f3] hover:bg-neutral-50 dark:hover:bg-[#282828] transition-colors cursor-pointer text-left"
+              className="w-full h-[48px] px-[44px] flex items-center gap-3.5 text-[15px] text-[#1b1b1b] dark:text-[#f3f3f3] hover:bg-neutral-50 dark:hover:bg-[#282828] transition-colors cursor-pointer text-left"
             >
-              <Key size={20} className="text-[#505050] dark:text-[#b3b3b3] shrink-0 stroke-[1.75]" />
-              <span className="font-normal">Sign-in options</span>
+              <KeyRound size={20} className="text-[#1b1b1b] dark:text-[#f3f3f3] shrink-0 stroke-[1.5]" />
+              <span className="font-normal text-[15px]">Sign-in options</span>
             </button>
 
             <AnimatePresence>
@@ -2001,7 +2009,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                   animate={{ height: 'auto', opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
                   transition={{ duration: 0.2 }}
-                  className="px-8 sm:px-11 pb-5 pt-1 border-t border-neutral-100 dark:border-neutral-800/80 space-y-4"
+                  className="px-[44px] pb-5 pt-1 border-t border-neutral-100 dark:border-neutral-800/80 space-y-4"
                 >
                   {/* Quick Defense Switcher */}
                   <div>
