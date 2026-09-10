@@ -17,7 +17,6 @@ import {
   ClipboardList as ClipboardListIcon,
   Award as AwardIcon,
   Building2 as BuildingIcon,
-  MapPin as MapPinIcon,
   Sparkles,
   CheckCheck,
   Plus,
@@ -28,10 +27,7 @@ import {
   Check,
   GraduationCap,
   Briefcase,
-  AlertCircle,
-  HelpCircle,
   X,
-  Send,
 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import { Link } from 'react-router-dom';
@@ -262,197 +258,164 @@ export const StudentDashboard: React.FC = () => {
       : finalRequirements;
 
   return (
-    <div className="space-y-6 pb-12 animate-in fade-in duration-300">
-      {/* 1. Top Header: Greeting + Completed Tasks Quick Action */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-5">
-        <div className="space-y-1">
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight flex items-center gap-2.5">
-            <span>Hi John, welcome back!</span>
-            <span className="text-xl inline-block hover:rotate-12 transition-transform select-none">👋</span>
+    <div className="space-y-4 pb-10 animate-in fade-in duration-300">
+      {/* 1. Top Header: Simple, Clean & Compact */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/70 pb-3.5">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">
+            Practicum Overview
           </h1>
-          <p className="text-xs sm:text-sm font-medium text-muted-foreground">
-            STI Marikina Practicum Portal — BS Information Technology Practicum Dashboard
+          <p className="text-xs text-muted-foreground font-medium mt-0.5">
+            Track your internship hours, requirements, and deployment status.
           </p>
         </div>
 
-        {/* Completed Tasks Trigger Pill */}
+        {/* Compact Completed Tasks Trigger */}
         <button
           type="button"
           onClick={() => setIsCompletedModalOpen(true)}
-          className="bg-card border border-border/80 hover:border-primary/40 rounded-2xl p-2.5 sm:p-3 shadow-xs flex items-center gap-3 shrink-0 transition-all cursor-pointer group select-none hover:shadow-sm self-start sm:self-auto text-left"
+          className="bg-card border border-border/80 hover:border-border rounded-xl px-3 py-1.5 shadow-2xs flex items-center gap-2 shrink-0 transition-all cursor-pointer group select-none self-start sm:self-auto hover:bg-muted/40"
         >
-          <div className="size-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-            <CheckCircle2 size={18} />
-          </div>
-          <div className="space-y-0.5 pr-1">
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs font-bold text-foreground">Completed Tasks</span>
-              <Badge className="bg-emerald-600 text-white dark:bg-emerald-500 border-none text-[10px] h-4.5 px-1.5 font-extrabold">
-                {COMPLETED_TASKS.length + todos.filter((t) => t.done).length} Done
-              </Badge>
-            </div>
-            <p className="text-[11px] text-muted-foreground font-medium">
-              Click to view verified milestones
-            </p>
-          </div>
-          <div className="px-2.5 py-1.5 rounded-xl bg-muted/70 group-hover:bg-primary group-hover:text-primary-foreground text-foreground font-bold text-xs transition-colors flex items-center gap-1">
-            <span>View</span>
-            <ArrowRightIcon size={12} />
-          </div>
+          <CheckCircle2 size={14} className="text-emerald-500 shrink-0" />
+          <span className="text-xs font-semibold text-foreground">Completed Tasks</span>
+          <span className="px-1.5 py-0.2 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold text-[10px]">
+            {COMPLETED_TASKS.length + todos.filter((t) => t.done).length} Done
+          </span>
+          <ArrowRightIcon size={12} className="text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
         </button>
       </div>
 
-      {/* 2. Top Pulse Metrics Strip: 4 Grounded Overview Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* 2. Top Pulse Metrics Strip: 4 Sleek Compact Stat Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {/* Metric 1: Hours Rendered */}
-        <div className="bg-card border border-border rounded-2xl p-4 sm:p-4.5 shadow-xs flex flex-col justify-between hover:border-border/80 transition-colors">
+        <div className="bg-card border border-border/80 rounded-xl p-3 px-3.5 shadow-2xs flex flex-col justify-between hover:border-border transition-colors">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
               Practicum Hours
             </span>
-            <div className="size-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-              <ClockIcon size={16} />
-            </div>
+            <ClockIcon size={13} className="text-muted-foreground" />
           </div>
-          <div className="mt-2.5 space-y-2">
-            <div className="flex items-baseline gap-2">
-              <h3 className="text-2xl font-black text-foreground tracking-tight">122</h3>
-              <span className="text-xs text-muted-foreground font-semibold">/ 460 hrs</span>
-              <span className="ml-auto text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-md">
+          <div className="mt-1 space-y-1.5">
+            <div className="flex items-baseline gap-1.5">
+              <h3 className="text-lg font-bold text-foreground tracking-tight">122</h3>
+              <span className="text-xs text-muted-foreground font-medium">/ 460 hrs</span>
+              <span className="ml-auto text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.2 rounded">
                 26.5%
               </span>
             </div>
-            {/* Progress bar */}
-            <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
-              <div
-                className="bg-primary h-full rounded-full transition-all duration-500"
-                style={{ width: '26.5%' }}
-              />
+            <div className="w-full bg-muted rounded-full h-1 overflow-hidden">
+              <div className="bg-primary h-full rounded-full" style={{ width: '26.5%' }} />
             </div>
-            <p className="text-[10px] text-muted-foreground font-medium">
-              338 hours remaining to finish practicum
+            <p className="text-[10px] text-muted-foreground truncate">
+              338 hrs remaining
             </p>
           </div>
         </div>
 
-        {/* Metric 2: Requirements Status */}
-        <div className="bg-card border border-border rounded-2xl p-4 sm:p-4.5 shadow-xs flex flex-col justify-between hover:border-border/80 transition-colors">
+        {/* Metric 2: Requirements */}
+        <div className="bg-card border border-border/80 rounded-xl p-3 px-3.5 shadow-2xs flex flex-col justify-between hover:border-border transition-colors">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
               Requirements
             </span>
-            <div className="size-8 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
-              <ClipboardCheckIcon size={16} />
-            </div>
+            <ClipboardCheckIcon size={13} className="text-muted-foreground" />
           </div>
-          <div className="mt-2.5 space-y-2">
-            <div className="flex items-baseline gap-2">
-              <h3 className="text-2xl font-black text-foreground tracking-tight">3 of 10</h3>
-              <span className="text-xs text-muted-foreground font-semibold">Verified</span>
-              <span className="ml-auto text-[11px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded-md">
+          <div className="mt-1 space-y-1.5">
+            <div className="flex items-baseline gap-1.5">
+              <h3 className="text-lg font-bold text-foreground tracking-tight">3 of 10</h3>
+              <span className="text-xs text-muted-foreground font-medium">Verified</span>
+              <span className="ml-auto text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.2 rounded">
                 1 Pending
               </span>
             </div>
-            <div className="w-full bg-muted rounded-full h-2 overflow-hidden flex">
-              <div className="bg-emerald-500 h-full" style={{ width: '30%' }} title="Approved (3)" />
-              <div className="bg-amber-500 h-full" style={{ width: '10%' }} title="Action Required (1)" />
-              <div className="bg-muted h-full" style={{ width: '60%' }} title="Remaining (6)" />
+            <div className="w-full bg-muted rounded-full h-1 overflow-hidden flex">
+              <div className="bg-emerald-500 h-full" style={{ width: '30%' }} />
+              <div className="bg-amber-500 h-full" style={{ width: '10%' }} />
             </div>
-            <p className="text-[10px] text-muted-foreground font-medium">
-              Endorsement letter upload requires action
+            <p className="text-[10px] text-muted-foreground truncate">
+              Endorsement upload pending
             </p>
           </div>
         </div>
 
         {/* Metric 3: Current Phase */}
-        <div className="bg-card border border-border rounded-2xl p-4 sm:p-4.5 shadow-xs flex flex-col justify-between hover:border-border/80 transition-colors">
+        <div className="bg-card border border-border/80 rounded-xl p-3 px-3.5 shadow-2xs flex flex-col justify-between hover:border-border transition-colors">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
-              Practicum Stage
+            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+              Current Stage
             </span>
-            <div className="size-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-              <Sparkles size={16} />
-            </div>
+            <Sparkles size={13} className="text-muted-foreground" />
           </div>
-          <div className="mt-2.5 space-y-1.5">
-            <div className="flex items-center gap-2">
-              <h3 className="text-xl font-black text-foreground tracking-tight">Before OJT</h3>
-              <Badge variant="primary" className="text-[9px] h-4.5 px-1.5">
+          <div className="mt-1 space-y-1">
+            <div className="flex items-center gap-1.5">
+              <h3 className="text-base font-bold text-foreground tracking-tight">Before OJT</h3>
+              <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-primary/10 text-primary">
                 Phase 1
-              </Badge>
+              </span>
             </div>
-            <p className="text-xs text-muted-foreground font-medium">
-              Finalizing company clearance & endorsement
+            <p className="text-[11px] text-muted-foreground truncate">
+              Company clearance & endorsement
             </p>
-            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-medium pt-1">
-              <span className="font-bold text-foreground">Next:</span>
-              <span>In OJT Journal & DTR submission</span>
-            </div>
           </div>
         </div>
 
-        {/* Metric 4: Placement & Supervisor */}
-        <div className="bg-card border border-border rounded-2xl p-4 sm:p-4.5 shadow-xs flex flex-col justify-between hover:border-border/80 transition-colors">
+        {/* Metric 4: Placement */}
+        <div className="bg-card border border-border/80 rounded-xl p-3 px-3.5 shadow-2xs flex flex-col justify-between hover:border-border transition-colors">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
-              Host Company
+            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+              Placement
             </span>
-            <div className="size-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-              <BuildingIcon size={16} />
-            </div>
+            <BuildingIcon size={13} className="text-muted-foreground" />
           </div>
-          <div className="mt-2.5 space-y-1.5">
-            <div className="flex items-center gap-1.5">
-              <h3 className="text-base font-extrabold text-foreground tracking-tight truncate">
+          <div className="mt-1 space-y-1">
+            <div className="flex items-center gap-1">
+              <h3 className="text-sm font-bold text-foreground tracking-tight truncate">
                 InnoTech Labs Inc.
               </h3>
-              <CheckCheck size={14} className="text-emerald-500 shrink-0" />
+              <CheckCheck size={13} className="text-emerald-500 shrink-0" />
             </div>
-            <p className="text-xs text-muted-foreground font-medium truncate">
+            <p className="text-[11px] text-muted-foreground truncate">
               Pasig City · Frontend Intern
-            </p>
-            <p className="text-[10px] text-muted-foreground font-medium truncate pt-0.5">
-              Supervisor: <span className="font-bold text-foreground">Engr. Paolo Reyes</span>
             </p>
           </div>
         </div>
       </div>
 
       {/* 3. Main Dashboard Grid: Balanced 8:4 Ratio (lg:col-span-8 and lg:col-span-4) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
         {/* LEFT COLUMN: Main Practicum Workflows (8 cols) */}
-        <div className="lg:col-span-8 space-y-6 min-w-0">
+        <div className="lg:col-span-8 space-y-4 min-w-0">
           {/* Active Deployment & Attendance Tracker Banner */}
-          <div className="bg-card border border-border rounded-2xl p-5 sm:p-6 shadow-xs relative overflow-hidden space-y-5">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/70 pb-4">
-              <div className="flex items-center gap-3">
-                <div className="size-11 rounded-xl bg-primary/10 text-primary border border-primary/20 flex items-center justify-center shrink-0">
-                  <Briefcase size={22} />
+          <div className="bg-card border border-border/80 rounded-xl p-4 shadow-2xs space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-border/60 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="size-8 rounded-lg bg-primary/10 text-primary border border-primary/20 flex items-center justify-center shrink-0">
+                  <Briefcase size={16} />
                 </div>
                 <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-primary uppercase tracking-wider">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] font-bold text-primary uppercase tracking-wider">
                       Active Deployment
                     </span>
-                    <span className="text-muted-foreground text-xs">·</span>
-                    <span className="text-xs font-medium text-muted-foreground">Term 2026</span>
+                    <span className="text-muted-foreground text-[10px]">·</span>
+                    <span className="text-xs font-semibold text-foreground">InnoTech Labs Inc.</span>
                   </div>
-                  <h3 className="text-base sm:text-lg font-extrabold text-foreground tracking-tight">
-                    InnoTech Labs Inc. — Practicum Attendance
-                  </h3>
+                  <p className="text-[11px] text-muted-foreground">
+                    Supervisor: <span className="font-semibold text-foreground">Engr. Paolo Reyes</span> · Frontend Intern
+                  </p>
                 </div>
               </div>
 
               <div className="flex items-center gap-2 self-start sm:self-auto">
                 <Link to="/student/dtr">
-                  <Button variant="primary" size="sm" className="font-bold text-xs h-9 px-4 rounded-xl cursor-pointer">
-                    <ClockIcon size={14} className="mr-1.5" />
+                  <Button variant="primary" size="sm" className="font-bold text-xs h-8 px-3 rounded-lg cursor-pointer">
+                    <ClockIcon size={13} className="mr-1" />
                     Log Today's DTR
                   </Button>
                 </Link>
                 <Link to="/student/journal">
-                  <Button variant="outline" size="sm" className="font-bold text-xs h-9 px-3 rounded-xl cursor-pointer">
-                    <BookOpenIcon size={14} className="mr-1.5" />
+                  <Button variant="outline" size="sm" className="font-bold text-xs h-8 px-2.5 rounded-lg cursor-pointer">
+                    <BookOpenIcon size={13} className="mr-1" />
                     Journal
                   </Button>
                 </Link>
@@ -460,22 +423,22 @@ export const StudentDashboard: React.FC = () => {
             </div>
 
             {/* Hours Progress and Milestones */}
-            <div className="space-y-2.5">
+            <div className="space-y-1.5">
               <div className="flex items-center justify-between text-xs font-semibold">
                 <span className="text-muted-foreground">
-                  Logged: <span className="text-foreground font-extrabold">122.0 Hours</span>
+                  Logged: <span className="text-foreground font-bold">122.0 / 460.0 Hours</span>
                 </span>
-                <span className="text-primary font-bold">460.0 Required Hours (26.5%)</span>
+                <span className="text-primary font-bold">26.5% Rendered</span>
               </div>
 
-              <div className="relative w-full bg-muted rounded-full h-3 overflow-hidden">
+              <div className="relative w-full bg-muted rounded-full h-2 overflow-hidden">
                 <div
-                  className="bg-primary h-full rounded-full transition-all duration-500 relative"
+                  className="bg-primary h-full rounded-full transition-all duration-500"
                   style={{ width: '26.5%' }}
                 />
               </div>
 
-              <div className="flex items-center justify-between text-[11px] text-muted-foreground font-medium pt-1">
+              <div className="flex items-center justify-between text-[10px] text-muted-foreground font-medium">
                 <span>Phase: Prelim Logging</span>
                 <span>Midterm Target: 230 hrs</span>
                 <span>Final Target: 460 hrs</span>
@@ -483,26 +446,26 @@ export const StudentDashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Practicum Requirements Matrix (Zero Layout Shift Card Grid) */}
-          <div className="bg-card border border-border rounded-2xl p-5 sm:p-6 shadow-xs space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
+          {/* Practicum Requirements Checklist */}
+          <div className="bg-card border border-border/80 rounded-xl p-4 sm:p-4.5 shadow-2xs space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/60 pb-3">
               <div>
-                <h2 className="text-base sm:text-lg font-extrabold text-foreground tracking-tight flex items-center gap-2">
-                  <ClipboardListIcon size={20} className="text-primary" />
-                  <span>Practicum Requirements Checklist</span>
+                <h2 className="text-sm sm:text-base font-bold text-foreground tracking-tight flex items-center gap-2">
+                  <ClipboardListIcon size={16} className="text-primary" />
+                  <span>Practicum Requirements</span>
                 </h2>
-                <p className="text-xs text-muted-foreground font-medium mt-0.5">
-                  Institutional documents required by STI Marikina before, during, and after practicum.
+                <p className="text-[11px] text-muted-foreground font-medium mt-0.5">
+                  Institutional documents required across all 3 practicum phases.
                 </p>
               </div>
 
               {/* Phase Segmented Buttons */}
-              <div className="bg-muted/70 border border-border rounded-xl p-1 flex items-center gap-1 text-xs self-start sm:self-auto shrink-0">
+              <div className="bg-muted/60 border border-border/80 rounded-lg p-0.5 flex items-center gap-0.5 text-xs self-start sm:self-auto shrink-0">
                 <button
                   type="button"
                   onClick={() => setActivePhaseTab('before')}
                   className={cn(
-                    "px-3 py-1.5 rounded-lg font-bold transition-all flex items-center gap-2 cursor-pointer text-xs",
+                    "px-2.5 py-1 rounded-md font-bold transition-all flex items-center gap-1.5 cursor-pointer text-xs",
                     activePhaseTab === 'before'
                       ? "bg-foreground text-background shadow-2xs"
                       : "text-muted-foreground hover:text-foreground"
@@ -511,7 +474,7 @@ export const StudentDashboard: React.FC = () => {
                   <span>Before OJT</span>
                   <span
                     className={cn(
-                      "px-1.5 py-0.2 rounded-full text-[10px] font-extrabold tabular-nums",
+                      "px-1.5 py-0.2 rounded-full text-[9px] font-extrabold tabular-nums",
                       activePhaseTab === 'before' ? "bg-background/20 text-background" : "bg-muted text-muted-foreground"
                     )}
                   >
@@ -523,7 +486,7 @@ export const StudentDashboard: React.FC = () => {
                   type="button"
                   onClick={() => setActivePhaseTab('in')}
                   className={cn(
-                    "px-3 py-1.5 rounded-lg font-bold transition-all flex items-center gap-2 cursor-pointer text-xs",
+                    "px-2.5 py-1 rounded-md font-bold transition-all flex items-center gap-1.5 cursor-pointer text-xs",
                     activePhaseTab === 'in'
                       ? "bg-foreground text-background shadow-2xs"
                       : "text-muted-foreground hover:text-foreground"
@@ -532,7 +495,7 @@ export const StudentDashboard: React.FC = () => {
                   <span>In OJT</span>
                   <span
                     className={cn(
-                      "px-1.5 py-0.2 rounded-full text-[10px] font-extrabold tabular-nums",
+                      "px-1.5 py-0.2 rounded-full text-[9px] font-extrabold tabular-nums",
                       activePhaseTab === 'in' ? "bg-background/20 text-background" : "bg-muted text-muted-foreground"
                     )}
                   >
@@ -544,7 +507,7 @@ export const StudentDashboard: React.FC = () => {
                   type="button"
                   onClick={() => setActivePhaseTab('final')}
                   className={cn(
-                    "px-3 py-1.5 rounded-lg font-bold transition-all flex items-center gap-2 cursor-pointer text-xs",
+                    "px-2.5 py-1 rounded-md font-bold transition-all flex items-center gap-1.5 cursor-pointer text-xs",
                     activePhaseTab === 'final'
                       ? "bg-foreground text-background shadow-2xs"
                       : "text-muted-foreground hover:text-foreground"
@@ -553,7 +516,7 @@ export const StudentDashboard: React.FC = () => {
                   <span>Final Phase</span>
                   <span
                     className={cn(
-                      "px-1.5 py-0.2 rounded-full text-[10px] font-extrabold tabular-nums",
+                      "px-1.5 py-0.2 rounded-full text-[9px] font-extrabold tabular-nums",
                       activePhaseTab === 'final' ? "bg-background/20 text-background" : "bg-muted text-muted-foreground"
                     )}
                   >
@@ -563,64 +526,64 @@ export const StudentDashboard: React.FC = () => {
               </div>
             </div>
 
-            {/* High-Level 3-Stage Progress Indicator (Fixed Geometry, Zero Layout Shift) */}
-            <div className="bg-muted/30 border border-border/70 rounded-xl p-3.5">
+            {/* High-Level 3-Stage Progress Indicator */}
+            <div className="bg-muted/30 border border-border/50 rounded-lg p-2.5">
               <div className="grid grid-cols-3 gap-2 text-center text-xs">
                 <div
                   className={cn(
-                    "p-2 rounded-lg border transition-all",
+                    "p-1.5 rounded-md border transition-all",
                     activePhaseTab === 'before'
-                      ? "bg-card border-primary/40 shadow-xs"
+                      ? "bg-card border-primary/40 shadow-2xs"
                       : "border-transparent text-muted-foreground"
                   )}
                 >
-                  <div className="flex items-center justify-center gap-1.5 font-bold">
-                    <span className="size-4 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[9px] font-black">
+                  <div className="flex items-center justify-center gap-1.5 font-bold text-xs">
+                    <span className="size-3.5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[8px] font-black">
                       ✓
                     </span>
                     <span className="text-foreground">1. Before OJT</span>
                   </div>
-                  <span className="text-[10px] text-muted-foreground mt-0.5 block">2 of 4 Approved</span>
+                  <span className="text-[9px] text-muted-foreground block mt-0.5">2 of 4 Done</span>
                 </div>
 
                 <div
                   className={cn(
-                    "p-2 rounded-lg border transition-all",
+                    "p-1.5 rounded-md border transition-all",
                     activePhaseTab === 'in'
-                      ? "bg-card border-primary/40 shadow-xs"
+                      ? "bg-card border-primary/40 shadow-2xs"
                       : "border-transparent text-muted-foreground"
                   )}
                 >
-                  <div className="flex items-center justify-center gap-1.5 font-bold">
-                    <span className="size-4 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[9px] font-black">
+                  <div className="flex items-center justify-center gap-1.5 font-bold text-xs">
+                    <span className="size-3.5 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[8px] font-black">
                       2
                     </span>
                     <span className="text-foreground">2. In OJT</span>
                   </div>
-                  <span className="text-[10px] text-muted-foreground mt-0.5 block">Active Logging</span>
+                  <span className="text-[9px] text-muted-foreground block mt-0.5">Active Logging</span>
                 </div>
 
                 <div
                   className={cn(
-                    "p-2 rounded-lg border transition-all",
+                    "p-1.5 rounded-md border transition-all",
                     activePhaseTab === 'final'
-                      ? "bg-card border-primary/40 shadow-xs"
+                      ? "bg-card border-primary/40 shadow-2xs"
                       : "border-transparent text-muted-foreground opacity-60"
                   )}
                 >
-                  <div className="flex items-center justify-center gap-1.5 font-bold">
-                    <span className="size-4 rounded-full bg-muted-foreground/30 text-muted-foreground flex items-center justify-center text-[9px] font-black">
-                      <LockIcon size={8} />
+                  <div className="flex items-center justify-center gap-1.5 font-bold text-xs">
+                    <span className="size-3.5 rounded-full bg-muted-foreground/30 text-muted-foreground flex items-center justify-center text-[8px] font-black">
+                      <LockIcon size={7} />
                     </span>
                     <span>3. Final Phase</span>
                   </div>
-                  <span className="text-[10px] text-muted-foreground mt-0.5 block">Post-Deployment</span>
+                  <span className="text-[9px] text-muted-foreground block mt-0.5">Post-Deployment</span>
                 </div>
               </div>
             </div>
 
-            {/* Stable Requirement Cards Grid (2 Columns, Standard Height, Zero Layout Shift) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Stable Requirement Cards Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {currentRequirementItems.map((req, idx) => {
                 const isDone = req.status === 'done';
                 const isPending = req.status === 'pending';
@@ -632,82 +595,82 @@ export const StudentDashboard: React.FC = () => {
                   <div
                     key={req.label}
                     className={cn(
-                      "p-4 rounded-2xl border transition-all flex flex-col justify-between gap-3 bg-card hover:border-border",
+                      "p-3 rounded-xl border transition-all flex flex-col justify-between gap-2.5 bg-card hover:border-border",
                       isDone && "border-emerald-500/30 bg-emerald-500/[0.02]",
                       isPending && "border-amber-500/30 bg-amber-500/[0.02]",
                       isProgress && "border-primary/30 bg-primary/[0.02]",
                       isLocked && "opacity-60 border-border/60 bg-muted/20"
                     )}
                   >
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                       <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2 min-w-0">
+                        <div className="flex items-center gap-1.5 min-w-0">
                           <div
                             className={cn(
-                              "size-8 rounded-xl flex items-center justify-center shrink-0 border",
+                              "size-7 rounded-lg flex items-center justify-center shrink-0 border",
                               isDone && "bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400",
                               isPending && "bg-amber-500/10 border-amber-500/20 text-amber-600 dark:text-amber-400",
                               isProgress && "bg-primary/10 border-primary/20 text-primary",
                               isLocked && "bg-muted border-border text-muted-foreground"
                             )}
                           >
-                            <IconComponent size={16} />
+                            <IconComponent size={14} />
                           </div>
-                          <span className="text-[10px] font-extrabold text-muted-foreground uppercase tracking-wider">
+                          <span className="text-[9px] font-extrabold text-muted-foreground uppercase tracking-wider">
                             Item {idx + 1}
                           </span>
                         </div>
 
                         {/* Status Badge */}
                         {isDone && (
-                          <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 text-[10px] font-bold">
+                          <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                             Approved
-                          </Badge>
+                          </span>
                         )}
                         {isPending && (
-                          <Badge className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30 text-[10px] font-bold">
+                          <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
                             Action Required
-                          </Badge>
+                          </span>
                         )}
                         {isProgress && (
-                          <Badge className="bg-primary/10 text-primary border-primary/30 text-[10px] font-bold">
+                          <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-md bg-primary/10 text-primary border border-primary/20">
                             In Progress
-                          </Badge>
+                          </span>
                         )}
                         {isLocked && (
-                          <Badge variant="outline" className="text-[10px] text-muted-foreground font-semibold">
+                          <span className="text-[9px] font-semibold px-1.5 py-0.2 rounded-md bg-muted text-muted-foreground border border-border">
                             Locked
-                          </Badge>
+                          </span>
                         )}
                       </div>
 
                       <div>
-                        <h4 className="text-sm font-bold text-foreground tracking-tight line-clamp-1">
+                        <h4 className="text-xs font-bold text-foreground tracking-tight line-clamp-1">
                           {req.label}
                         </h4>
-                        <p className="text-[11px] text-muted-foreground leading-relaxed mt-0.5 line-clamp-2">
+                        <p className="text-[11px] text-muted-foreground leading-snug line-clamp-1">
                           {req.description}
                         </p>
                       </div>
                     </div>
 
                     {/* Action Footer */}
-                    <div className="pt-2 border-t border-border/50 flex items-center justify-between">
-                      <span className="text-[10px] font-semibold text-muted-foreground">
+                    <div className="pt-1.5 border-t border-border/50 flex items-center justify-between">
+                      <span className="text-[10px] font-medium text-muted-foreground">
                         {req.value}
                       </span>
                       {isLocked ? (
-                        <span className="text-xs text-muted-foreground/60 flex items-center gap-1 font-semibold">
-                          <LockIcon size={12} />
+                        <span className="text-[11px] text-muted-foreground/60 flex items-center gap-1 font-semibold">
+                          <LockIcon size={10} />
                           <span>Locked</span>
                         </span>
                       ) : (
                         <Link
                           to={req.link}
-                          className="inline-flex items-center gap-1 text-xs font-bold text-primary hover:underline group cursor-pointer"
+                          className="inline-flex items-center gap-1 text-[11px] font-bold text-primary hover:underline group cursor-pointer"
                         >
-                          <span>{isDone ? 'View Submission' : 'Open Document'}</span>
-                          <ArrowRightIcon size={12} className="group-hover:translate-x-0.5 transition-transform" />
+                          <span>{isDone ? 'View' : 'Open'}</span>
+                          <ArrowRightIcon size={11} className="group-hover:translate-x-0.5 transition-transform" />
                         </Link>
                       )}
                     </div>
@@ -718,31 +681,31 @@ export const StudentDashboard: React.FC = () => {
           </div>
 
           {/* Next Step Checklist Card */}
-          <div className="bg-card border border-border rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
-            <div className="flex flex-col sm:flex-row gap-4 items-start">
-              <div className="size-11 shrink-0 rounded-2xl bg-muted border border-border flex items-center justify-center text-foreground">
-                <FileTextIcon size={20} />
+          <div className="bg-card border border-border/80 rounded-xl p-3.5 sm:p-4 shadow-2xs space-y-3">
+            <div className="flex gap-3 items-start">
+              <div className="size-9 shrink-0 rounded-xl bg-muted border border-border flex items-center justify-center text-foreground">
+                <FileTextIcon size={16} />
               </div>
-              <div className="flex-1 space-y-1">
+              <div className="flex-1 space-y-0.5">
                 <div className="flex items-center gap-2">
-                  <Badge variant="secondary" className="font-bold text-[10px]">
+                  <Badge variant="secondary" className="font-bold text-[9px] h-4 px-1.5">
                     Action Required
                   </Badge>
-                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                  <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">
                     Before OJT Phase
                   </span>
                 </div>
-                <h3 className="text-base font-extrabold text-foreground tracking-tight">
+                <h3 className="text-sm font-bold text-foreground tracking-tight">
                   Upload Endorsement Letter
                 </h3>
-                <p className="text-xs text-muted-foreground leading-relaxed font-medium">
-                  Ensure coordinator signature is secured to finalize your verified company endorsement before starting onsite hours.
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  Ensure coordinator signature is secured to finalize your verified company endorsement.
                 </p>
               </div>
             </div>
 
             {/* Sub-steps flow */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-border">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 border-t border-border/60">
               {[
                 { label: '1. Download Template', status: 'completed', desc: 'Template retrieved' },
                 { label: '2. Faculty Signature', status: 'completed', desc: 'Signed by coordinator' },
@@ -751,33 +714,33 @@ export const StudentDashboard: React.FC = () => {
                 <div
                   key={idx}
                   className={cn(
-                    "p-3 rounded-xl border text-xs transition-colors",
+                    "p-2 rounded-lg border text-xs transition-colors",
                     step.status === 'completed' && "bg-muted/40 border-border/60 opacity-85",
-                    step.status === 'active' && "bg-card border-primary/40 shadow-xs"
+                    step.status === 'active' && "bg-card border-primary/40 shadow-2xs"
                   )}
                 >
-                  <div className="flex items-center gap-2 font-bold mb-1">
+                  <div className="flex items-center gap-1.5 font-bold mb-0.5">
                     <span
                       className={cn(
-                        "size-4 rounded-full flex items-center justify-center text-[9px] font-extrabold",
+                        "size-3.5 rounded-full flex items-center justify-center text-[8px] font-extrabold",
                         step.status === 'completed' ? "bg-emerald-500 text-white" : "bg-primary text-primary-foreground"
                       )}
                     >
                       {step.status === 'completed' ? '✓' : '3'}
                     </span>
-                    <span className="text-foreground font-bold">{step.label}</span>
+                    <span className="text-foreground text-[11px] font-bold">{step.label}</span>
                   </div>
-                  <p className="text-[10px] text-muted-foreground font-medium pl-6">{step.desc}</p>
+                  <p className="text-[9px] text-muted-foreground font-medium pl-5">{step.desc}</p>
                 </div>
               ))}
             </div>
 
-            <div className="flex items-center justify-between pt-2">
-              <span className="text-xs text-muted-foreground font-medium">
-                Target submission: <span className="text-foreground font-semibold">Friday, 5:00 PM</span>
+            <div className="flex items-center justify-between pt-1">
+              <span className="text-[11px] text-muted-foreground">
+                Target: <span className="text-foreground font-semibold">Friday, 5:00 PM</span>
               </span>
               <Link to="/student/endorsement">
-                <Button variant="primary" size="sm" icon={<ArrowRightIcon size={14} />} className="font-bold text-xs h-9 px-4 rounded-xl cursor-pointer">
+                <Button variant="primary" size="sm" icon={<ArrowRightIcon size={13} />} className="font-bold text-xs h-7.5 px-3 rounded-lg cursor-pointer">
                   Go to Submission
                 </Button>
               </Link>
@@ -786,39 +749,39 @@ export const StudentDashboard: React.FC = () => {
         </div>
 
         {/* RIGHT COLUMN: Companion Sidebar Widgets (4 cols, ~360px wide) */}
-        <div className="lg:col-span-4 space-y-5">
+        <div className="lg:col-span-4 space-y-3.5">
           {/* Widget 1: Mini Calendar */}
           {!isCalendarHidden ? (
-            <div className="bg-card border border-border rounded-2xl p-4 sm:p-5 shadow-xs space-y-3">
+            <div className="bg-card border border-border/80 rounded-xl p-3.5 shadow-2xs space-y-2">
               {/* Header */}
               <div className="flex items-center justify-between px-0.5">
-                <div className="flex items-center gap-2 text-foreground font-extrabold text-sm">
-                  <CalendarIcon className="size-4 text-primary" />
+                <div className="flex items-center gap-1.5 text-foreground font-bold text-xs">
+                  <CalendarIcon className="size-3.5 text-primary" />
                   <span>Calendar</span>
                 </div>
-                <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
+                <div className="flex items-center gap-1 text-xs font-bold text-foreground">
                   <button
                     type="button"
                     onClick={() => setCalendarMonth(new Date(calYear, calMonth - 1, 1))}
-                    className="p-1 hover:bg-muted rounded-lg cursor-pointer transition-colors text-muted-foreground hover:text-foreground"
+                    className="p-1 hover:bg-muted rounded-md cursor-pointer transition-colors text-muted-foreground hover:text-foreground"
                     title="Previous month"
                   >
-                    <ChevronLeft size={14} />
+                    <ChevronLeft size={13} />
                   </button>
                   <span className="tracking-tight text-xs font-bold">{monthName}</span>
                   <button
                     type="button"
                     onClick={() => setCalendarMonth(new Date(calYear, calMonth + 1, 1))}
-                    className="p-1 hover:bg-muted rounded-lg cursor-pointer transition-colors text-muted-foreground hover:text-foreground"
+                    className="p-1 hover:bg-muted rounded-md cursor-pointer transition-colors text-muted-foreground hover:text-foreground"
                     title="Next month"
                   >
-                    <ChevronRight size={14} />
+                    <ChevronRight size={13} />
                   </button>
                 </div>
               </div>
 
               {/* Day headers: S M T W T F S */}
-              <div className="grid grid-cols-7 text-center text-[10px] font-bold text-muted-foreground/80 select-none py-1 border-b border-border/50">
+              <div className="grid grid-cols-7 text-center text-[10px] font-bold text-muted-foreground/75 select-none py-0.5 border-b border-border/50">
                 <span>Su</span>
                 <span>Mo</span>
                 <span>Tu</span>
@@ -829,14 +792,14 @@ export const StudentDashboard: React.FC = () => {
               </div>
 
               {/* Days cells */}
-              <div className="grid grid-cols-7 gap-y-1 text-center text-xs">
+              <div className="grid grid-cols-7 gap-y-0.5 text-center text-xs">
                 {miniDays.map((d, i) => (
-                  <div key={i} className="flex flex-col items-center justify-center h-8">
+                  <div key={i} className="flex flex-col items-center justify-center h-6.5">
                     <span
                       className={cn(
-                        "size-7 flex items-center justify-center rounded-full text-xs font-semibold select-none transition-colors",
+                        "size-5.5 flex items-center justify-center rounded-full text-[11px] font-semibold select-none transition-colors",
                         d.isToday
-                          ? "bg-primary text-primary-foreground font-bold shadow-xs"
+                          ? "bg-primary text-primary-foreground font-bold shadow-2xs"
                           : d.currentMonth
                           ? "text-foreground hover:bg-muted/70 cursor-pointer"
                           : "text-muted-foreground/25"
@@ -852,71 +815,71 @@ export const StudentDashboard: React.FC = () => {
               </div>
 
               {/* Footer Links: 'full calendar' on left, 'hide' on right */}
-              <div className="flex items-center justify-between pt-2 border-t border-border/60 text-xs font-semibold px-0.5">
+              <div className="flex items-center justify-between pt-1.5 border-t border-border/60 text-[11px] font-semibold px-0.5">
                 <Link
                   to="/student/calendar"
                   className="text-primary hover:underline cursor-pointer flex items-center gap-1"
                 >
-                  <span>Full calendar view</span>
-                  <ExternalLink size={10} />
+                  <span>Full calendar</span>
+                  <ExternalLink size={9} />
                 </Link>
                 <button
                   type="button"
                   onClick={() => setIsCalendarHidden(true)}
-                  className="text-muted-foreground/70 hover:text-foreground cursor-pointer transition-colors text-xs"
+                  className="text-muted-foreground/70 hover:text-foreground cursor-pointer transition-colors text-[11px]"
                 >
                   Hide
                 </button>
               </div>
             </div>
           ) : (
-            <div className="bg-card border border-dashed border-border rounded-2xl p-4 flex items-center justify-between text-xs text-muted-foreground">
-              <span className="font-semibold text-xs">Calendar widget hidden</span>
+            <div className="bg-card border border-dashed border-border rounded-xl p-3 flex items-center justify-between text-xs text-muted-foreground">
+              <span className="font-semibold text-xs">Calendar hidden</span>
               <button
                 type="button"
                 onClick={() => setIsCalendarHidden(false)}
                 className="text-primary font-bold hover:underline cursor-pointer text-xs"
               >
-                Show calendar
+                Show
               </button>
             </div>
           )}
 
           {/* Widget 2: Interactive To-Do List */}
-          <div className="bg-card border border-border rounded-2xl p-4 sm:p-5 shadow-xs space-y-3">
+          <div className="bg-card border border-border/80 rounded-xl p-3.5 shadow-2xs space-y-2.5">
             {/* Header */}
             <div className="flex items-center justify-between px-0.5">
-              <div className="flex items-center gap-2 text-foreground font-extrabold text-sm">
-                <CheckCircle2 className="size-4 text-primary" />
+              <div className="flex items-center gap-1.5 text-foreground font-bold text-xs">
+                <CheckCircle2 className="size-3.5 text-primary" />
                 <span>To-do Checklist</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline" className="text-[10px] h-4.5 px-1.5 font-bold">
+              <div className="flex items-center gap-1.5">
+                <Badge variant="outline" className="text-[9px] h-4 px-1.5 font-bold">
                   {todos.filter((t) => !t.done).length} Pending
                 </Badge>
                 <button
                   type="button"
                   onClick={() => setIsAddingTodo((prev) => !prev)}
                   title={isAddingTodo ? "Cancel" : "Add task"}
-                  className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors cursor-pointer"
+                  className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors cursor-pointer"
                 >
-                  {isAddingTodo ? <X size={14} /> : <Plus size={14} />}
+                  {isAddingTodo ? <X size={12} /> : <Plus size={12} />}
                 </button>
               </div>
             </div>
 
             {/* Quick Add Form */}
             {isAddingTodo && (
-              <form onSubmit={handleAddTodo} className="space-y-2 pt-1 animate-in fade-in duration-200">
+              <form onSubmit={handleAddTodo} className="space-y-1.5 pt-0.5 animate-in fade-in duration-200">
                 <input
                   type="text"
                   value={newTodoText}
                   onChange={(e) => setNewTodoText(e.target.value)}
                   placeholder="Type new task..."
                   autoFocus
-                  className="w-full text-xs px-3 py-2 rounded-xl bg-muted/50 border border-border focus:outline-none focus:border-primary text-foreground"
+                  className="w-full text-xs px-2.5 py-1.5 rounded-lg bg-muted/50 border border-border focus:outline-none focus:border-primary text-foreground"
                 />
-                <div className="flex justify-end gap-2">
+                <div className="flex justify-end gap-1.5">
                   <Button
                     type="button"
                     variant="outline"
@@ -925,7 +888,7 @@ export const StudentDashboard: React.FC = () => {
                       setIsAddingTodo(false);
                       setNewTodoText('');
                     }}
-                    className="h-7 text-[11px] px-2.5 rounded-lg"
+                    className="h-6 text-[10px] px-2 rounded-md"
                   >
                     Cancel
                   </Button>
@@ -934,7 +897,7 @@ export const StudentDashboard: React.FC = () => {
                     variant="primary"
                     size="sm"
                     disabled={!newTodoText.trim()}
-                    className="h-7 text-[11px] px-2.5 rounded-lg font-bold"
+                    className="h-6 text-[10px] px-2 rounded-md font-bold"
                   >
                     Add Task
                   </Button>
@@ -943,32 +906,32 @@ export const StudentDashboard: React.FC = () => {
             )}
 
             {/* Todo Items */}
-            <div className="space-y-2 pt-1 max-h-[300px] overflow-y-auto pr-0.5">
+            <div className="space-y-1.5 pt-0.5 max-h-[260px] overflow-y-auto pr-0.5">
               {todos.map((item) => (
                 <div
                   key={item.id}
                   onClick={() => toggleTodo(item.id)}
                   className={cn(
-                    "flex items-start gap-2.5 p-2.5 rounded-xl border transition-all cursor-pointer group text-xs",
+                    "flex items-start gap-2 p-2 px-2.5 rounded-lg border transition-all cursor-pointer group text-xs",
                     item.done
-                      ? "bg-muted/20 border-border/40 opacity-65"
+                      ? "bg-muted/20 border-border/40 opacity-60"
                       : "bg-muted/30 border-border/70 hover:bg-muted/60 hover:border-border"
                   )}
                 >
                   <div
                     className={cn(
-                      "size-4 rounded-md border flex items-center justify-center shrink-0 mt-0.5 transition-colors",
+                      "size-3.5 rounded border flex items-center justify-center shrink-0 mt-0.5 transition-colors",
                       item.done
                         ? "bg-primary border-primary text-primary-foreground"
                         : "border-muted-foreground/50 group-hover:border-foreground"
                     )}
                   >
-                    {item.done && <Check size={10} strokeWidth={3} />}
+                    {item.done && <Check size={9} strokeWidth={3} />}
                   </div>
                   <div className="min-w-0 flex-1">
                     <p
                       className={cn(
-                        "font-semibold text-xs leading-snug transition-colors",
+                        "font-medium text-xs leading-snug transition-colors",
                         item.done ? "line-through text-muted-foreground" : "text-foreground group-hover:text-primary"
                       )}
                     >
@@ -978,10 +941,10 @@ export const StudentDashboard: React.FC = () => {
                       <Link
                         to={item.link}
                         onClick={(e) => e.stopPropagation()}
-                        className="inline-flex items-center gap-1 text-[10px] text-primary font-bold hover:underline mt-1"
+                        className="inline-flex items-center gap-1 text-[10px] text-primary font-bold hover:underline mt-0.5"
                       >
                         <span>Open requirement</span>
-                        <ExternalLink size={9} />
+                        <ExternalLink size={8} />
                       </Link>
                     )}
                   </div>
@@ -991,74 +954,68 @@ export const StudentDashboard: React.FC = () => {
           </div>
 
           {/* Widget 3: Practicum Announcements */}
-          <div className="bg-card border border-border rounded-2xl p-4 sm:p-5 shadow-xs space-y-3">
+          <div className="bg-card border border-border/80 rounded-xl p-3.5 shadow-2xs space-y-2">
             {/* Header */}
             <div className="flex items-center justify-between px-0.5">
-              <div className="flex items-center gap-2 text-foreground font-extrabold text-sm">
-                <Megaphone className="size-4 text-primary" />
+              <div className="flex items-center gap-1.5 text-foreground font-bold text-xs">
+                <Megaphone className="size-3.5 text-primary" />
                 <span>Announcements</span>
               </div>
-              <Badge variant="outline" className="text-[10px] h-4.5 px-1.5 font-bold">
+              <Badge variant="outline" className="text-[9px] h-4 px-1.5 font-bold">
                 1 New
               </Badge>
             </div>
 
             {/* Announcement Bulletin */}
-            <div className="space-y-2.5 pt-0.5">
-              <div className="p-3 rounded-xl bg-muted/40 border border-border/70 space-y-1.5 text-xs">
+            <div className="space-y-1.5 pt-0.5">
+              <div className="p-2.5 rounded-lg bg-muted/40 border border-border/70 space-y-1 text-xs">
                 <div className="flex items-center justify-between">
                   <span className="font-bold text-foreground">Practicum Midterm Cutoff</span>
-                  <span className="text-[10px] text-muted-foreground font-medium">2h ago</span>
+                  <span className="text-[9px] text-muted-foreground font-medium">2h ago</span>
                 </div>
                 <p className="text-[11px] text-muted-foreground leading-relaxed font-medium">
-                  Midterm journal cutoff is scheduled for Friday at 5:00 PM. Please ensure your company supervisor signs your DTR logs.
+                  Midterm journal cutoff is scheduled for Friday at 5:00 PM. Please ensure your supervisor signs your DTR logs.
                 </p>
               </div>
 
-              <div className="text-center pt-1">
+              <div className="text-center pt-0.5">
                 <Link
                   to="/student/notifications"
-                  className="text-xs font-bold text-primary hover:underline cursor-pointer inline-flex items-center gap-1"
+                  className="text-[11px] font-bold text-primary hover:underline cursor-pointer inline-flex items-center gap-1"
                 >
                   <span>View all notifications</span>
-                  <ArrowRightIcon size={12} />
+                  <ArrowRightIcon size={10} />
                 </Link>
               </div>
             </div>
           </div>
 
           {/* Widget 4: Practicum Support & Contacts Card */}
-          <div className="bg-card border border-border rounded-2xl p-4 sm:p-5 shadow-xs space-y-3">
-            <div className="flex items-center gap-2 text-foreground font-extrabold text-sm">
-              <UsersIcon className="size-4 text-primary" />
+          <div className="bg-card border border-border/80 rounded-xl p-3.5 shadow-2xs space-y-2">
+            <div className="flex items-center gap-1.5 text-foreground font-bold text-xs px-0.5">
+              <UsersIcon className="size-3.5 text-primary" />
               <span>Practicum Support</span>
             </div>
 
-            <div className="space-y-2.5 text-xs">
-              <div className="flex items-start gap-2.5 p-2.5 rounded-xl bg-muted/30 border border-border/60">
-                <div className="size-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5 font-bold text-xs">
+            <div className="space-y-1.5 text-xs">
+              <div className="flex items-start gap-2 p-2 rounded-lg bg-muted/30 border border-border/60">
+                <div className="size-6 rounded-md bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5 font-bold text-[10px]">
                   SJ
                 </div>
-                <div className="min-w-0 flex-1 space-y-0.5">
-                  <p className="font-bold text-foreground truncate">Dr. Sarah Johnson</p>
+                <div className="min-w-0 flex-1 space-y-0.2">
+                  <p className="font-bold text-foreground truncate text-xs">Dr. Sarah Johnson</p>
                   <p className="text-[10px] text-muted-foreground">Practicum Adviser · STI Marikina</p>
                 </div>
               </div>
 
-              <div className="flex items-start gap-2.5 p-2.5 rounded-xl bg-muted/30 border border-border/60">
-                <div className="size-7 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5 font-bold text-xs">
+              <div className="flex items-start gap-2 p-2 rounded-lg bg-muted/30 border border-border/60">
+                <div className="size-6 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5 font-bold text-[10px]">
                   PR
                 </div>
-                <div className="min-w-0 flex-1 space-y-0.5">
-                  <p className="font-bold text-foreground truncate">Engr. Paolo Reyes</p>
-                  <p className="text-[10px] text-muted-foreground">Company Supervisor · InnoTech Labs</p>
+                <div className="min-w-0 flex-1 space-y-0.2">
+                  <p className="font-bold text-foreground truncate text-xs">Engr. Paolo Reyes</p>
+                  <p className="text-[10px] text-muted-foreground">Supervisor · InnoTech Labs</p>
                 </div>
-              </div>
-
-              <div className="p-2.5 rounded-xl bg-muted/20 border border-border/50 text-[11px] text-muted-foreground">
-                <p className="leading-snug">
-                  Need assistance with MOA or endorsement signing? Visit the Practicum Office or message your coordinator.
-                </p>
               </div>
             </div>
           </div>
@@ -1070,11 +1027,11 @@ export const StudentDashboard: React.FC = () => {
         <DialogContent className="sm:max-w-lg rounded-2xl p-5 sm:p-6 bg-card border border-border shadow-2xl">
           <DialogHeader>
             <div className="flex items-center gap-3">
-              <div className="size-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-                <CheckCircle2 size={22} />
+              <div className="size-9 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                <CheckCircle2 size={20} />
               </div>
               <div>
-                <DialogTitle className="text-base font-extrabold text-foreground">
+                <DialogTitle className="text-base font-bold text-foreground">
                   Completed Tasks & Requirements
                 </DialogTitle>
                 <DialogDescription className="text-xs text-muted-foreground mt-0.5">
@@ -1084,12 +1041,12 @@ export const StudentDashboard: React.FC = () => {
             </div>
           </DialogHeader>
 
-          <div className="space-y-2.5 max-h-[400px] overflow-y-auto pr-1 py-2">
+          <div className="space-y-2 max-h-[380px] overflow-y-auto pr-1 py-2">
             {/* System verified requirements */}
             {COMPLETED_TASKS.map((task) => (
               <div
                 key={task.id}
-                className="p-3.5 rounded-xl bg-muted/30 border border-border/60 hover:bg-muted/50 transition-colors flex items-start justify-between gap-3 text-xs"
+                className="p-3 rounded-xl bg-muted/30 border border-border/60 hover:bg-muted/50 transition-colors flex items-start justify-between gap-3 text-xs"
               >
                 <div className="flex items-start gap-2.5 min-w-0">
                   <div className="size-5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
@@ -1123,7 +1080,7 @@ export const StudentDashboard: React.FC = () => {
               .map((item) => (
                 <div
                   key={item.id}
-                  className="p-3.5 rounded-xl bg-emerald-500/5 border border-emerald-500/20 flex items-start justify-between gap-3 text-xs"
+                  className="p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/20 flex items-start justify-between gap-3 text-xs"
                 >
                   <div className="flex items-start gap-2.5 min-w-0">
                     <div className="size-5 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0 mt-0.5">
