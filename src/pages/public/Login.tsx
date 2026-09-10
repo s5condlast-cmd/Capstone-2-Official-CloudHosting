@@ -843,7 +843,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
   return (
     <div className="min-h-screen bg-[#f2f4f8] dark:bg-[#121212] flex flex-col justify-between items-center font-sans selection:bg-[#0067b8] selection:text-white relative">
-      <div className="w-full flex-1 flex flex-col items-center justify-center max-w-[480px] px-4 py-8 my-auto">
+      <div className="w-full flex-1 flex flex-col items-center justify-center max-w-[470px] px-4 py-8 my-auto">
         {/* ════════════════════════════════════════════════
              MAIN MICROSOFT SIGN-IN CARD
             ════════════════════════════════════════════════ */}
@@ -914,7 +914,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                     </Link>
                   </div>
 
-                  <div className="flex justify-end mt-11">
+                  <div className="flex justify-end mt-12">
                     <button
                       type="submit"
                       className="bg-[#0067b8] hover:bg-[#005da6] active:bg-[#005293] text-white text-[15px] font-normal px-8 py-1.5 min-w-[108px] rounded-[2px] transition-colors cursor-pointer shadow-2xs"
@@ -993,7 +993,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                     </Link>
                   </div>
 
-                  <div className="flex justify-end mt-11">
+                  <div className="flex justify-end mt-12">
                     <button
                       type="submit"
                       disabled={isSubmitting}
