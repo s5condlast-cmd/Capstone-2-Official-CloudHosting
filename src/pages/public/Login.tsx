@@ -549,8 +549,25 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
     const trimmed = emailOrUser.trim();
     if (!trimmed) {
-      setSignInError('Enter a valid username, student ID, or email address.');
+      setSignInError('Enter a valid email address or phone number.');
       return;
+    }
+
+    // Format validation: if user mis-inputs or enters an invalid email format
+    const isEmailAttempt = trimmed.includes('@');
+    if (isEmailAttempt) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[a-zA-Z0-9._-]{2,}$/;
+      if (!emailRegex.test(trimmed)) {
+        setSignInError('Enter a valid email address or phone number.');
+        return;
+      }
+    } else {
+      // Must be a valid phone number, student ID, or recognized username
+      const isValidFormat = /^[a-zA-Z0-9+_.-]{2,}$/.test(trimmed);
+      if (!isValidFormat) {
+        setSignInError('Enter a valid email address or phone number.');
+        return;
+      }
     }
 
     setSignInStep('password');
@@ -620,6 +637,11 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
     setRegError('');
 
     const trimmedInput = regEmail.toLowerCase().trim();
+    if (!trimmedInput) {
+      setRegError('Enter a valid email address or phone number.');
+      return;
+    }
+
     const normalized = trimmedInput.includes('@') ? trimmedInput : `${trimmedInput}@practicum.edu`;
     const isDomainValid =
       normalized.endsWith('@marikina.sti.edu.ph') ||
@@ -640,9 +662,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
       normalized.includes('@');
 
     if (!isDomainValid) {
-      setRegError(
-        'Please enter a valid student ID, username, or institutional email address.'
-      );
+      setRegError('Enter a valid email address or phone number.');
       return;
     }
 
