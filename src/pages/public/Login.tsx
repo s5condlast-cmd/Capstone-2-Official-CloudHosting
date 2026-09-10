@@ -914,14 +914,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                     </Link>
                   </div>
 
-                  <div className="flex justify-end gap-1.5 mt-8">
-                    <button
-                      type="button"
-                      onClick={() => navigate('/')}
-                      className="bg-[#cccccc] dark:bg-[#3b3b3b] hover:bg-[#b8b8b8] dark:hover:bg-[#4a4a4a] text-[#1b1b1b] dark:text-white text-[15px] font-normal px-8 py-1.5 min-w-[108px] rounded-[2px] transition-colors cursor-pointer"
-                    >
-                      Back
-                    </button>
+                  <div className="flex justify-end mt-4">
                     <button
                       type="submit"
                       className="bg-[#0067b8] hover:bg-[#005da6] active:bg-[#005293] text-white text-[15px] font-normal px-8 py-1.5 min-w-[108px] rounded-[2px] transition-colors cursor-pointer shadow-2xs"
@@ -1000,7 +993,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                     </Link>
                   </div>
 
-                  <div className="flex justify-end mt-8">
+                  <div className="flex justify-end mt-4">
                     <button
                       type="submit"
                       disabled={isSubmitting}
