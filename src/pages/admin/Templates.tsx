@@ -98,6 +98,11 @@ export const Templates: React.FC = () => {
 
         setTemplates(newTemplatesList);
         await templateStorage.saveMetadata(newTemplatesList);
+        setDeletedIds(prev => {
+          const next = new Set(prev);
+          next.delete(replacingId);
+          return next;
+        });
         toast.success(`PDF for "${templateName}" uploaded and published to students!`);
         return;
       }
@@ -117,10 +122,37 @@ export const Templates: React.FC = () => {
 
       if (!existing) {
         const cleanUploadName = templateName.toLowerCase().replace(/[^a-z0-9]/g, '');
-        existing = allItems.find(i => {
-          const cleanItemName = i.name.toLowerCase().replace(/[^a-z0-9]/g, '');
-          return cleanItemName.includes(cleanUploadName) || cleanUploadName.includes(cleanItemName);
-        });
+
+        // Smart matching for common uploaded filenames
+        const aliasMap: Record<string, string> = {
+          'weeklyjournal': 'h5',
+          'journal': 'h5',
+          'weeklyjournaltemplate': 'h5',
+          'journaltemplate': 'h5',
+          'ojtjournal': 'h5',
+          'applicationletter': 'h11',
+          'parentconsent': 'h2_1',
+          'studentconsent': 'h2_3',
+          'moa': 'h3',
+          'endorsement': 'h4',
+          'proposal': 'h12',
+          'dtr': 'h6',
+          'trainingplan': 'h7',
+          'integrationpaper': 'h8',
+          'performanceappraisal': 'h10'
+        };
+
+        const aliasMatchId = Object.entries(aliasMap).find(([alias]) => cleanUploadName.includes(alias))?.[1];
+        if (aliasMatchId) {
+          existing = allItems.find(i => i.id === aliasMatchId);
+        }
+
+        if (!existing) {
+          existing = allItems.find(i => {
+            const cleanItemName = i.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+            return cleanItemName.includes(cleanUploadName) || cleanUploadName.includes(cleanItemName);
+          });
+        }
       }
 
       if (existing) {
@@ -142,7 +174,10 @@ export const Templates: React.FC = () => {
         isCustom: true
       };
 
-      // Save file and metadata to IndexedDB
+      // Save file and metadata to IndexedDB & Backend API
+      if (fileExtension === 'PDF' && id) {
+        await templateStorage.saveTemplateFile(`${id}_pdf_backup`, file);
+      }
       await templateStorage.saveTemplateFile(id, file);
 
       let newMetadata;
@@ -155,11 +190,23 @@ export const Templates: React.FC = () => {
           newMetadata = [...templates, newTemplate];
         }
       } else {
-        newMetadata = [...templates, newTemplate];
+        const existingIndex = templates.findIndex(t => t.id === id);
+        if (existingIndex >= 0) {
+          newMetadata = [...templates];
+          newMetadata[existingIndex] = newTemplate;
+        } else {
+          newMetadata = [...templates, newTemplate];
+        }
       }
 
       await templateStorage.saveMetadata(newMetadata);
       setTemplates(newMetadata);
+      setDeletedIds(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        if (replacingId) next.delete(replacingId);
+        return next;
+      });
       toast.success(`Template "${newTemplate.name}" uploaded successfully!`);
 
       // Clear input
@@ -178,7 +225,9 @@ export const Templates: React.FC = () => {
   const confirmDelete = async (id: string) => {
     try {
       await templateStorage.deleteTemplate(id);
-      setTemplates(templates.filter(t => t.id !== id));
+      const updated = templates.filter(t => t.id !== id && t.id !== `${id}_pdf_backup`);
+      setTemplates(updated);
+      await templateStorage.saveMetadata(updated);
       setDeletedIds(prev => new Set(prev).add(id));
       toast.success('Template deleted successfully.');
     } catch (err) {

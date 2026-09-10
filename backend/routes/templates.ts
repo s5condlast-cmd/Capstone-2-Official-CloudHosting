@@ -106,11 +106,9 @@ router.post('/templates/upload', upload.single('file'), (req: Request, res: Resp
     // 1. Store in memory cache
     templatesCache.set(id, stored);
 
-    // If ID has suffix like `_pdf_backup`, also map base ID if not set
-    if (id.endsWith('_pdf_backup')) {
-      const baseId = id.replace('_pdf_backup', '');
-      templatesCache.set(`${baseId}_pdf_backup`, stored);
-    }
+    const baseId = id.endsWith('_pdf_backup') ? id.replace('_pdf_backup', '') : id;
+    templatesCache.set(baseId, stored);
+    templatesCache.set(`${baseId}_pdf_backup`, stored);
 
     // 2. Persist to disk
     const dir = getStorageDir();
@@ -120,6 +118,14 @@ router.post('/templates/upload', upload.single('file'), (req: Request, res: Resp
         const diskFilename = `${id}${ext}`;
         fs.writeFileSync(path.join(dir, diskFilename), buffer);
         fs.writeFileSync(path.join(dir, id), buffer); // Raw ID without extension for exact match
+
+        if (id !== baseId) {
+          fs.writeFileSync(path.join(dir, `${baseId}${ext}`), buffer);
+          fs.writeFileSync(path.join(dir, baseId), buffer);
+        } else {
+          fs.writeFileSync(path.join(dir, `${baseId}_pdf_backup${ext}`), buffer);
+          fs.writeFileSync(path.join(dir, `${baseId}_pdf_backup`), buffer);
+        }
       } catch (writeErr) {
         console.warn('[Templates] Disk save notice (in-memory cache preserved):', writeErr);
       }
@@ -226,13 +232,23 @@ router.delete('/templates/:id', (req: Request, res: Response) => {
   templatesCache.delete(id);
   templatesCache.delete(`${id}_pdf_backup`);
 
+  const baseId = id.endsWith('_pdf_backup') ? id.replace('_pdf_backup', '') : id;
+  templatesCache.delete(baseId);
+  templatesCache.delete(`${baseId}_pdf_backup`);
+
   const dir = getStorageDir();
   if (dir) {
     [
       path.join(dir, id),
       path.join(dir, `${id}.pdf`),
+      path.join(dir, `${id}_pdf_backup`),
       path.join(dir, `${id}_pdf_backup.pdf`),
       path.join(dir, `${id}.docx`),
+      path.join(dir, baseId),
+      path.join(dir, `${baseId}.pdf`),
+      path.join(dir, `${baseId}_pdf_backup`),
+      path.join(dir, `${baseId}_pdf_backup.pdf`),
+      path.join(dir, `${baseId}.docx`),
     ].forEach(f => {
       if (fs.existsSync(f)) {
         try { fs.unlinkSync(f); } catch {}

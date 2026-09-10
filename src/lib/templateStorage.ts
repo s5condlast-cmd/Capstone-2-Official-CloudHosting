@@ -91,10 +91,12 @@ export const templateStorage = {
     const buffer = await file.arrayBuffer();
     await saveIDBFile(id, buffer);
 
-    // If backup key, also save to base key in IDB
+    // If backup key, also save to base key in IDB, and vice versa for PDFs
     if (id.endsWith('_pdf_backup')) {
       const baseId = id.replace('_pdf_backup', '');
       await saveIDBFile(baseId, buffer);
+    } else if (file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf') {
+      await saveIDBFile(`${id}_pdf_backup`, buffer);
     }
 
     // Persist to Backend API so all users (Student & Admin) can view the file
@@ -298,36 +300,47 @@ export const templateStorage = {
   
   // Delete a template and its metadata
   async deleteTemplate(id: string): Promise<void> {
+    const baseId = id.endsWith('_pdf_backup') ? id.replace('_pdf_backup', '') : id;
+
+    // 1. Delete from IndexedDB
     await deleteIDBFile(id);
     await deleteIDBFile(`${id}_pdf_backup`);
+    if (baseId !== id) {
+      await deleteIDBFile(baseId);
+    }
 
+    // 2. Delete from Backend API
+    try {
+      await fetch(`/api/templates/${encodeURIComponent(id)}`, { method: 'DELETE' });
+      await fetch(`/api/templates/${encodeURIComponent(`${id}_pdf_backup`)}`, { method: 'DELETE' });
+      if (baseId !== id) {
+        await fetch(`/api/templates/${encodeURIComponent(baseId)}`, { method: 'DELETE' });
+      }
+    } catch (e) {
+      console.warn('Backend delete template warning:', e);
+    }
+
+    // 3. Clean up localStorage metadata backup immediately
+    try {
+      const local = localStorage.getItem('template_metadata_backup');
+      if (local) {
+        const metadata = JSON.parse(local);
+        if (Array.isArray(metadata)) {
+          const clean = metadata.filter((t: any) => t.id !== id && t.id !== baseId && t.id !== `${id}_pdf_backup`);
+          localStorage.setItem('template_metadata_backup', JSON.stringify(clean));
+        }
+      }
+    } catch (e) {}
+
+    // 4. Notify all components to re-render immediately
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('template_updated', { detail: { id } }));
     }
 
-    /*
-    // Preserved Cloudinary Delete (Commented out for future redesign)
+    // 5. Cleanup Supabase Storage and DB
     try {
-      // Delete from Cloudinary
-      await fetch('/api/cloudinary/delete', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ publicId: `practicum/templates/${id}` }),
-      });
-      await fetch('/api/cloudinary/delete', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ publicId: `practicum/templates/${id}_pdf_backup` }),
-      });
-    } catch (e) {
-      console.warn('Cloudinary delete template warning:', e);
-    }
-    */
-
-    try {
-      // Legacy cleanup: Supabase Storage
-      await supabase.storage.from('templates').remove([id, `${id}_pdf_backup`]);
-      await supabase.from('template_metadata').delete().eq('id', id);
+      await supabase.storage.from('templates').remove([id, `${id}_pdf_backup`, baseId]);
+      await supabase.from('template_metadata').delete().or(`id.eq.${id},id.eq.${baseId},id.eq.${id}_pdf_backup`);
     } catch (e) {
       console.warn('Supabase delete template warning:', e);
     }
