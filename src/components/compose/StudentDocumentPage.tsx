@@ -15,7 +15,8 @@ import {
   UserCheck,
   Users,
   ChevronDown,
-  Cloud
+  Cloud,
+  Lock
 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import { AnimatePresence, motion } from 'motion/react';
@@ -47,6 +48,10 @@ export interface StudentDocumentPageProps {
   adviserFeedback: string;
   lastUpdated?: string;
   adviserComments?: { author: string; msg: string; time: string }[];
+  isLocked?: boolean;
+  lockedMessage?: string;
+  extraSidebarContent?: React.ReactNode;
+  headerAction?: React.ReactNode;
 }
 
 interface ConsentOption {
@@ -174,7 +179,11 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
   submissionInfo,
   adviserFeedback,
   lastUpdated,
-  adviserComments
+  adviserComments,
+  isLocked = false,
+  lockedMessage,
+  extraSidebarContent,
+  headerAction
 }) => {
   const [isUrgent, setIsUrgent] = useState(false);
   const [selectedTemplateIndex, setSelectedTemplateIndex] = useState(0);
@@ -335,7 +344,7 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
         {/* Left column - Document Preview */}
         <div className="flex-1 min-w-0 flex flex-col gap-6 w-full">
           {templates.length > 1 && (
-            <div className="bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 p-3 sm:p-3.5 rounded-xl shadow-2xs space-y-2 shrink-0">
+            <div className="bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800/80 p-3 sm:p-3.5 rounded-xl shadow-2xs space-y-2.5 shrink-0">
               <div className="flex items-center justify-between gap-2 flex-wrap px-0.5">
                 <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0 animate-pulse" />
@@ -374,14 +383,14 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
                         }
                       }}
                       className={cn(
-                        "px-3 py-2 rounded-lg text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-all border flex items-center gap-2 text-left cursor-pointer",
+                        "px-3 py-2.5 rounded-xl text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-all border flex items-center gap-2 text-left cursor-pointer",
                         selectedTemplateIndex === idx
-                          ? "bg-zinc-950 dark:bg-zinc-50 text-white dark:text-zinc-950 border-zinc-950 dark:border-zinc-50 shadow-xs"
-                          : "bg-zinc-50 dark:bg-zinc-950 text-zinc-500 dark:text-zinc-300 border-zinc-200/80 dark:border-zinc-800/80 hover:border-zinc-300 dark:hover:border-zinc-700"
+                          ? "bg-zinc-950 dark:bg-zinc-100 text-white dark:text-zinc-950 border-zinc-950 dark:border-zinc-100 shadow-2xs"
+                          : "bg-zinc-50/70 dark:bg-zinc-900/60 text-zinc-600 dark:text-zinc-400 border-zinc-200/80 dark:border-zinc-800/80 hover:border-zinc-300 dark:hover:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-100"
                       )}
                     >
                       <div className={cn(
-                        "w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 text-[9px]",
+                        "w-4 h-4 rounded-full border flex items-center justify-center shrink-0 text-[9px] font-black",
                         selectedTemplateIndex === idx
                           ? "border-white dark:border-zinc-950 bg-white/20 dark:bg-zinc-950/20"
                           : "border-zinc-300 dark:border-zinc-700"
@@ -408,26 +417,37 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
 
         {/* Right sidebar */}
         <div className="w-full lg:w-[360px] shrink-0 flex flex-col gap-6">
-          <Card title={uploadTitle}>
+          <Card title={uploadTitle} action={headerAction}>
             <div className="space-y-4">
-              <div className="bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-800 rounded-lg p-2 flex items-start gap-2">
-                <Info className="text-zinc-500 dark:text-zinc-400 mt-0.5 shrink-0" size={13} />
-                <p className="text-[11px] text-zinc-600 dark:text-zinc-400 leading-tight">
+              <div className="bg-zinc-50/80 dark:bg-zinc-900/50 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-3 flex items-start gap-2.5">
+                <Info className="text-zinc-500 dark:text-zinc-400 mt-0.5 shrink-0" size={14} />
+                <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed font-normal">
                   Upload a clear scanned PDF with visible signatures.
                 </p>
               </div>
 
               <div
-                className="border border-dashed border-zinc-200 dark:border-zinc-700 rounded-xl p-4 text-center hover:border-zinc-400 dark:hover:border-zinc-600 transition-colors cursor-pointer group"
-                onClick={() => fileInputRef.current?.click()}
+                className={cn(
+                  "border-2 border-dashed rounded-xl p-4 sm:p-5 text-center transition-all relative overflow-hidden group",
+                  isLocked
+                    ? "border-zinc-200 dark:border-zinc-800/80 bg-zinc-50/30 dark:bg-zinc-900/20 cursor-not-allowed"
+                    : "border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-700 bg-zinc-50/40 hover:bg-zinc-50/80 dark:bg-zinc-900/20 dark:hover:bg-zinc-900/50 cursor-pointer"
+                )}
+                onClick={() => !isLocked && fileInputRef.current?.click()}
               >
-                <div className="w-10 h-10 bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl flex items-center justify-center mx-auto mb-2 group-hover:scale-105 transition-transform">
+                {isLocked && (
+                  <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/85 dark:bg-zinc-950/85 backdrop-blur-xs">
+                    <Lock size={22} className="text-zinc-400 dark:text-zinc-500 mb-1.5" />
+                    <span className="text-xs font-semibold text-zinc-600 dark:text-zinc-400">{lockedMessage || 'Unlocks at 460 hours'}</span>
+                  </div>
+                )}
+                <div className="w-11 h-11 bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200/80 dark:border-zinc-700/80 rounded-xl flex items-center justify-center mx-auto mb-2.5 group-hover:scale-105 transition-transform">
                   {isSubmitted ? <CheckCircle2 size={20} className="text-emerald-500" /> : isUploading ? <Upload size={20} className="text-zinc-400 animate-bounce" /> : uploadedFileName ? <FileUp size={20} className="text-emerald-500" /> : <Upload size={20} className="text-zinc-500 dark:text-zinc-400" />}
                 </div>
-                <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-0.5">
+                <p className="text-xs font-semibold text-zinc-800 dark:text-zinc-200 mb-0.5">
                   {isSubmitted ? 'File Submitted' : isUploading ? 'Uploading...' : uploadedFileName ? 'File Selected' : uploadDescription}
                 </p>
-                <p className="text-[11px] text-zinc-400 dark:text-zinc-500 mb-3 truncate">
+                <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mb-3 truncate">
                   {isSubmitted ? 'Pending adviser review.' : isUploading ? 'Please wait...' : uploadedFileName ? uploadedFileName : 'PDF or DOCX · Max 10MB'}
                 </p>
                 <Button
@@ -435,7 +455,7 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
                   size="sm"
                   className="h-8 text-[11px] font-bold"
                   aria-label={`Select file for ${uploadTitle}`}
-                  disabled={isUploading || isSubmitted}
+                  disabled={isLocked || isUploading || isSubmitted}
                 >
                   {isSubmitted ? 'Submitted' : isUploading ? 'Uploading...' : uploadedFileName ? 'Change File' : 'Select File'}
                 </Button>
@@ -445,17 +465,20 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
                   className="hidden"
                   accept=".pdf,application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                   onChange={handleFileSelect}
+                  disabled={isLocked}
                 />
               </div>
 
-              <div className="flex gap-2 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+              <div className="flex gap-2 pt-2 border-t border-zinc-200/80 dark:border-zinc-800/80">
                 <button
                   onClick={() => setIsUrgent(!isUrgent)}
+                  disabled={isLocked}
                   className={cn(
-                    "w-1/2 flex items-center justify-center gap-1.5 px-2 h-8 rounded-lg text-[11px] font-bold transition-all border cursor-pointer shrink-0",
+                    "w-1/2 flex items-center justify-center gap-1.5 px-2 h-8 rounded-lg text-[11px] font-bold transition-all border shrink-0",
+                    isLocked ? "opacity-50 cursor-not-allowed border-zinc-200 dark:border-zinc-800 text-zinc-400" : "cursor-pointer",
                     isUrgent
-                      ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 border-zinc-900 dark:border-zinc-100"
-                      : "bg-white dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 border-zinc-200 dark:border-zinc-800 hover:border-zinc-300"
+                      ? "bg-zinc-950 dark:bg-zinc-100 text-white dark:text-zinc-950 border-zinc-950 dark:border-zinc-100"
+                      : "bg-zinc-50/60 dark:bg-zinc-900/50 text-zinc-600 dark:text-zinc-400 border-zinc-200/80 dark:border-zinc-800/80 hover:bg-zinc-100 dark:hover:bg-zinc-800/80"
                   )}
                 >
                   <AlertCircle size={12} className={cn(isUrgent ? "animate-pulse" : "")} />
@@ -466,7 +489,7 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
                   className="w-1/2 h-8 text-[11px] font-bold justify-center shrink-0 px-2"
                   icon={currentStatus === 'Pending' ? undefined : <ShieldCheck size={12} />}
                   onClick={handleSubmit}
-                  disabled={!selectedFile || isUploading || isSubmitted}
+                  disabled={isLocked || !selectedFile || isUploading || isSubmitted}
                 >
                   {isSubmitted ? 'Submitted' : isUploading ? 'Processing...' : currentStatus === 'Pending' ? 'Submit' : 'Submit File'}
                 </Button>
@@ -481,43 +504,42 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
 
           <Card title={currentStatus === 'Pending' ? "Status" : "Review Status"}>
             <div className="space-y-4">
-              <div className={cn(
-                "flex items-center gap-3 p-2.5 rounded-lg border",
-                currentStatus === 'Returned' ? "bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700" :
-                  "bg-zinc-50 dark:bg-zinc-800/50 border-zinc-100 dark:border-zinc-800"
-              )}>
+              <div className="bg-zinc-50/80 dark:bg-zinc-900/50 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-3 flex items-center gap-3 shadow-2xs">
                 <div className={cn(
-                  "w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
-                  currentStatus !== 'Pending' ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-950" :
-                    "bg-zinc-200 dark:bg-zinc-700 text-zinc-500 dark:text-zinc-400"
+                  "w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border",
+                  currentStatus === 'Approved'
+                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                    : currentStatus === 'Returned'
+                      ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+                      : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-zinc-200/80 dark:border-zinc-700/80"
                 )}>
                   {currentStatus === 'Approved' ? (
-                    <ShieldCheck size={16} />
+                    <ShieldCheck size={17} />
                   ) : currentStatus === 'Returned' ? (
-                    <AlertCircle size={16} />
+                    <AlertCircle size={17} />
                   ) : (
-                    <Clock size={16} />
+                    <Clock size={17} />
                   )}
                 </div>
                 <div>
                   <p className="text-xs font-bold text-zinc-900 dark:text-zinc-100">
                     {currentStatus === 'Approved' ? 'Approved' : currentStatus === 'Returned' ? 'Returned' : 'Pending Review'}
                   </p>
-                  <p className="text-[10px] text-zinc-400 dark:text-zinc-500 font-medium mt-0.5">
+                  <p className="text-[10px] text-zinc-500 dark:text-zinc-400 font-medium mt-0.5">
                     {currentLastUpdated ? `Updated ${currentLastUpdated}` : 'No submission yet'}
                   </p>
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <h4 className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider flex items-center gap-1.5">
+                <h4 className="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
                   <MessageSquare size={11} /> Adviser Feedback
                 </h4>
                 <div className={cn(
-                  "p-2.5 rounded-lg text-xs leading-relaxed font-medium",
+                  "p-3 rounded-xl text-xs leading-relaxed font-medium border transition-all",
                   currentStatus === 'Returned'
-                    ? "bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 border-l-2 border-l-zinc-900 dark:border-l-zinc-100"
-                    : "bg-zinc-50/70 dark:bg-zinc-900/60 border border-zinc-100 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400"
+                    ? "bg-amber-500/10 border-amber-500/30 text-amber-950 dark:text-amber-200 border-l-3 border-l-amber-500"
+                    : "bg-zinc-50/80 dark:bg-zinc-900/50 border-zinc-200/80 dark:border-zinc-800/80 text-zinc-600 dark:text-zinc-400"
                 )}>
                   {currentFeedback}
                 </div>
@@ -531,15 +553,17 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
             </div>
           </Card>
 
+          {extraSidebarContent}
+
           {((dbDoc && dbDoc.comments && dbDoc.comments.length > 0) || (adviserComments && adviserComments.length > 0)) && (
             <Card title="Adviser Comments">
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 {((dbDoc && dbDoc.comments) || adviserComments || []).map((comment: any, i: number, arr: any[]) => (
                   <div key={i} className={cn(
-                    "p-3 rounded-lg border text-sm space-y-1.5",
+                    "p-3 rounded-xl border text-xs space-y-1.5 transition-all",
                     i === arr.length - 1
-                      ? "bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 border-l-2 border-l-zinc-900 dark:border-l-zinc-100"
-                      : "bg-zinc-50 dark:bg-zinc-800/50 border-zinc-100 dark:border-zinc-800"
+                      ? "bg-zinc-50/90 dark:bg-zinc-900/70 border-zinc-200/80 dark:border-zinc-800/80 border-l-3 border-l-zinc-950 dark:border-l-zinc-100"
+                      : "bg-zinc-50/60 dark:bg-zinc-900/40 border-zinc-200/80 dark:border-zinc-800/80"
                   )}>
                     <div className="flex justify-between items-start">
                       <span className="text-xs font-semibold text-zinc-900 dark:text-zinc-100">{comment.author}</span>
@@ -553,11 +577,11 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
           )}
 
           <Card title="Submission Info">
-            <div className="space-y-3">
+            <div className="bg-zinc-50/80 dark:bg-zinc-900/50 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-3.5 divide-y divide-zinc-200/60 dark:divide-zinc-800/60">
               {submissionInfo.map((item, i) => (
-                <div key={i} className="flex justify-between items-center">
-                  <span className="text-xs text-zinc-400 dark:text-zinc-500">{item.label}</span>
-                  <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300">{item.value}</span>
+                <div key={i} className="flex justify-between items-center py-2 first:pt-0 last:pb-0 text-xs">
+                  <span className="text-zinc-500 dark:text-zinc-400 font-medium">{item.label}</span>
+                  <span className="font-semibold text-zinc-800 dark:text-zinc-200">{item.value}</span>
                 </div>
               ))}
             </div>

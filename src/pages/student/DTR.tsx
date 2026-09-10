@@ -29,43 +29,54 @@ export const DTR: React.FC = () => {
         </div>
         <div className="w-full lg:w-[360px] shrink-0 flex flex-col gap-6">
           <Card title="Upload Daily Time Record">
-            <div className="space-y-5">
-              <div className="bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-800 rounded-lg p-2.5 flex items-start gap-2">
-                <Info className="text-zinc-500 dark:text-zinc-400 mt-0.5 shrink-0" size={13} />
-                <p className="text-[11px] text-zinc-600 dark:text-zinc-400 leading-normal">
-                  <strong>Reminder:</strong> We recommend uploading a scanned PDF. Please ensure all signatures are clearly visible and scanned correctly.
+            <div className="space-y-4">
+              <div className="bg-zinc-50/80 dark:bg-zinc-900/50 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-3 flex items-start gap-2.5">
+                <Info className="text-zinc-500 dark:text-zinc-400 mt-0.5 shrink-0" size={14} />
+                <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed font-normal">
+                  We recommend uploading a scanned PDF. Please ensure all signatures are clearly visible.
                 </p>
               </div>
 
-              <div className="border border-dashed border-zinc-200 dark:border-zinc-700 rounded-xl p-6 text-center hover:border-zinc-400 dark:hover:border-zinc-600 transition-colors cursor-pointer group">
-                <div className="w-12 h-12 bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-105 transition-transform">
-                  <Upload size={22} className="text-zinc-500 dark:text-zinc-400" />
+              <div className="border-2 border-dashed border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-700 bg-zinc-50/40 hover:bg-zinc-50/80 dark:bg-zinc-900/20 dark:hover:bg-zinc-900/50 rounded-xl p-4 sm:p-5 text-center transition-all cursor-pointer group">
+                <div className="w-11 h-11 bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200/80 dark:border-zinc-700/80 rounded-xl flex items-center justify-center mx-auto mb-2.5 group-hover:scale-105 transition-transform">
+                  <Upload size={20} className="text-zinc-500 dark:text-zinc-400" />
                 </div>
-                <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Upload Digitized DTR</p>
-                <p className="text-xs text-zinc-400 dark:text-zinc-500 mb-4">PDF or high-res image · Max 10MB</p>
-                <Button variant="secondary" size="sm" aria-label="Select file for Daily Time Record">Select File</Button>
+                <p className="text-xs font-semibold text-zinc-800 dark:text-zinc-200 mb-0.5">Upload Digitized DTR</p>
+                <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mb-3 truncate">PDF or high-res image · Max 10MB</p>
+                <Button variant="secondary" size="sm" className="h-8 text-[11px] font-bold" aria-label="Select file for Daily Time Record">Select File</Button>
               </div>
-              <div className="flex justify-end pt-2 border-t border-zinc-100 dark:border-zinc-800">
-                <Button id="btn-submit-dtr" icon={<Send size={14} />}>Submit Monthly DTR</Button>
+              <div className="flex justify-end pt-2 border-t border-zinc-200/80 dark:border-zinc-800/80">
+                <Button variant="primary" id="btn-submit-dtr" className="h-8 text-[11px] font-bold" icon={<Send size={13} />}>
+                  Submit Monthly DTR
+                </Button>
               </div>
             </div>
           </Card>
           <Card title="Submission History">
-            <div className="space-y-1">
+            <div className="space-y-2.5">
               {history.map((item, i) => (
-                <div key={i} className="p-3 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors space-y-2">
-                  <div className="flex justify-between items-start">
+                <div key={i} className="bg-zinc-50/80 dark:bg-zinc-900/50 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-3 space-y-2">
+                  <div className="flex justify-between items-start gap-2">
                     <div>
-                      <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{item.period}</p>
-                      <p className="text-[11px] text-zinc-400 dark:text-zinc-500 mt-0.5">{item.date}</p>
+                      <p className="text-xs font-bold text-zinc-900 dark:text-zinc-100">{item.period}</p>
+                      <p className="text-[10px] text-zinc-400 dark:text-zinc-500 font-medium mt-0.5">{item.date}</p>
                     </div>
                     <Badge variant={item.status === 'Approved' ? 'success' : item.status === 'Returned' ? 'error' : 'warning'}>{item.status}</Badge>
                   </div>
-                  <div className={cn("flex items-start gap-2 p-2.5 rounded-lg text-xs", item.status === 'Returned' ? "bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700" : "bg-zinc-50 dark:bg-zinc-800/50")}>
-                    <MessageSquare size={12} className="text-zinc-400 shrink-0 mt-0.5" />
-                    <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed">{item.feedback}</p>
+                  <div className={cn(
+                    "flex items-start gap-2 p-2 rounded-lg text-xs border transition-all",
+                    item.status === 'Returned'
+                      ? "bg-amber-500/10 border-amber-500/30 text-amber-950 dark:text-amber-200 border-l-3 border-l-amber-500"
+                      : "bg-white dark:bg-zinc-950 border-zinc-200/80 dark:border-zinc-800/80 text-zinc-600 dark:text-zinc-400"
+                  )}>
+                    <MessageSquare size={13} className={cn("shrink-0 mt-0.5", item.status === 'Returned' ? "text-amber-600" : "text-zinc-400")} />
+                    <p className="leading-relaxed text-[11px]">{item.feedback}</p>
                   </div>
-                  {item.status === 'Returned' && <Button variant="primary" size="sm" className="w-full" icon={<FileUp size={14} />}>Upload Fix</Button>}
+                  {item.status === 'Returned' && (
+                    <Button variant="primary" size="sm" className="w-full h-8 text-[11px] font-bold justify-center" icon={<FileUp size={13} />}>
+                      Upload Fix
+                    </Button>
+                  )}
                 </div>
               ))}
             </div>
