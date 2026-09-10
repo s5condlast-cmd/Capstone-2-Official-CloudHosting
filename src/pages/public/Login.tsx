@@ -850,7 +850,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
         <div className="w-full bg-white dark:bg-[#1f1f1f] shadow-[0_2px_6px_rgba(0,0,0,0.2)] dark:shadow-[0_4px_16px_rgba(0,0,0,0.5)] border border-neutral-200/90 dark:border-neutral-800/80 px-[44px] py-[40px] rounded-none relative">
           
           {/* Official Microsoft 4-Color Logo */}
-          <div className="mb-4 sm:mb-5 flex items-center gap-2.5">
+          <div className="mb-3.5 flex items-center gap-2.5">
             {/* Authentic Microsoft 4-Square Logo */}
             <div className="grid grid-cols-2 gap-[2px] w-[21px] h-[21px] shrink-0">
               <div className="bg-[#f25022] w-full h-full" />
@@ -875,11 +875,11 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.18 }}
               >
-                <h1 className="text-2xl font-semibold text-[#1b1b1b] dark:text-[#f3f3f3] tracking-tight mb-4">
+                <h1 className="text-2xl font-semibold text-[#1b1b1b] dark:text-[#f3f3f3] tracking-tight mb-3">
                   Sign in
                 </h1>
 
-                <form onSubmit={handleUsernameNext} noValidate className="space-y-4">
+                <form onSubmit={handleUsernameNext} noValidate>
                   <div>
                     {signInError && (
                       <div className="text-[#e81123] text-[13.5px] sm:text-[14px] leading-relaxed tracking-[0.015em] font-normal pt-0.5 pb-0.5 mb-1.5">
@@ -904,7 +904,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                     />
                   </div>
 
-                  <div className="pt-2">
+                  <div className="mt-3.5">
                     <Link
                       to="/forgot-password"
                       style={{ fontWeight: 400 }}
@@ -914,7 +914,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                     </Link>
                   </div>
 
-                  <div className="flex justify-end gap-1.5 pt-6">
+                  <div className="flex justify-end gap-1.5 mt-8">
                     <button
                       type="button"
                       onClick={() => navigate('/')}
@@ -952,7 +952,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                     setSignInError('');
                   }}
                   style={{ fontWeight: 400 }}
-                  className="flex items-center gap-2 text-[13.5px] font-normal text-neutral-600 dark:text-neutral-300 hover:text-[#0067b8] dark:hover:text-[#4da3ff] mb-4 cursor-pointer group transition-colors"
+                  className="flex items-center gap-2 text-[13.5px] font-normal text-neutral-600 dark:text-neutral-300 hover:text-[#0067b8] dark:hover:text-[#4da3ff] mb-3 cursor-pointer group transition-colors"
                 >
                   <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform shrink-0 text-neutral-500 dark:text-neutral-400 stroke-[1.75]" />
                   <span style={{ fontWeight: 400 }} className="truncate max-w-[340px] font-normal tracking-normal">
@@ -960,11 +960,11 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                   </span>
                 </button>
 
-                <h1 className="text-2xl font-semibold text-[#1b1b1b] dark:text-[#f3f3f3] tracking-tight mb-4">
+                <h1 className="text-2xl font-semibold text-[#1b1b1b] dark:text-[#f3f3f3] tracking-tight mb-3">
                   Enter password
                 </h1>
 
-                <form onSubmit={handlePasswordSubmit} className="space-y-4">
+                <form onSubmit={handlePasswordSubmit}>
                   <div>
                     {signInError && (
                       <div className="text-[#e81123] text-[13.5px] sm:text-[14px] leading-relaxed tracking-[0.015em] font-normal pt-0.5 pb-0.5 mb-1.5">
@@ -990,7 +990,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                     />
                   </div>
 
-                  <div className="pt-2">
+                  <div className="mt-3.5">
                     <Link
                       to="/forgot-password"
                       style={{ fontWeight: 400 }}
@@ -1000,7 +1000,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                     </Link>
                   </div>
 
-                  <div className="flex justify-end pt-4">
+                  <div className="flex justify-end mt-8">
                     <button
                       type="submit"
                       disabled={isSubmitting}
