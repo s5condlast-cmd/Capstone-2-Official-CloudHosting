@@ -3,6 +3,7 @@ import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
   Key,
+  KeyRound,
   ShieldCheck,
   CheckCircle2,
   AlertCircle,
@@ -549,8 +550,25 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
     const trimmed = emailOrUser.trim();
     if (!trimmed) {
-      setSignInError('Enter a valid username, student ID, or email address.');
+      setSignInError('Enter a valid email address or phone number.');
       return;
+    }
+
+    // Format validation: if user mis-inputs or enters an invalid email format
+    const isEmailAttempt = trimmed.includes('@');
+    if (isEmailAttempt) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[a-zA-Z0-9._-]{2,}$/;
+      if (!emailRegex.test(trimmed)) {
+        setSignInError('Enter a valid email address or phone number.');
+        return;
+      }
+    } else {
+      // Must be a valid phone number, student ID, or recognized username
+      const isValidFormat = /^[a-zA-Z0-9+_.-]{2,}$/.test(trimmed);
+      if (!isValidFormat) {
+        setSignInError('Enter a valid email address or phone number.');
+        return;
+      }
     }
 
     setSignInStep('password');
@@ -566,83 +584,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
       const lower = emailOrUser.toLowerCase().trim();
 
       // 1. Authenticate through the official backend API
-      let user: any = null;
-      try {
-        user = await login(emailOrUser, password);
-      } catch (loginErr: any) {
-        // If account is suspended or removed, do not bypass: display official server message
-        if (
-          loginErr.message?.toLowerCase().includes('suspended') ||
-          loginErr.message?.toLowerCase().includes('removed')
-        ) {
-          throw loginErr;
-        }
-
-        // Offline / network fallback for quick demo evaluation if server cannot be reached
-        const isJohnDwayneAdmin =
-          password === '123' && lower === 'johndwayneguaniso.05242004@gmail.com';
-
-        const isDemoRole =
-          password === '123' &&
-          (lower === 'admin@practicum.edu' ||
-            lower === 'adviser' ||
-            lower === 'adviser@practicum.edu' ||
-            lower === 'student' ||
-            lower === 'student@practicum.edu' ||
-            lower === '02000249822' ||
-            lower === 'supervisor' ||
-            lower === 'supervisor@practicum.edu');
-
-        const targetCleanKey = lower.replace(/[^a-zA-Z0-9]/g, '');
-        const isPwdChangedLocally = localStorage.getItem(`pwd_changed_${targetCleanKey}`) === 'true';
-        const isMfaEnrolledLocally = localStorage.getItem(`mfa_enrolled_${targetCleanKey}`) === 'true';
-
-        if (isJohnDwayneAdmin) {
-          user = {
-            id: '44e3adc7-7b59-423e-a746-a8a055882458',
-            name: 'John Dwayne Guaniso',
-            username: 'johndwayneguaniso.05242004',
-            role: 'admin',
-            email: 'johndwayneguaniso.05242004@gmail.com',
-            department: 'System Administration',
-            contactNumber: '09171234589',
-            requiresPasswordChange: !isPwdChangedLocally,
-            mfaEnrolled: isMfaEnrolledLocally,
-          };
-        } else if (isDemoRole) {
-          let detectedRole: Role = 'student';
-          let displayName = 'John Dwayne B. Guaniso';
-          let seedId = 'e5555555-5555-4555-8555-555555555555';
-          if (lower.startsWith('admin')) {
-            detectedRole = 'admin';
-            displayName = 'John Dwayne Guaniso';
-            seedId = '44e3adc7-7b59-423e-a746-a8a055882458';
-          } else if (lower.startsWith('adviser')) {
-            detectedRole = 'adviser';
-            displayName = 'Jiro';
-            seedId = 'a3333333-3333-4333-8333-333333333333';
-          } else if (lower.startsWith('supervisor')) {
-            detectedRole = 'supervisor';
-            displayName = 'Kerin';
-            seedId = 'b4444444-4444-4444-8444-444444444444';
-          }
-
-          const rolePrefix = detectedRole;
-          user = {
-            id: seedId,
-            name: displayName,
-            username: rolePrefix,
-            role: detectedRole,
-            email: `${rolePrefix}@practicum.edu`,
-            studentId: detectedRole === 'student' ? '02000249822' : undefined,
-            contactNumber: '09171234589',
-            requiresPasswordChange: false,
-            mfaEnrolled: true,
-          };
-        } else {
-          throw loginErr;
-        }
-      }
+      const user = await login(emailOrUser, password);
 
       if (user) {
         setPendingUser(user);
@@ -696,6 +638,11 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
     setRegError('');
 
     const trimmedInput = regEmail.toLowerCase().trim();
+    if (!trimmedInput) {
+      setRegError('Enter a valid email address or phone number.');
+      return;
+    }
+
     const normalized = trimmedInput.includes('@') ? trimmedInput : `${trimmedInput}@practicum.edu`;
     const isDomainValid =
       normalized.endsWith('@marikina.sti.edu.ph') ||
@@ -716,9 +663,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
       normalized.includes('@');
 
     if (!isDomainValid) {
-      setRegError(
-        'Please enter a valid student ID, username, or institutional email address.'
-      );
+      setRegError('Enter a valid email address or phone number.');
       return;
     }
 
@@ -898,22 +843,25 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
   return (
     <div className="min-h-screen bg-[#f2f4f8] dark:bg-[#121212] flex flex-col justify-between items-center font-sans selection:bg-[#0067b8] selection:text-white relative">
-      <div className="w-full flex-1 flex flex-col items-center justify-center max-w-[450px] px-4 py-8 my-auto">
+      <div
+        style={{ fontFamily: '"Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", sans-serif' }}
+        className="w-full flex-1 flex flex-col items-center justify-center max-w-[470px] px-4 py-8 my-auto"
+      >
         {/* ════════════════════════════════════════════════
              MAIN MICROSOFT SIGN-IN CARD
             ════════════════════════════════════════════════ */}
-        <div className="w-full bg-white dark:bg-[#1f1f1f] shadow-[0_2px_16px_rgba(0,0,0,0.08)] dark:shadow-[0_2px_16px_rgba(0,0,0,0.5)] border border-neutral-200/90 dark:border-neutral-800 px-8 sm:px-10 py-7 sm:py-8 rounded-xs relative">
+        <div className="w-full bg-white dark:bg-[#1f1f1f] shadow-[0_2px_6px_rgba(0,0,0,0.2)] dark:shadow-[0_4px_16px_rgba(0,0,0,0.5)] border border-neutral-200/90 dark:border-neutral-800/80 px-[44px] py-[42px] rounded-none relative">
           
           {/* Official Microsoft 4-Color Logo */}
-          <div className="mb-4 sm:mb-5 flex items-center gap-2.5">
+          <div className="mb-5 flex items-center gap-3">
             {/* Authentic Microsoft 4-Square Logo */}
-            <div className="grid grid-cols-2 gap-[2px] w-[21px] h-[21px] shrink-0">
+            <div className="grid grid-cols-2 gap-[2.5px] w-[24px] h-[24px] shrink-0">
               <div className="bg-[#f25022] w-full h-full" />
               <div className="bg-[#7fba00] w-full h-full" />
               <div className="bg-[#00a4ef] w-full h-full" />
               <div className="bg-[#ffb900] w-full h-full" />
             </div>
-            <span className="text-[#737373] dark:text-[#a6a6a6] text-[17px] font-semibold tracking-tight">
+            <span className="text-[#737373] dark:text-[#a6a6a6] text-[19px] font-semibold tracking-tight">
               Microsoft
             </span>
           </div>
@@ -934,7 +882,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                   Sign in
                 </h1>
 
-                <form onSubmit={handleUsernameNext} noValidate className="space-y-4">
+                <form onSubmit={handleUsernameNext} noValidate>
                   <div>
                     {signInError && (
                       <div className="text-[#e81123] text-[13.5px] sm:text-[14px] leading-relaxed tracking-[0.015em] font-normal pt-0.5 pb-0.5 mb-1.5">
@@ -943,23 +891,23 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                     )}
                     <input
                       type="text"
-                      placeholder="Email, username, or student ID"
+                      placeholder="Email or phone"
                       value={emailOrUser}
                       onChange={(e) => {
                         setEmailOrUser(e.target.value);
                         setSignInError('');
                       }}
                       className={cn(
-                        'w-full text-[15px] pb-2 pt-0.5 bg-transparent text-[#1b1b1b] dark:text-white placeholder:text-[#767676] dark:placeholder:text-[#999] outline-none transition-all rounded-none',
+                        'w-full text-[15px] px-0 pt-1 pb-1.5 bg-transparent text-[#1b1b1b] dark:text-white placeholder:text-[#666666] dark:placeholder:text-[#8a8a8a] outline-none transition-all rounded-none',
                         signInError
-                          ? 'border-b border-[#e81123] focus:border-[#e81123] focus:border-b-2'
-                          : 'border-b border-[#606060] dark:border-[#8a8a8a] focus:border-[#0067b8] focus:border-b-2'
+                          ? 'border-b border-[#e81123] focus:border-[#e81123]'
+                          : 'border-b border-[#606060] dark:border-[#8a8a8a] focus:border-[#0067b8]'
                       )}
                       autoFocus
                     />
                   </div>
 
-                  <div className="pt-2">
+                  <div className="mt-4">
                     <Link
                       to="/forgot-password"
                       style={{ fontWeight: 400 }}
@@ -969,7 +917,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                     </Link>
                   </div>
 
-                  <div className="flex justify-end pt-4">
+                  <div className="flex justify-end mt-[60px]">
                     <button
                       type="submit"
                       className="bg-[#0067b8] hover:bg-[#005da6] active:bg-[#005293] text-white text-[15px] font-normal px-8 py-1.5 min-w-[108px] rounded-[2px] transition-colors cursor-pointer shadow-2xs"
@@ -1000,7 +948,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                     setSignInError('');
                   }}
                   style={{ fontWeight: 400 }}
-                  className="flex items-center gap-2 text-[13.5px] font-normal text-neutral-600 dark:text-neutral-300 hover:text-[#0067b8] dark:hover:text-[#4da3ff] mb-4 cursor-pointer group transition-colors"
+                  className="flex items-center gap-2 text-[13.5px] font-normal text-neutral-600 dark:text-neutral-300 hover:text-[#0067b8] dark:hover:text-[#4da3ff] mb-3 cursor-pointer group transition-colors"
                 >
                   <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform shrink-0 text-neutral-500 dark:text-neutral-400 stroke-[1.75]" />
                   <span style={{ fontWeight: 400 }} className="truncate max-w-[340px] font-normal tracking-normal">
@@ -1012,7 +960,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                   Enter password
                 </h1>
 
-                <form onSubmit={handlePasswordSubmit} className="space-y-4">
+                <form onSubmit={handlePasswordSubmit}>
                   <div>
                     {signInError && (
                       <div className="text-[#e81123] text-[13.5px] sm:text-[14px] leading-relaxed tracking-[0.015em] font-normal pt-0.5 pb-0.5 mb-1.5">
@@ -1028,17 +976,17 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                         setSignInError('');
                       }}
                       className={cn(
-                        'w-full text-[15px] pb-2 pt-0.5 bg-transparent text-[#1b1b1b] dark:text-white placeholder:text-[#767676] dark:placeholder:text-[#999] outline-none transition-all rounded-none',
+                        'w-full text-[15px] px-0 pt-1 pb-1.5 bg-transparent text-[#1b1b1b] dark:text-white placeholder:text-[#666666] dark:placeholder:text-[#8a8a8a] outline-none transition-all rounded-none',
                         signInError
-                          ? 'border-b border-[#e81123] focus:border-[#e81123] focus:border-b-2'
-                          : 'border-b border-[#606060] dark:border-[#8a8a8a] focus:border-[#0067b8] focus:border-b-2'
+                          ? 'border-b border-[#e81123] focus:border-[#e81123]'
+                          : 'border-b border-[#606060] dark:border-[#8a8a8a] focus:border-[#0067b8]'
                       )}
                       required
                       autoFocus
                     />
                   </div>
 
-                  <div className="pt-2">
+                  <div className="mt-4">
                     <Link
                       to="/forgot-password"
                       style={{ fontWeight: 400 }}
@@ -1048,7 +996,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                     </Link>
                   </div>
 
-                  <div className="flex justify-end pt-4">
+                  <div className="flex justify-end mt-[60px]">
                     <button
                       type="submit"
                       disabled={isSubmitting}
@@ -1453,7 +1401,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                           setGoogleAuthError('');
                         }}
                         className={cn(
-                          'w-full text-[15px] pb-2 pt-0.5 bg-transparent text-[#1b1b1b] dark:text-white placeholder:text-[#767676] dark:placeholder:text-[#999] outline-none transition-all rounded-none',
+                          'w-full text-[15px] px-0 pt-1 pb-1 bg-transparent text-[#1b1b1b] dark:text-white placeholder:text-[#767676] dark:placeholder:text-[#999] outline-none transition-all rounded-none',
                           googleAuthError
                             ? 'border-b border-[#e81123] focus:border-[#e81123] focus:border-b-2'
                             : 'border-b border-[#606060] dark:border-[#8a8a8a] focus:border-[#0067b8] focus:border-b-2'
@@ -1554,7 +1502,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                       placeholder="Current password"
                       required
                       autoFocus
-                      className="w-full text-[15px] border-b border-neutral-400 dark:border-neutral-600 focus:border-[#0067b8] dark:focus:border-[#4da3ff] outline-none pb-2 pt-1 bg-transparent text-[#1b1b1b] dark:text-[#f3f3f3] placeholder-neutral-500 rounded-none transition-colors"
+                      className="w-full text-[15px] border-b border-neutral-400 dark:border-neutral-600 focus:border-[#0067b8] dark:focus:border-[#4da3ff] outline-none px-0 pt-1 pb-1 bg-transparent text-[#1b1b1b] dark:text-[#f3f3f3] placeholder-neutral-500 rounded-none transition-colors"
                     />
                   </div>
 
@@ -1571,7 +1519,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                       }}
                       placeholder="New password (min. 6 characters)"
                       required
-                      className="w-full text-[15px] border-b border-neutral-400 dark:border-neutral-600 focus:border-[#0067b8] dark:focus:border-[#4da3ff] outline-none pb-2 pt-1 bg-transparent text-[#1b1b1b] dark:text-[#f3f3f3] placeholder-neutral-500 rounded-none transition-colors"
+                      className="w-full text-[15px] border-b border-neutral-400 dark:border-neutral-600 focus:border-[#0067b8] dark:focus:border-[#4da3ff] outline-none px-0 pt-1 pb-1 bg-transparent text-[#1b1b1b] dark:text-[#f3f3f3] placeholder-neutral-500 rounded-none transition-colors"
                     />
                   </div>
 
@@ -1588,7 +1536,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                       }}
                       placeholder="Confirm new password"
                       required
-                      className="w-full text-[15px] border-b border-neutral-400 dark:border-neutral-600 focus:border-[#0067b8] dark:focus:border-[#4da3ff] outline-none pb-2 pt-1 bg-transparent text-[#1b1b1b] dark:text-[#f3f3f3] placeholder-neutral-500 rounded-none transition-colors"
+                      className="w-full text-[15px] border-b border-neutral-400 dark:border-neutral-600 focus:border-[#0067b8] dark:focus:border-[#4da3ff] outline-none px-0 pt-1 pb-1 bg-transparent text-[#1b1b1b] dark:text-[#f3f3f3] placeholder-neutral-500 rounded-none transition-colors"
                     />
                   </div>
 
@@ -1762,7 +1710,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                         setRegEmail(e.target.value);
                         setRegError('');
                       }}
-                      className="w-full text-[15px] pb-1.5 border-b border-[#606060] dark:border-[#8a8a8a] bg-transparent text-[#1b1b1b] dark:text-white placeholder:text-[#767676] dark:placeholder:text-[#999] outline-none focus:border-[#0067b8] focus:border-b-2 transition-all rounded-none"
+                      className="w-full text-[15px] px-0 pt-1 pb-1 border-b border-[#606060] dark:border-[#8a8a8a] bg-transparent text-[#1b1b1b] dark:text-white placeholder:text-[#767676] dark:placeholder:text-[#999] outline-none focus:border-[#0067b8] focus:border-b-2 transition-all rounded-none"
                       required
                       autoFocus
                     />
@@ -1780,7 +1728,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                         setRegPassword(e.target.value);
                         setRegError('');
                       }}
-                      className="w-full text-[15px] pb-1.5 border-b border-[#606060] dark:border-[#8a8a8a] bg-transparent text-[#1b1b1b] dark:text-white placeholder:text-[#767676] dark:placeholder:text-[#999] outline-none focus:border-[#0067b8] focus:border-b-2 transition-all rounded-none"
+                      className="w-full text-[15px] px-0 pt-1 pb-1 border-b border-[#606060] dark:border-[#8a8a8a] bg-transparent text-[#1b1b1b] dark:text-white placeholder:text-[#767676] dark:placeholder:text-[#999] outline-none focus:border-[#0067b8] focus:border-b-2 transition-all rounded-none"
                       required
                     />
                   </div>
@@ -1797,7 +1745,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                         setRegConfirmPassword(e.target.value);
                         setRegError('');
                       }}
-                      className="w-full text-[15px] pb-1.5 border-b border-[#606060] dark:border-[#8a8a8a] bg-transparent text-[#1b1b1b] dark:text-white placeholder:text-[#767676] dark:placeholder:text-[#999] outline-none focus:border-[#0067b8] focus:border-b-2 transition-all rounded-none"
+                      className="w-full text-[15px] px-0 pt-1 pb-1 border-b border-[#606060] dark:border-[#8a8a8a] bg-transparent text-[#1b1b1b] dark:text-white placeholder:text-[#767676] dark:placeholder:text-[#999] outline-none focus:border-[#0067b8] focus:border-b-2 transition-all rounded-none"
                       required
                     />
                   </div>
@@ -2039,17 +1987,15 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
         {/* ════════════════════════════════════════════════
              AUTHENTIC MICROSOFT "SIGN-IN OPTIONS" CARD
             ════════════════════════════════════════════════ */}
-        <div className="w-full mt-4">
-          <div className="bg-white dark:bg-[#1f1f1f] border border-neutral-200/90 dark:border-neutral-800 shadow-[0_2px_8px_rgba(0,0,0,0.04)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.3)] rounded-xs overflow-hidden">
+        <div className="w-full mt-5">
+          <div className="bg-white dark:bg-[#1f1f1f] border border-neutral-200/90 dark:border-neutral-800/80 shadow-[0_2px_6px_rgba(0,0,0,0.1)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.3)] rounded-none overflow-hidden">
             <button
               type="button"
               onClick={() => setShowSignInOptions((prev) => !prev)}
-              className="w-full px-8 py-3.5 flex items-center gap-3 text-[14px] text-[#1b1b1b] dark:text-[#f3f3f3] hover:bg-neutral-50 dark:hover:bg-[#282828] transition-colors cursor-pointer text-left"
+              className="w-full h-[48px] px-[44px] flex items-center gap-3.5 text-[15px] text-[#1b1b1b] dark:text-[#f3f3f3] hover:bg-neutral-50 dark:hover:bg-[#282828] transition-colors cursor-pointer text-left"
             >
-              <div className="w-8 h-8 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center text-[#505050] dark:text-[#b3b3b3] shrink-0">
-                <Key size={16} />
-              </div>
-              <span className="font-normal">Sign-in options</span>
+              <KeyRound size={20} className="text-[#1b1b1b] dark:text-[#f3f3f3] shrink-0 stroke-[1.5]" />
+              <span className="font-normal text-[15px]">Sign-in options</span>
             </button>
 
             <AnimatePresence>
@@ -2059,7 +2005,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                   animate={{ height: 'auto', opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
                   transition={{ duration: 0.2 }}
-                  className="px-8 pb-5 pt-1 border-t border-neutral-100 dark:border-neutral-800/80 space-y-4"
+                  className="px-[44px] pb-5 pt-1 border-t border-neutral-100 dark:border-neutral-800/80 space-y-4"
                 >
                   {/* Quick Defense Switcher */}
                   <div>

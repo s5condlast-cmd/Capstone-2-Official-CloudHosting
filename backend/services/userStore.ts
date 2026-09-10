@@ -1,6 +1,5 @@
-import fs from 'fs';
-import path from 'path';
 import crypto from 'crypto';
+import { supabase } from '../config/supabase';
 
 export interface ProvisionedUser {
   id: string;
@@ -17,25 +16,67 @@ export interface ProvisionedUser {
   updatedAt: string;
 }
 
-const isVercel = !!process.env.VERCEL;
-const DATA_DIR = isVercel
-  ? path.join('/tmp', 'data')
-  : path.resolve(process.cwd(), 'backend', 'data');
-const DATA_FILE = path.join(DATA_DIR, 'provisioned_users.json');
-const DELETED_USERS_FILE = path.join(DATA_DIR, 'deleted_users.json');
-
-// In-memory fallback cache to ensure zero crashes in serverless read-only environments
+// Pure in-memory cache for process lifecycle (100% serverless-safe, zero local disk files)
 let memoryUsersCache: ProvisionedUser[] | null = null;
 let memoryDeletedUsersCache: Set<string> | null = null;
 
-// Ensure data directory exists safely without crashing
-function ensureDirExists() {
+/**
+ * Persists a salted password hash to Supabase cloud storage (auth_otps table).
+ */
+export async function saveCloudPasswordHash(email: string, hash: string): Promise<void> {
   try {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
+    const normalized = email.toLowerCase().trim();
+    const { data: existing } = await supabase
+      .from('auth_otps')
+      .select('id')
+      .ilike('email', normalized)
+      .eq('purpose', 'password_reset')
+      .maybeSingle();
+
+    if (existing?.id) {
+      await supabase
+        .from('auth_otps')
+        .update({
+          verification_token: hash,
+          verified: true,
+          expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+        })
+        .eq('id', existing.id);
+    } else {
+      await supabase
+        .from('auth_otps')
+        .insert({
+          email: normalized,
+          otp_code: '000000',
+          purpose: 'password_reset',
+          verification_token: hash,
+          verified: true,
+          expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+        });
     }
   } catch (err) {
-    // Non-blocking in read-only filesystems (memory cache will serve requests)
+    console.warn('[Cloud Password Hash] Save notice:', err);
+  }
+}
+
+/**
+ * Fetches the authoritative salted password hash from Supabase cloud storage.
+ */
+export async function fetchCloudPasswordHash(email: string): Promise<string | null> {
+  try {
+    const normalized = email.toLowerCase().trim();
+    const { data } = await supabase
+      .from('auth_otps')
+      .select('verification_token')
+      .ilike('email', normalized)
+      .eq('purpose', 'password_reset')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    return data?.verification_token || null;
+  } catch {
+    return null;
   }
 }
 
@@ -123,29 +164,13 @@ export const DEFAULT_SYSTEM_SEEDS: ProvisionedUser[] = [
 ];
 
 /**
- * Loads the persistent set of deleted user identifiers.
+ * Loads the in-memory set of deleted user identifiers.
  */
 export function loadDeletedUsers(): Set<string> {
-  if (memoryDeletedUsersCache) {
-    return memoryDeletedUsersCache;
+  if (!memoryDeletedUsersCache) {
+    memoryDeletedUsersCache = new Set<string>();
   }
-
-  const set = new Set<string>();
-  try {
-    ensureDirExists();
-    if (fs.existsSync(DELETED_USERS_FILE)) {
-      const raw = fs.readFileSync(DELETED_USERS_FILE, 'utf8');
-      if (raw && raw.trim()) {
-        const list = JSON.parse(raw) as string[];
-        list.forEach((item) => set.add(item.toLowerCase().trim()));
-      }
-    }
-  } catch (err) {
-    // Non-blocking in serverless
-  }
-
-  memoryDeletedUsersCache = set;
-  return set;
+  return memoryDeletedUsersCache;
 }
 
 /**
@@ -161,16 +186,6 @@ export function recordDeletedUser(id: string, email: string): void {
       set.add(normEmail.split('@')[0]);
     }
   }
-  memoryDeletedUsersCache = set;
-
-  try {
-    ensureDirExists();
-    const tempFile = `${DELETED_USERS_FILE}.tmp.${Date.now()}`;
-    fs.writeFileSync(tempFile, JSON.stringify(Array.from(set), null, 2), 'utf8');
-    fs.renameSync(tempFile, DELETED_USERS_FILE);
-  } catch (err) {
-    // Non-blocking
-  }
 }
 
 /**
@@ -182,16 +197,6 @@ export function unmarkDeletedUser(identifier: string): void {
   set.delete(lower);
   if (lower.includes('@')) {
     set.delete(lower.split('@')[0]);
-  }
-  memoryDeletedUsersCache = set;
-
-  try {
-    ensureDirExists();
-    const tempFile = `${DELETED_USERS_FILE}.tmp.${Date.now()}`;
-    fs.writeFileSync(tempFile, JSON.stringify(Array.from(set), null, 2), 'utf8');
-    fs.renameSync(tempFile, DELETED_USERS_FILE);
-  } catch (err) {
-    // Non-blocking
   }
 }
 
@@ -206,97 +211,23 @@ export function isUserDeleted(identifier: string): boolean {
 }
 
 /**
- * Loads all provisioned users from the persistent JSON file or in-memory cache.
+ * Loads all provisioned users from the in-memory cache, seeded from institutional defaults.
  */
 export function loadAllUsers(): ProvisionedUser[] {
   if (memoryUsersCache && memoryUsersCache.length > 0) {
     return memoryUsersCache;
   }
 
-  let users: ProvisionedUser[] = [];
-
-  try {
-    ensureDirExists();
-    if (fs.existsSync(DATA_FILE)) {
-      const raw = fs.readFileSync(DATA_FILE, 'utf8');
-      if (raw && raw.trim()) {
-        users = JSON.parse(raw) as ProvisionedUser[];
-      }
-    }
-  } catch (err) {
-    // Graceful fallback to memory store if filesystem is unavailable
-  }
-
-  let hasMutated = false;
-  const deletedSet = loadDeletedUsers();
-
-  // Ensure default system seeds always exist unless explicitly deleted by an administrator
-  for (const seed of DEFAULT_SYSTEM_SEEDS) {
-    const isSeedDeleted =
-      seed.email.toLowerCase() !== 'johndwayneguaniso.05242004@gmail.com' &&
-      (deletedSet.has(seed.email.toLowerCase()) || deletedSet.has(seed.id.toLowerCase()));
-
-    if (isSeedDeleted) {
-      continue;
-    }
-
-    const existingIdx = users.findIndex(
-      (u) => u.email.toLowerCase() === seed.email.toLowerCase() || u.id === seed.id
-    );
-    if (existingIdx === -1) {
-      users.push(seed);
-      hasMutated = true;
-    } else if (seed.email.toLowerCase() === 'johndwayneguaniso.05242004@gmail.com') {
-      // Elevate official administrator
-      users[existingIdx].role = 'admin';
-      users[existingIdx].dept = 'System Administration';
-      users[existingIdx].status = 'Active';
-      users[existingIdx].requiresPasswordChange = false;
-      users[existingIdx].mfaEnrolled = true;
-      hasMutated = true;
-    } else if (seed.email.toLowerCase() === 'adviser@practicum.edu') {
-      users[existingIdx].name = 'Jiro';
-      users[existingIdx].role = 'adviser';
-      users[existingIdx].requiresPasswordChange = false;
-      users[existingIdx].mfaEnrolled = true;
-      hasMutated = true;
-    } else if (seed.email.toLowerCase() === 'supervisor@practicum.edu') {
-      users[existingIdx].name = 'Kerin';
-      users[existingIdx].role = 'supervisor';
-      users[existingIdx].requiresPasswordChange = false;
-      users[existingIdx].mfaEnrolled = true;
-      hasMutated = true;
-    }
-  }
-
-  // Filter out any users that are in the deletedSet
-  users = users.filter((u) => {
-    if (u.email.toLowerCase() === 'johndwayneguaniso.05242004@gmail.com') return true;
-    return !deletedSet.has(u.email.toLowerCase()) && !deletedSet.has(u.id.toLowerCase());
-  });
-
+  const users: ProvisionedUser[] = DEFAULT_SYSTEM_SEEDS.map((seed) => ({ ...seed }));
   memoryUsersCache = users;
-  if (hasMutated) {
-    saveAllUsers(users);
-  }
   return users;
 }
 
 /**
- * Atomically writes provisioned users to the persistent JSON file and in-memory cache.
+ * Updates the in-memory provisioned users cache.
  */
 export function saveAllUsers(users: ProvisionedUser[]): void {
-  // Always update in-memory cache first
   memoryUsersCache = [...users];
-
-  try {
-    ensureDirExists();
-    const tempFile = `${DATA_FILE}.tmp.${Date.now()}`;
-    fs.writeFileSync(tempFile, JSON.stringify(users, null, 2), 'utf8');
-    fs.renameSync(tempFile, DATA_FILE);
-  } catch (err) {
-    // Non-blocking in serverless environments (in-memory store preserves state for the invocation)
-  }
 }
 
 /**
@@ -386,11 +317,16 @@ export function updateUserPassword(
   const targetIdx = users.findIndex((u) => u.id === user.id || u.email.toLowerCase() === user.email.toLowerCase());
   if (targetIdx < 0) return false;
 
-  users[targetIdx].passwordHash = hashPassword(newPassword);
+  const newHash = hashPassword(newPassword);
+  users[targetIdx].passwordHash = newHash;
   users[targetIdx].requiresPasswordChange = requiresPasswordChange;
   users[targetIdx].updatedAt = new Date().toISOString();
 
   saveAllUsers(users);
+
+  // Sync to Supabase Cloud
+  saveCloudPasswordHash(users[targetIdx].email, newHash).catch(() => {});
+
   return true;
 }
 
