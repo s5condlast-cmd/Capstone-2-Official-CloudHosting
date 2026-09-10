@@ -907,8 +907,7 @@ router.post('/auth/login', async (req: Request, res: Response) => {
  * Default Institutional Seed Users (Figure 25: Admin Accounts)
  */
 const defaultSeedUsers = [
-  { id: 'admin-main-001', name: 'John Dwayne Guaniso', role: 'Admin' as const, email: 'johndwayneguaniso.05242004@gmail.com', status: 'Active' as const, dept: 'System Administration' },
-  { id: 'admin-role-002', name: 'Administrator', role: 'Admin' as const, email: 'admin@practicum.edu', status: 'Active' as const, dept: 'System Administration' },
+  { id: '44e3adc7-7b59-423e-a746-a8a055882458', name: 'John Dwayne Guaniso', role: 'Admin' as const, email: 'johndwayneguaniso.05242004@gmail.com', status: 'Active' as const, dept: 'System Administration' },
   { id: 'adviser-role-003', name: 'Dr. Sarah Johnson', role: 'Adviser' as const, email: 'adviser@practicum.edu', status: 'Active' as const, dept: 'College of Computer Studies' },
   { id: 'supervisor-role-004', name: 'Engr. Paolo Reyes', role: 'Supervisor' as const, email: 'supervisor@practicum.edu', status: 'Active' as const, dept: 'InnoTech Labs' },
   { id: 'student-role-005', name: 'John Dwayne B. Guaniso', role: 'Student' as const, email: 'student@practicum.edu', status: 'Active' as const, dept: 'BSIT 402', studentId: '02000249822' },
