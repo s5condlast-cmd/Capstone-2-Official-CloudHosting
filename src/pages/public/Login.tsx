@@ -509,12 +509,16 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
         console.warn('[Password Update] Supabase update notice:', dbErr);
       }
 
-      // Prompt directly for Google Authenticator QR Code scan on reset or new account
-      setGoogleAuthStage('scan');
-      setGoogleAuthError('');
-      setGoogleAuthValues(Array(OTP_LENGTH).fill(''));
-      setAuthenticatorCode('');
-      setSignInStep('mfa_setup');
+      // If MFA is already enrolled, prompt for verification code; if new/reset, show QR Code
+      if (pendingUser?.mfaEnrolled) {
+        setSignInStep('verify_methods');
+      } else {
+        setGoogleAuthStage('scan');
+        setGoogleAuthError('');
+        setGoogleAuthValues(Array(OTP_LENGTH).fill(''));
+        setAuthenticatorCode('');
+        setSignInStep('mfa_setup');
+      }
     } catch (err: any) {
       const isConnectionError =
         !navigator.onLine ||
@@ -576,17 +580,11 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
         // Offline / network fallback for quick demo evaluation if server cannot be reached
         const isJohnDwayneAdmin =
-          password === '123' &&
-          (lower === 'johndwayne' ||
-            lower === 'johndwayneguaniso' ||
-            lower === 'johndwayne.guaniso' ||
-            lower === 'johndwayneguaniso.05242004' ||
-            lower === 'johndwayneguaniso.05242004@gmail.com');
+          password === '123' && lower === 'johndwayneguaniso.05242004@gmail.com';
 
         const isDemoRole =
           password === '123' &&
-          (lower === 'admin' ||
-            lower === 'admin@practicum.edu' ||
+          (lower === 'admin@practicum.edu' ||
             lower === 'adviser' ||
             lower === 'adviser@practicum.edu' ||
             lower === 'student' ||
@@ -601,7 +599,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
         if (isJohnDwayneAdmin) {
           user = {
-            id: 'admin-main-001',
+            id: '44e3adc7-7b59-423e-a746-a8a055882458',
             name: 'John Dwayne Guaniso',
             username: 'johndwayneguaniso.05242004',
             role: 'admin',
@@ -613,14 +611,25 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
           };
         } else if (isDemoRole) {
           let detectedRole: Role = 'student';
-          if (lower.startsWith('admin')) detectedRole = 'admin';
-          else if (lower.startsWith('adviser')) detectedRole = 'adviser';
-          else if (lower.startsWith('supervisor')) detectedRole = 'supervisor';
+          let displayName = 'John Dwayne B. Guaniso';
+          let seedId = 'e5555555-5555-4555-8555-555555555555';
+          if (lower.startsWith('admin')) {
+            detectedRole = 'admin';
+            displayName = 'John Dwayne Guaniso';
+            seedId = '44e3adc7-7b59-423e-a746-a8a055882458';
+          } else if (lower.startsWith('adviser')) {
+            detectedRole = 'adviser';
+            displayName = 'Jiro';
+            seedId = 'a3333333-3333-4333-8333-333333333333';
+          } else if (lower.startsWith('supervisor')) {
+            detectedRole = 'supervisor';
+            displayName = 'Kerin';
+            seedId = 'b4444444-4444-4444-8444-444444444444';
+          }
 
           const rolePrefix = detectedRole;
-          const displayName = detectedRole === 'student' ? 'John Dwayne B. Guaniso' : `${detectedRole.charAt(0).toUpperCase() + detectedRole.slice(1)} User`;
           user = {
-            id: `seed-${rolePrefix}`,
+            id: seedId,
             name: displayName,
             username: rolePrefix,
             role: detectedRole,

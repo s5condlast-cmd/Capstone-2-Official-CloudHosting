@@ -80,8 +80,15 @@ async function initUserStoreFromDatabase() {
             status: p.status || (p.is_activated === false ? 'Suspended' : 'Active'),
             passwordHash: hashPassword('123'),
             requiresPasswordChange: p.requires_password_change ?? false,
-            mfaEnrolled: p.mfa_enrolled ?? false,
+            mfaEnrolled: p.mfa_enrolled ?? true,
           });
+        } else {
+          existing.id = p.id;
+          existing.name = p.full_name || existing.name;
+          existing.role = (p.role?.toLowerCase() as any) || existing.role;
+          existing.requiresPasswordChange = p.requires_password_change ?? false;
+          existing.mfaEnrolled = p.mfa_enrolled ?? true;
+          existing.status = p.status || existing.status;
         }
       }
     }
@@ -808,16 +815,16 @@ router.post('/auth/login', async (req: Request, res: Response) => {
     // 3. Persistent credentials store check (dynamic verification, NO hardcoding)
     let userRecord = mappedUser || findUser(authEmail) || findUser(normalized);
 
-    // If not in persistent store yet, check official Supabase profiles
-    if (!userRecord) {
-      try {
-        const { data: dbProfile } = await supabase
-          .from('profiles')
-          .select('*')
-          .or(`email.ilike.${authEmail},email.ilike.${normalized}@%,student_id.eq.${normalized}`)
-          .maybeSingle();
+    // Check official Supabase profiles to ensure live cloud synchronization
+    try {
+      const { data: dbProfile } = await supabase
+        .from('profiles')
+        .select('*')
+        .or(`email.ilike.${authEmail},email.ilike.${normalized}@%,student_id.eq.${normalized}`)
+        .maybeSingle();
 
-        if (dbProfile) {
+      if (dbProfile) {
+        if (!userRecord) {
           const roleLower = (dbProfile.role ? dbProfile.role.toLowerCase() : 'student') as any;
           userRecord = upsertUser({
             id: dbProfile.id,
@@ -829,12 +836,18 @@ router.post('/auth/login', async (req: Request, res: Response) => {
             status: dbProfile.status || (dbProfile.is_activated === false ? 'Suspended' : 'Active'),
             passwordHash: hashPassword('123'),
             requiresPasswordChange: dbProfile.requires_password_change ?? false,
-            mfaEnrolled: dbProfile.mfa_enrolled ?? false,
+            mfaEnrolled: dbProfile.mfa_enrolled ?? true,
           });
+        } else {
+          // Authoritatively sync live Supabase profile state
+          userRecord.requiresPasswordChange = dbProfile.requires_password_change ?? false;
+          userRecord.mfaEnrolled = dbProfile.mfa_enrolled ?? true;
+          userRecord.role = (dbProfile.role?.toLowerCase() as any) || userRecord.role;
+          userRecord.name = dbProfile.full_name || userRecord.name;
         }
-      } catch (dbErr) {
-        console.warn('[Auth Login] Profiles check notice:', dbErr);
       }
+    } catch (dbErr) {
+      console.warn('[Auth Login] Profiles check notice:', dbErr);
     }
 
     // If still not found, check default institutional seed users
@@ -856,7 +869,7 @@ router.post('/auth/login', async (req: Request, res: Response) => {
           status: seedMatch.status,
           passwordHash: hashPassword('123'),
           requiresPasswordChange: false,
-          mfaEnrolled: false,
+          mfaEnrolled: true,
         });
       }
     }
@@ -908,9 +921,9 @@ router.post('/auth/login', async (req: Request, res: Response) => {
  */
 const defaultSeedUsers = [
   { id: '44e3adc7-7b59-423e-a746-a8a055882458', name: 'John Dwayne Guaniso', role: 'Admin' as const, email: 'johndwayneguaniso.05242004@gmail.com', status: 'Active' as const, dept: 'System Administration' },
-  { id: 'adviser-role-003', name: 'Dr. Sarah Johnson', role: 'Adviser' as const, email: 'adviser@practicum.edu', status: 'Active' as const, dept: 'College of Computer Studies' },
-  { id: 'supervisor-role-004', name: 'Engr. Paolo Reyes', role: 'Supervisor' as const, email: 'supervisor@practicum.edu', status: 'Active' as const, dept: 'InnoTech Labs' },
-  { id: 'student-role-005', name: 'John Dwayne B. Guaniso', role: 'Student' as const, email: 'student@practicum.edu', status: 'Active' as const, dept: 'BSIT 402', studentId: '02000249822' },
+  { id: 'a3333333-3333-4333-8333-333333333333', name: 'Jiro', role: 'Adviser' as const, email: 'adviser@practicum.edu', status: 'Active' as const, dept: 'College of Computer Studies' },
+  { id: 'b4444444-4444-4444-8444-444444444444', name: 'Kerin', role: 'Supervisor' as const, email: 'supervisor@practicum.edu', status: 'Active' as const, dept: 'InnoTech Labs' },
+  { id: 'e5555555-5555-4555-8555-555555555555', name: 'John Dwayne B. Guaniso', role: 'Student' as const, email: 'student@practicum.edu', status: 'Active' as const, dept: 'BSIT 402', studentId: '02000249822' },
   { id: '1', name: 'Alice Brown', role: 'Student' as const, email: 'alice.b@edu.ph', status: 'Active' as const, dept: '__BSIT 402_401__' },
   { id: '2', name: 'Dr. Sarah Johnson', role: 'Adviser' as const, email: 's.johnson@edu.ph', status: 'Active' as const, dept: 'BSIT 402' },
   { id: '3', name: 'Charlie Davis', role: 'Student' as const, email: 'c.davis@edu.ph', status: 'Active' as const, dept: '__BSIT 402_401__', resetRequested: true },
