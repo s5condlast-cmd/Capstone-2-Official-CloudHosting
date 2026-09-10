@@ -120,10 +120,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const loginWithDemo = useCallback((role: Role, username?: string) => {
     const defaultUsername = username || role;
     const seedInfo: Record<Role, { id: string; name: string; email?: string; dept: string; studentId?: string }> = {
-      student: { id: 'student-role-005', name: 'John Dwayne B. Guaniso', email: 'student@practicum.edu', dept: 'BSIT 402', studentId: '02000249822' },
+      student: { id: 'e5555555-5555-4555-8555-555555555555', name: 'John Dwayne B. Guaniso', email: 'student@practicum.edu', dept: 'BSIT 402', studentId: '02000249822' },
       admin: { id: '44e3adc7-7b59-423e-a746-a8a055882458', name: 'John Dwayne Guaniso', email: 'johndwayneguaniso.05242004@gmail.com', dept: 'System Administration' },
-      adviser: { id: 'adviser-role-003', name: 'Dr. Sarah Johnson', email: 'adviser@practicum.edu', dept: 'College of Computer Studies' },
-      supervisor: { id: 'supervisor-role-004', name: 'Engr. Paolo Reyes', email: 'supervisor@practicum.edu', dept: 'InnoTech Labs' },
+      adviser: { id: 'a3333333-3333-4333-8333-333333333333', name: 'Jiro', email: 'adviser@practicum.edu', dept: 'College of Computer Studies' },
+      supervisor: { id: 'b4444444-4444-4444-8444-444444444444', name: 'Kerin', email: 'supervisor@practicum.edu', dept: 'InnoTech Labs' },
     };
 
     const targetSeed = seedInfo[role] || {

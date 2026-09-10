@@ -68,7 +68,7 @@ export function verifyPassword(enteredPassword: string, storedHashOrPlain: strin
 
 export const DEFAULT_SYSTEM_SEEDS: ProvisionedUser[] = [
   {
-    id: 'admin-main-001',
+    id: '44e3adc7-7b59-423e-a746-a8a055882458',
     email: 'johndwayneguaniso.05242004@gmail.com',
     name: 'John Dwayne Guaniso',
     role: 'admin',
@@ -76,14 +76,14 @@ export const DEFAULT_SYSTEM_SEEDS: ProvisionedUser[] = [
     status: 'Active',
     passwordHash: hashPassword('123'),
     requiresPasswordChange: false,
-    mfaEnrolled: false,
+    mfaEnrolled: true,
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
   },
   {
-    id: 'adviser-role-003',
+    id: 'a3333333-3333-4333-8333-333333333333',
     email: 'adviser@practicum.edu',
-    name: 'Dr. Sarah Johnson',
+    name: 'Jiro',
     role: 'adviser',
     dept: 'College of Computer Studies',
     status: 'Active',
@@ -94,9 +94,9 @@ export const DEFAULT_SYSTEM_SEEDS: ProvisionedUser[] = [
     updatedAt: '2026-01-01T00:00:00.000Z',
   },
   {
-    id: 'supervisor-role-004',
+    id: 'b4444444-4444-4444-8444-444444444444',
     email: 'supervisor@practicum.edu',
-    name: 'Engr. Paolo Reyes',
+    name: 'Kerin',
     role: 'supervisor',
     dept: 'InnoTech Labs',
     status: 'Active',
@@ -107,7 +107,7 @@ export const DEFAULT_SYSTEM_SEEDS: ProvisionedUser[] = [
     updatedAt: '2026-01-01T00:00:00.000Z',
   },
   {
-    id: 'student-role-005',
+    id: 'e5555555-5555-4555-8555-555555555555',
     email: 'student@practicum.edu',
     name: 'John Dwayne B. Guaniso',
     role: 'student',
@@ -246,13 +246,25 @@ export function loadAllUsers(): ProvisionedUser[] {
     if (existingIdx === -1) {
       users.push(seed);
       hasMutated = true;
-    } else if (seed.email.toLowerCase() === 'johndwayneguaniso.05242004@gmail.com' && users[existingIdx].role !== 'admin') {
+    } else if (seed.email.toLowerCase() === 'johndwayneguaniso.05242004@gmail.com') {
       // Elevate official administrator
       users[existingIdx].role = 'admin';
       users[existingIdx].dept = 'System Administration';
       users[existingIdx].status = 'Active';
-      users[existingIdx].passwordHash = seed.passwordHash;
       users[existingIdx].requiresPasswordChange = false;
+      users[existingIdx].mfaEnrolled = true;
+      hasMutated = true;
+    } else if (seed.email.toLowerCase() === 'adviser@practicum.edu') {
+      users[existingIdx].name = 'Jiro';
+      users[existingIdx].role = 'adviser';
+      users[existingIdx].requiresPasswordChange = false;
+      users[existingIdx].mfaEnrolled = true;
+      hasMutated = true;
+    } else if (seed.email.toLowerCase() === 'supervisor@practicum.edu') {
+      users[existingIdx].name = 'Kerin';
+      users[existingIdx].role = 'supervisor';
+      users[existingIdx].requiresPasswordChange = false;
+      users[existingIdx].mfaEnrolled = true;
       hasMutated = true;
     }
   }
@@ -302,15 +314,7 @@ export function findUser(identifier: string): ProvisionedUser | undefined {
     const uId = u.id.toLowerCase();
     const uStudentId = u.studentId ? u.studentId.toLowerCase() : '';
 
-    const isJohnDwayneAlias =
-      uEmail === 'johndwayneguaniso.05242004@gmail.com' &&
-      (normalized === 'johndwayne' ||
-        normalized === 'johndwayneguaniso' ||
-        normalized === 'john.dwayne' ||
-        normalized === 'johndwayne.guaniso');
-
     return (
-      isJohnDwayneAlias ||
       uEmail === normalized ||
       uEmail === `${normalized}@practicum.edu` ||
       uEmail === `${normalized}@marikina.sti.edu.ph` ||
