@@ -86,62 +86,59 @@ const deleteIDBFile = async (key: string): Promise<void> => {
 };
 
 export const templateStorage = {
-  // Save the raw file to Supabase Storage AND local IndexedDB fallback
+  // Save the raw file to Backend API, Supabase Storage, AND local IndexedDB fallback
   async saveTemplateFile(id: string, file: File): Promise<void> {
     const buffer = await file.arrayBuffer();
     await saveIDBFile(id, buffer);
 
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('template_updated', { detail: { id } }));
+    // If backup key, also save to base key in IDB
+    if (id.endsWith('_pdf_backup')) {
+      const baseId = id.replace('_pdf_backup', '');
+      await saveIDBFile(baseId, buffer);
     }
 
-    /*
-    // Preserved Cloudinary Template Upload (Commented out for future redesign)
+    // Persist to Backend API so all users (Student & Admin) can view the file
     try {
       const formData = new FormData();
       formData.append('file', file);
-      const res = await fetch(`/api/cloudinary/upload?folder=practicum/templates&customId=${encodeURIComponent(id)}`, {
+      formData.append('id', id);
+      const res = await fetch('/api/templates/upload', {
         method: 'POST',
         body: formData,
       });
-      const data = await res.json();
       if (!res.ok) {
-        console.warn('Cloudinary template upload warning:', data.error);
+        console.warn('Backend template upload returned non-200:', res.status);
       }
     } catch (err) {
-      console.warn('Cloudinary unreachable, saved to local store:', err);
+      console.warn('Backend template upload notice (local cache active):', err);
     }
-    */
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('template_updated', { detail: { id } }));
+    }
   },
 
-  // Retrieve the raw file buffer from Cloudinary or local IndexedDB fallback
+  // Retrieve the raw file buffer from Backend API, local IndexedDB, or Supabase
   async getTemplateFile(id: string): Promise<ArrayBuffer | undefined> {
-    // Check local store first for instant load
+    // 1. Try Backend API first so latest admin uploads are shared across all users
+    try {
+      const res = await fetch(`/api/templates/${encodeURIComponent(id)}`);
+      if (res.ok) {
+        const buf = await res.arrayBuffer();
+        await saveIDBFile(id, buf);
+        return buf;
+      }
+    } catch (e) {
+      console.warn('Backend template fetch notice:', e);
+    }
+
+    // 2. Check local store fallback
     const localBuf = await getIDBFile(id);
     if (localBuf && localBuf.byteLength > 0) {
       return localBuf;
     }
 
-    /*
-    // Preserved Cloudinary Template Fetch (Commented out for future redesign)
-    try {
-      // Try fetching the Cloudinary URL from the backend
-      const res = await fetch(`/api/cloudinary/url?publicId=${encodeURIComponent('practicum/templates/' + id)}`);
-      if (res.ok) {
-        const { url } = await res.json();
-        const fileRes = await fetch(url);
-        if (fileRes.ok) {
-          const buf = await fileRes.arrayBuffer();
-          await saveIDBFile(id, buf);
-          return buf;
-        }
-      }
-    } catch (e) {
-      console.warn('Cloudinary fetch failed, trying Supabase fallback:', e);
-    }
-    */
-
-    // Legacy fallback: Supabase Storage
+    // 3. Legacy fallback: Supabase Storage
     try {
       const { data, error } = await supabase.storage
         .from('templates')
@@ -162,30 +159,34 @@ export const templateStorage = {
   // Retrieve the PDF backup for a template
   async getTemplatePdfBackup(id: string): Promise<ArrayBuffer | undefined> {
     const backupKey = `${id}_pdf_backup`;
+
+    // 1. Try Backend API first for the PDF backup
+    try {
+      const res = await fetch(`/api/templates/${encodeURIComponent(backupKey)}`);
+      if (res.ok) {
+        const buf = await res.arrayBuffer();
+        await saveIDBFile(backupKey, buf);
+        return buf;
+      }
+
+      // Also check if base id was uploaded as a PDF
+      const baseRes = await fetch(`/api/templates/${encodeURIComponent(id)}`);
+      if (baseRes.ok && baseRes.headers.get('content-type')?.includes('pdf')) {
+        const buf = await baseRes.arrayBuffer();
+        await saveIDBFile(backupKey, buf);
+        return buf;
+      }
+    } catch (e) {
+      console.warn('Backend PDF backup fetch notice:', e);
+    }
+
+    // 2. Check local store fallback
     const localBuf = await getIDBFile(backupKey);
     if (localBuf && localBuf.byteLength > 0) {
       return localBuf;
     }
 
-    /*
-    // Preserved Cloudinary PDF Backup Fetch (Commented out for future redesign)
-    try {
-      const res = await fetch(`/api/cloudinary/url?publicId=${encodeURIComponent('practicum/templates/' + backupKey)}`);
-      if (res.ok) {
-        const { url } = await res.json();
-        const fileRes = await fetch(url);
-        if (fileRes.ok) {
-          const buf = await fileRes.arrayBuffer();
-          await saveIDBFile(backupKey, buf);
-          return buf;
-        }
-      }
-    } catch (e) {
-      console.warn('Cloudinary fetch PDF backup failed, trying Supabase fallback:', e);
-    }
-    */
-
-    // Legacy fallback: Supabase Storage
+    // 3. Legacy fallback: Supabase Storage
     try {
       const { data, error } = await supabase.storage
         .from('templates')

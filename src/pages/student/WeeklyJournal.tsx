@@ -34,9 +34,9 @@ export const WeeklyJournal: React.FC = () => {
           <div className="flex-1 flex flex-col min-h-0">
             <DocumentWorkflow
               title={`Weekly Journal — ${milestones[activeTab]}`}
-              docUrl="/templates/FT-CRD-167-00 Weekly Journal Template.docx"
+              docUrl=""
               templateId="h5"
-              fields={templateFields[getTemplateFilename("/templates/FT-CRD-167-00 Weekly Journal Template.pdf")] || []}
+              fields={[]}
             />
           </div>
         </div>
