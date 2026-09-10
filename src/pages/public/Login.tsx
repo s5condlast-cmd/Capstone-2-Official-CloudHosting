@@ -853,15 +853,15 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
         <div className="w-full bg-white dark:bg-[#1f1f1f] shadow-[0_2px_6px_rgba(0,0,0,0.2)] dark:shadow-[0_4px_16px_rgba(0,0,0,0.5)] border border-neutral-200/90 dark:border-neutral-800/80 px-[44px] py-[42px] rounded-none relative">
           
           {/* Official Microsoft 4-Color Logo */}
-          <div className="mb-5 flex items-center gap-2.5">
+          <div className="mb-5 flex items-center gap-3">
             {/* Authentic Microsoft 4-Square Logo */}
-            <div className="grid grid-cols-2 gap-[2px] w-[21px] h-[21px] shrink-0">
+            <div className="grid grid-cols-2 gap-[2.5px] w-[24px] h-[24px] shrink-0">
               <div className="bg-[#f25022] w-full h-full" />
               <div className="bg-[#7fba00] w-full h-full" />
               <div className="bg-[#00a4ef] w-full h-full" />
               <div className="bg-[#ffb900] w-full h-full" />
             </div>
-            <span className="text-[#737373] dark:text-[#a6a6a6] text-[17px] font-semibold tracking-tight">
+            <span className="text-[#737373] dark:text-[#a6a6a6] text-[19px] font-semibold tracking-tight">
               Microsoft
             </span>
           </div>
