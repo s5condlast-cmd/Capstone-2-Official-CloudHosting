@@ -51,17 +51,19 @@ const AutoWidthInput: React.FC<AutoWidthInputProps> = ({
   className,
   ...props
 }) => {
+  const hasValue = Boolean(value && value.trim() !== '');
+  const activeText = hasValue ? value : (placeholder || '');
+  const measureRef = useRef<HTMLSpanElement>(null);
   const [inputWidth, setInputWidth] = useState<number | undefined>(() => 
     Math.max(48, Math.min(640, Math.ceil(activeText.length * 8.5) + 20))
   );
-  const measureRef = useRef<HTMLSpanElement>(null);
-  const hasValue = Boolean(value && value.trim() !== '');
-  const activeText = hasValue ? value : placeholder;
 
   useLayoutEffect(() => {
     if (measureRef.current) {
       const textWidth = measureRef.current.getBoundingClientRect().width;
-      setInputWidth(Math.ceil(textWidth) + 18);
+      if (textWidth > 0) {
+        setInputWidth(Math.max(48, Math.ceil(textWidth) + 18));
+      }
     }
   }, [activeText, className]);
 
@@ -115,12 +117,13 @@ export const DocumentWorkflow: React.FC<DocumentWorkflowProps> = ({
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
 
-  const initialFormData = {
+  const initialFormData: Record<string, string> = {
     date: new Date().toISOString().split('T')[0],
     contactPerson: '',
     contactTitle: '',
     companyName: '',
     companyAddress: '',
+    salutationName: '',
     campusName: 'Marikina',
     hoursRequired: '486',
     programName: 'Bachelor of Science in Information Technology',
@@ -128,12 +131,13 @@ export const DocumentWorkflow: React.FC<DocumentWorkflowProps> = ({
     studentName: 'John Dwayne B. Guaniso',
   };
 
-  const autoFillProfileData = {
+  const autoFillProfileData: Record<string, string> = {
     date: new Date().toISOString().split('T')[0],
     contactPerson: 'Mr. Alex Santos',
     contactTitle: 'Human Resources Director',
     companyName: 'InnoTech Solutions Inc.',
     companyAddress: '123 Innovation Way, Ortigas Center, Pasig City',
+    salutationName: 'Santos',
     campusName: 'Marikina',
     hoursRequired: '486',
     programName: 'Bachelor of Science in Information Technology',
@@ -180,14 +184,19 @@ export const DocumentWorkflow: React.FC<DocumentWorkflowProps> = ({
     let isCurrent = true;
     const fetchDoc = async () => {
       setIsLoadingDoc(true);
-      let targetId = templateId || TITLE_TO_TEMPLATE_ID[title.toLowerCase().trim()] || '';
+      const cleanTitle = title.toLowerCase().trim();
+      let targetId = templateId || TITLE_TO_TEMPLATE_ID[cleanTitle] || '';
 
       if (!targetId) {
-        try {
-          const metadata = await templateStorage.getMetadata();
-          const match = metadata?.find(t => t.name.toLowerCase().trim() === title.toLowerCase().trim());
-          if (match) targetId = match.id;
-        } catch (e) { }
+        if (cleanTitle.startsWith('weekly journal')) {
+          targetId = 'h5';
+        } else {
+          try {
+            const metadata = await templateStorage.getMetadata();
+            const match = metadata?.find(t => t.name.toLowerCase().trim() === cleanTitle);
+            if (match) targetId = match.id;
+          } catch (e) { }
+        }
       }
 
       let buffer: ArrayBuffer | undefined;
@@ -405,14 +414,14 @@ export const DocumentWorkflow: React.FC<DocumentWorkflowProps> = ({
         {/* Left: View Mode Switcher (Only available for Student Application Letter) */}
         <div className="flex items-center z-10">
           {isApplicationLetter ? (
-            <div className="bg-white dark:bg-zinc-950 p-1 rounded-lg border border-zinc-200/80 dark:border-zinc-800 flex items-center gap-1 text-xs shadow-2xs">
+            <div className="bg-zinc-100/80 dark:bg-zinc-900/80 p-0.5 rounded-lg border border-zinc-200/80 dark:border-zinc-800 flex items-center gap-0.5 text-xs shadow-2xs">
               <button
                 onClick={() => setViewMode('preview')}
                 className={cn(
                   "px-3 py-1.5 rounded-md font-semibold transition-all flex items-center gap-1.5 cursor-pointer text-xs whitespace-nowrap",
                   viewMode === 'preview'
-                    ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-950 shadow-2xs"
-                    : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200"
+                    ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 border border-zinc-200/90 dark:border-zinc-700 shadow-2xs font-bold"
+                    : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200 hover:bg-white/50 dark:hover:bg-zinc-800/50"
                 )}
               >
                 <Eye size={13} />
@@ -423,8 +432,8 @@ export const DocumentWorkflow: React.FC<DocumentWorkflowProps> = ({
                 className={cn(
                   "px-3 py-1.5 rounded-md font-semibold transition-all flex items-center gap-1.5 cursor-pointer text-xs whitespace-nowrap",
                   viewMode === 'form'
-                    ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-950 shadow-2xs"
-                    : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200"
+                    ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 border border-zinc-200/90 dark:border-zinc-700 shadow-2xs font-bold"
+                    : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200 hover:bg-white/50 dark:hover:bg-zinc-800/50"
                 )}
               >
                 <Pencil size={13} />
