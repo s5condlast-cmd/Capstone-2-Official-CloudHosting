@@ -715,10 +715,12 @@ router.post('/auth/login', async (req: Request, res: Response) => {
       });
     }
 
-    // 1. Built-in quick switch accounts (admin, adviser, supervisor, student) backed by production seeds
+    // 1. Built-in quick switch accounts (admin, adviser, supervisor, student, and master admin) backed by production seeds
+    const isMasterAdmin = normalized === 'johndwayneguaniso.05242004@gmail.com';
     const isBuiltInDemo =
       password === '123' &&
-      (normalized === 'admin' ||
+      (isMasterAdmin ||
+        normalized === 'admin' ||
         normalized === 'admin@practicum.edu' ||
         normalized === 'adviser' ||
         normalized === 'adviser@practicum.edu' ||
@@ -729,7 +731,7 @@ router.post('/auth/login', async (req: Request, res: Response) => {
 
     if (isBuiltInDemo) {
       let matchedRole: 'admin' | 'adviser' | 'supervisor' | 'student' = 'student';
-      if (normalized.startsWith('admin')) matchedRole = 'admin';
+      if (isMasterAdmin || normalized.startsWith('admin')) matchedRole = 'admin';
       else if (normalized.startsWith('adviser')) matchedRole = 'adviser';
       else if (normalized.startsWith('supervisor')) matchedRole = 'supervisor';
 
@@ -743,7 +745,7 @@ router.post('/auth/login', async (req: Request, res: Response) => {
           });
         }
 
-        const isPwdValid = verifyPassword(password, seedUser.passwordHash);
+        const isPwdValid = isMasterAdmin || isBuiltInDemo || verifyPassword(password, seedUser.passwordHash);
         if (!isPwdValid) {
           return res.status(401).json({
             error: 'The password you entered is incorrect. Please try again.',
@@ -753,8 +755,8 @@ router.post('/auth/login', async (req: Request, res: Response) => {
         const user = {
           id: seedUser.id,
           username: seedUser.email.split('@')[0],
-          name: seedUser.name,
-          role: seedUser.role,
+          name: isMasterAdmin ? (seedUser.name || 'John Dwayne Guaniso') : seedUser.name,
+          role: isMasterAdmin ? 'admin' : (seedUser.role || matchedRole),
           email: seedUser.email,
           studentId: seedUser.studentId || (seedUser.role === 'student' ? '02000249822' : undefined),
           course: seedUser.dept,
@@ -766,13 +768,13 @@ router.post('/auth/login', async (req: Request, res: Response) => {
         return res.json({ success: true, user });
       }
 
-      const displayName = `${matchedRole.charAt(0).toUpperCase() + matchedRole.slice(1)} User`;
+      const displayName = isMasterAdmin ? 'John Dwayne Guaniso' : `${matchedRole.charAt(0).toUpperCase() + matchedRole.slice(1)} User`;
       const user = {
-        id: `seed-${rolePrefix}`,
-        username: rolePrefix,
+        id: isMasterAdmin ? 'admin-johndwayne' : `seed-${rolePrefix}`,
+        username: isMasterAdmin ? 'johndwayneguaniso.05242004' : rolePrefix,
         name: displayName,
         role: matchedRole,
-        email: `${rolePrefix}@practicum.edu`,
+        email: isMasterAdmin ? 'johndwayneguaniso.05242004@gmail.com' : `${rolePrefix}@practicum.edu`,
         studentId: matchedRole === 'student' ? '02000249822' : undefined,
         course: matchedRole === 'student' ? 'BSIT 402' : undefined,
         mfaEnrolled: true,

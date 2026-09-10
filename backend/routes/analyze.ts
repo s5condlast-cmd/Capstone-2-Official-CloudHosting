@@ -1,6 +1,5 @@
 import { Router } from 'express';
 import { supabase } from '../config/supabase';
-import { extractTextFromPdfBuffer } from '../utils/pdfParser';
 import { analyzeDocumentText } from '../services/aiService';
 
 const router = Router();
@@ -29,8 +28,15 @@ router.post('/analyze', async (req, res) => {
 
     const fileBuffer = Buffer.from(await fileResponse.arrayBuffer());
 
-    // 3. Extract text from the PDF buffer
-    const docText = await extractTextFromPdfBuffer(fileBuffer);
+    // 3. Extract text from the PDF buffer via lazy dynamic import
+    let docText = '';
+    try {
+      const { extractTextFromPdfBuffer } = await import('../utils/pdfParser');
+      docText = await extractTextFromPdfBuffer(fileBuffer);
+    } catch (parseErr: any) {
+      console.warn('[Backend Route] PDF text extraction failed or native binary unavailable:', parseErr);
+      throw new Error(`PDF text extraction unavailable: ${parseErr?.message || 'Unsupported runtime environment'}`);
+    }
 
     // 4. Run AI analysis
     const findings = await analyzeDocumentText(docText, {
