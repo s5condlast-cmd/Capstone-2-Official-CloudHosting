@@ -843,14 +843,17 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
   return (
     <div className="min-h-screen bg-[#f2f4f8] dark:bg-[#121212] flex flex-col justify-between items-center font-sans selection:bg-[#0067b8] selection:text-white relative">
-      <div className="w-full flex-1 flex flex-col items-center justify-center max-w-[470px] px-4 py-8 my-auto">
+      <div
+        style={{ fontFamily: '"Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", sans-serif' }}
+        className="w-full flex-1 flex flex-col items-center justify-center max-w-[470px] px-4 py-8 my-auto"
+      >
         {/* ════════════════════════════════════════════════
              MAIN MICROSOFT SIGN-IN CARD
             ════════════════════════════════════════════════ */}
         <div className="w-full bg-white dark:bg-[#1f1f1f] shadow-[0_2px_6px_rgba(0,0,0,0.2)] dark:shadow-[0_4px_16px_rgba(0,0,0,0.5)] border border-neutral-200/90 dark:border-neutral-800/80 px-[44px] py-[40px] rounded-none relative">
           
           {/* Official Microsoft 4-Color Logo */}
-          <div className="mb-3.5 flex items-center gap-2.5">
+          <div className="mb-5 flex items-center gap-2.5">
             {/* Authentic Microsoft 4-Square Logo */}
             <div className="grid grid-cols-2 gap-[2px] w-[21px] h-[21px] shrink-0">
               <div className="bg-[#f25022] w-full h-full" />
@@ -875,7 +878,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.18 }}
               >
-                <h1 className="text-2xl font-semibold text-[#1b1b1b] dark:text-[#f3f3f3] tracking-tight mb-3">
+                <h1 className="text-2xl font-semibold text-[#1b1b1b] dark:text-[#f3f3f3] tracking-tight mb-4">
                   Sign in
                 </h1>
 
@@ -888,23 +891,23 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                     )}
                     <input
                       type="text"
-                      placeholder="Email, username, or student ID"
+                      placeholder="Email or phone"
                       value={emailOrUser}
                       onChange={(e) => {
                         setEmailOrUser(e.target.value);
                         setSignInError('');
                       }}
                       className={cn(
-                        'w-full text-[15px] px-0 pt-1 pb-1 bg-transparent text-[#1b1b1b] dark:text-white placeholder:text-[#767676] dark:placeholder:text-[#999] outline-none transition-all rounded-none',
+                        'w-full text-[15px] px-0 pt-1 pb-1.5 bg-transparent text-[#1b1b1b] dark:text-white placeholder:text-[#666666] dark:placeholder:text-[#8a8a8a] outline-none transition-all rounded-none',
                         signInError
-                          ? 'border-b border-[#e81123] focus:border-[#e81123] focus:border-b-2'
-                          : 'border-b border-[#606060] dark:border-[#8a8a8a] focus:border-[#0067b8] focus:border-b-2'
+                          ? 'border-b border-[#e81123] focus:border-[#e81123]'
+                          : 'border-b border-[#606060] dark:border-[#8a8a8a] focus:border-[#0067b8]'
                       )}
                       autoFocus
                     />
                   </div>
 
-                  <div className="mt-3.5">
+                  <div className="mt-4">
                     <Link
                       to="/forgot-password"
                       style={{ fontWeight: 400 }}
@@ -953,7 +956,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                   </span>
                 </button>
 
-                <h1 className="text-2xl font-semibold text-[#1b1b1b] dark:text-[#f3f3f3] tracking-tight mb-3">
+                <h1 className="text-2xl font-semibold text-[#1b1b1b] dark:text-[#f3f3f3] tracking-tight mb-4">
                   Enter password
                 </h1>
 
@@ -973,17 +976,17 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                         setSignInError('');
                       }}
                       className={cn(
-                        'w-full text-[15px] px-0 pt-1 pb-1 bg-transparent text-[#1b1b1b] dark:text-white placeholder:text-[#767676] dark:placeholder:text-[#999] outline-none transition-all rounded-none',
+                        'w-full text-[15px] px-0 pt-1 pb-1.5 bg-transparent text-[#1b1b1b] dark:text-white placeholder:text-[#666666] dark:placeholder:text-[#8a8a8a] outline-none transition-all rounded-none',
                         signInError
-                          ? 'border-b border-[#e81123] focus:border-[#e81123] focus:border-b-2'
-                          : 'border-b border-[#606060] dark:border-[#8a8a8a] focus:border-[#0067b8] focus:border-b-2'
+                          ? 'border-b border-[#e81123] focus:border-[#e81123]'
+                          : 'border-b border-[#606060] dark:border-[#8a8a8a] focus:border-[#0067b8]'
                       )}
                       required
                       autoFocus
                     />
                   </div>
 
-                  <div className="mt-3.5">
+                  <div className="mt-4">
                     <Link
                       to="/forgot-password"
                       style={{ fontWeight: 400 }}
