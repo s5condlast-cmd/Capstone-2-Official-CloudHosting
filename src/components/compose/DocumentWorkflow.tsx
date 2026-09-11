@@ -12,7 +12,8 @@ import {
   ZoomIn,
   ZoomOut,
   FileSpreadsheet,
-  CheckCircle2
+  CheckCircle2,
+  Send
 } from 'lucide-react';
 import { FormField } from '@/src/components/review/templateFields';
 import { documentGenerator } from '@/src/lib/documentGenerator';
@@ -36,6 +37,7 @@ interface DocumentWorkflowProps {
     activeField?: string
   }>;
   onSubmit?: () => void;
+  onDirectSubmit?: (file: File) => Promise<void>;
 }
 
 interface AutoWidthInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -105,7 +107,8 @@ export const DocumentWorkflow: React.FC<DocumentWorkflowProps> = ({
   templateId,
   fields,
   previewComponent: Preview,
-  onSubmit
+  onSubmit,
+  onDirectSubmit
 }) => {
   const isApplicationLetter = title.toLowerCase().includes('application letter');
   const [docBuffer, setDocBuffer] = useState<ArrayBuffer | null>(null);
@@ -115,6 +118,7 @@ export const DocumentWorkflow: React.FC<DocumentWorkflowProps> = ({
   const [zoomScale, setZoomScale] = useState<number>(1);
   const [isGeneratingDocx, setIsGeneratingDocx] = useState(false);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [isSubmittingFormat, setIsSubmittingFormat] = useState<'docx' | 'pdf' | null>(null);
   const [generationError, setGenerationError] = useState<string | null>(null);
 
   const initialFormData: Record<string, string> = {
@@ -390,6 +394,96 @@ export const DocumentWorkflow: React.FC<DocumentWorkflowProps> = ({
     setTimeout(() => {
       window.print();
     }, 100);
+  };
+
+  const handleDirectSubmit = async (format: 'docx' | 'pdf') => {
+    if (!onDirectSubmit) {
+      toast.error("Submission handler not attached.");
+      return;
+    }
+    setGenerationError(null);
+    setIsSubmittingFormat(format);
+    try {
+      if (format === 'docx') {
+        const container = previewRef.current || document;
+        const placeholders = container.querySelectorAll('.editable-placeholder');
+        const blankEdits: string[] = [];
+        const dateEdits: string[] = [];
+        const angleData: Record<string, string> = { ...formData };
+
+        placeholders.forEach((el) => {
+          const span = el as HTMLElement;
+          const blankIndex = span.getAttribute('data-blank-index');
+          const dateIndex = span.getAttribute('data-date-index');
+          const original = span.getAttribute('data-original');
+
+          if (blankIndex !== null) {
+            const idx = parseInt(blankIndex, 10);
+            blankEdits[idx] = formData.studentName || formData.signature || '';
+          } else if (dateIndex !== null) {
+            const idx = parseInt(dateIndex, 10);
+            dateEdits[idx] = formData.date || new Date().toISOString().split('T')[0];
+          } else if (original) {
+            const strippedKey = original.replace(/^<|>$/g, '');
+            if (formData[strippedKey]) {
+              angleData[strippedKey] = formData[strippedKey];
+            } else if (strippedKey.toLowerCase() === 'signature') {
+              angleData[strippedKey] = '';
+            }
+          }
+        });
+
+        const blob = await documentGenerator.generateDocx(
+          docUrl,
+          formData,
+          blankEdits,
+          angleData,
+          formData,
+          dateEdits.length > 0 ? dateEdits : [formData.date],
+          templateId,
+          title
+        );
+
+        const cleanTitle = title.replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '_');
+        const file = new File(
+          [blob],
+          `${cleanTitle}_Filled.docx`,
+          { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' }
+        );
+        await onDirectSubmit(file);
+      } else {
+        // PDF Format
+        let pdfBlob: Blob | null = null;
+        if (pdfBuffer) {
+          pdfBlob = new Blob([pdfBuffer], { type: 'application/pdf' });
+        } else if (templateId) {
+          try {
+            const backup = await templateStorage.getTemplatePdfBackup(templateId);
+            if (backup) {
+              pdfBlob = new Blob([backup], { type: 'application/pdf' });
+            }
+          } catch (e) {}
+        }
+
+        if (!pdfBlob) {
+          // Generate high quality PDF using jsPDF in documentGenerator
+          pdfBlob = await documentGenerator.generatePdf(title, formData);
+        }
+
+        const cleanTitle = title.replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '_');
+        const file = new File(
+          [pdfBlob],
+          `${cleanTitle}_Filled.pdf`,
+          { type: 'application/pdf' }
+        );
+        await onDirectSubmit(file);
+      }
+    } catch (err: any) {
+      console.error('Direct submission error:', err);
+      setGenerationError(err?.message || `Failed to submit ${format.toUpperCase()} to adviser.`);
+    } finally {
+      setIsSubmittingFormat(null);
+    }
   };
 
   return (
@@ -814,25 +908,52 @@ export const DocumentWorkflow: React.FC<DocumentWorkflowProps> = ({
           )}
         </div>
 
-        <div className="flex items-center gap-3 w-full sm:w-auto">
+        <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto justify-end">
           <Button
             variant="outline"
-            icon={<Printer size={16} />}
+            size="sm"
+            icon={<Printer size={15} />}
             onClick={handleDownloadPdf}
-            disabled={isGeneratingDocx || isGeneratingPdf}
-            className="flex-1 sm:flex-none"
+            disabled={isGeneratingDocx || isGeneratingPdf || isSubmittingFormat !== null}
+            className="flex-1 sm:flex-none text-xs font-semibold"
           >
             Print / Save PDF
           </Button>
           <Button
-            variant="primary"
-            icon={<FileText size={16} />}
+            variant="outline"
+            size="sm"
+            icon={<FileText size={15} />}
             onClick={handleDownloadDocx}
-            disabled={isGeneratingDocx || isGeneratingPdf}
-            className="flex-1 sm:flex-none"
+            disabled={isGeneratingDocx || isGeneratingPdf || isSubmittingFormat !== null}
+            className="flex-1 sm:flex-none text-xs font-semibold"
           >
-            {isGeneratingDocx ? 'Generating DOCX...' : 'Download Customized DOCX'}
+            {isGeneratingDocx ? 'Generating DOCX...' : 'Download DOCX'}
           </Button>
+
+          {onDirectSubmit && (
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                icon={<Send size={14} className="text-emerald-600 dark:text-emerald-400" />}
+                onClick={() => handleDirectSubmit('pdf')}
+                disabled={isGeneratingDocx || isGeneratingPdf || isSubmittingFormat !== null}
+                className="flex-1 sm:flex-none text-xs font-bold border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 text-emerald-700 dark:text-emerald-300 cursor-pointer"
+              >
+                {isSubmittingFormat === 'pdf' ? 'Submitting PDF...' : 'Submit PDF to Adviser'}
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                icon={<Send size={14} />}
+                onClick={() => handleDirectSubmit('docx')}
+                disabled={isGeneratingDocx || isGeneratingPdf || isSubmittingFormat !== null}
+                className="flex-1 sm:flex-none text-xs font-bold cursor-pointer"
+              >
+                {isSubmittingFormat === 'docx' ? 'Submitting DOCX...' : 'Submit DOCX to Adviser'}
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </div>

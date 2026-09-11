@@ -16,13 +16,17 @@ import {
   Users,
   ChevronDown,
   Cloud,
-  Lock
+  Lock,
+  Send,
+  FileText
 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import { AnimatePresence, motion } from 'motion/react';
 import { DocumentWorkflow } from '@/src/components/compose/DocumentWorkflow';
 import { templateFields, getTemplateFilename } from '@/src/components/review/templateFields';
 import { submissionStorage } from '@/src/lib/submissionStorage';
+import { documentGenerator } from '@/src/lib/documentGenerator';
+import { templateStorage } from '@/src/lib/templateStorage';
 import { aiService } from '@/src/lib/aiService';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { toast } from 'sonner';
@@ -303,16 +307,11 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
     }
   };
 
-  const handleSubmit = async () => {
-    if (!selectedFile) {
-      toast.error('Please select a DOCX or PDF file first.');
-      return;
-    }
-
+  const executeUpload = async (fileToUpload: File) => {
     setIsUploading(true);
     try {
       const doc = await submissionStorage.uploadSubmission(
-        selectedFile,
+        fileToUpload,
         studentName,
         studentCourse,
         selectedTemplate.title,
@@ -320,7 +319,7 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
       );
 
       // Trigger AI Analysis in the background for PDFs
-      const isPdf = selectedFile.type === 'application/pdf' || selectedFile.name.toLowerCase().endsWith('.pdf');
+      const isPdf = fileToUpload.type === 'application/pdf' || fileToUpload.name.toLowerCase().endsWith('.pdf');
       if (isPdf) {
         try {
           await submissionStorage.updateAiFindings(doc.id, 'Processing', null);
@@ -357,18 +356,59 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
       if (doc.onedrive_url) {
         toast.success(
           <div>
-            <p className="font-bold">Submitted & Archived to OneDrive!</p>
-            <p className="text-xs opacity-90">Your file is safely stored in Microsoft OneDrive.</p>
+            <p className="font-bold">Submitted to Adviser & Archived!</p>
+            <p className="text-xs opacity-90">Your file is in the Adviser Review Hub and saved to Microsoft OneDrive.</p>
           </div>
         );
       } else {
-        toast.success('Document submitted successfully!');
+        toast.success('Document submitted to adviser successfully!');
       }
     } catch (error: any) {
       console.error("Upload failed", error);
       toast.error(error?.message || "Upload failed. Please check your connection and try again.");
     } finally {
       setIsUploading(false);
+    }
+  };
+
+  const handleDirectSubmitFromWorkflow = async (file: File) => {
+    setSelectedFile(file);
+    setUploadedFileName(file.name);
+    await executeUpload(file);
+  };
+
+  const handleSubmit = async () => {
+    if (selectedFile) {
+      await executeUpload(selectedFile);
+      return;
+    }
+
+    // If no file picked, auto-generate DOCX from template and submit
+    toast.info("Generating DOCX to submit to adviser...");
+    try {
+      const blob = await documentGenerator.generateDocx(
+        selectedTemplate.docUrl,
+        {
+          studentName,
+          programName: studentCourse,
+          date: new Date().toISOString().split('T')[0]
+        },
+        [],
+        {},
+        {},
+        [],
+        selectedTemplate.id,
+        selectedTemplate.title
+      );
+      const cleanTitle = selectedTemplate.title.replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '_');
+      const file = new File([blob], `${cleanTitle}_Filled.docx`, {
+        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      });
+      setSelectedFile(file);
+      setUploadedFileName(file.name);
+      await executeUpload(file);
+    } catch (e: any) {
+      toast.error("Please select a DOCX or PDF file first.");
     }
   };
 
@@ -447,6 +487,7 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
               pdfUrl={selectedTemplate.pdfUrl}
               templateId={selectedTemplate.id}
               fields={templateFields[getTemplateFilename(selectedTemplate.pdfUrl)] || []}
+              onDirectSubmit={handleDirectSubmitFromWorkflow}
             />
           </div>
         </div>
@@ -557,9 +598,91 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
                   className="w-1/2 h-8 text-[11px] font-bold justify-center shrink-0 px-2 cursor-pointer"
                   icon={currentStatus === 'Pending' && isSubmitted ? undefined : <ShieldCheck size={12} />}
                   onClick={handleSubmit}
-                  disabled={isLocked || !selectedFile || isUploading}
+                  disabled={isLocked || isUploading}
                 >
-                  {isUploading ? 'Syncing...' : isSubmitted ? 'Re-Submit' : 'Submit'}
+                  {isUploading
+                    ? 'Syncing...'
+                    : isSubmitted
+                      ? 'Re-Submit'
+                      : selectedFile
+                        ? `Submit ${selectedFile.name.toLowerCase().endsWith('.pdf') ? 'PDF' : 'DOCX'}`
+                        : 'Submit to Adviser'}
+                </Button>
+              </div>
+
+              {/* Direct Quick Submit Options (DOCX or PDF) */}
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-[10px] font-bold justify-center cursor-pointer border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                  icon={<FileText size={12} className="text-blue-500" />}
+                  disabled={isLocked || isUploading}
+                  onClick={async () => {
+                    toast.info("Generating customized DOCX for submission...");
+                    try {
+                      const blob = await documentGenerator.generateDocx(
+                        selectedTemplate.docUrl,
+                        {
+                          studentName,
+                          programName: studentCourse,
+                          date: new Date().toISOString().split('T')[0]
+                        },
+                        [],
+                        {},
+                        {},
+                        [],
+                        selectedTemplate.id,
+                        selectedTemplate.title
+                      );
+                      const cleanTitle = selectedTemplate.title.replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '_');
+                      const file = new File([blob], `${cleanTitle}_Filled.docx`, {
+                        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                      });
+                      setSelectedFile(file);
+                      setUploadedFileName(file.name);
+                      await executeUpload(file);
+                    } catch (e: any) {
+                      toast.error("Failed to generate DOCX.");
+                    }
+                  }}
+                >
+                  Submit as DOCX
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-[10px] font-bold justify-center cursor-pointer border-emerald-500/30 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
+                  icon={<Send size={11} className="text-emerald-600 dark:text-emerald-400" />}
+                  disabled={isLocked || isUploading}
+                  onClick={async () => {
+                    toast.info("Generating customized PDF for submission...");
+                    try {
+                      let pdfBlob: Blob | null = null;
+                      if (selectedTemplate.id) {
+                        try {
+                          const backup = await templateStorage.getTemplatePdfBackup(selectedTemplate.id);
+                          if (backup) pdfBlob = new Blob([backup], { type: 'application/pdf' });
+                        } catch (e) {}
+                      }
+                      if (!pdfBlob) {
+                        pdfBlob = await documentGenerator.generatePdf(selectedTemplate.title, {
+                          studentName,
+                          programName: studentCourse,
+                          date: new Date().toISOString().split('T')[0]
+                        });
+                      }
+                      const cleanTitle = selectedTemplate.title.replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '_');
+                      const file = new File([pdfBlob], `${cleanTitle}_Filled.pdf`, { type: 'application/pdf' });
+                      setSelectedFile(file);
+                      setUploadedFileName(file.name);
+                      await executeUpload(file);
+                    } catch (e: any) {
+                      toast.error("Failed to generate PDF.");
+                    }
+                  }}
+                >
+                  Submit as PDF
                 </Button>
               </div>
 

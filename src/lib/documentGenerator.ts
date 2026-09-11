@@ -1,6 +1,7 @@
 import { TemplateHandler } from 'easy-template-x';
 import JSZip from 'jszip';
 import { Document, Paragraph, TextRun, AlignmentType, Packer, VerticalAlign, Table, TableRow, TableCell, WidthType, BorderStyle } from 'docx';
+import { jsPDF } from 'jspdf';
 
 import { templateStorage } from '@/src/lib/templateStorage';
 
@@ -308,6 +309,101 @@ export const documentGenerator = {
           new Paragraph({ children: [new TextRun({ text: academicHeadText, font: 'Calibri', size: 24 })] }),
           new Paragraph({ children: [new TextRun({ text: "Academic Head", font: 'Calibri', size: 24 })] }),
         ];
+      } else if (docTitle.toLowerCase().includes('proposal')) {
+        // Proposal Letter to the Industry Layout
+        children = [
+          new Paragraph({
+            children: [
+              new TextRun({ text: "Note: Use the STI Campus Letterhead", italics: true, font: 'Calibri', size: 20 }),
+            ],
+            spacing: { after: 360 },
+          }),
+          new Paragraph({
+            children: [
+              new TextRun({ text: dateText, font: 'Calibri', size: 24 }),
+            ],
+            spacing: { after: 360 },
+          }),
+          ...(recipientName ? [new Paragraph({ children: [new TextRun({ text: recipientName, font: 'Calibri', size: 24 })] })] : []),
+          ...(designationText ? [new Paragraph({ children: [new TextRun({ text: designationText, font: 'Calibri', size: 24 })] })] : []),
+          ...(companyNameText ? [new Paragraph({ children: [new TextRun({ text: companyNameText, font: 'Calibri', size: 24 })] })] : []),
+          ...(addressText ? [new Paragraph({ children: [new TextRun({ text: addressText, font: 'Calibri', size: 24 })], spacing: { after: 360 } })] : []),
+          new Paragraph({
+            children: [new TextRun({ text: `Dear ${recipientName ? `Mr./Ms. ${recipientName}` : 'Industry Partner'}:`, font: 'Calibri', size: 24 })],
+            spacing: { after: 240 },
+          }),
+          new Paragraph({
+            children: [
+              new TextRun({ text: "Greetings in the spirit of education and industry collaboration!", font: 'Calibri', size: 24 }),
+            ],
+            spacing: { after: 240 },
+            alignment: AlignmentType.JUSTIFIED,
+          }),
+          new Paragraph({
+            children: [
+              new TextRun({ text: "As part of the academic curriculum for the ", font: 'Calibri', size: 24 }),
+              new TextRun({ text: programText, font: 'Calibri', size: 24 }),
+              new TextRun({ text: " program at STI College, our bona fide student trainee, ", font: 'Calibri', size: 24 }),
+              new TextRun({ text: studentNameText, font: 'Calibri', bold: true, size: 24 }),
+              new TextRun({ text: ", is required to complete a total of ", font: 'Calibri', size: 24 }),
+              new TextRun({ text: hoursText, font: 'Calibri', size: 24 }),
+              new TextRun({ text: " hours of On-the-Job Training (OJT). The objective of this immersion is to enhance the professional development and competency of our students by arming them with hands-on industrial experience.", font: 'Calibri', size: 24 }),
+            ],
+            spacing: { after: 240 },
+            alignment: AlignmentType.JUSTIFIED,
+          }),
+          new Paragraph({
+            children: [
+              new TextRun({ text: "With this, we respectfully submit this Proposal Letter to request your good office to accept the student trainee into your esteemed organization for their practicum. We are confident that their skills, foundational training, and dedication will make a positive contribution to your organization.", font: 'Calibri', size: 24 }),
+            ],
+            spacing: { after: 240 },
+            alignment: AlignmentType.JUSTIFIED,
+          }),
+          new Paragraph({
+            children: [
+              new TextRun({ text: "Attached are the training objectives and profile for your review and endorsement. We look forward to establishing a meaningful partnership with your organization.", font: 'Calibri', size: 24 }),
+            ],
+            spacing: { after: 240 },
+            alignment: AlignmentType.JUSTIFIED,
+          }),
+          new Paragraph({ children: [new TextRun({ text: "Thank you very much for your valued time and continued support.", font: 'Calibri', size: 24 })], spacing: { after: 240 } }),
+          new Paragraph({ children: [new TextRun({ text: "Respectfully yours,", font: 'Calibri', size: 24 })], spacing: { after: 360 } }),
+          new Table({
+            rows: [
+              new TableRow({
+                children: [
+                  new TableCell({
+                    children: [
+                      new Paragraph({
+                        children: [new TextRun({ text: signatureText || '\u00A0', font: 'Calibri', size: 24 })],
+                        alignment: AlignmentType.CENTER,
+                        spacing: { before: 0, after: 0 },
+                        border: {
+                          bottom: { style: BorderStyle.SINGLE, size: 6, space: 1, color: '000000' },
+                        },
+                      }),
+                      new Paragraph({ children: [new TextRun({ text: studentNameText, font: 'Calibri', bold: true, size: 24 })], alignment: AlignmentType.CENTER, spacing: { before: 60, after: 0 } }),
+                      new Paragraph({ children: [new TextRun({ text: "Student Trainee Applicant", font: 'Calibri', size: 24 })], alignment: AlignmentType.CENTER }),
+                    ],
+                    width: { size: 2800, type: WidthType.DXA },
+                    margins: { left: 0, right: 0 },
+                  }),
+                ],
+              }),
+            ],
+            borders: {
+              top: { style: BorderStyle.NONE, size: 0, color: 'auto' },
+              bottom: { style: BorderStyle.NONE, size: 0, color: 'auto' },
+              left: { style: BorderStyle.NONE, size: 0, color: 'auto' },
+              right: { style: BorderStyle.NONE, size: 0, color: 'auto' },
+              insideHorizontal: { style: BorderStyle.NONE, size: 0, color: 'auto' },
+              insideVertical: { style: BorderStyle.NONE, size: 0, color: 'auto' },
+            },
+          }),
+          new Paragraph({ children: [new TextRun({ text: "Noted by:", font: 'Calibri', size: 24 })], spacing: { before: 360, after: 240 } }),
+          new Paragraph({ children: [new TextRun({ text: programHeadText, font: 'Calibri', bold: true, size: 24 })] }),
+          new Paragraph({ children: [new TextRun({ text: "Practicum Coordinator / Program Head", font: 'Calibri', size: 24 })] }),
+        ];
       } else {
         // Application Letter Layout (Clean 12pt Calibri, matching Image 2 placeholder layout)
         children = [
@@ -422,6 +518,127 @@ export const documentGenerator = {
 
       return Packer.toBlob(doc);
     })(), 30000, 'DOCX Generation Timeout');
+  },
+
+  /**
+   * Generates a clean, formal STI PDF directly in browser
+   */
+  async generatePdf(
+    title: string,
+    formData: Record<string, string>
+  ): Promise<Blob> {
+    const doc = new jsPDF({
+      unit: 'pt',
+      format: 'letter',
+    });
+
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 54; // 0.75 in
+    const contentWidth = pageWidth - margin * 2;
+    let y = 60;
+
+    // Header
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(30, 41, 59);
+    doc.text('STI COLLEGE - PRACTICUM / ON-THE-JOB TRAINING OFFICE', margin, y);
+    y += 16;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(100, 116, 139);
+    doc.text('Industry Placement & Experiential Education Program', margin, y);
+    y += 10;
+    doc.setDrawColor(203, 213, 225);
+    doc.setLineWidth(1);
+    doc.line(margin, y, margin + contentWidth, y);
+    y += 24;
+
+    // Date
+    const rawDate = formData.date;
+    let dateText = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    if (rawDate) {
+      const parsed = new Date(rawDate.includes('T') ? rawDate : `${rawDate}T00:00:00`);
+      if (!isNaN(parsed.getTime())) {
+        dateText = parsed.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+      } else {
+        dateText = rawDate;
+      }
+    }
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(15, 23, 42);
+    doc.text(dateText, margin, y);
+    y += 24;
+
+    // Recipient block
+    const recipient = formData.contactPerson || formData['Industry Representative Name'] || 'The Human Resources Director';
+    const titleText = formData.contactTitle || formData['Position / Title'] || 'Industry Partner';
+    const company = formData.companyName || formData['Company Name'] || 'Host Training Establishment';
+    const address = formData.companyAddress || formData['Company Address'] || 'City / Province';
+
+    doc.setFont('helvetica', 'bold');
+    doc.text(recipient, margin, y);
+    y += 14;
+    doc.setFont('helvetica', 'normal');
+    doc.text(titleText, margin, y);
+    y += 14;
+    doc.text(company, margin, y);
+    y += 14;
+    doc.text(address, margin, y);
+    y += 26;
+
+    // Salutation
+    doc.text(`Dear ${formData.contactPerson ? `Mr./Ms. ${formData.contactPerson}` : 'Industry Representative'}:`, margin, y);
+    y += 20;
+
+    // Body paragraphs
+    const studentName = formData.studentName || 'John Dwayne B. Guaniso';
+    const program = formData.programName || 'Bachelor of Science in Information Technology';
+    const hours = formData.hoursRequired || '486';
+
+    const p1 = `Greetings in the spirit of education and industry collaboration!`;
+    const p2 = `As part of the academic curriculum for the ${program} program at STI College, our student trainee, ${studentName}, is required to undergo a total of ${hours} hours of On-the-Job Training (OJT). This program bridges classroom instruction with direct industrial immersion.`;
+    const p3 = `We respectfully submit this Proposal Letter to explore placement and internship opportunities for our trainee within your reputable organization. Enclosed are the student profile and initial training objectives for your consideration.`;
+    const p4 = `Thank you very much for your valued time, guidance, and continuous support of our student's professional growth.`;
+
+    const writePara = (text: string) => {
+      const lines = doc.splitTextToSize(text, contentWidth);
+      doc.text(lines, margin, y);
+      y += lines.length * 14 + 10;
+    };
+
+    writePara(p1);
+    writePara(p2);
+    writePara(p3);
+    writePara(p4);
+
+    y += 10;
+    doc.text('Respectfully yours,', margin, y);
+    y += 40;
+
+    // Student Signature line
+    doc.setDrawColor(15, 23, 42);
+    doc.line(margin, y, margin + 180, y);
+    y += 14;
+    doc.setFont('helvetica', 'bold');
+    doc.text(studentName, margin, y);
+    y += 12;
+    doc.setFont('helvetica', 'normal');
+    doc.text('Student Trainee Applicant', margin, y);
+
+    // Coordinator block on right
+    const coordX = margin + 260;
+    const coordY = y - 26;
+    doc.setDrawColor(15, 23, 42);
+    doc.line(coordX, coordY, coordX + 180, coordY);
+    doc.setFont('helvetica', 'bold');
+    doc.text(formData.coordinatorName || 'Prof. Maria Santos', coordX, coordY + 14);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Practicum Coordinator', coordX, coordY + 26);
+
+    const pdfBlob = doc.output('blob');
+    return pdfBlob;
   },
 
   /**
