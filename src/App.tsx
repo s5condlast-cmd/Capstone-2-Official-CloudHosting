@@ -55,8 +55,10 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { User, Role } from './types';
 
 // Mock simple sub-pages for this prototype
+import { templateStorage } from './lib/templateStorage';
+
 const Placeholder = ({ name }: { name: string }) => (
-  <div className="flex flex-col items-center justify-center min-h-[400px] border border-dashed border-zinc-200 dark:border-zinc-800">
+  <div className="flex flex-col items-center justify-center h-full min-h-[400px] border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-2xl p-8 text-center bg-zinc-50/50 dark:bg-zinc-900/50">
     <h2 className="text-4xl font-semibold uppercase text-zinc-300">{name}</h2>
     <p className="text-zinc-400 dark:text-zinc-500 font-bold uppercase tracking-wide mt-2">Prototype Implementation Pending</p>
   </div>
@@ -76,7 +78,7 @@ function AppRoutes() {
       localStorage.setItem('app-theme', 'default');
     }
 
-    // Clear any troll inputs/items saved in localStorage
+    // Clear any troll inputs/items saved in localStorage and purge legacy templates from IndexedDB
     try {
       Object.keys(localStorage).forEach(key => {
         const val = localStorage.getItem(key);
@@ -84,6 +86,7 @@ function AppRoutes() {
           localStorage.removeItem(key);
         }
       });
+      templateStorage.purgeTrollMetadata().catch(() => {});
     } catch (e) { }
   }, []);
 

@@ -33,6 +33,7 @@ export const WeeklyJournal: React.FC = () => {
         <div className="flex-1 min-w-0 flex flex-col gap-6 w-full">
           <div className="flex-1 flex flex-col min-h-0">
             <DocumentWorkflow
+              key={`weekly-journal-${milestones[activeTab]}`}
               title={`Weekly Journal — ${milestones[activeTab]}`}
               docUrl=""
               templateId="h5"

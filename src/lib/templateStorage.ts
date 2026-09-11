@@ -122,9 +122,12 @@ export const templateStorage = {
 
   // Retrieve the raw file buffer from Backend API, local IndexedDB, or Supabase
   async getTemplateFile(id: string): Promise<ArrayBuffer | undefined> {
+    let isBackendActive = false;
+
     // 1. Try Backend API first so latest admin uploads are shared across all users
     try {
       const res = await fetch(`/api/templates/${encodeURIComponent(id)}`);
+      isBackendActive = true;
       if (res.ok) {
         const buf = await res.arrayBuffer();
         await saveIDBFile(id, buf);
@@ -134,13 +137,7 @@ export const templateStorage = {
       console.warn('Backend template fetch notice:', e);
     }
 
-    // 2. Check local store fallback
-    const localBuf = await getIDBFile(id);
-    if (localBuf && localBuf.byteLength > 0) {
-      return localBuf;
-    }
-
-    // 3. Legacy fallback: Supabase Storage
+    // 2. Legacy fallback: Supabase Storage
     try {
       const { data, error } = await supabase.storage
         .from('templates')
@@ -155,16 +152,31 @@ export const templateStorage = {
       console.warn('Supabase fetch also failed:', e);
     }
 
+    // If server is online and neither backend nor Supabase has the file:
+    // It was deleted or not uploaded. Remove any stale cache from IndexedDB!
+    if (isBackendActive) {
+      await deleteIDBFile(id);
+      return undefined;
+    }
+
+    // 3. Offline fallback only
+    const localBuf = await getIDBFile(id);
+    if (localBuf && localBuf.byteLength > 0) {
+      return localBuf;
+    }
+
     return undefined;
   },
 
   // Retrieve the PDF backup for a template
   async getTemplatePdfBackup(id: string): Promise<ArrayBuffer | undefined> {
     const backupKey = `${id}_pdf_backup`;
+    let isBackendActive = false;
 
     // 1. Try Backend API first for the PDF backup
     try {
       const res = await fetch(`/api/templates/${encodeURIComponent(backupKey)}`);
+      isBackendActive = true;
       if (res.ok) {
         const buf = await res.arrayBuffer();
         await saveIDBFile(backupKey, buf);
@@ -182,13 +194,7 @@ export const templateStorage = {
       console.warn('Backend PDF backup fetch notice:', e);
     }
 
-    // 2. Check local store fallback
-    const localBuf = await getIDBFile(backupKey);
-    if (localBuf && localBuf.byteLength > 0) {
-      return localBuf;
-    }
-
-    // 3. Legacy fallback: Supabase Storage
+    // 2. Legacy fallback: Supabase Storage
     try {
       const { data, error } = await supabase.storage
         .from('templates')
@@ -201,6 +207,19 @@ export const templateStorage = {
       }
     } catch (e) {
       console.warn('Supabase fetch PDF backup also failed:', e);
+    }
+
+    // If server is online and neither backend nor Supabase has the PDF backup:
+    // It was deleted or not uploaded. Remove stale cache from IndexedDB!
+    if (isBackendActive) {
+      await deleteIDBFile(backupKey);
+      return undefined;
+    }
+
+    // 3. Offline fallback only
+    const localBuf = await getIDBFile(backupKey);
+    if (localBuf && localBuf.byteLength > 0) {
+      return localBuf;
     }
 
     return undefined;
@@ -228,29 +247,49 @@ export const templateStorage = {
   // Permanently delete troll rows from Supabase DB, IndexedDB, and localStorage
   async purgeTrollMetadata(): Promise<void> {
     try {
-      // 1. Delete matching troll rows from Supabase DB
+      // 1. Delete matching troll rows and legacy journal PDF entries from Supabase DB & Storage
       await supabase
         .from('template_metadata')
         .delete()
-        .or('name.ilike.%tite%,name.ilike.%bat may%,name.ilike.%hahhgh%,filename.ilike.%tite%,filename.ilike.%hahhgh%');
+        .or('id.eq.h5_pdf_backup,name.ilike.%tite%,name.ilike.%bat may%,name.ilike.%hahhgh%,filename.ilike.%tite%,filename.ilike.%hahhgh%');
+      await supabase
+        .storage
+        .from('templates')
+        .remove(['h5_pdf_backup', 'h5']);
     } catch (e) {
       console.warn('Supabase purge error:', e);
     }
 
     try {
-      // 2. Delete matching troll entries from IndexedDB
+      // 2. Delete matching troll entries, h5, and h5_pdf_backup from IndexedDB
       const db = await getIDB();
       const tx = db.transaction(STORE_NAME, 'readwrite');
       const store = tx.objectStore(STORE_NAME);
+      store.delete('h5');
+      store.delete('h5_pdf_backup');
       const req = store.getAllKeys();
-      req.onsuccess = () => {
-        const keys = req.result;
-        keys.forEach(k => {
-          if (typeof k === 'string' && (k.toLowerCase().includes('tite') || k.toLowerCase().includes('hahhgh') || k.toLowerCase().includes('bat may'))) {
-            store.delete(k);
-          }
-        });
-      };
+      await new Promise<void>((resolve) => {
+        req.onsuccess = () => {
+          const keys = req.result;
+          keys.forEach(k => {
+            if (typeof k === 'string') {
+              const lower = k.toLowerCase();
+              if (
+                lower === 'h5' ||
+                lower.includes('h5') ||
+                lower.includes('tite') ||
+                lower.includes('hahhgh') ||
+                lower.includes('bat may') ||
+                lower.includes('assignment')
+              ) {
+                store.delete(k);
+              }
+            }
+          });
+          resolve();
+        };
+        req.onerror = () => resolve();
+      });
     } catch (e) {}
 
     // 3. Clean up localStorage backup
@@ -259,7 +298,7 @@ export const templateStorage = {
       if (local) {
         const metadata = JSON.parse(local);
         if (Array.isArray(metadata)) {
-          const clean = metadata.filter((t: any) => !/tite|hahhgh|bat\s*may/i.test(t.name || '') && !/tite|hahhgh|bat\s*may/i.test(t.filename || ''));
+          const clean = metadata.filter((t: any) => t.id !== 'h5_pdf_backup' && !/tite|hahhgh|bat\s*may/i.test(t.name || '') && !/tite|hahhgh|bat\s*may/i.test(t.filename || ''));
           localStorage.setItem('template_metadata_backup', JSON.stringify(clean));
         }
       }
