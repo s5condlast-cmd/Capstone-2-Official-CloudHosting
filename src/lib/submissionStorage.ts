@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 
-export type DocumentStatus = 'Pending Adviser Review' | 'Pending Final Approval' | 'Revision Required' | 'Approved';
+export type DocumentStatus = 'Pending' | 'Pending Adviser Review' | 'Pending Final Approval' | 'Revision Required' | 'Approved' | 'Returned';
 
 export interface StudentDocument {
   id: string;
@@ -62,6 +62,16 @@ export const submissionStorage = {
         console.warn('[OneDrive] Background archive notice:', onedriveErr);
       }
 
+      // Also upload file to Supabase Storage bucket 'submissions' for direct download fallback
+      try {
+        await supabase.storage.from('submissions').upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
+      } catch (storageErr) {
+        console.warn('Supabase storage upload notice:', storageErr);
+      }
+
       // Insert database record
       const { data, error: insertError } = await supabase
         .from('student_documents')
@@ -70,7 +80,7 @@ export const submissionStorage = {
             student_name: studentName,
             course: course,
             doc_type: docType,
-            status: 'Pending Adviser Review',
+            status: 'Pending',
             urgency: urgency,
             file_path: filePath,
             ai_status: 'Pending'
@@ -80,13 +90,13 @@ export const submissionStorage = {
         .single();
 
       if (insertError) {
-        console.warn('DB Insert Notice (falling back to mock response):', insertError);
+        console.warn('DB Insert Notice (falling back to local return):', insertError);
         return {
           id: `doc-${Date.now()}`,
           student_name: studentName,
           course: course,
           doc_type: docType,
-          status: 'Pending Adviser Review',
+          status: 'Pending',
           urgency: urgency,
           file_path: filePath,
           onedrive_url: onedriveUrl,
@@ -103,7 +113,7 @@ export const submissionStorage = {
         student_name: studentName,
         course: course,
         doc_type: docType,
-        status: 'Pending Adviser Review',
+        status: 'Pending',
         urgency: urgency,
         file_path: filePath,
         onedrive_url: onedriveUrl,

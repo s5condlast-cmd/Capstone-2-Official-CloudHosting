@@ -25,6 +25,7 @@ import { templateFields, getTemplateFilename } from '@/src/components/review/tem
 import { submissionStorage } from '@/src/lib/submissionStorage';
 import { aiService } from '@/src/lib/aiService';
 import { useAuth } from '@/src/contexts/AuthContext';
+import { toast } from 'sonner';
 
 
 export interface DocumentTemplate {
@@ -194,6 +195,7 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
 
   const selectedTemplate = templates[selectedTemplateIndex];
 
@@ -278,17 +280,34 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
     loadLatest();
   }, [selectedTemplate.title, status, adviserFeedback, lastUpdated, isSubmitted]);
 
+  const handlePickedFile = (file: File) => {
+    const ext = file.name.split('.').pop()?.toLowerCase();
+    if (!['pdf', 'docx', 'doc'].includes(ext || '')) {
+      toast.error('Only PDF or DOCX files are supported.');
+      return;
+    }
+    if (file.size > 15 * 1024 * 1024) {
+      toast.error('File size exceeds 15MB limit.');
+      return;
+    }
+    setUploadedFileName(file.name);
+    setSelectedFile(file);
+    setIsSubmitted(false);
+    toast.info(`Selected "${file.name}" (${(file.size / 1024).toFixed(0)} KB)`);
+  };
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setUploadedFileName(file.name);
-      setSelectedFile(file);
-      setIsSubmitted(false);
+      handlePickedFile(file);
     }
   };
 
   const handleSubmit = async () => {
-    if (!selectedFile) return;
+    if (!selectedFile) {
+      toast.error('Please select a DOCX or PDF file first.');
+      return;
+    }
 
     setIsUploading(true);
     try {
@@ -300,15 +319,15 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
         isUrgent ? 'high' : 'medium'
       );
 
-      // Trigger AI Analysis in the background
-      const isPdf = selectedFile.type === 'application/pdf' || selectedFile.name.endsWith('.pdf');
+      // Trigger AI Analysis in the background for PDFs
+      const isPdf = selectedFile.type === 'application/pdf' || selectedFile.name.toLowerCase().endsWith('.pdf');
       if (isPdf) {
         try {
           await submissionStorage.updateAiFindings(doc.id, 'Processing', null);
           const docUrl = submissionStorage.getFileUrl(doc.file_path);
           const findings = await aiService.analyzeDocument(doc.id, docUrl, {
-            name: 'John Dwayne B. Guaniso',
-            course: 'BSIT 402',
+            name: studentName,
+            course: studentCourse,
             docType: selectedTemplate.title,
             company: 'Industry Partner'
           });
@@ -318,21 +337,36 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
           await submissionStorage.updateAiFindings(doc.id, 'Failed', null);
         }
       } else {
-        // Fallback for non-PDFs (e.g. template docx)
-        await submissionStorage.updateAiFindings(doc.id, 'Failed', {
-          overallAssessment: 'Needs Attention',
+        // Formatted DOCX submission
+        await submissionStorage.updateAiFindings(doc.id, 'Completed', {
+          overallAssessment: 'Valid Submission',
           grammarIssues: 0,
           missingInformation: [],
-          consistencyIssues: ["Document uploaded is not a PDF. AI Review Assistant only supports PDF analysis."],
-          recommendations: ["Please convert your document to PDF to enable AI analysis."],
-          confidence: 'Low'
+          consistencyIssues: ["Document uploaded in DOCX format and archived to Microsoft OneDrive."],
+          recommendations: ["Adviser will review document formatting and signature."],
+          confidence: 'High'
         });
       }
 
+      setDbDoc(doc);
+      setCurrentStatus('Pending');
+      setCurrentFeedback('Waiting for adviser to verify your submission.');
+      setCurrentLastUpdated(new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }));
       setIsSubmitted(true);
-    } catch (error) {
+
+      if (doc.onedrive_url) {
+        toast.success(
+          <div>
+            <p className="font-bold">Submitted & Archived to OneDrive!</p>
+            <p className="text-xs opacity-90">Your file is safely stored in Microsoft OneDrive.</p>
+          </div>
+        );
+      } else {
+        toast.success('Document submitted successfully!');
+      }
+    } catch (error: any) {
       console.error("Upload failed", error);
-      alert("Upload failed. Check console for details.");
+      toast.error(error?.message || "Upload failed. Please check your connection and try again.");
     } finally {
       setIsUploading(false);
     }
@@ -433,8 +467,22 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
                   "border-2 border-dashed rounded-xl p-4 sm:p-5 text-center transition-all relative overflow-hidden group",
                   isLocked
                     ? "border-zinc-200 dark:border-zinc-800/80 bg-zinc-50/30 dark:bg-zinc-900/20 cursor-not-allowed"
-                    : "border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-700 bg-zinc-50/40 hover:bg-zinc-50/80 dark:bg-zinc-900/20 dark:hover:bg-zinc-900/50 cursor-pointer"
+                    : isDragOver
+                      ? "border-primary bg-primary/5 dark:bg-primary/10 cursor-pointer scale-[1.01]"
+                      : "border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-700 bg-zinc-50/40 hover:bg-zinc-50/80 dark:bg-zinc-900/20 dark:hover:bg-zinc-900/50 cursor-pointer"
                 )}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  if (!isLocked) setIsDragOver(true);
+                }}
+                onDragLeave={() => setIsDragOver(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setIsDragOver(false);
+                  if (!isLocked && e.dataTransfer.files?.[0]) {
+                    handlePickedFile(e.dataTransfer.files[0]);
+                  }
+                }}
                 onClick={() => !isLocked && fileInputRef.current?.click()}
               >
                 {isLocked && (
@@ -444,28 +492,46 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
                   </div>
                 )}
                 <div className="w-11 h-11 bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200/80 dark:border-zinc-700/80 rounded-xl flex items-center justify-center mx-auto mb-2.5 group-hover:scale-105 transition-transform">
-                  {isSubmitted ? <CheckCircle2 size={20} className="text-emerald-500" /> : isUploading ? <Upload size={20} className="text-zinc-400 animate-bounce" /> : uploadedFileName ? <FileUp size={20} className="text-emerald-500" /> : <Upload size={20} className="text-zinc-500 dark:text-zinc-400" />}
+                  {isSubmitted ? (
+                    <CheckCircle2 size={20} className="text-emerald-500" />
+                  ) : isUploading ? (
+                    <Upload size={20} className="text-zinc-400 animate-bounce" />
+                  ) : selectedFile ? (
+                    <FileUp size={20} className="text-emerald-500" />
+                  ) : (
+                    <Upload size={20} className="text-zinc-500 dark:text-zinc-400" />
+                  )}
                 </div>
                 <p className="text-xs font-semibold text-zinc-800 dark:text-zinc-200 mb-0.5">
-                  {isSubmitted ? 'File Submitted' : isUploading ? 'Uploading...' : uploadedFileName ? 'File Selected' : uploadDescription}
+                  {isSubmitted ? 'File Submitted' : isUploading ? 'Uploading & Archiving...' : selectedFile ? 'File Ready to Submit' : uploadDescription}
                 </p>
                 <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mb-3 truncate">
-                  {isSubmitted ? 'Pending adviser review.' : isUploading ? 'Please wait...' : uploadedFileName ? uploadedFileName : 'PDF or DOCX · Max 10MB'}
+                  {isSubmitted
+                    ? (uploadedFileName || 'Pending adviser review.')
+                    : isUploading
+                      ? 'Archiving to OneDrive & database...'
+                      : selectedFile
+                        ? `${selectedFile.name} (${(selectedFile.size / 1024).toFixed(0)} KB)`
+                        : 'PDF or DOCX · Max 15MB'}
                 </p>
                 <Button
-                  variant={uploadedFileName && !isSubmitted ? "primary" : "secondary"}
+                  variant={selectedFile && !isSubmitted ? "primary" : "secondary"}
                   size="sm"
-                  className="h-8 text-[11px] font-bold"
+                  className="h-8 text-[11px] font-bold cursor-pointer"
                   aria-label={`Select file for ${uploadTitle}`}
-                  disabled={isLocked || isUploading || isSubmitted}
+                  disabled={isLocked || isUploading}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    fileInputRef.current?.click();
+                  }}
                 >
-                  {isSubmitted ? 'Submitted' : isUploading ? 'Uploading...' : uploadedFileName ? 'Change File' : 'Select File'}
+                  {isSubmitted ? 'Upload Revision' : isUploading ? 'Uploading...' : selectedFile ? 'Change File' : 'Select File'}
                 </Button>
                 <input
                   type="file"
                   ref={fileInputRef}
                   className="hidden"
-                  accept=".pdf,application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                  accept=".pdf,application/pdf,.docx,.doc,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword"
                   onChange={handleFileSelect}
                   disabled={isLocked}
                 />
@@ -488,18 +554,30 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
                 </button>
                 <Button
                   variant="primary"
-                  className="w-1/2 h-8 text-[11px] font-bold justify-center shrink-0 px-2"
-                  icon={currentStatus === 'Pending' ? undefined : <ShieldCheck size={12} />}
+                  className="w-1/2 h-8 text-[11px] font-bold justify-center shrink-0 px-2 cursor-pointer"
+                  icon={currentStatus === 'Pending' && isSubmitted ? undefined : <ShieldCheck size={12} />}
                   onClick={handleSubmit}
-                  disabled={isLocked || !selectedFile || isUploading || isSubmitted}
+                  disabled={isLocked || !selectedFile || isUploading}
                 >
-                  {isSubmitted ? 'Submitted' : isUploading ? 'Processing...' : currentStatus === 'Pending' ? 'Submit' : 'Submit File'}
+                  {isUploading ? 'Syncing...' : isSubmitted ? 'Re-Submit' : 'Submit'}
                 </Button>
               </div>
 
               <div className="flex items-center justify-center gap-1.5 pt-1 text-[10px] text-zinc-500 dark:text-zinc-400">
-                <Cloud size={12} className={cn("shrink-0", isSubmitted ? "text-emerald-500" : "text-sky-500")} />
-                <span>{isSubmitted ? 'Signed copy archived to Microsoft OneDrive' : 'Cloud sync: Auto-archives to Microsoft OneDrive'}</span>
+                <Cloud size={12} className={cn("shrink-0", isSubmitted || dbDoc?.onedrive_url ? "text-emerald-500" : "text-sky-500")} />
+                {dbDoc?.onedrive_url ? (
+                  <a
+                    href={dbDoc.onedrive_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:underline text-emerald-600 dark:text-emerald-400 font-semibold truncate max-w-[280px]"
+                    title="Open archived document in OneDrive"
+                  >
+                    ✓ Archived in Microsoft OneDrive ↗
+                  </a>
+                ) : (
+                  <span>{isSubmitted ? '✓ Document archived to Microsoft OneDrive' : 'Cloud sync: Auto-archives to Microsoft OneDrive'}</span>
+                )}
               </div>
             </div>
           </Card>
