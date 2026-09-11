@@ -931,28 +931,16 @@ export const DocumentWorkflow: React.FC<DocumentWorkflowProps> = ({
           </Button>
 
           {onDirectSubmit && (
-            <>
-              <Button
-                variant="outline"
-                size="sm"
-                icon={<Send size={14} className="text-emerald-600 dark:text-emerald-400" />}
-                onClick={() => handleDirectSubmit('pdf')}
-                disabled={isGeneratingDocx || isGeneratingPdf || isSubmittingFormat !== null}
-                className="flex-1 sm:flex-none text-xs font-bold border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 text-emerald-700 dark:text-emerald-300 cursor-pointer"
-              >
-                {isSubmittingFormat === 'pdf' ? 'Submitting PDF...' : 'Submit PDF to Adviser'}
-              </Button>
-              <Button
-                variant="primary"
-                size="sm"
-                icon={<Send size={14} />}
-                onClick={() => handleDirectSubmit('docx')}
-                disabled={isGeneratingDocx || isGeneratingPdf || isSubmittingFormat !== null}
-                className="flex-1 sm:flex-none text-xs font-bold cursor-pointer"
-              >
-                {isSubmittingFormat === 'docx' ? 'Submitting DOCX...' : 'Submit DOCX to Adviser'}
-              </Button>
-            </>
+            <Button
+              variant="primary"
+              size="sm"
+              icon={<Send size={14} />}
+              onClick={() => handleDirectSubmit(viewMode === 'preview' && (pdfBuffer || pdfBlobUrl) ? 'pdf' : 'docx')}
+              disabled={isGeneratingDocx || isGeneratingPdf || isSubmittingFormat !== null}
+              className="flex-1 sm:flex-none text-xs font-bold cursor-pointer"
+            >
+              {isSubmittingFormat ? 'Submitting to Adviser...' : 'Submit to Adviser'}
+            </Button>
           )}
         </div>
       </div>

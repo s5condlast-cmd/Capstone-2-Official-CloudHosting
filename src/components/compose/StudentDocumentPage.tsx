@@ -57,6 +57,7 @@ export interface StudentDocumentPageProps {
   lockedMessage?: string;
   extraSidebarContent?: React.ReactNode;
   headerAction?: React.ReactNode;
+  showOneDriveCard?: boolean;
 }
 
 interface ConsentOption {
@@ -188,7 +189,8 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
   isLocked = false,
   lockedMessage,
   extraSidebarContent,
-  headerAction
+  headerAction,
+  showOneDriveCard = true
 }) => {
   const [isUrgent, setIsUrgent] = useState(false);
   const [selectedTemplateIndex, setSelectedTemplateIndex] = useState(0);
@@ -202,6 +204,14 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
   const [isDragOver, setIsDragOver] = useState(false);
 
   const selectedTemplate = templates[selectedTemplateIndex];
+
+  // Proposal letter identification: suppress OneDrive card on Proposal Letter only
+  const isProposalPage = templates.some(t =>
+    t.title.toLowerCase().includes('proposal') ||
+    (t.id && t.id.toLowerCase().includes('proposal'))
+  ) || uploadTitle.toLowerCase().includes('proposal');
+
+  const shouldShowOneDrive = showOneDriveCard && !isProposalPage;
 
   // Consent form grouping
   const isConsentPage = templates.some(t =>
@@ -601,120 +611,44 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
                   disabled={isLocked || isUploading}
                 >
                   {isUploading
-                    ? 'Syncing...'
+                    ? 'Submitting...'
                     : isSubmitted
                       ? 'Re-Submit'
-                      : selectedFile
-                        ? `Submit ${selectedFile.name.toLowerCase().endsWith('.pdf') ? 'PDF' : 'DOCX'}`
-                        : 'Submit to Adviser'}
+                      : 'Submit to Adviser'}
                 </Button>
               </div>
 
-              {/* Direct Quick Submit Options (DOCX or PDF) */}
-              <div className="grid grid-cols-2 gap-2 pt-1">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-7 text-[10px] font-bold justify-center cursor-pointer border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                  icon={<FileText size={12} className="text-blue-500" />}
-                  disabled={isLocked || isUploading}
-                  onClick={async () => {
-                    toast.info("Generating customized DOCX for submission...");
-                    try {
-                      const blob = await documentGenerator.generateDocx(
-                        selectedTemplate.docUrl,
-                        {
-                          studentName,
-                          programName: studentCourse,
-                          date: new Date().toISOString().split('T')[0]
-                        },
-                        [],
-                        {},
-                        {},
-                        [],
-                        selectedTemplate.id,
-                        selectedTemplate.title
-                      );
-                      const cleanTitle = selectedTemplate.title.replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '_');
-                      const file = new File([blob], `${cleanTitle}_Filled.docx`, {
-                        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-                      });
-                      setSelectedFile(file);
-                      setUploadedFileName(file.name);
-                      await executeUpload(file);
-                    } catch (e: any) {
-                      toast.error("Failed to generate DOCX.");
-                    }
-                  }}
-                >
-                  Submit as DOCX
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-7 text-[10px] font-bold justify-center cursor-pointer border-emerald-500/30 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
-                  icon={<Send size={11} className="text-emerald-600 dark:text-emerald-400" />}
-                  disabled={isLocked || isUploading}
-                  onClick={async () => {
-                    toast.info("Generating customized PDF for submission...");
-                    try {
-                      let pdfBlob: Blob | null = null;
-                      if (selectedTemplate.id) {
-                        try {
-                          const backup = await templateStorage.getTemplatePdfBackup(selectedTemplate.id);
-                          if (backup) pdfBlob = new Blob([backup], { type: 'application/pdf' });
-                        } catch (e) {}
-                      }
-                      if (!pdfBlob) {
-                        pdfBlob = await documentGenerator.generatePdf(selectedTemplate.title, {
-                          studentName,
-                          programName: studentCourse,
-                          date: new Date().toISOString().split('T')[0]
-                        });
-                      }
-                      const cleanTitle = selectedTemplate.title.replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '_');
-                      const file = new File([pdfBlob], `${cleanTitle}_Filled.pdf`, { type: 'application/pdf' });
-                      setSelectedFile(file);
-                      setUploadedFileName(file.name);
-                      await executeUpload(file);
-                    } catch (e: any) {
-                      toast.error("Failed to generate PDF.");
-                    }
-                  }}
-                >
-                  Submit as PDF
-                </Button>
-              </div>
-
-              <div className="pt-2 border-t border-zinc-200/80 dark:border-zinc-800/80">
-                <a
-                  href={dbDoc?.onedrive_url || "https://onedrive.live.com?cid=D9646D9033CEACF0&id=D9646D9033CEACF0!sbcec97914ef14503aaaa786bd628bc60"}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={cn(
-                    "flex items-center justify-between p-2.5 rounded-xl border text-xs font-semibold transition-all group",
-                    isSubmitted || dbDoc?.onedrive_url
-                      ? "bg-emerald-500/5 hover:bg-emerald-500/10 border-emerald-500/30 text-emerald-700 dark:text-emerald-400"
-                      : "bg-zinc-50/50 hover:bg-zinc-100 dark:bg-zinc-900/40 border-zinc-200/80 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400"
-                  )}
-                  title="Open STI_Practicum_Archive in Microsoft OneDrive"
-                >
-                  <div className="flex items-center gap-2 min-w-0">
-                    <Cloud size={16} className={isSubmitted || dbDoc?.onedrive_url ? "text-emerald-500" : "text-sky-500"} />
-                    <div className="flex flex-col text-left truncate">
-                      <span className="font-bold text-[11px] leading-tight text-zinc-900 dark:text-zinc-100">
-                        {isSubmitted || dbDoc?.onedrive_url ? 'Archived in Microsoft OneDrive' : 'OneDrive Sync Connected'}
-                      </span>
-                      <span className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate">
-                        STI_Practicum_Archive
-                      </span>
+              {shouldShowOneDrive && (
+                <div className="pt-2 border-t border-zinc-200/80 dark:border-zinc-800/80">
+                  <a
+                    href={dbDoc?.onedrive_url || "https://onedrive.live.com?cid=D9646D9033CEACF0&id=D9646D9033CEACF0!sbcec97914ef14503aaaa786bd628bc60"}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={cn(
+                      "flex items-center justify-between p-2.5 rounded-xl border text-xs font-semibold transition-all group",
+                      isSubmitted || dbDoc?.onedrive_url
+                        ? "bg-emerald-500/5 hover:bg-emerald-500/10 border-emerald-500/30 text-emerald-700 dark:text-emerald-400"
+                        : "bg-zinc-50/50 hover:bg-zinc-100 dark:bg-zinc-900/40 border-zinc-200/80 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400"
+                    )}
+                    title="Open STI_Practicum_Archive in Microsoft OneDrive"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Cloud size={16} className={isSubmitted || dbDoc?.onedrive_url ? "text-emerald-500" : "text-sky-500"} />
+                      <div className="flex flex-col text-left truncate">
+                        <span className="font-bold text-[11px] leading-tight text-zinc-900 dark:text-zinc-100">
+                          {isSubmitted || dbDoc?.onedrive_url ? 'Archived in Microsoft OneDrive' : 'OneDrive Sync Connected'}
+                        </span>
+                        <span className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate">
+                          STI_Practicum_Archive
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                  <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 underline group-hover:translate-x-0.5 transition-transform shrink-0">
-                    Open OneDrive ↗
-                  </span>
-                </a>
-              </div>
+                    <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 underline group-hover:translate-x-0.5 transition-transform shrink-0">
+                      Open OneDrive ↗
+                    </span>
+                  </a>
+                </div>
+              )}
             </div>
           </Card>
 

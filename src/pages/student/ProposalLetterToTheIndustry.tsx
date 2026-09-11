@@ -33,6 +33,7 @@ export const ProposalLetterToTheIndustry = () => {
       submissionInfo={submissionInfo}
       adviserFeedback={adviserFeedback}
       lastUpdated="May 12, 2026"
+      showOneDriveCard={false}
     />
   );
 };
