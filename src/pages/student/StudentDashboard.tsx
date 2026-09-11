@@ -467,7 +467,7 @@ export const StudentDashboard: React.FC = () => {
                   className={cn(
                     "px-2.5 py-1 rounded-md font-bold transition-all flex items-center gap-1.5 cursor-pointer text-xs",
                     activePhaseTab === 'before'
-                      ? "bg-zinc-950 dark:bg-zinc-100 text-white dark:text-zinc-950 shadow-2xs"
+                      ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 border border-zinc-200/90 dark:border-zinc-700 shadow-2xs"
                       : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
                   )}
                 >
@@ -475,7 +475,7 @@ export const StudentDashboard: React.FC = () => {
                   <span
                     className={cn(
                       "px-1.5 py-0.2 rounded-full text-[9px] font-extrabold tabular-nums",
-                      activePhaseTab === 'before' ? "bg-white/20 dark:bg-zinc-950/20 text-white dark:text-zinc-950" : "bg-zinc-200/60 dark:bg-zinc-800/60 text-zinc-600 dark:text-zinc-400"
+                      activePhaseTab === 'before' ? "bg-zinc-100 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-200" : "bg-zinc-200/60 dark:bg-zinc-800/60 text-zinc-600 dark:text-zinc-400"
                     )}
                   >
                     4
@@ -488,7 +488,7 @@ export const StudentDashboard: React.FC = () => {
                   className={cn(
                     "px-2.5 py-1 rounded-md font-bold transition-all flex items-center gap-1.5 cursor-pointer text-xs",
                     activePhaseTab === 'in'
-                      ? "bg-zinc-950 dark:bg-zinc-100 text-white dark:text-zinc-950 shadow-2xs"
+                      ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 border border-zinc-200/90 dark:border-zinc-700 shadow-2xs"
                       : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
                   )}
                 >
@@ -496,7 +496,7 @@ export const StudentDashboard: React.FC = () => {
                   <span
                     className={cn(
                       "px-1.5 py-0.2 rounded-full text-[9px] font-extrabold tabular-nums",
-                      activePhaseTab === 'in' ? "bg-white/20 dark:bg-zinc-950/20 text-white dark:text-zinc-950" : "bg-zinc-200/60 dark:bg-zinc-800/60 text-zinc-600 dark:text-zinc-400"
+                      activePhaseTab === 'in' ? "bg-zinc-100 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-200" : "bg-zinc-200/60 dark:bg-zinc-800/60 text-zinc-600 dark:text-zinc-400"
                     )}
                   >
                     3
@@ -509,7 +509,7 @@ export const StudentDashboard: React.FC = () => {
                   className={cn(
                     "px-2.5 py-1 rounded-md font-bold transition-all flex items-center gap-1.5 cursor-pointer text-xs",
                     activePhaseTab === 'final'
-                      ? "bg-zinc-950 dark:bg-zinc-100 text-white dark:text-zinc-950 shadow-2xs"
+                      ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 border border-zinc-200/90 dark:border-zinc-700 shadow-2xs"
                       : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
                   )}
                 >
@@ -517,7 +517,7 @@ export const StudentDashboard: React.FC = () => {
                   <span
                     className={cn(
                       "px-1.5 py-0.2 rounded-full text-[9px] font-extrabold tabular-nums",
-                      activePhaseTab === 'final' ? "bg-white/20 dark:bg-zinc-950/20 text-white dark:text-zinc-950" : "bg-zinc-200/60 dark:bg-zinc-800/60 text-zinc-600 dark:text-zinc-400"
+                      activePhaseTab === 'final' ? "bg-zinc-100 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-200" : "bg-zinc-200/60 dark:bg-zinc-800/60 text-zinc-600 dark:text-zinc-400"
                     )}
                   >
                     3
@@ -591,17 +591,16 @@ export const StudentDashboard: React.FC = () => {
                 const isLocked = req.status === 'locked';
                 const IconComponent = req.icon;
 
-                return (
-                  <div
-                    key={req.label}
-                    className={cn(
-                      "p-3 rounded-xl border transition-all flex flex-col justify-between gap-2.5 bg-zinc-50/70 dark:bg-zinc-900/60 border-zinc-200/80 dark:border-zinc-800/80 hover:border-zinc-300 dark:hover:border-zinc-700 hover:bg-white dark:hover:bg-zinc-900",
-                      isDone && "border-emerald-500/30 bg-emerald-500/[0.03]",
-                      isPending && "border-amber-500/30 bg-amber-500/[0.03]",
-                      isProgress && "border-primary/30 bg-primary/[0.03]",
-                      isLocked && "opacity-60 border-dashed border-zinc-300/80 dark:border-zinc-800 bg-zinc-100/40 dark:bg-zinc-900/30"
-                    )}
-                  >
+                const cardClasses = cn(
+                  "p-3 rounded-xl border transition-all flex flex-col justify-between gap-2.5 bg-zinc-50/70 dark:bg-zinc-900/60 border-zinc-200/80 dark:border-zinc-800/80 hover:border-zinc-300 dark:hover:border-zinc-700 hover:bg-white dark:hover:bg-zinc-900 no-underline text-inherit",
+                  isDone && "border-emerald-500/30 bg-emerald-500/[0.03] hover:border-emerald-500/40",
+                  isPending && "border-amber-500/30 bg-amber-500/[0.03] hover:border-amber-500/40",
+                  isProgress && "border-primary/30 bg-primary/[0.03] hover:border-primary/40",
+                  isLocked ? "opacity-60 border-dashed border-zinc-300/80 dark:border-zinc-800 bg-zinc-100/40 dark:bg-zinc-900/30 cursor-not-allowed" : "cursor-pointer group select-none"
+                );
+
+                const cardInner = (
+                  <>
                     <div className="space-y-1.5">
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-1.5 min-w-0">
@@ -665,16 +664,36 @@ export const StudentDashboard: React.FC = () => {
                           <span>Locked</span>
                         </span>
                       ) : (
-                        <Link
-                          to={req.link}
-                          className="inline-flex items-center gap-1 text-[11px] font-bold text-primary hover:underline group cursor-pointer"
+                        <span
+                          className={cn(
+                            "inline-flex items-center gap-1 text-[11px] font-bold transition-colors",
+                            isDone
+                              ? "text-emerald-600 dark:text-emerald-400 group-hover:text-emerald-700 dark:group-hover:text-emerald-300"
+                              : isPending
+                              ? "text-amber-600 dark:text-amber-400 group-hover:text-amber-700 dark:group-hover:text-amber-300"
+                              : "text-zinc-700 dark:text-zinc-300 group-hover:text-zinc-900 dark:group-hover:text-zinc-100"
+                          )}
                         >
                           <span>{isDone ? 'View' : 'Open'}</span>
                           <ArrowRightIcon size={11} className="group-hover:translate-x-0.5 transition-transform" />
-                        </Link>
+                        </span>
                       )}
                     </div>
-                  </div>
+                  </>
+                );
+
+                if (isLocked) {
+                  return (
+                    <div key={req.label} className={cardClasses}>
+                      {cardInner}
+                    </div>
+                  );
+                }
+
+                return (
+                  <Link key={req.label} to={req.link} className={cardClasses}>
+                    {cardInner}
+                  </Link>
                 );
               })}
             </div>
@@ -1066,7 +1085,7 @@ export const StudentDashboard: React.FC = () => {
                   <Link
                     to={task.link}
                     onClick={() => setIsCompletedModalOpen(false)}
-                    className="text-primary hover:underline font-bold text-[11px] shrink-0 self-center"
+                    className="text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 hover:underline font-bold text-[11px] shrink-0 self-center"
                   >
                     View
                   </Link>

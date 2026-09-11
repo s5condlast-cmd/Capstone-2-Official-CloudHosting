@@ -62,6 +62,7 @@ export interface UnifiedReviewSessionProps {
   initialAiStatus?: 'Pending' | 'Processing' | 'Completed' | 'Failed';
   initialAiFindings?: any;
   onSendToAdmin?: () => void;
+  onedriveUrl?: string;
 }
 
 export const UnifiedReviewSession: React.FC<UnifiedReviewSessionProps> = ({
@@ -78,7 +79,8 @@ export const UnifiedReviewSession: React.FC<UnifiedReviewSessionProps> = ({
   docId,
   initialAiStatus = 'Pending',
   initialAiFindings = null,
-  onSendToAdmin
+  onSendToAdmin,
+  onedriveUrl
 }) => {
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [completionAction, setCompletionAction] = useState<'approve' | 'revise' | 'reject' | 'sendToAdmin' | null>(null);
@@ -246,6 +248,17 @@ export const UnifiedReviewSession: React.FC<UnifiedReviewSessionProps> = ({
                 </p>
               </div>
               <div className="flex items-center gap-2">
+                {onedriveUrl && (
+                  <a
+                    href={onedriveUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/20 text-xs font-bold transition-colors"
+                    title="Open document directly in Microsoft OneDrive"
+                  >
+                    <span>OneDrive ↗</span>
+                  </a>
+                )}
                 {pdfUrl && (
                   <a
                     href={pdfUrl}
@@ -266,6 +279,7 @@ export const UnifiedReviewSession: React.FC<UnifiedReviewSessionProps> = ({
                   studentName={student.name}
                   docTitle={student.docType}
                   readOnly={readOnly}
+                  onedriveUrl={onedriveUrl}
                 />
               </div>
             </div>

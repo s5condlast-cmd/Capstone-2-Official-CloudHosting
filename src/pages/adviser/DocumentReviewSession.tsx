@@ -103,9 +103,13 @@ export const DocumentReviewSession: React.FC = () => {
         docId={doc?.id}
         initialAiStatus={doc?.ai_status}
         initialAiFindings={doc?.ai_findings}
+        onedriveUrl={doc?.onedrive_url}
         onBack={() => navigate(-1)}
-        onApprove={async () => {
-          if (doc) await submissionStorage.updateDocumentStatus(doc.id, 'Approved');
+        onApprove={async (remarks) => {
+          if (doc) {
+            await submissionStorage.updateDocumentStatus(doc.id, 'Approved', remarks);
+            if (remarks) await submissionStorage.postComment(doc.id, 'Adviser', remarks);
+          }
           setQueueStatus('Completed');
           setTimeout(() => navigate('/adviser/review'), 1500);
         }}
@@ -114,13 +118,19 @@ export const DocumentReviewSession: React.FC = () => {
           setQueueStatus('Completed');
           setTimeout(() => navigate('/adviser/review'), 1500);
         }}
-        onRequestRevision={async () => {
-          if (doc) await submissionStorage.updateDocumentStatus(doc.id, 'Revision Required');
+        onRequestRevision={async (remarks) => {
+          if (doc) {
+            await submissionStorage.updateDocumentStatus(doc.id, 'Revision Required', remarks);
+            if (remarks) await submissionStorage.postComment(doc.id, 'Adviser', remarks);
+          }
           setQueueStatus('Completed');
           setTimeout(() => navigate('/adviser/review'), 1500);
         }}
-        onReject={async () => {
-          if (doc) await submissionStorage.updateDocumentStatus(doc.id, 'Revision Required');
+        onReject={async (remarks) => {
+          if (doc) {
+            await submissionStorage.updateDocumentStatus(doc.id, 'Revision Required', remarks);
+            if (remarks) await submissionStorage.postComment(doc.id, 'Adviser', remarks);
+          }
           setQueueStatus('Completed');
           setTimeout(() => navigate('/adviser/review'), 1500);
         }}

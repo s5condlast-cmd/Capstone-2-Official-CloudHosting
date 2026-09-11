@@ -311,7 +311,7 @@ export const Templates: React.FC = () => {
     {
       group: 'In OJT Templates',
       items: [
-        { name: 'Journal Template', type: 'PDF', version: 'v1.0', updated: 'Pending Upload', size: '—', id: 'h5', group: 'In OJT Templates', filename: 'No PDF uploaded yet' },
+        { name: 'Journal Template', type: 'DOCX', version: 'v1.0', updated: 'Pending Upload', size: '—', id: 'h5', group: 'In OJT Templates', filename: 'FT-CRD-167-00 Weekly Journal Template.docx' },
         { name: 'DTR Form', type: 'XLSX', version: 'v1.2', updated: 'Feb 10, 2026', size: '450 KB', id: 'h6', group: 'In OJT Templates', filename: 'DTR Form.xlsx' },
         { name: 'Training Plan Form', type: 'DOCX', version: 'v2.0', updated: 'Jan 5, 2026', size: '920 KB', id: 'h7', group: 'In OJT Templates', filename: 'FT-CRD-176-00 OJT Training Plan_BSIT-BSCS-BSIS-ACT-ITP.docx' },
       ]

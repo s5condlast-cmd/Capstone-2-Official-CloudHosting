@@ -62,9 +62,9 @@ export const submissionStorage = {
         console.warn('[OneDrive] Background archive notice:', onedriveErr);
       }
 
-      // Also upload file to Supabase Storage bucket 'submissions' for direct download fallback
+      // Also upload file to Supabase Storage bucket 'student_submissions' for direct download fallback
       try {
-        await supabase.storage.from('submissions').upload(fileName, file, {
+        await supabase.storage.from('student_submissions').upload(fileName, file, {
           cacheControl: '3600',
           upsert: true
         });
@@ -89,26 +89,26 @@ export const submissionStorage = {
         .select()
         .single();
 
-      if (insertError) {
-        console.warn('DB Insert Notice (falling back to local return):', insertError);
-        return {
-          id: `doc-${Date.now()}`,
-          student_name: studentName,
-          course: course,
-          doc_type: docType,
-          status: 'Pending',
-          urgency: urgency,
-          file_path: filePath,
-          onedrive_url: onedriveUrl,
-          created_at: new Date().toISOString(),
-          ai_status: 'Pending'
-        };
-      }
+      const resultDoc: StudentDocument = insertError || !data
+        ? {
+            id: `doc-${Date.now()}`,
+            student_name: studentName,
+            course: course,
+            doc_type: docType,
+            status: 'Pending',
+            urgency: urgency,
+            file_path: filePath,
+            onedrive_url: onedriveUrl,
+            created_at: new Date().toISOString(),
+            ai_status: 'Pending'
+          }
+        : { ...(data as StudentDocument), onedrive_url: onedriveUrl };
 
-      return { ...(data as StudentDocument), onedrive_url: onedriveUrl };
+      this.savePublishedSubmission(resultDoc);
+      return resultDoc;
     } catch (err: any) {
       console.warn('Supabase integration notice:', err);
-      return {
+      const fallbackDoc: StudentDocument = {
         id: `doc-${Date.now()}`,
         student_name: studentName,
         course: course,
@@ -120,7 +120,25 @@ export const submissionStorage = {
         created_at: new Date().toISOString(),
         ai_status: 'Pending'
       };
+      this.savePublishedSubmission(fallbackDoc);
+      return fallbackDoc;
     }
+  },
+
+  // Helper to load locally saved student submissions from localStorage fallback
+  getPublishedSubmissions(): StudentDocument[] {
+    try {
+      const saved = localStorage.getItem('student_submissions_cache');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return [];
+  },
+
+  savePublishedSubmission(doc: StudentDocument): void {
+    try {
+      const existing = this.getPublishedSubmissions().filter(d => d.id !== doc.id && !(d.student_name === doc.student_name && d.doc_type === doc.doc_type));
+      localStorage.setItem('student_submissions_cache', JSON.stringify([doc, ...existing]));
+    } catch (e) {}
   },
 
   // Helper to load locally published DTRs from localStorage fallback
@@ -236,59 +254,71 @@ export const submissionStorage = {
 
   // Get a public URL for the document
   getFileUrl(filePath: string): string {
-    // If already a full URL (Cloudinary), return directly
-    if (filePath.startsWith('http')) {
+    // If already a full URL (Cloudinary or OneDrive), return directly
+    if (filePath.startsWith('http') || filePath.startsWith('blob:')) {
       return filePath;
     }
-    // Legacy fallback: Supabase Storage
+    // Supabase Storage: bucket 'student_submissions'
+    const cleanPath = filePath.startsWith('submissions/') ? filePath.replace('submissions/', '') : filePath;
     const { data } = supabase.storage
       .from('student_submissions')
-      .getPublicUrl(filePath);
+      .getPublicUrl(cleanPath);
     return data.publicUrl;
   },
 
   // Fetch all pending documents for the adviser review tables
   async getPendingDocuments(): Promise<StudentDocument[]> {
     const localDtrs = this.getPublishedDTRs();
+    const localSubmissions = this.getPublishedSubmissions().filter(d => ['Pending', 'Pending Adviser Review', 'Pending Final Approval'].includes(d.status));
     try {
       const { data, error } = await supabase
         .from('student_documents')
         .select('*')
-        .in('status', ['Pending Adviser Review', 'Pending Final Approval'])
+        .in('status', ['Pending', 'Pending Adviser Review', 'Pending Final Approval'])
         .order('created_at', { ascending: false });
 
-      if (error || !data || data.length === 0) {
-        return localDtrs;
-      }
-
-      // Merge remote and local documents deduplicated by id or doc_type
       const map = new Map<string, StudentDocument>();
-      [...localDtrs, ...(data as StudentDocument[])].forEach(d => map.set(d.id, d));
+      [...localDtrs, ...localSubmissions, ...(data || [] as StudentDocument[])].forEach(d => map.set(d.id, d));
+      return Array.from(map.values()).filter(d => ['Pending', 'Pending Adviser Review', 'Pending Final Approval'].includes(d.status));
+    } catch (err) {
+      return [...localSubmissions, ...localDtrs];
+    }
+  },
+
+  // Fetch document history (Approved / Revision Required)
+  async getHistoryDocuments(): Promise<StudentDocument[]> {
+    const localSubmissions = this.getPublishedSubmissions().filter(d => ['Approved', 'Revision Required', 'Returned'].includes(d.status));
+    try {
+      const { data, error } = await supabase
+        .from('student_documents')
+        .select('*')
+        .in('status', ['Approved', 'Revision Required', 'Returned'])
+        .order('created_at', { ascending: false });
+
+      const map = new Map<string, StudentDocument>();
+      [...localSubmissions, ...(data || [] as StudentDocument[])].forEach(d => map.set(d.id, d));
       return Array.from(map.values());
     } catch (err) {
-      return localDtrs;
+      return localSubmissions;
     }
   },
 
   // Fetch all pending documents for the admin review tables
   async getPendingAdminDocuments(): Promise<StudentDocument[]> {
     const localDtrs = this.getPublishedDTRs();
+    const localSubmissions = this.getPublishedSubmissions();
     try {
       const { data, error } = await supabase
         .from('student_documents')
         .select('*')
-        .in('status', ['Pending Final Approval', 'Pending Adviser Review', 'Approved'])
+        .in('status', ['Pending', 'Pending Final Approval', 'Pending Adviser Review', 'Approved'])
         .order('created_at', { ascending: false });
 
-      if (error || !data || data.length === 0) {
-        return localDtrs;
-      }
-
       const map = new Map<string, StudentDocument>();
-      [...localDtrs, ...(data as StudentDocument[])].forEach(d => map.set(d.id, d));
+      [...localDtrs, ...localSubmissions, ...(data || [] as StudentDocument[])].forEach(d => map.set(d.id, d));
       return Array.from(map.values());
     } catch (err) {
-      return localDtrs;
+      return [...localSubmissions, ...localDtrs];
     }
   },
 
@@ -306,6 +336,9 @@ export const submissionStorage = {
       }
     } catch (err) {}
 
+    const localSub = this.getPublishedSubmissions().find(d => d.id === id);
+    if (localSub) return localSub;
+
     const localMatch = this.getPublishedDTRs().find(d => d.id === id);
     if (localMatch) return localMatch;
 
@@ -313,10 +346,10 @@ export const submissionStorage = {
       id: id,
       student_name: 'John Dwayne B. Guaniso',
       course: 'BSIT',
-      doc_type: 'DTR Form (Week 1)',
-      status: 'Pending Adviser Review',
+      doc_type: 'Proposal Letter to the Industry',
+      status: 'Pending',
       urgency: 'medium',
-      file_path: 'submissions/Signed_DTR_Week_1.xlsx',
+      file_path: 'submissions/Proposal_Letter.docx',
       created_at: new Date().toISOString(),
       ai_status: 'Completed'
     };
@@ -324,21 +357,27 @@ export const submissionStorage = {
 
   // Get the latest document by student name and type
   async getLatestDocumentByType(studentName: string, docType: string): Promise<StudentDocument | null> {
-    const { data, error } = await supabase
-      .from('student_documents')
-      .select('*')
-      .eq('student_name', studentName)
-      .eq('doc_type', docType)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    try {
+      const { data, error } = await supabase
+        .from('student_documents')
+        .select('*')
+        .eq('student_name', studentName)
+        .eq('doc_type', docType)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
-    if (error) {
-      console.error('Fetch Latest Error:', error);
-      return null;
+      if (!error && data) {
+        return data as StudentDocument;
+      }
+    } catch (err) {
+      console.warn('Fetch Latest DB notice:', err);
     }
 
-    return data as StudentDocument | null;
+    const localMatch = this.getPublishedSubmissions().find(
+      d => (d.student_name === studentName || !studentName) && d.doc_type === docType
+    );
+    return localMatch || null;
   },
 
   // Update document status
@@ -347,15 +386,25 @@ export const submissionStorage = {
     if (feedback !== undefined) {
       updateData.adviser_feedback = feedback;
     }
-    const { error } = await supabase
-      .from('student_documents')
-      .update(updateData)
-      .eq('id', id);
-
-    if (error) {
-      console.error('Update Error:', error);
-      throw new Error(`Failed to update status: ${error.message}`);
+    try {
+      await supabase
+        .from('student_documents')
+        .update(updateData)
+        .eq('id', id);
+    } catch (err) {
+      console.warn('DB update notice:', err);
     }
+
+    // Also update local cache
+    try {
+      const subs = this.getPublishedSubmissions();
+      const match = subs.find(d => d.id === id);
+      if (match) {
+        match.status = status;
+        if (feedback !== undefined) match.adviser_feedback = feedback;
+        localStorage.setItem('student_submissions_cache', JSON.stringify(subs));
+      }
+    } catch (e) {}
   },
 
   // Post a comment to a document
@@ -367,15 +416,24 @@ export const submissionStorage = {
       msg,
       time: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })
     };
-    const { error } = await supabase
-      .from('student_documents')
-      .update({ comments: [...existingComments, newComment] })
-      .eq('id', id);
-
-    if (error) {
-      console.error('Error posting comment:', error);
-      throw error;
+    const updatedComments = [...existingComments, newComment];
+    try {
+      await supabase
+        .from('student_documents')
+        .update({ comments: updatedComments })
+        .eq('id', id);
+    } catch (err) {
+      console.warn('DB post comment notice:', err);
     }
+
+    try {
+      const subs = this.getPublishedSubmissions();
+      const match = subs.find(d => d.id === id);
+      if (match) {
+        match.comments = updatedComments;
+        localStorage.setItem('student_submissions_cache', JSON.stringify(subs));
+      }
+    } catch (e) {}
   },
 
   // Update AI status and findings

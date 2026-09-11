@@ -56,10 +56,18 @@ export const ReviewDocs: React.FC = () => {
   const [liveDocs, setLiveDocs] = useState<StudentDocument[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const navigate = useNavigate();
+  const [selectedDocs, setSelectedDocs] = useState<Set<string>>(new Set());
+  const [expandedAI, setExpandedAI] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'needs_review' | 'history'>('needs_review');
+
   React.useEffect(() => {
     async function loadDocs() {
+      setIsLoading(true);
       try {
-        const docs = await submissionStorage.getPendingDocuments();
+        const docs = activeTab === 'needs_review'
+          ? await submissionStorage.getPendingDocuments()
+          : await submissionStorage.getHistoryDocuments();
         setLiveDocs(docs);
       } catch (err) {
         console.error("Failed to load documents", err);
@@ -68,26 +76,37 @@ export const ReviewDocs: React.FC = () => {
       }
     }
     loadDocs();
-  }, []);
+  }, [activeTab]);
 
   // Map the live Supabase documents into the format expected by the table
-  const mappedLiveDocs: PendingDoc[] = liveDocs.map(doc => ({
-    id: doc.id,
-    student: doc.student_name,
-    type: doc.doc_type,
-    time: new Date(doc.created_at).toLocaleDateString(),
-    course: doc.course,
-    urgency: doc.urgency,
-    aiCheck: { status: 'passed' as const, issues: [], confidence: 100 },
-    contentInsight: { totalChecks: 15, issues: 0, score: 100 }
-  }));
+  const mappedLiveDocs: PendingDoc[] = liveDocs.map(doc => {
+    let aiStatus: 'passed' | 'warning' | 'failed' = 'passed';
+    let aiIssues: string[] = [];
+    if (doc.ai_status === 'Processing') {
+      aiIssues = ['AI document analysis in progress...'];
+    } else if (doc.ai_findings) {
+      if (doc.ai_findings.grammarIssues > 0 || (doc.ai_findings.missingInformation && doc.ai_findings.missingInformation.length > 0)) {
+        aiStatus = 'warning';
+      }
+      aiIssues = [
+        ...(doc.ai_findings.missingInformation || []),
+        ...(doc.ai_findings.consistencyIssues || [])
+      ];
+    }
+
+    return {
+      id: doc.id,
+      student: doc.student_name,
+      type: doc.doc_type,
+      time: new Date(doc.created_at).toLocaleDateString(),
+      course: doc.course,
+      urgency: doc.urgency || 'medium',
+      aiCheck: { status: aiStatus, issues: aiIssues, confidence: doc.ai_findings?.confidence === 'High' ? 95 : 100 },
+      contentInsight: { totalChecks: 15, issues: aiIssues.length, score: aiIssues.length > 0 ? 88 : 100 }
+    };
+  });
 
   const pendingDocs: PendingDoc[] = mappedLiveDocs;
-
-  const navigate = useNavigate();
-  const [selectedDocs, setSelectedDocs] = useState<Set<string>>(new Set());
-  const [expandedAI, setExpandedAI] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'needs_review' | 'history'>('needs_review');
   const [hiddenDocIds, setHiddenDocIds] = useState<Set<string>>(new Set());
 
   const visibleDocs = pendingDocs.filter(d => {
@@ -420,41 +439,55 @@ export const ReviewDocs: React.FC = () => {
                       </td>
                       <td className="px-6 py-5 text-right">
                         <div className="flex items-center justify-end gap-1.5 flex-nowrap">
-                           <Button 
-                             size="sm" 
-                             variant="outline" 
-                             onClick={() => navigate(`/adviser/review/${doc.id}`)} 
-                             className="p-2 border-zinc-300 dark:border-zinc-700 group-hover:border-zinc-900 dark:group-hover:border-zinc-100 shadow-none"
-                           >
-                             <MessageSquare size={14} />
-                           </Button>
-                           <Button 
-                             size="sm" 
-                             variant="danger" 
-                             icon={<X size={14} />} 
-                             onClick={() => handleReject(doc.id)}
-                             className="px-2 py-1 text-[10px] h-7"
-                           >
-                             Reject
-                           </Button>
-                           <Button 
-                             size="sm" 
-                             variant="secondary" 
-                             icon={<Check size={14} />} 
-                             onClick={() => handleApprove(doc.id)}
-                             className="px-2 py-1 text-[10px] h-7 border-zinc-300 hover:bg-zinc-50"
-                           >
-                             Approve
-                           </Button>
-                           <Button 
-                             size="sm" 
-                             variant="primary" 
-                             icon={<ShieldCheck size={14} />} 
-                             onClick={() => handleSendToAdmin(doc.id)}
-                             className="px-2 py-1 text-[10px] h-7 whitespace-nowrap shrink-0"
-                           >
-                             Send to Admin
-                           </Button>
+                          {activeTab === 'history' ? (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => navigate(`/adviser/review/${doc.id}`)}
+                              className="px-3 py-1 text-[11px] h-7 font-bold border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                            >
+                              Inspect Document
+                            </Button>
+                          ) : (
+                            <>
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                onClick={() => navigate(`/adviser/review/${doc.id}`)} 
+                                className="p-2 border-zinc-300 dark:border-zinc-700 group-hover:border-zinc-900 dark:group-hover:border-zinc-100 shadow-none"
+                                title="Open Review Session"
+                              >
+                                <MessageSquare size={14} />
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="danger" 
+                                icon={<X size={14} />} 
+                                onClick={() => handleReject(doc.id)}
+                                className="px-2 py-1 text-[10px] h-7"
+                              >
+                                Reject
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="secondary" 
+                                icon={<Check size={14} />} 
+                                onClick={() => handleApprove(doc.id)}
+                                className="px-2 py-1 text-[10px] h-7 border-zinc-300 hover:bg-zinc-50"
+                              >
+                                Approve
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="primary" 
+                                icon={<ShieldCheck size={14} />} 
+                                onClick={() => handleSendToAdmin(doc.id)}
+                                className="px-2 py-1 text-[10px] h-7 whitespace-nowrap shrink-0"
+                              >
+                                Forward
+                              </Button>
+                            </>
+                          )}
                         </div>
                       </td>
                     </tr>

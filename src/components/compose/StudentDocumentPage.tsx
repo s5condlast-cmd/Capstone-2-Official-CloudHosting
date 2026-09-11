@@ -258,13 +258,13 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
           setDbDoc(doc);
           if (doc.status === 'Approved') {
             setCurrentStatus('Approved');
-            setCurrentFeedback('Document successfully verified and approved.');
+            setCurrentFeedback(doc.adviser_feedback || 'Document successfully verified and approved.');
           } else if (doc.status === 'Revision Required') {
             setCurrentStatus('Returned');
-            setCurrentFeedback('Revision Required. Please re-upload your document.');
+            setCurrentFeedback(doc.adviser_feedback || 'Revision Required. Please re-upload your document.');
           } else {
             setCurrentStatus('Pending');
-            setCurrentFeedback('Waiting for adviser to verify your submission.');
+            setCurrentFeedback(doc.adviser_feedback || 'Waiting for adviser to verify your submission.');
           }
           setCurrentLastUpdated(new Date(doc.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }));
         } else {
@@ -458,7 +458,7 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
               <div className="bg-zinc-50/80 dark:bg-zinc-900/50 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-3 flex items-start gap-2.5">
                 <Info className="text-zinc-500 dark:text-zinc-400 mt-0.5 shrink-0" size={14} />
                 <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed font-normal">
-                  Upload a clear scanned PDF with visible signatures.
+                  Upload a clear PDF or DOCX file with required details and signatures.
                 </p>
               </div>
 
