@@ -572,10 +572,10 @@ export const documentGenerator = {
     y += 24;
 
     // Recipient block
-    const recipient = formData.contactPerson || formData['Industry Representative Name'] || 'The Human Resources Director';
-    const titleText = formData.contactTitle || formData['Position / Title'] || 'Industry Partner';
-    const company = formData.companyName || formData['Company Name'] || 'Host Training Establishment';
-    const address = formData.companyAddress || formData['Company Address'] || 'City / Province';
+    const recipient = formData.contactPerson || formData['Industry Representative Name'] || formData['Name of Host Training Establishment Representative'] || 'The Human Resources Director';
+    const titleText = formData.contactTitle || formData['Position / Title'] || formData['Designation'] || 'Industry Partner';
+    const company = formData.companyName || formData['Company Name'] || formData['Name of Host Company'] || 'Host Training Establishment';
+    const address = formData.companyAddress || formData['Company Address'] || formData['Address'] || 'City / Province';
 
     doc.setFont('helvetica', 'bold');
     doc.text(recipient, margin, y);
@@ -588,19 +588,27 @@ export const documentGenerator = {
     doc.text(address, margin, y);
     y += 26;
 
+    // Document Subject / Title line
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(15, 23, 42);
+    const subjectTitle = title.toUpperCase().includes('LETTER') || title.toUpperCase().includes('FORM') || title.toUpperCase().includes('MOA')
+      ? title.toUpperCase()
+      : `${title.toUpperCase()} - PRACTICUM SUBMISSION`;
+    doc.text(`SUBJECT: ${subjectTitle}`, margin, y);
+    y += 20;
+
     // Salutation
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
     doc.text(`Dear ${formData.contactPerson ? `Mr./Ms. ${formData.contactPerson}` : 'Industry Representative'}:`, margin, y);
     y += 20;
 
-    // Body paragraphs
-    const studentName = formData.studentName || 'John Dwayne B. Guaniso';
-    const program = formData.programName || 'Bachelor of Science in Information Technology';
-    const hours = formData.hoursRequired || '486';
-
-    const p1 = `Greetings in the spirit of education and industry collaboration!`;
-    const p2 = `As part of the academic curriculum for the ${program} program at STI College, our student trainee, ${studentName}, is required to undergo a total of ${hours} hours of On-the-Job Training (OJT). This program bridges classroom instruction with direct industrial immersion.`;
-    const p3 = `We respectfully submit this Proposal Letter to explore placement and internship opportunities for our trainee within your reputable organization. Enclosed are the student profile and initial training objectives for your consideration.`;
-    const p4 = `Thank you very much for your valued time, guidance, and continuous support of our student's professional growth.`;
+    // Common Student & Program details
+    const studentName = formData.studentName || formData['Name of Student Trainee'] || 'John Dwayne B. Guaniso';
+    const program = formData.programName || formData['Name of Program'] || 'Bachelor of Science in Information Technology';
+    const hours = formData.hoursRequired || formData['no. of training hours'] || '486';
+    const coordinator = formData.coordinatorName || formData['programHead'] || 'Prof. Maria Santos, MIT';
 
     const writePara = (text: string) => {
       const lines = doc.splitTextToSize(text, contentWidth);
@@ -608,10 +616,38 @@ export const documentGenerator = {
       y += lines.length * 14 + 10;
     };
 
-    writePara(p1);
-    writePara(p2);
-    writePara(p3);
-    writePara(p4);
+    const lowerTitle = title.toLowerCase();
+
+    if (lowerTitle.includes('proposal')) {
+      writePara(`Greetings in the spirit of education and industry collaboration!`);
+      writePara(`As part of the academic curriculum for the ${program} program at STI College, our student trainee, ${studentName}, is required to undergo a total of ${hours} hours of On-the-Job Training (OJT). This program bridges classroom instruction with direct industrial immersion.`);
+      writePara(`We respectfully submit this Proposal Letter to explore placement and internship opportunities for our trainee within your reputable organization. Enclosed are the student profile and initial training objectives for your consideration.`);
+      writePara(`Thank you very much for your valued time, guidance, and continuous support of our student's professional growth.`);
+    } else if (lowerTitle.includes('application')) {
+      writePara(`I am writing to express my strong interest in rendering my required ${hours} hours of On-the-Job Training (OJT) with your esteemed company, ${company}.`);
+      writePara(`I am currently a senior student taking up ${program} at STI College. Through our coursework and practical laboratories, I have acquired hands-on foundational skills and am eager to contribute effectively to your team's ongoing projects.`);
+      writePara(`Attached to this application are my curriculum vitae, academic credentials, and official requirements for your review. I look forward to the opportunity to discuss how my passion and background align with your organization's goals.`);
+      writePara(`Thank you very much for your consideration.`);
+    } else if (lowerTitle.includes('endorsement')) {
+      writePara(`Warm greetings from STI College!`);
+      writePara(`This is to formally endorse our bonafide student, ${studentName}, enrolled in the ${program} program, to undergo their required ${hours} hours of practicum immersion with ${company}.`);
+      writePara(`We vouch for the student's academic standing, discipline, and commitment to learning. We are confident that this industry placement will provide valuable practical experience while allowing the student to contribute meaningfully to your company.`);
+      writePara(`We look forward to an enduring partnership with your institution.`);
+    } else if (lowerTitle.includes('consent')) {
+      const feeText = lowerTitle.includes('without fee') ? 'without fee requirements' : 'with applicable fee coverage';
+      writePara(`This document certifies that voluntary consent and approval have been granted for ${studentName}, a student of ${program}, to participate in the prescribed ${hours}-hour On-the-Job Training program (${feeText}).`);
+      writePara(`We acknowledge that the training is an integral part of the academic requirements and agree to comply with the safety protocols, rules, and guidelines mandated by STI College and ${company}.`);
+      writePara(`In granting this consent, we understand that all parties will exercise necessary diligence to ensure a fruitful and safe immersion experience.`);
+    } else if (lowerTitle.includes('moa') || lowerTitle.includes('memorandum')) {
+      writePara(`This Memorandum of Agreement is entered into by and between STI College and ${company} to govern the industry placement and internship of ${studentName} for a duration of ${hours} hours.`);
+      writePara(`Both parties agree to collaborate in providing experiential learning, technical mentorship, and regular performance evaluations to advance the academic and professional competencies of the student trainee.`);
+      writePara(`This agreement reflects our mutual commitment to cultivating industry-ready professionals through quality practicum training.`);
+    } else {
+      writePara(`Greetings in the spirit of academic excellence and industry collaboration!`);
+      writePara(`This document pertains to the official practicum requirements of ${studentName}, currently pursuing the ${program} curriculum at STI College.`);
+      writePara(`All terms, requirements, and information presented herein have been prepared in accordance with the official On-the-Job Training guidelines prescribed for the completion of ${hours} training hours.`);
+      writePara(`Thank you for your continuous cooperation in advancing quality experiential education.`);
+    }
 
     y += 10;
     doc.text('Respectfully yours,', margin, y);
@@ -625,7 +661,7 @@ export const documentGenerator = {
     doc.text(studentName, margin, y);
     y += 12;
     doc.setFont('helvetica', 'normal');
-    doc.text('Student Trainee Applicant', margin, y);
+    doc.text(lowerTitle.includes('endorsement') ? 'Student Trainee' : 'Student Trainee Applicant', margin, y);
 
     // Coordinator block on right
     const coordX = margin + 260;
@@ -633,7 +669,7 @@ export const documentGenerator = {
     doc.setDrawColor(15, 23, 42);
     doc.line(coordX, coordY, coordX + 180, coordY);
     doc.setFont('helvetica', 'bold');
-    doc.text(formData.coordinatorName || 'Prof. Maria Santos', coordX, coordY + 14);
+    doc.text(coordinator, coordX, coordY + 14);
     doc.setFont('helvetica', 'normal');
     doc.text('Practicum Coordinator', coordX, coordY + 26);
 

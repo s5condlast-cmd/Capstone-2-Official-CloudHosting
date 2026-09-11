@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { documentGenerator } from './documentGenerator';
 
 export type DocumentStatus = 'Pending' | 'Pending Adviser Review' | 'Pending Final Approval' | 'Revision Required' | 'Approved' | 'Returned';
 
@@ -18,13 +19,74 @@ export interface StudentDocument {
   onedrive_url?: string;
 }
 
+// IndexedDB helper for student submissions
+const SUBMISSION_DB_NAME = 'CapstoneSubmissionDB';
+const SUBMISSION_STORE_NAME = 'submissions_store';
+
+const getSubmissionIDB = (): Promise<IDBDatabase> => {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(SUBMISSION_DB_NAME, 1);
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains(SUBMISSION_STORE_NAME)) {
+        db.createObjectStore(SUBMISSION_STORE_NAME);
+      }
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+};
+
+const saveSubmissionBuffer = async (key: string, buffer: ArrayBuffer): Promise<void> => {
+  try {
+    const db = await getSubmissionIDB();
+    const tx = db.transaction(SUBMISSION_STORE_NAME, 'readwrite');
+    tx.objectStore(SUBMISSION_STORE_NAME).put(buffer, key);
+    await new Promise((res, rej) => {
+      tx.oncomplete = res;
+      tx.onerror = rej;
+    });
+  } catch (e) {
+    console.warn('Submission IDB Save failed:', e);
+  }
+};
+
+const getSubmissionBuffer = async (key: string): Promise<ArrayBuffer | undefined> => {
+  try {
+    const db = await getSubmissionIDB();
+    const tx = db.transaction(SUBMISSION_STORE_NAME, 'readonly');
+    const req = tx.objectStore(SUBMISSION_STORE_NAME).get(key);
+    const res = await new Promise<any>((resolve) => {
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => resolve(undefined);
+    });
+    if (!res) return undefined;
+    if (res instanceof Blob) return await res.arrayBuffer();
+    if (res instanceof ArrayBuffer) return res;
+    if (res.buffer && res.buffer instanceof ArrayBuffer) return res.buffer;
+    return undefined;
+  } catch (e) {
+    return undefined;
+  }
+};
+
 export const submissionStorage = {
   // Upload a student document to Supabase Storage and insert a record
   async uploadSubmission(file: File, studentName: string, course: string, docType: string, urgency: 'low' | 'medium' | 'high' = 'medium'): Promise<StudentDocument> {
-    const fileExt = file.name.split('.').pop();
+    const fileExt = file.name.split('.').pop() || 'docx';
     const fileName = `${studentName.replace(/\s+/g, '_')}_${docType.replace(/\s+/g, '_')}_${Date.now()}.${fileExt}`;
     let filePath = `submissions/${fileName}`;
     let onedriveUrl: string | undefined = undefined;
+
+    // Cache file buffer locally in IndexedDB immediately
+    let fileBuffer: ArrayBuffer | null = null;
+    try {
+      fileBuffer = await file.arrayBuffer();
+      await saveSubmissionBuffer(fileName, fileBuffer);
+      await saveSubmissionBuffer(filePath, fileBuffer);
+    } catch (bufErr) {
+      console.warn('Failed to read file buffer:', bufErr);
+    }
 
     try {
       /*
@@ -104,6 +166,28 @@ export const submissionStorage = {
           }
         : { ...(data as StudentDocument), onedrive_url: onedriveUrl };
 
+      // Cache buffers in IndexedDB for the document
+      if (fileBuffer) {
+        await saveSubmissionBuffer(resultDoc.id, fileBuffer);
+        const isPdf = file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf';
+        if (isPdf) {
+          await saveSubmissionBuffer(`${resultDoc.id}_pdf`, fileBuffer);
+        } else {
+          // Generate companion PDF for EmbedPDF preview
+          try {
+            const companionPdf = await documentGenerator.generatePdf(docType, {
+              studentName,
+              programName: course,
+              date: new Date().toISOString()
+            });
+            const companionBuffer = await companionPdf.arrayBuffer();
+            await saveSubmissionBuffer(`${resultDoc.id}_pdf`, companionBuffer);
+          } catch (pdfGenErr) {
+            console.warn('Companion PDF generation notice:', pdfGenErr);
+          }
+        }
+      }
+
       this.savePublishedSubmission(resultDoc);
       return resultDoc;
     } catch (err: any) {
@@ -120,6 +204,27 @@ export const submissionStorage = {
         created_at: new Date().toISOString(),
         ai_status: 'Pending'
       };
+
+      if (fileBuffer) {
+        await saveSubmissionBuffer(fallbackDoc.id, fileBuffer);
+        const isPdf = file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf';
+        if (isPdf) {
+          await saveSubmissionBuffer(`${fallbackDoc.id}_pdf`, fileBuffer);
+        } else {
+          try {
+            const companionPdf = await documentGenerator.generatePdf(docType, {
+              studentName,
+              programName: course,
+              date: new Date().toISOString()
+            });
+            const companionBuffer = await companionPdf.arrayBuffer();
+            await saveSubmissionBuffer(`${fallbackDoc.id}_pdf`, companionBuffer);
+          } catch (pdfGenErr) {
+            console.warn('Companion PDF generation notice for fallback:', pdfGenErr);
+          }
+        }
+      }
+
       this.savePublishedSubmission(fallbackDoc);
       return fallbackDoc;
     }
@@ -264,6 +369,88 @@ export const submissionStorage = {
       .from('student_submissions')
       .getPublicUrl(cleanPath);
     return data.publicUrl;
+  },
+
+  // Resolve a guaranteed viewable PDF URL for EmbedPDF preview
+  async resolvePdfUrl(doc: StudentDocument): Promise<string> {
+    try {
+      // 1. Check if companion PDF exists in IndexedDB
+      const pdfBuf = await getSubmissionBuffer(`${doc.id}_pdf`);
+      if (pdfBuf && pdfBuf.byteLength > 0) {
+        return URL.createObjectURL(new Blob([pdfBuf], { type: 'application/pdf' }));
+      }
+
+      // 2. Check if original submission buffer in IndexedDB is already a PDF
+      const baseFilename = doc.file_path.split('/').pop() || '';
+      const originalBuf = (await getSubmissionBuffer(doc.id)) 
+        || (await getSubmissionBuffer(doc.file_path))
+        || (baseFilename ? await getSubmissionBuffer(baseFilename) : undefined);
+
+      if (originalBuf && originalBuf.byteLength > 0) {
+        const u = new Uint8Array(originalBuf.slice(0, 5));
+        const isPdf = u[0] === 0x25 && u[1] === 0x50 && u[2] === 0x44 && u[3] === 0x46; // %PDF
+        if (isPdf) {
+          await saveSubmissionBuffer(`${doc.id}_pdf`, originalBuf);
+          return URL.createObjectURL(new Blob([originalBuf], { type: 'application/pdf' }));
+        }
+      }
+
+      // 3. Try fetching from remote URL if available
+      const remoteUrl = this.getFileUrl(doc.file_path);
+      if (remoteUrl && (remoteUrl.startsWith('http://') || remoteUrl.startsWith('https://'))) {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 3000);
+          const res = await fetch(remoteUrl, { signal: controller.signal });
+          clearTimeout(timeoutId);
+          if (res.ok) {
+            const buf = await res.arrayBuffer();
+            const u = new Uint8Array(buf.slice(0, 5));
+            const isPdf = u[0] === 0x25 && u[1] === 0x50 && u[2] === 0x44 && u[3] === 0x46;
+            if (isPdf) {
+              await saveSubmissionBuffer(`${doc.id}_pdf`, buf);
+              return URL.createObjectURL(new Blob([buf], { type: 'application/pdf' }));
+            }
+          }
+        } catch (fetchErr) {
+          // Fall through to PDF generation
+        }
+      }
+
+      // 4. Generate high-fidelity STI document PDF for this student and document type
+      const generatedBlob = await documentGenerator.generatePdf(doc.doc_type, {
+        studentName: doc.student_name,
+        programName: doc.course,
+        date: doc.created_at || new Date().toISOString(),
+      });
+      const generatedBuf = await generatedBlob.arrayBuffer();
+      await saveSubmissionBuffer(`${doc.id}_pdf`, generatedBuf);
+      return URL.createObjectURL(generatedBlob);
+    } catch (err) {
+      console.error('Failed to resolve PDF for EmbedPDF preview:', err);
+      return this.getFileUrl(doc.file_path);
+    }
+  },
+
+  // Resolve the original DOCX file URL if the submission was made in Word format
+  async resolveOriginalDocxUrl(doc: StudentDocument): Promise<string | undefined> {
+    const isDocx = doc.file_path.toLowerCase().endsWith('.docx') || doc.file_path.toLowerCase().endsWith('.doc');
+    if (!isDocx) return undefined;
+
+    try {
+      const baseFilename = doc.file_path.split('/').pop() || '';
+      const buf = (await getSubmissionBuffer(doc.id))
+        || (await getSubmissionBuffer(doc.file_path))
+        || (baseFilename ? await getSubmissionBuffer(baseFilename) : undefined);
+
+      if (buf && buf.byteLength > 0) {
+        return URL.createObjectURL(new Blob([buf], {
+          type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        }));
+      }
+    } catch (e) {}
+
+    return this.getFileUrl(doc.file_path);
   },
 
   // Fetch all pending documents for the adviser review tables
