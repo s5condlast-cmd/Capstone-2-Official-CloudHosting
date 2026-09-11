@@ -381,12 +381,6 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
     }
   };
 
-  const handleDirectSubmitFromWorkflow = async (file: File) => {
-    setSelectedFile(file);
-    setUploadedFileName(file.name);
-    await executeUpload(file);
-  };
-
   const handleSubmit = async () => {
     if (selectedFile) {
       await executeUpload(selectedFile);
@@ -497,7 +491,6 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
               pdfUrl={selectedTemplate.pdfUrl}
               templateId={selectedTemplate.id}
               fields={templateFields[getTemplateFilename(selectedTemplate.pdfUrl)] || []}
-              onDirectSubmit={handleDirectSubmitFromWorkflow}
             />
           </div>
         </div>
