@@ -8,6 +8,7 @@ import {
   uploadToOneDrive,
   getOneDriveFileMetadata,
   listOneDriveFolder,
+  syncFolderFilesToRoot,
 } from '../services/onedriveService';
 
 import os from 'os';
@@ -193,6 +194,25 @@ router.get('/onedrive/file/:id', async (req: Request, res: Response) => {
       success: false,
       error: err.message || 'Failed to fetch OneDrive file metadata',
     });
+  }
+});
+
+/**
+ * POST /api/onedrive/sync-root
+ * Syncs all files from a nested subfolder directly to the root archive folder.
+ */
+router.post('/onedrive/sync-root', async (req: Request, res: Response) => {
+  const folder = (req.query.folder as string) || (req.body?.folder as string) || '';
+  if (!folder) {
+    return res.status(400).json({ error: 'Folder path is required' });
+  }
+
+  try {
+    const synced = await syncFolderFilesToRoot(folder);
+    return res.json({ success: true, count: synced.length, synced });
+  } catch (err: any) {
+    console.error('[OneDrive] Sync to root error:', err);
+    return res.status(500).json({ success: false, error: err.message });
   }
 });
 

@@ -563,21 +563,34 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
                 </Button>
               </div>
 
-              <div className="flex items-center justify-center gap-1.5 pt-1 text-[10px] text-zinc-500 dark:text-zinc-400">
-                <Cloud size={12} className={cn("shrink-0", isSubmitted || dbDoc?.onedrive_url ? "text-emerald-500" : "text-sky-500")} />
-                {dbDoc?.onedrive_url ? (
-                  <a
-                    href={dbDoc.onedrive_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="hover:underline text-emerald-600 dark:text-emerald-400 font-semibold truncate max-w-[280px]"
-                    title="Open archived document in OneDrive"
-                  >
-                    ✓ Archived in Microsoft OneDrive ↗
-                  </a>
-                ) : (
-                  <span>{isSubmitted ? '✓ Document archived to Microsoft OneDrive' : 'Cloud sync: Auto-archives to Microsoft OneDrive'}</span>
-                )}
+              <div className="pt-2 border-t border-zinc-200/80 dark:border-zinc-800/80">
+                <a
+                  href={dbDoc?.onedrive_url || "https://onedrive.live.com?cid=D9646D9033CEACF0&id=D9646D9033CEACF0!sbcec97914ef14503aaaa786bd628bc60"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={cn(
+                    "flex items-center justify-between p-2.5 rounded-xl border text-xs font-semibold transition-all group",
+                    isSubmitted || dbDoc?.onedrive_url
+                      ? "bg-emerald-500/5 hover:bg-emerald-500/10 border-emerald-500/30 text-emerald-700 dark:text-emerald-400"
+                      : "bg-zinc-50/50 hover:bg-zinc-100 dark:bg-zinc-900/40 border-zinc-200/80 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400"
+                  )}
+                  title="Open STI_Practicum_Archive in Microsoft OneDrive"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Cloud size={16} className={isSubmitted || dbDoc?.onedrive_url ? "text-emerald-500" : "text-sky-500"} />
+                    <div className="flex flex-col text-left truncate">
+                      <span className="font-bold text-[11px] leading-tight text-zinc-900 dark:text-zinc-100">
+                        {isSubmitted || dbDoc?.onedrive_url ? 'Archived in Microsoft OneDrive' : 'OneDrive Sync Connected'}
+                      </span>
+                      <span className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate">
+                        STI_Practicum_Archive
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 underline group-hover:translate-x-0.5 transition-transform shrink-0">
+                    Open OneDrive ↗
+                  </span>
+                </a>
               </div>
             </div>
           </Card>

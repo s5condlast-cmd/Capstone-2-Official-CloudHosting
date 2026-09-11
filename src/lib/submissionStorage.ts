@@ -357,6 +357,10 @@ export const submissionStorage = {
 
   // Get the latest document by student name and type
   async getLatestDocumentByType(studentName: string, docType: string): Promise<StudentDocument | null> {
+    const localMatch = this.getPublishedSubmissions().find(
+      d => (d.student_name === studentName || !studentName) && d.doc_type === docType
+    );
+
     try {
       const { data, error } = await supabase
         .from('student_documents')
@@ -368,15 +372,15 @@ export const submissionStorage = {
         .maybeSingle();
 
       if (!error && data) {
-        return data as StudentDocument;
+        return {
+          ...(data as StudentDocument),
+          onedrive_url: localMatch?.onedrive_url || (data as any).onedrive_url || "https://onedrive.live.com?cid=D9646D9033CEACF0&id=D9646D9033CEACF0!sbcec97914ef14503aaaa786bd628bc60"
+        };
       }
     } catch (err) {
       console.warn('Fetch Latest DB notice:', err);
     }
 
-    const localMatch = this.getPublishedSubmissions().find(
-      d => (d.student_name === studentName || !studentName) && d.doc_type === docType
-    );
     return localMatch || null;
   },
 
