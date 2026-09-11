@@ -22,6 +22,7 @@ import { submissionStorage } from '@/src/lib/submissionStorage';
 import { toast } from 'sonner';
 import { cn } from '@/src/lib/utils';
 import { templateStorage } from '@/src/lib/templateStorage';
+import { PlateProposalEditor } from '@/src/components/editor/PlateProposalEditor';
 
 import { EmptyState } from '@/src/components/ui/EmptyState';
 
@@ -111,10 +112,12 @@ export const DocumentWorkflow: React.FC<DocumentWorkflowProps> = ({
   onDirectSubmit
 }) => {
   const isApplicationLetter = title.toLowerCase().includes('application letter');
+  const isProposalLetter = title.toLowerCase().includes('proposal');
+  const hasInteractiveForm = isApplicationLetter || isProposalLetter;
   const [docBuffer, setDocBuffer] = useState<ArrayBuffer | null>(null);
   const [pdfBuffer, setPdfBuffer] = useState<ArrayBuffer | null>(null);
   const [isLoadingDoc, setIsLoadingDoc] = useState<boolean>(true);
-  const [viewMode, setViewMode] = useState<'preview' | 'form'>(isApplicationLetter ? 'form' : 'preview');
+  const [viewMode, setViewMode] = useState<'preview' | 'form'>(hasInteractiveForm ? 'form' : 'preview');
   const [zoomScale, setZoomScale] = useState<number>(1);
   const [isGeneratingDocx, setIsGeneratingDocx] = useState(false);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
@@ -133,6 +136,8 @@ export const DocumentWorkflow: React.FC<DocumentWorkflowProps> = ({
     programName: 'Bachelor of Science in Information Technology',
     signature: '',
     studentName: 'John Dwayne B. Guaniso',
+    coordinatorName: 'Prof. Maria Santos, MIT',
+    proposalBody: '',
   };
 
   const autoFillProfileData: Record<string, string> = {
@@ -147,6 +152,8 @@ export const DocumentWorkflow: React.FC<DocumentWorkflowProps> = ({
     programName: 'Bachelor of Science in Information Technology',
     signature: '',
     studentName: 'John Dwayne B. Guaniso',
+    coordinatorName: 'Prof. Maria Santos, MIT',
+    proposalBody: '',
   };
 
   // Form State for inline document placeholders matching <TAGS>, Date, and ____
@@ -310,11 +317,28 @@ export const DocumentWorkflow: React.FC<DocumentWorkflowProps> = ({
   };
 
   const handleAutoFill = () => {
-    setFormData(autoFillProfileData);
+    setFormData({
+      ...autoFillProfileData,
+      ...(isProposalLetter ? {
+        contactPerson: 'Mr. Alex Santos',
+        contactTitle: 'Human Resources Director',
+        companyName: 'InnoTech Solutions Inc.',
+        companyAddress: '123 Innovation Way, Ortigas Center, Pasig City',
+        salutationName: 'Santos',
+        coordinatorName: 'Prof. Maria Santos, MIT',
+        proposalBody:
+          `Greetings in the spirit of education and industry collaboration!\n\n` +
+          `As part of the academic curriculum for the Bachelor of Science in Information Technology program at STI College, I am required to render a total of 486 hours of On-the-Job Training (OJT). This program is designed to bridge academic instruction with direct industrial immersion.\n\n` +
+          `I respectfully submit this Proposal Letter to explore placement and internship opportunities within InnoTech Solutions Inc. Equipped with hands-on coursework in full-stack web applications, database architecture, and cloud services, I offer my dedication and active service to support your engineering initiatives.\n\n` +
+          `Enclosed are my student credentials, academic curriculum vitae, and practicum training objectives for your favorable consideration. Thank you very much for your valued time, guidance, and continuous support.`
+      } : {})
+    });
+    toast.success("Profile data auto-filled!");
   };
 
   const handleResetForm = () => {
     setFormData(initialFormData);
+    toast.info("Form reset to defaults.");
   };
 
   const handleDownloadDocx = async () => {
@@ -387,6 +411,17 @@ export const DocumentWorkflow: React.FC<DocumentWorkflowProps> = ({
         }
       } catch (err) {
         console.error("Failed to download PDF backup", err);
+      }
+    }
+
+    // Dynamic PDF generation if in interactive form mode
+    if (hasInteractiveForm && viewMode === 'form') {
+      try {
+        const pdfBlob = await documentGenerator.generatePdf(title, formData);
+        documentGenerator.downloadBlob(pdfBlob, `${title.replace(/\s+/g, '_')}_Filled.pdf`);
+        return;
+      } catch (err) {
+        console.warn("generatePdf fallback failed, using window.print", err);
       }
     }
 
@@ -505,9 +540,9 @@ export const DocumentWorkflow: React.FC<DocumentWorkflowProps> = ({
 
       {/* Action Toolbar Row */}
       <div className="relative flex flex-wrap items-center justify-between gap-3 shrink-0 bg-zinc-50 dark:bg-zinc-900/60 p-2.5 rounded-xl border border-zinc-200/80 dark:border-zinc-800">
-        {/* Left: View Mode Switcher (Only available for Student Application Letter) */}
+        {/* Left: View Mode Switcher */}
         <div className="flex items-center z-10">
-          {isApplicationLetter ? (
+          {hasInteractiveForm ? (
             <div className="bg-zinc-100/80 dark:bg-zinc-900/80 p-0.5 rounded-lg border border-zinc-200/80 dark:border-zinc-800 flex items-center gap-0.5 text-xs shadow-2xs">
               <button
                 onClick={() => setViewMode('preview')}
@@ -565,9 +600,9 @@ export const DocumentWorkflow: React.FC<DocumentWorkflowProps> = ({
           </div>
         </div>
 
-        {/* Right: Form Actions (Only shown for Application Letter in Form Mode) */}
+        {/* Right: Form Actions */}
         <div className="flex items-center gap-2 z-10 ml-auto sm:ml-0">
-          {isApplicationLetter && viewMode === 'form' && (
+          {hasInteractiveForm && viewMode === 'form' && (
             <>
               <Button
                 variant="secondary"
@@ -634,6 +669,166 @@ export const DocumentWorkflow: React.FC<DocumentWorkflowProps> = ({
                 description={`No PDF file has been uploaded yet for ${title}. Upload a PDF in the Admin Portal to preview it here.`}
               />
             )
+          ) : isProposalLetter ? (
+              /* Proposal Letter Interactive Paper with Plate AI Editor */
+              <div
+                ref={previewRef}
+                style={zoomScale !== 1 ? { transform: `scale(${zoomScale})`, transformOrigin: 'center center' } : undefined}
+                className="doc-preview-paper bg-white text-black shadow-md border border-zinc-200 dark:border-zinc-700 w-full max-w-[680px] min-h-[760px] p-6 sm:p-10 font-sans text-[11pt] leading-relaxed space-y-5 rounded-sm select-text flex flex-col justify-between transition-transform duration-150 my-auto"
+              >
+                <div className="space-y-5">
+                  {/* Date */}
+                  <div>
+                    <AutoWidthInput
+                      type="text"
+                      value={formData.date || ''}
+                      onChange={(e) => handleInputChange('date', e.target.value)}
+                      placeholder="Date (e.g. July 26, 2026)"
+                      className="[&::-webkit-calendar-picker-indicator]:hidden"
+                    />
+                  </div>
+
+                  {/* Recipient details */}
+                  <div className="space-y-1 text-black font-normal text-[11pt]">
+                    <div>
+                      <AutoWidthInput
+                        type="text"
+                        value={formData.contactPerson || ''}
+                        onChange={(e) => handleInputChange('contactPerson', e.target.value)}
+                        placeholder="<Name of Industry Representative>"
+                      />
+                    </div>
+                    <div>
+                      <AutoWidthInput
+                        type="text"
+                        value={formData.contactTitle || ''}
+                        onChange={(e) => handleInputChange('contactTitle', e.target.value)}
+                        placeholder="<Position / Title>"
+                      />
+                    </div>
+                    <div>
+                      <AutoWidthInput
+                        type="text"
+                        value={formData.companyName || ''}
+                        onChange={(e) => handleInputChange('companyName', e.target.value)}
+                        placeholder="<Name of Company / Institution>"
+                      />
+                    </div>
+                    <div>
+                      <AutoWidthInput
+                        type="text"
+                        value={formData.companyAddress || ''}
+                        onChange={(e) => handleInputChange('companyAddress', e.target.value)}
+                        placeholder="<Company Address>"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Salutation */}
+                  <div className="pt-1 text-[11pt]">
+                    <p className="font-normal text-black leading-relaxed">
+                      Dear Mr./Ms.{' '}
+                      <AutoWidthInput
+                        type="text"
+                        value={formData.salutationName || formData.contactPerson || ''}
+                        onChange={(e) => handleInputChange('salutationName', e.target.value)}
+                        placeholder="<Representative / Salutation>"
+                      />:
+                    </p>
+                  </div>
+
+                  {/* Introductory paragraph */}
+                  <p className="text-left leading-relaxed text-black text-[11pt]">
+                    Greetings in the spirit of education and industry collaboration! As part of the academic curriculum for the{' '}
+                    <AutoWidthInput
+                      type="text"
+                      value={formData.programName || ''}
+                      onChange={(e) => handleInputChange('programName', e.target.value)}
+                      placeholder="<Degree / Program Name>"
+                    />{' '}
+                    program at STI College, our student trainee,{' '}
+                    <AutoWidthInput
+                      type="text"
+                      value={formData.studentName || ''}
+                      onChange={(e) => handleInputChange('studentName', e.target.value)}
+                      placeholder="<Name of Student Trainee>"
+                    />, is required to undergo a total of{' '}
+                    <AutoWidthInput
+                      type="text"
+                      value={formData.hoursRequired || ''}
+                      onChange={(e) => handleInputChange('hoursRequired', e.target.value)}
+                      placeholder="<no. of training hours>"
+                    />{' '}
+                    hours of On-the-Job Training (OJT). This program bridges classroom instruction with direct industrial immersion.
+                  </p>
+
+                  {/* Plate AI Editor Canvas for Proposal Body and Objectives */}
+                  <div className="pt-1">
+                    <PlateProposalEditor
+                      value={formData.proposalBody || ''}
+                      onChange={(newBody) => handleInputChange('proposalBody', newBody)}
+                      studentName={formData.studentName}
+                      programName={formData.programName}
+                      companyName={formData.companyName}
+                      hoursRequired={formData.hoursRequired}
+                    />
+                  </div>
+
+                  {/* Concluding Note */}
+                  <p className="text-left leading-relaxed text-black text-[11pt]">
+                    We respectfully submit this Proposal Letter to explore placement and internship opportunities within your reputable organization. Enclosed are the student profile and initial training objectives for your favorable consideration.
+                  </p>
+
+                  {/* Formal Closing */}
+                  <div className="pt-1 text-[11pt]">
+                    <p className="text-black font-normal">Respectfully yours,</p>
+                  </div>
+
+                  {/* Dual Signature Block: Student Trainee & Practicum Coordinator */}
+                  <div className="pt-4 grid grid-cols-1 sm:grid-cols-2 gap-6 items-start">
+                    {/* Student Signature Block */}
+                    <div className="flex flex-col items-start w-full">
+                      <div className="w-full max-w-[240px] flex items-end justify-center min-h-[26px] mb-0.5">
+                        <AutoWidthInput
+                          type="text"
+                          value={formData.signature || ''}
+                          onChange={(e) => handleInputChange('signature', e.target.value)}
+                          placeholder="<Signature>"
+                          hidePlaceholderInPrint
+                          className="text-center font-serif italic text-[11pt] py-0.5 px-2"
+                        />
+                      </div>
+                      <div className="border-b border-black w-full max-w-[240px] my-0.5" />
+                      <div className="flex justify-start w-full max-w-[240px] mt-0.5">
+                        <AutoWidthInput
+                          type="text"
+                          value={formData.studentName || ''}
+                          onChange={(e) => handleInputChange('studentName', e.target.value)}
+                          placeholder="<Name of Student Trainee>"
+                          className="font-normal text-[11pt]"
+                        />
+                      </div>
+                      <p className="text-black font-normal text-[10pt] mt-0.5">Student Trainee Applicant</p>
+                    </div>
+
+                    {/* Practicum Coordinator Block */}
+                    <div className="flex flex-col items-start w-full">
+                      <div className="w-full max-w-[240px] min-h-[26px] mb-0.5" />
+                      <div className="border-b border-black w-full max-w-[240px] my-0.5" />
+                      <div className="flex justify-start w-full max-w-[240px] mt-0.5">
+                        <AutoWidthInput
+                          type="text"
+                          value={formData.coordinatorName || ''}
+                          onChange={(e) => handleInputChange('coordinatorName', e.target.value)}
+                          placeholder="<Name of Practicum Coordinator>"
+                          className="font-normal text-[11pt]"
+                        />
+                      </div>
+                      <p className="text-black font-normal text-[10pt] mt-0.5">Practicum Coordinator</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
           ) : !isApplicationLetter ? (
               /* Non-Application Letter Interactive Form Card */
               <div
