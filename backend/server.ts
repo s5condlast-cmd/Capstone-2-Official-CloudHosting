@@ -56,20 +56,17 @@ app.use((req, res, next) => {
 });
 
 import templatesRouter from './routes/templates';
-import aiProposalRouter from './routes/aiProposal';
 
 // Mount API routers under both /api and root / for seamless edge routing
 app.use('/api', analyzeRouter);
 app.use('/api', onedriveRouter);
 app.use('/api', authRouter);
 app.use('/api', templatesRouter);
-app.use('/api', aiProposalRouter);
 
 app.use('/', analyzeRouter);
 app.use('/', onedriveRouter);
 app.use('/', authRouter);
 app.use('/', templatesRouter);
-app.use('/', aiProposalRouter);
 
 // 404 JSON fallback for unmatched API endpoints
 app.use((req, res) => {

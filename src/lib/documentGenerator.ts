@@ -181,11 +181,6 @@ export const documentGenerator = {
             dataForTemplate['email address'] = emailText || '';
             dataForTemplate['School Email'] = emailText || '';
             dataForTemplate['Signature'] = signatureText || '';
-            dataForTemplate['coordinatorName'] = allData['coordinatorName'] || programHeadText || 'Prof. Maria Santos, MIT';
-            dataForTemplate['Coordinator Name'] = allData['coordinatorName'] || programHeadText || 'Prof. Maria Santos, MIT';
-            dataForTemplate['Practicum Coordinator'] = allData['coordinatorName'] || programHeadText || 'Prof. Maria Santos, MIT';
-            dataForTemplate['proposalBody'] = allData['proposalBody'] || '';
-            dataForTemplate['Proposal Body'] = allData['proposalBody'] || '';
 
             // Process with easy-template-x
             let finalBuffer = await handler.process(intermediateBuffer, dataForTemplate);
@@ -624,15 +619,10 @@ export const documentGenerator = {
     const lowerTitle = title.toLowerCase();
 
     if (lowerTitle.includes('proposal')) {
-      if (formData.proposalBody && formData.proposalBody.trim()) {
-        const paragraphs = formData.proposalBody.split(/\n\s*\n/).filter((p: string) => p.trim() !== '');
-        paragraphs.forEach((p: string) => writePara(p));
-      } else {
-        writePara(`Greetings in the spirit of education and industry collaboration!`);
-        writePara(`As part of the academic curriculum for the ${program} program at STI College, our student trainee, ${studentName}, is required to undergo a total of ${hours} hours of On-the-Job Training (OJT). This program bridges classroom instruction with direct industrial immersion.`);
-        writePara(`We respectfully submit this Proposal Letter to explore placement and internship opportunities for our trainee within your reputable organization. Enclosed are the student profile and initial training objectives for your consideration.`);
-        writePara(`Thank you very much for your valued time, guidance, and continuous support of our student's professional growth.`);
-      }
+      writePara(`Greetings in the spirit of education and industry collaboration!`);
+      writePara(`As part of the academic curriculum for the ${program} program at STI College, our student trainee, ${studentName}, is required to undergo a total of ${hours} hours of On-the-Job Training (OJT). This program bridges classroom instruction with direct industrial immersion.`);
+      writePara(`We respectfully submit this Proposal Letter to explore placement and internship opportunities for our trainee within your reputable organization. Enclosed are the student profile and initial training objectives for your consideration.`);
+      writePara(`Thank you very much for your valued time, guidance, and continuous support of our student's professional growth.`);
     } else if (lowerTitle.includes('application')) {
       writePara(`I am writing to express my strong interest in rendering my required ${hours} hours of On-the-Job Training (OJT) with your esteemed company, ${company}.`);
       writePara(`I am currently a senior student taking up ${program} at STI College. Through our coursework and practical laboratories, I have acquired hands-on foundational skills and am eager to contribute effectively to your team's ongoing projects.`);

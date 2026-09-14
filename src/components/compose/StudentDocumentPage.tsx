@@ -491,7 +491,6 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
               pdfUrl={selectedTemplate.pdfUrl}
               templateId={selectedTemplate.id}
               fields={templateFields[getTemplateFilename(selectedTemplate.pdfUrl)] || []}
-              onDirectSubmit={executeUpload}
             />
           </div>
         </div>
