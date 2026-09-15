@@ -2079,5 +2079,14 @@ Per user request with screenshot `media_1789470743517.png` (showing Comment, Edi
    - **When Sidebar is Collapsed**:
      - The available width expands by 256px, and `FixedToolbarButtons` instantly reveals all three controls horizontally inline: `CommentToolbarButton`, `ToolbarSeparator`, `ModeToolbarButton`, `ToolbarSeparator`, `Fullscreen ToolbarButton`.
 
+---
 
+## 22. Document Editor Navigation: Chevron Icon and "Back" Label
+
+Per user request with reference screenshot `media_1789514707093.png`:
+
+1. **Back Navigation Update**:
+   - In `src/pages/student/StudentDocumentEditor.tsx`, updated top navigation button from `ArrowLeft` (`←`) and `"Repository"` to `ChevronLeft` (`<`) and `"Back"`.
+   - Updated Lucide icon imports: replaced `ArrowLeft` with `ChevronLeft`.
+   - Enhanced styling with `gap-1`, `font-medium`, and `transition-colors` matching design standards.
 

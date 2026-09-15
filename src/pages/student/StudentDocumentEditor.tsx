@@ -13,7 +13,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
-  ArrowLeft, Save, Download, Clock, Send, Copy,
+  ChevronLeft, Save, Download, Clock, Send, Copy,
   AlertTriangle, CheckCircle, Wifi, WifiOff, Loader2,
   History, FileText, Users
 } from 'lucide-react';
@@ -378,10 +378,10 @@ export function StudentDocumentEditor() {
       <div className="flex items-center gap-3 flex-wrap">
         <button
           onClick={() => navigate('/student/documents')}
-          className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+          className="flex items-center gap-1 text-sm font-medium text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
         >
-          <ArrowLeft className="w-4 h-4" />
-          Repository
+          <ChevronLeft className="w-4 h-4" />
+          Back
         </button>
 
         <div className="flex-1 min-w-0">
