@@ -76,9 +76,9 @@ export function ToolbarSeparator({
 export const toolbarButtonVariants = cva(
   cn(
     'inline-flex cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium text-xs outline-none',
-    'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800/70',
-    'focus-visible:ring-1 focus-visible:ring-primary focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50',
-    'aria-checked:bg-zinc-200 dark:aria-checked:bg-zinc-800 aria-checked:text-zinc-900 dark:aria-checked:text-zinc-100',
+    'text-zinc-700 dark:text-zinc-200 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-200/70 dark:hover:bg-zinc-800',
+    'focus-visible:ring-1 focus-visible:ring-primary focus-visible:outline-none disabled:pointer-events-none disabled:opacity-40',
+    'aria-checked:bg-zinc-200 dark:aria-checked:bg-zinc-800 aria-checked:text-zinc-950 dark:aria-checked:text-white',
     'transition-colors'
   ),
   {
@@ -88,14 +88,14 @@ export const toolbarButtonVariants = cva(
     },
     variants: {
       size: {
-        default: 'h-8 min-w-8 px-2',
-        sm: 'h-7 min-w-7 px-1.5',
-        lg: 'h-9 min-w-9 px-2.5',
+        default: 'h-8.5 min-w-8.5 px-2',
+        sm: 'h-8 min-w-8 px-2',
+        lg: 'h-9.5 min-w-9.5 px-2.5',
       },
       variant: {
         default: 'bg-transparent',
-        active: 'bg-zinc-200 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 font-semibold',
-        accent: 'bg-primary/10 text-primary hover:bg-primary/20',
+        active: 'bg-zinc-200 dark:bg-zinc-800 text-zinc-950 dark:text-white font-semibold shadow-xs',
+        accent: 'bg-primary/15 text-primary hover:bg-primary/25',
       },
     },
   }
@@ -190,7 +190,7 @@ export function ToolbarSplitButtonPrimary({
       type="button"
       onMouseDown={(e) => e.preventDefault()}
       className={cn(
-        'inline-flex h-8 items-center justify-center px-1.5 rounded-l-md text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors',
+        'inline-flex h-8.5 items-center justify-center px-2 rounded-l-md text-zinc-700 dark:text-zinc-200 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-200/70 dark:hover:bg-zinc-800 transition-colors',
         className
       )}
       {...props}
@@ -210,7 +210,7 @@ export function ToolbarSplitButtonSecondary({
       type="button"
       onMouseDown={(e) => e.preventDefault()}
       className={cn(
-        'inline-flex h-8 w-4 items-center justify-center rounded-r-md text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors',
+        'inline-flex h-8.5 w-5 items-center justify-center rounded-r-md text-zinc-400 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-200/70 dark:hover:bg-zinc-800 transition-colors',
         className
       )}
       {...props}

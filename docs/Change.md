@@ -1788,3 +1788,40 @@ Implemented the complete fixed toolbar layout, controls, and functionality shown
 ### 7.3. DOCX Export Serialization
 - Extended `leafToRuns` in `docxSerializer.ts` to serialize font size, font color, background highlight, strikethrough, subscript, superscript, and monospace code/kbd runs directly to Word DOCX elements.
 
+---
+
+## 8. Toolbar Dropdown Visibility & Ergonomic Sizing Enhancements
+
+### 8.1. Root Cause Analysis: Clipped / Hidden Dropdowns
+- **Diagnosis**: When clicking dropdowns and popovers on the toolbar (Turn Into, Font Size, Color Pickers, Alignment, Lists, Table, Emoji, Media, Line Height, More), the popover container did not appear on screen.
+- **Underlying Cause**:
+  1. In CSS specifications, specifying `overflow-x: auto` on `.fixed-toolbar` implicitly computes `overflow-y: auto`.
+  2. The parent `.plate-editor-wrapper` also enforced `overflow-hidden`.
+  3. Any child dropdown relying on `position: absolute; top: 100%` was trapped within the toolbar's ~40px bounding box and clipped off-screen or caused an internal scrollbar rather than floating over the document canvas.
+
+### 8.2. Solution: `PortalPopover` Architecture (`src/components/plate-ui/fixed-toolbar-buttons.tsx`)
+- Implemented a reusable, zero-dependency `PortalPopover` component utilizing React's `createPortal(popoverContent, document.body)`.
+- **Key Features**:
+  - Computes `triggerRef.current.getBoundingClientRect()` upon opening and on resize/scroll events.
+  - Dynamically calculates absolute screen coordinates (`position: fixed`, `zIndex: 99999`).
+  - Implements viewport collision detection: if the popover would overflow the right edge of the screen (`rect.left + popoverWidth > window.innerWidth`), it flips alignment to anchor to the right edge of the trigger button.
+  - Adds window click-outside detection and Escape key listeners to cleanly close popovers.
+  - Completely eliminates parent container overflow clipping across all browsers and screen widths.
+
+### 8.3. Ergonomic Sizing & Dark-Mode High-Contrast Controls
+- **Hit Area & Button Dimensions**:
+  - Upgraded base toolbar button dimensions from `h-7 min-w-7 px-1.5` to `h-8.5 min-w-8.5 px-2` (`src/components/plate-ui/toolbar.tsx` and `fixed-toolbar-buttons.tsx`).
+  - Increased icon dimensions across all 34 toolbar items from `w-3.5 h-3.5` (14px) to `w-4 h-4` (16px).
+  - Heightened `FixedToolbar` wrapper to `min-h-[48px]` with `px-2.5 py-2` padding for comfortable finger and cursor targeting.
+- **Font Size Stepper**:
+  - Decrement and increment buttons increased to `w-6 h-7.5`.
+  - Current font size display styled with `min-w-[32px] text-xs font-bold text-zinc-800 dark:text-zinc-100`.
+- **Color Picker Palettes**:
+  - Color swatches enlarged to `w-5 h-5` (20px) with `hover:scale-125 transition-transform` and distinct active borders for tactile feedback.
+- **Table Picker**:
+  - Table grid cells enlarged to `w-4 h-4` (16px) with dynamic live dimension counter (`N x M`).
+- **Emoji Picker**:
+  - Emoji buttons enlarged to `w-8 h-8 text-xl` with clear category groupings.
+- **Dark Mode Visibility**:
+  - Upgraded text/icon token contrast in dark mode from muted `text-zinc-400` to vibrant `text-zinc-200 dark:text-zinc-100` with subtle hover backdrops `hover:bg-zinc-200 dark:hover:bg-zinc-800`.
+

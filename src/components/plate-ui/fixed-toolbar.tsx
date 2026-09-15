@@ -13,7 +13,7 @@ export function FixedToolbar({ className, ...props }: React.ComponentProps<typeo
       {...props}
       className={cn(
         'sticky top-0 left-0 z-30 w-full justify-between overflow-x-auto rounded-t-xl',
-        'border border-zinc-200 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/95 p-1.5',
+        'border border-zinc-200 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/95 px-2.5 py-2 min-h-[48px]',
         'backdrop-blur-sm shadow-xs select-none print:hidden',
         '[&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]',
         className

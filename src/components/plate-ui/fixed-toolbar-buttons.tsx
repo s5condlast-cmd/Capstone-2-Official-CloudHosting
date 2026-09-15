@@ -3,43 +3,12 @@
  * Full button suite matching the user's reference screenshot (media_1789455979370.png)
  * and official Plate.js v53 registry specifications (https://platejs.org/r/).
  *
- * Sequence:
- * 1.  + v (InsertToolbarButton: Basic blocks, Lists, Media, Advanced, Inline)
- * 2.  Heading 1 v (TurnIntoToolbarButton: Text, H1-H6, Lists, Quote, Code)
- * 3.  [- | 12 | +] (FontSizeToolbarButton: Stepper pill + Size picker popover)
- * 4.  | (Separator)
- * 5.  B (Bold mark)
- * 6.  I (Italic mark)
- * 7.  U (Underline mark)
- * 8.  S (Strikethrough mark)
- * 9.  </> (Inline code mark)
- * 10. A_ (FontColorToolbarButton: Text color picker)
- * 11. Paint bucket (BackgroundColorToolbarButton: Background / fill color picker)
- * 12. | (Separator)
- * 13. Align v (AlignToolbarButton: Left, Center, Right, Justify)
- * 14. 1. v (NumberedListToolbarButton: Decimal, Lower/Upper Alpha, Roman)
- * 15. • v (BulletedListToolbarButton: Disc, Circle, Square)
- * 16. ☑ (TodoListToolbarButton: Checklist item)
- * 17. Toggle list (ToggleToolbarButton: Collapsible item)
- * 18. | (Separator)
- * 19. Link (LinkToolbarButton: Insert / edit link)
- * 20. Table v (TableToolbarButton: 8x8 grid picker + table cell/row/col tools)
- * 21. Emoji v (EmojiToolbarButton: Emoji categories & quick picker)
- * 22. | (Separator)
- * 23. Image v (MediaToolbarButton: Image upload & URL)
- * 24. Video v (MediaToolbarButton: Video upload & URL)
- * 25. Audio v (MediaToolbarButton: Audio upload & URL)
- * 26. File v (MediaToolbarButton: File attachment upload & URL)
- * 27. | (Separator)
- * 28. Line spacing v (LineHeightToolbarButton: 1, 1.15, 1.5, 2, 2.5, 3)
- * 29. Outdent <≡ (OutdentToolbarButton)
- * 30. Indent >≡ (IndentToolbarButton)
- * 31. | (Separator)
- * 32. ... (MoreToolbarButton: Superscript, Subscript, Keyboard <kbd>)
- * 33. Highlighter pen (HighlightToolbarButton)
- * 34. | (Separator)
+ * All dropdowns and popovers use React Portals rendered directly to document.body,
+ * guaranteeing they are NEVER clipped by toolbar overflow or parent wrappers,
+ * and ensuring large, easy-to-spot, accessible click targets.
  */
 import * as React from 'react';
+import { createPortal } from 'react-dom';
 import {
   Plus,
   Heading1,
@@ -193,7 +162,103 @@ function setBlockProperty(editor: any, prop: string, value: any) {
   } catch { /* non-fatal */ }
 }
 
-// ─── Default Color Palette (10x7 Grid from Plate registry) ────────────────────
+// ─── Universal Portal Popover (Never Clipped by Toolbar Overflow) ──────────────
+
+interface PortalPopoverProps {
+  anchorRef: React.RefObject<HTMLElement | null>;
+  open: boolean;
+  onClose: () => void;
+  children: React.ReactNode;
+  className?: string;
+  align?: 'start' | 'center' | 'end';
+}
+
+function PortalPopover({
+  anchorRef,
+  open,
+  onClose,
+  children,
+  className,
+  align = 'start',
+}: PortalPopoverProps) {
+  const [coords, setCoords] = React.useState<{ top: number; left: number } | null>(null);
+  const popoverRef = React.useRef<HTMLDivElement>(null);
+
+  const updatePosition = React.useCallback(() => {
+    if (!anchorRef.current) return;
+    const rect = anchorRef.current.getBoundingClientRect();
+    let left = rect.left;
+    if (align === 'center') {
+      left = rect.left + rect.width / 2;
+    } else if (align === 'end') {
+      left = rect.right;
+    }
+
+    // Keep dropdown fully inside the viewport
+    const viewportWidth = window.innerWidth;
+    const estimatedWidth = 280;
+    if (left + estimatedWidth > viewportWidth) {
+      left = Math.max(12, viewportWidth - estimatedWidth - 12);
+    }
+
+    setCoords({
+      top: rect.bottom + 6,
+      left: Math.max(12, left),
+    });
+  }, [anchorRef, align]);
+
+  React.useEffect(() => {
+    if (!open) return;
+    updatePosition();
+    const handleScrollOrResize = () => updatePosition();
+    window.addEventListener('scroll', handleScrollOrResize, true);
+    window.addEventListener('resize', handleScrollOrResize);
+    return () => {
+      window.removeEventListener('scroll', handleScrollOrResize, true);
+      window.removeEventListener('resize', handleScrollOrResize);
+    };
+  }, [open, updatePosition]);
+
+  React.useEffect(() => {
+    if (!open) return;
+    const handleMouseDown = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (
+        popoverRef.current &&
+        !popoverRef.current.contains(target) &&
+        anchorRef.current &&
+        !anchorRef.current.contains(target)
+      ) {
+        onClose();
+      }
+    };
+    document.addEventListener('mousedown', handleMouseDown);
+    return () => document.removeEventListener('mousedown', handleMouseDown);
+  }, [open, onClose, anchorRef]);
+
+  if (!open || !coords || typeof document === 'undefined') return null;
+
+  return createPortal(
+    <div
+      ref={popoverRef}
+      style={{
+        position: 'fixed',
+        top: coords.top,
+        left: coords.left,
+        zIndex: 99999,
+      }}
+      className={cn(
+        'rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xl py-1.5 text-zinc-800 dark:text-zinc-200 animate-in fade-in zoom-in-95 duration-100',
+        className
+      )}
+    >
+      {children}
+    </div>,
+    document.body
+  );
+}
+
+// ─── Default 70-Color Palette (10x7 Grid from Plate registry) ──────────────────
 
 export const DEFAULT_COLORS = [
   // Row 1: Grayscale
@@ -281,7 +346,6 @@ export const DEFAULT_COLORS = [
   { name: 'Dark Magenta 2', value: '#4C1130' },
 ];
 
-// Standard document font sizes (pt)
 export const FONT_SIZES = [8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 30, 36, 48, 60, 72];
 
 // ─── 1. Insert Toolbar Button (+ v) ───────────────────────────────────────────
@@ -297,17 +361,7 @@ interface InsertGroup {
 
 function InsertToolbarButton({ editor }: { editor: any }) {
   const [open, setOpen] = React.useState(false);
-  const dropdownRef = React.useRef<HTMLDivElement>(null);
-
-  React.useEffect(() => {
-    const handleOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    if (open) document.addEventListener('mousedown', handleOutside);
-    return () => document.removeEventListener('mousedown', handleOutside);
-  }, [open]);
+  const anchorRef = React.useRef<HTMLDivElement>(null);
 
   const groups: InsertGroup[] = [
     {
@@ -390,44 +444,47 @@ function InsertToolbarButton({ editor }: { editor: any }) {
   ];
 
   return (
-    <div ref={dropdownRef} className="relative">
+    <div ref={anchorRef} className="relative">
       <ToolbarButton
         isDropdown
         onClick={() => setOpen(!open)}
         tooltip="Insert block or element"
-        className="px-2 font-normal gap-1"
+        className="px-2.5 h-8.5 font-medium gap-1"
       >
-        <Plus className="w-4 h-4 text-zinc-700 dark:text-zinc-300" />
-        <ChevronDown className="w-3 h-3 text-zinc-400 ml-0.5" />
+        <Plus className="w-4 h-4 text-zinc-800 dark:text-zinc-200" />
+        <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
       </ToolbarButton>
 
-      {open && (
-        <div className="absolute top-full left-0 mt-1 w-52 max-h-96 overflow-y-auto rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xl py-1.5 z-50 animate-in fade-in zoom-in-95 duration-100">
-          {groups.map(({ group, items }) => (
-            <div key={group} className="py-1">
-              <div className="px-2.5 py-1 text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">
-                {group}
-              </div>
-              {items.map(({ icon: Icon, label, action }) => (
-                <button
-                  key={label}
-                  type="button"
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    action(editor);
-                    setOpen(false);
-                    editor?.tf?.focus?.();
-                  }}
-                  className="flex items-center gap-2.5 w-full px-3 py-1.5 text-xs text-left text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-                >
-                  <Icon className="w-3.5 h-3.5 text-zinc-500" />
-                  <span>{label}</span>
-                </button>
-              ))}
+      <PortalPopover
+        anchorRef={anchorRef}
+        open={open}
+        onClose={() => setOpen(false)}
+        className="w-56 max-h-96 overflow-y-auto p-1.5"
+      >
+        {groups.map(({ group, items }) => (
+          <div key={group} className="py-1">
+            <div className="px-3 py-1 text-[11px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
+              {group}
             </div>
-          ))}
-        </div>
-      )}
+            {items.map(({ icon: Icon, label, action }) => (
+              <button
+                key={label}
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  action(editor);
+                  setOpen(false);
+                  editor?.tf?.focus?.();
+                }}
+                className="flex items-center gap-3 w-full px-3 py-2 text-xs font-medium rounded-lg text-left text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              >
+                <Icon className="w-4 h-4 text-zinc-500" />
+                <span>{label}</span>
+              </button>
+            ))}
+          </div>
+        ))}
+      </PortalPopover>
     </div>
   );
 }
@@ -451,70 +508,63 @@ const TURN_INTO_OPTIONS = [
 
 function TurnIntoToolbarButton({ editor }: { editor: any }) {
   const [open, setOpen] = React.useState(false);
-  const dropdownRef = React.useRef<HTMLDivElement>(null);
-
-  React.useEffect(() => {
-    const handleOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    if (open) document.addEventListener('mousedown', handleOutside);
-    return () => document.removeEventListener('mousedown', handleOutside);
-  }, [open]);
+  const anchorRef = React.useRef<HTMLDivElement>(null);
 
   const activeType = getActiveBlockType(editor);
   const currentOption = TURN_INTO_OPTIONS.find((o) => o.id === activeType) || TURN_INTO_OPTIONS[0];
 
   return (
-    <div ref={dropdownRef} className="relative">
+    <div ref={anchorRef} className="relative">
       <ToolbarButton
         isDropdown
         onClick={() => setOpen(!open)}
         tooltip="Turn into"
-        className="px-2 font-normal min-w-[100px] justify-between gap-1.5"
+        className="px-2.5 h-8.5 font-medium min-w-[110px] justify-between gap-1.5"
       >
-        <span className="text-xs font-medium text-zinc-800 dark:text-zinc-200">
+        <span className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">
           {currentOption.label}
         </span>
-        <ChevronDown className="w-3 h-3 text-zinc-400" />
+        <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
       </ToolbarButton>
 
-      {open && (
-        <div className="absolute top-full left-0 mt-1 w-48 max-h-80 overflow-y-auto rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xl py-1 z-50 animate-in fade-in zoom-in-95 duration-100">
-          <div className="px-2.5 py-1 text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">
-            Turn into
-          </div>
-          {TURN_INTO_OPTIONS.map((opt) => {
-            const Icon = opt.icon;
-            const isSelected = activeType === opt.id;
-            return (
-              <button
-                key={opt.id}
-                type="button"
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  setBlockType(editor, opt.id);
-                  setOpen(false);
-                  editor?.tf?.focus?.();
-                }}
-                className={cn(
-                  'flex items-center justify-between w-full px-2.5 py-1.5 text-xs text-left transition-colors',
-                  isSelected
-                    ? 'bg-primary/10 text-primary font-medium'
-                    : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-                )}
-              >
-                <div className="flex items-center gap-2">
-                  <Icon className="w-3.5 h-3.5" />
-                  <span>{opt.label}</span>
-                </div>
-                {isSelected && <Check className="w-3 h-3 text-primary" />}
-              </button>
-            );
-          })}
+      <PortalPopover
+        anchorRef={anchorRef}
+        open={open}
+        onClose={() => setOpen(false)}
+        className="w-52 max-h-80 overflow-y-auto p-1.5"
+      >
+        <div className="px-3 py-1 text-[11px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
+          Turn into
         </div>
-      )}
+        {TURN_INTO_OPTIONS.map((opt) => {
+          const Icon = opt.icon;
+          const isSelected = activeType === opt.id;
+          return (
+            <button
+              key={opt.id}
+              type="button"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                setBlockType(editor, opt.id);
+                setOpen(false);
+                editor?.tf?.focus?.();
+              }}
+              className={cn(
+                'flex items-center justify-between w-full px-3 py-2 text-xs font-medium rounded-lg text-left transition-colors',
+                isSelected
+                  ? 'bg-primary/15 text-primary font-semibold'
+                  : 'text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+              )}
+            >
+              <div className="flex items-center gap-2.5">
+                <Icon className="w-4 h-4" />
+                <span>{opt.label}</span>
+              </div>
+              {isSelected && <Check className="w-3.5 h-3.5 text-primary" />}
+            </button>
+          );
+        })}
+      </PortalPopover>
     </div>
   );
 }
@@ -523,19 +573,8 @@ function TurnIntoToolbarButton({ editor }: { editor: any }) {
 
 function FontSizeToolbarButton({ editor }: { editor: any }) {
   const [open, setOpen] = React.useState(false);
-  const popoverRef = React.useRef<HTMLDivElement>(null);
+  const containerRef = React.useRef<HTMLDivElement>(null);
 
-  React.useEffect(() => {
-    const handleOutside = (e: MouseEvent) => {
-      if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    if (open) document.addEventListener('mousedown', handleOutside);
-    return () => document.removeEventListener('mousedown', handleOutside);
-  }, [open]);
-
-  // Extract current font size from marks or fallback to 12
   const markVal = getMarkValue(editor, 'fontSize');
   let currentSize = 12;
   if (typeof markVal === 'string') {
@@ -557,8 +596,8 @@ function FontSizeToolbarButton({ editor }: { editor: any }) {
 
   return (
     <div
-      ref={popoverRef}
-      className="relative flex items-center h-8 rounded-md border border-zinc-200 dark:border-zinc-800 bg-zinc-50/80 dark:bg-zinc-900/60 p-0.5"
+      ref={containerRef}
+      className="relative flex items-center h-8.5 rounded-md border border-zinc-300/80 dark:border-zinc-700/80 bg-zinc-100/80 dark:bg-zinc-800/80 p-0.5"
     >
       <button
         type="button"
@@ -567,19 +606,19 @@ function FontSizeToolbarButton({ editor }: { editor: any }) {
           e.preventDefault();
           handleStep(-1);
         }}
-        className="w-5 h-7 flex items-center justify-center text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-200/60 dark:hover:bg-zinc-800 rounded transition-colors"
+        className="w-6 h-7.5 flex items-center justify-center text-zinc-600 hover:text-zinc-950 dark:text-zinc-300 dark:hover:text-white hover:bg-zinc-200/80 dark:hover:bg-zinc-700 rounded transition-colors"
       >
-        <Minus className="w-3 h-3" />
+        <Minus className="w-3.5 h-3.5" />
       </button>
 
       <button
         type="button"
-        title="Font size"
+        title="Choose font size"
         onMouseDown={(e) => {
           e.preventDefault();
           setOpen(!open);
         }}
-        className="px-1.5 h-7 flex items-center justify-center text-xs font-semibold text-zinc-800 dark:text-zinc-200 hover:bg-zinc-200/60 dark:hover:bg-zinc-800 rounded transition-colors min-w-[28px]"
+        className="px-2 h-7.5 flex items-center justify-center text-xs font-bold text-zinc-900 dark:text-zinc-100 hover:bg-zinc-200/80 dark:hover:bg-zinc-700 rounded transition-colors min-w-[32px]"
       >
         {currentSize}
       </button>
@@ -591,34 +630,37 @@ function FontSizeToolbarButton({ editor }: { editor: any }) {
           e.preventDefault();
           handleStep(1);
         }}
-        className="w-5 h-7 flex items-center justify-center text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-200/60 dark:hover:bg-zinc-800 rounded transition-colors"
+        className="w-6 h-7.5 flex items-center justify-center text-zinc-600 hover:text-zinc-950 dark:text-zinc-300 dark:hover:text-white hover:bg-zinc-200/80 dark:hover:bg-zinc-700 rounded transition-colors"
       >
-        <Plus className="w-3 h-3" />
+        <Plus className="w-3.5 h-3.5" />
       </button>
 
-      {open && (
-        <div className="absolute top-full left-0 mt-1 w-20 max-h-64 overflow-y-auto rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xl py-1 z-50 animate-in fade-in zoom-in-95 duration-100">
-          {FONT_SIZES.map((size) => (
-            <button
-              key={size}
-              type="button"
-              onMouseDown={(e) => {
-                e.preventDefault();
-                applySize(size);
-                setOpen(false);
-              }}
-              className={cn(
-                'w-full py-1 text-center text-xs transition-colors',
-                currentSize === size
-                  ? 'bg-primary/10 text-primary font-semibold'
-                  : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-              )}
-            >
-              {size}
-            </button>
-          ))}
-        </div>
-      )}
+      <PortalPopover
+        anchorRef={containerRef}
+        open={open}
+        onClose={() => setOpen(false)}
+        className="w-24 max-h-64 overflow-y-auto p-1.5"
+      >
+        {FONT_SIZES.map((size) => (
+          <button
+            key={size}
+            type="button"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              applySize(size);
+              setOpen(false);
+            }}
+            className={cn(
+              'w-full py-1.5 text-center text-xs font-semibold rounded-md transition-colors',
+              currentSize === size
+                ? 'bg-primary/15 text-primary'
+                : 'text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+            )}
+          >
+            {size} pt
+          </button>
+        ))}
+      </PortalPopover>
     </div>
   );
 }
@@ -634,18 +676,7 @@ interface ColorPickerDropdownProps {
 
 function ColorPickerDropdown({ editor, nodeType, tooltip, icon: Icon }: ColorPickerDropdownProps) {
   const [open, setOpen] = React.useState(false);
-  const dropdownRef = React.useRef<HTMLDivElement>(null);
-  const colorInputRef = React.useRef<HTMLInputElement>(null);
-
-  React.useEffect(() => {
-    const handleOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    if (open) document.addEventListener('mousedown', handleOutside);
-    return () => document.removeEventListener('mousedown', handleOutside);
-  }, [open]);
+  const anchorRef = React.useRef<HTMLDivElement>(null);
 
   const activeColor = getMarkValue(editor, nodeType);
 
@@ -662,91 +693,93 @@ function ColorPickerDropdown({ editor, nodeType, tooltip, icon: Icon }: ColorPic
   };
 
   return (
-    <div ref={dropdownRef} className="relative">
+    <div ref={anchorRef} className="relative">
       <ToolbarButton
         onClick={() => setOpen(!open)}
         tooltip={tooltip}
-        className="relative px-1.5"
+        className="relative px-2 h-8.5"
       >
         <div className="flex flex-col items-center">
-          <Icon className="w-3.5 h-3.5" />
+          <Icon className="w-4 h-4" />
           <div
-            className="w-3.5 h-1 mt-0.5 rounded-full"
+            className="w-4 h-1 mt-0.5 rounded-full"
             style={{ backgroundColor: activeColor || (nodeType === 'color' ? '#000000' : 'transparent') }}
           />
         </div>
       </ToolbarButton>
 
-      {open && (
-        <div className="absolute top-full left-0 mt-1 w-64 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xl p-3 z-50 animate-in fade-in zoom-in-95 duration-100">
-          <div className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider mb-2">
-            {nodeType === 'color' ? 'Text Color' : 'Background Color'}
-          </div>
+      <PortalPopover
+        anchorRef={anchorRef}
+        open={open}
+        onClose={() => setOpen(false)}
+        className="w-72 p-3.5"
+      >
+        <div className="text-[11px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-2.5">
+          {nodeType === 'color' ? 'Text Font Color' : 'Background / Highlight Color'}
+        </div>
 
-          {/* 10-column palette grid */}
-          <div className="grid grid-cols-10 gap-1.5 place-items-center mb-3">
-            {DEFAULT_COLORS.map(({ name, value }) => {
-              const isSelected = activeColor === value;
-              return (
-                <button
-                  key={`${name}-${value}`}
-                  type="button"
-                  title={name}
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    applyColor(value);
-                  }}
-                  style={{ backgroundColor: value }}
-                  className={cn(
-                    'w-4 h-4 rounded-full border border-zinc-300/80 dark:border-zinc-700/80 transition-transform hover:scale-125 flex items-center justify-center',
-                    isSelected && 'ring-2 ring-primary ring-offset-1'
-                  )}
-                >
-                  {isSelected && (
-                    <Check
-                      className={cn(
-                        'w-2.5 h-2.5',
-                        value === '#FFFFFF' || value === '#FEFF00' || value === '#00FFFF'
-                          ? 'text-zinc-900'
-                          : 'text-white'
-                      )}
-                    />
-                  )}
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="flex items-center justify-between border-t border-zinc-100 dark:border-zinc-800 pt-2 gap-2">
-            {/* Custom Color Input */}
-            <div className="flex items-center gap-1.5">
-              <input
-                ref={colorInputRef}
-                type="color"
-                className="w-6 h-6 rounded cursor-pointer border border-zinc-300 dark:border-zinc-700 p-0"
-                value={activeColor || '#000000'}
-                onChange={(e) => applyColor(e.target.value)}
-              />
-              <span className="text-[11px] text-zinc-500 font-medium">Custom</span>
-            </div>
-
-            {/* Clear Button */}
-            {activeColor && (
+        {/* 10-column palette grid with large 20px circles */}
+        <div className="grid grid-cols-10 gap-2 place-items-center mb-3.5">
+          {DEFAULT_COLORS.map(({ name, value }) => {
+            const isSelected = activeColor === value;
+            return (
               <button
+                key={`${name}-${value}`}
                 type="button"
+                title={name}
                 onMouseDown={(e) => {
                   e.preventDefault();
-                  clearColor();
+                  applyColor(value);
                 }}
-                className="flex items-center gap-1 text-[11px] text-zinc-500 hover:text-red-500 transition-colors px-2 py-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                style={{ backgroundColor: value }}
+                className={cn(
+                  'w-5 h-5 rounded-full border border-zinc-300 dark:border-zinc-700 transition-transform hover:scale-125 flex items-center justify-center cursor-pointer shadow-xs',
+                  isSelected && 'ring-2 ring-primary ring-offset-2'
+                )}
               >
-                <Eraser className="w-3 h-3" />
-                <span>Clear</span>
+                {isSelected && (
+                  <Check
+                    className={cn(
+                      'w-3 h-3',
+                      value === '#FFFFFF' || value === '#FEFF00' || value === '#00FFFF'
+                        ? 'text-zinc-900'
+                        : 'text-white'
+                    )}
+                  />
+                )}
               </button>
-            )}
-          </div>
+            );
+          })}
         </div>
-      )}
+
+        <div className="flex items-center justify-between border-t border-zinc-200 dark:border-zinc-800 pt-2.5 gap-2">
+          {/* Custom Color Input */}
+          <div className="flex items-center gap-2">
+            <input
+              type="color"
+              className="w-7 h-7 rounded cursor-pointer border border-zinc-300 dark:border-zinc-700 p-0.5 bg-transparent"
+              value={activeColor || '#000000'}
+              onChange={(e) => applyColor(e.target.value)}
+            />
+            <span className="text-xs text-zinc-600 dark:text-zinc-400 font-medium">Custom HEX</span>
+          </div>
+
+          {/* Clear Button */}
+          {activeColor && (
+            <button
+              type="button"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                clearColor();
+              }}
+              className="flex items-center gap-1.5 text-xs text-zinc-600 dark:text-zinc-400 hover:text-red-500 dark:hover:text-red-400 transition-colors px-2.5 py-1 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800"
+            >
+              <Eraser className="w-3.5 h-3.5" />
+              <span>Clear</span>
+            </button>
+          )}
+        </div>
+      </PortalPopover>
     </div>
   );
 }
@@ -762,17 +795,7 @@ const ALIGN_OPTIONS = [
 
 function AlignToolbarButton({ editor }: { editor: any }) {
   const [open, setOpen] = React.useState(false);
-  const dropdownRef = React.useRef<HTMLDivElement>(null);
-
-  React.useEffect(() => {
-    const handleOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    if (open) document.addEventListener('mousedown', handleOutside);
-    return () => document.removeEventListener('mousedown', handleOutside);
-  }, [open]);
+  const anchorRef = React.useRef<HTMLDivElement>(null);
 
   const block = getActiveBlock(editor);
   const currentAlign = block?.align || 'left';
@@ -780,49 +803,52 @@ function AlignToolbarButton({ editor }: { editor: any }) {
   const CurrentIcon = currentOption.icon;
 
   return (
-    <div ref={dropdownRef} className="relative">
+    <div ref={anchorRef} className="relative">
       <ToolbarButton
         isDropdown
         onClick={() => setOpen(!open)}
         tooltip="Text Alignment"
-        className="px-1.5"
+        className="px-2 h-8.5"
       >
-        <CurrentIcon className="w-3.5 h-3.5" />
-        <ChevronDown className="w-3 h-3 text-zinc-400 ml-0.5" />
+        <CurrentIcon className="w-4 h-4" />
+        <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
       </ToolbarButton>
 
-      {open && (
-        <div className="absolute top-full left-0 mt-1 w-36 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xl py-1 z-50 animate-in fade-in zoom-in-95 duration-100">
-          {ALIGN_OPTIONS.map((opt) => {
-            const Icon = opt.icon;
-            const isSelected = currentAlign === opt.id;
-            return (
-              <button
-                key={opt.id}
-                type="button"
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  setBlockProperty(editor, 'align', opt.id);
-                  setOpen(false);
-                  editor?.tf?.focus?.();
-                }}
-                className={cn(
-                  'flex items-center justify-between w-full px-2.5 py-1.5 text-xs text-left transition-colors',
-                  isSelected
-                    ? 'bg-primary/10 text-primary font-medium'
-                    : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-                )}
-              >
-                <div className="flex items-center gap-2">
-                  <Icon className="w-3.5 h-3.5" />
-                  <span>{opt.label}</span>
-                </div>
-                {isSelected && <Check className="w-3 h-3 text-primary" />}
-              </button>
-            );
-          })}
-        </div>
-      )}
+      <PortalPopover
+        anchorRef={anchorRef}
+        open={open}
+        onClose={() => setOpen(false)}
+        className="w-40 p-1.5"
+      >
+        {ALIGN_OPTIONS.map((opt) => {
+          const Icon = opt.icon;
+          const isSelected = currentAlign === opt.id;
+          return (
+            <button
+              key={opt.id}
+              type="button"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                setBlockProperty(editor, 'align', opt.id);
+                setOpen(false);
+                editor?.tf?.focus?.();
+              }}
+              className={cn(
+                'flex items-center justify-between w-full px-3 py-2 text-xs font-medium rounded-lg text-left transition-colors',
+                isSelected
+                  ? 'bg-primary/15 text-primary font-semibold'
+                  : 'text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+              )}
+            >
+              <div className="flex items-center gap-2.5">
+                <Icon className="w-4 h-4" />
+                <span>{opt.label}</span>
+              </div>
+              {isSelected && <Check className="w-3.5 h-3.5 text-primary" />}
+            </button>
+          );
+        })}
+      </PortalPopover>
     </div>
   );
 }
@@ -839,17 +865,7 @@ const NUMBERED_STYLES = [
 
 function NumberedListToolbarButton({ editor }: { editor: any }) {
   const [open, setOpen] = React.useState(false);
-  const dropdownRef = React.useRef<HTMLDivElement>(null);
-
-  React.useEffect(() => {
-    const handleOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    if (open) document.addEventListener('mousedown', handleOutside);
-    return () => document.removeEventListener('mousedown', handleOutside);
-  }, [open]);
+  const containerRef = React.useRef<HTMLDivElement>(null);
 
   const activeType = getActiveBlockType(editor);
   const isNumbered = activeType === 'ol';
@@ -867,13 +883,13 @@ function NumberedListToolbarButton({ editor }: { editor: any }) {
   };
 
   return (
-    <div ref={dropdownRef} className="relative">
+    <div ref={containerRef} className="relative">
       <ToolbarSplitButton pressed={isNumbered}>
         <ToolbarSplitButtonPrimary
           title="Numbered List"
           onClick={() => toggleList('decimal')}
         >
-          <ListOrdered className="w-3.5 h-3.5" />
+          <ListOrdered className="w-4 h-4" />
         </ToolbarSplitButtonPrimary>
         <ToolbarSplitButtonSecondary
           onClick={() => setOpen(!open)}
@@ -881,27 +897,30 @@ function NumberedListToolbarButton({ editor }: { editor: any }) {
         />
       </ToolbarSplitButton>
 
-      {open && (
-        <div className="absolute top-full left-0 mt-1 w-44 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xl py-1 z-50 animate-in fade-in zoom-in-95 duration-100">
-          <div className="px-2.5 py-1 text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">
-            Numbering Style
-          </div>
-          {NUMBERED_STYLES.map((st) => (
-            <button
-              key={st.id}
-              type="button"
-              onMouseDown={(e) => {
-                e.preventDefault();
-                toggleList(st.id);
-                setOpen(false);
-              }}
-              className="flex items-center w-full px-2.5 py-1.5 text-xs text-left text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-            >
-              {st.label}
-            </button>
-          ))}
+      <PortalPopover
+        anchorRef={containerRef}
+        open={open}
+        onClose={() => setOpen(false)}
+        className="w-48 p-1.5"
+      >
+        <div className="px-3 py-1 text-[11px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
+          Numbering Style
         </div>
-      )}
+        {NUMBERED_STYLES.map((st) => (
+          <button
+            key={st.id}
+            type="button"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              toggleList(st.id);
+              setOpen(false);
+            }}
+            className="flex items-center w-full px-3 py-2 text-xs font-medium rounded-lg text-left text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+          >
+            {st.label}
+          </button>
+        ))}
+      </PortalPopover>
     </div>
   );
 }
@@ -914,17 +933,7 @@ const BULLET_STYLES = [
 
 function BulletedListToolbarButton({ editor }: { editor: any }) {
   const [open, setOpen] = React.useState(false);
-  const dropdownRef = React.useRef<HTMLDivElement>(null);
-
-  React.useEffect(() => {
-    const handleOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    if (open) document.addEventListener('mousedown', handleOutside);
-    return () => document.removeEventListener('mousedown', handleOutside);
-  }, [open]);
+  const containerRef = React.useRef<HTMLDivElement>(null);
 
   const activeType = getActiveBlockType(editor);
   const isBulleted = activeType === 'ul';
@@ -942,13 +951,13 @@ function BulletedListToolbarButton({ editor }: { editor: any }) {
   };
 
   return (
-    <div ref={dropdownRef} className="relative">
+    <div ref={containerRef} className="relative">
       <ToolbarSplitButton pressed={isBulleted}>
         <ToolbarSplitButtonPrimary
           title="Bulleted List"
           onClick={() => toggleList('disc')}
         >
-          <List className="w-3.5 h-3.5" />
+          <List className="w-4 h-4" />
         </ToolbarSplitButtonPrimary>
         <ToolbarSplitButtonSecondary
           onClick={() => setOpen(!open)}
@@ -956,27 +965,30 @@ function BulletedListToolbarButton({ editor }: { editor: any }) {
         />
       </ToolbarSplitButton>
 
-      {open && (
-        <div className="absolute top-full left-0 mt-1 w-36 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xl py-1 z-50 animate-in fade-in zoom-in-95 duration-100">
-          <div className="px-2.5 py-1 text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">
-            Bullet Style
-          </div>
-          {BULLET_STYLES.map((st) => (
-            <button
-              key={st.id}
-              type="button"
-              onMouseDown={(e) => {
-                e.preventDefault();
-                toggleList(st.id);
-                setOpen(false);
-              }}
-              className="flex items-center w-full px-2.5 py-1.5 text-xs text-left text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-            >
-              {st.label}
-            </button>
-          ))}
+      <PortalPopover
+        anchorRef={containerRef}
+        open={open}
+        onClose={() => setOpen(false)}
+        className="w-40 p-1.5"
+      >
+        <div className="px-3 py-1 text-[11px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
+          Bullet Style
         </div>
-      )}
+        {BULLET_STYLES.map((st) => (
+          <button
+            key={st.id}
+            type="button"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              toggleList(st.id);
+              setOpen(false);
+            }}
+            className="flex items-center w-full px-3 py-2 text-xs font-medium rounded-lg text-left text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+          >
+            {st.label}
+          </button>
+        ))}
+      </PortalPopover>
     </div>
   );
 }
@@ -986,19 +998,8 @@ function BulletedListToolbarButton({ editor }: { editor: any }) {
 function TableToolbarButton({ editor }: { editor: any }) {
   const [open, setOpen] = React.useState(false);
   const [hoveredSize, setHoveredSize] = React.useState({ rows: 0, cols: 0 });
-  const dropdownRef = React.useRef<HTMLDivElement>(null);
+  const anchorRef = React.useRef<HTMLDivElement>(null);
 
-  React.useEffect(() => {
-    const handleOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    if (open) document.addEventListener('mousedown', handleOutside);
-    return () => document.removeEventListener('mousedown', handleOutside);
-  }, [open]);
-
-  // Check if cursor is currently inside a table
   const insideTable = Boolean(
     editor?.api?.above?.({ match: (n: any) => n.type === 'table' })
   );
@@ -1081,121 +1082,123 @@ function TableToolbarButton({ editor }: { editor: any }) {
   };
 
   return (
-    <div ref={dropdownRef} className="relative">
+    <div ref={anchorRef} className="relative">
       <ToolbarButton
         isDropdown
         onClick={() => setOpen(!open)}
         tooltip="Table"
-        className="px-1.5"
+        className="px-2 h-8.5"
       >
-        <TableIcon className="w-3.5 h-3.5" />
-        <ChevronDown className="w-3 h-3 text-zinc-400 ml-0.5" />
+        <TableIcon className="w-4 h-4" />
+        <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
       </ToolbarButton>
 
-      {open && (
-        <div className="absolute top-full left-0 mt-1 w-52 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xl p-3 z-50 animate-in fade-in zoom-in-95 duration-100">
-          <div className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider mb-2">
-            Insert Table
-          </div>
+      <PortalPopover
+        anchorRef={anchorRef}
+        open={open}
+        onClose={() => setOpen(false)}
+        className="w-60 p-3.5"
+      >
+        <div className="text-[11px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-2.5">
+          Insert Table Grid
+        </div>
 
-          {/* 8x8 Interactive Grid */}
-          <div
-            className="grid grid-cols-8 gap-1 p-1 bg-zinc-50 dark:bg-zinc-800/60 rounded-lg border border-zinc-200 dark:border-zinc-700/60 mb-2 cursor-pointer"
-            onMouseLeave={() => setHoveredSize({ rows: 0, cols: 0 })}
-          >
-            {Array.from({ length: 8 }).map((_, r) =>
-              Array.from({ length: 8 }).map((__, c) => {
-                const isHighlighted = r < hoveredSize.rows && c < hoveredSize.cols;
-                return (
-                  <div
-                    key={`${r}-${c}`}
-                    onMouseEnter={() => setHoveredSize({ rows: r + 1, cols: c + 1 })}
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      insertTable(r + 1, c + 1);
-                    }}
-                    className={cn(
-                      'w-3.5 h-3.5 rounded-xs border transition-colors',
-                      isHighlighted
-                        ? 'bg-primary border-primary'
-                        : 'bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700'
-                    )}
-                  />
-                );
-              })
-            )}
-          </div>
-
-          <div className="text-center text-xs text-zinc-500 font-medium mb-2">
-            {hoveredSize.rows > 0 ? `${hoveredSize.rows} x ${hoveredSize.cols}` : 'Hover to choose grid'}
-          </div>
-
-          {/* In-table options if cursor is inside table */}
-          {insideTable && (
-            <div className="border-t border-zinc-200 dark:border-zinc-800 pt-2 space-y-1">
-              <div className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider px-1">
-                Table Tools
-              </div>
-              <button
-                type="button"
-                onMouseDown={(e) => { e.preventDefault(); insertRow(true); }}
-                className="flex items-center gap-2 w-full px-2 py-1 text-xs text-left text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded transition-colors"
-              >
-                <ArrowUp className="w-3 h-3 text-zinc-400" />
-                <span>Insert row before</span>
-              </button>
-              <button
-                type="button"
-                onMouseDown={(e) => { e.preventDefault(); insertRow(false); }}
-                className="flex items-center gap-2 w-full px-2 py-1 text-xs text-left text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded transition-colors"
-              >
-                <ArrowDown className="w-3 h-3 text-zinc-400" />
-                <span>Insert row after</span>
-              </button>
-              <button
-                type="button"
-                onMouseDown={(e) => { e.preventDefault(); deleteRow(); }}
-                className="flex items-center gap-2 w-full px-2 py-1 text-xs text-left text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded transition-colors"
-              >
-                <X className="w-3 h-3 text-zinc-400" />
-                <span>Delete row</span>
-              </button>
-              <button
-                type="button"
-                onMouseDown={(e) => { e.preventDefault(); insertCol(true); }}
-                className="flex items-center gap-2 w-full px-2 py-1 text-xs text-left text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded transition-colors"
-              >
-                <ArrowLeft className="w-3 h-3 text-zinc-400" />
-                <span>Insert col before</span>
-              </button>
-              <button
-                type="button"
-                onMouseDown={(e) => { e.preventDefault(); insertCol(false); }}
-                className="flex items-center gap-2 w-full px-2 py-1 text-xs text-left text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded transition-colors"
-              >
-                <ArrowRight className="w-3 h-3 text-zinc-400" />
-                <span>Insert col after</span>
-              </button>
-              <button
-                type="button"
-                onMouseDown={(e) => { e.preventDefault(); deleteCol(); }}
-                className="flex items-center gap-2 w-full px-2 py-1 text-xs text-left text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded transition-colors"
-              >
-                <X className="w-3 h-3 text-zinc-400" />
-                <span>Delete column</span>
-              </button>
-              <button
-                type="button"
-                onMouseDown={(e) => { e.preventDefault(); deleteTable(); }}
-                className="flex items-center gap-2 w-full px-2 py-1 text-xs text-left text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 rounded transition-colors"
-              >
-                <Trash2 className="w-3 h-3 text-red-500" />
-                <span>Delete table</span>
-              </button>
-            </div>
+        {/* 8x8 Interactive Grid */}
+        <div
+          className="grid grid-cols-8 gap-1.5 p-1.5 bg-zinc-50 dark:bg-zinc-800/70 rounded-lg border border-zinc-200 dark:border-zinc-700/80 mb-2.5 cursor-pointer"
+          onMouseLeave={() => setHoveredSize({ rows: 0, cols: 0 })}
+        >
+          {Array.from({ length: 8 }).map((_, r) =>
+            Array.from({ length: 8 }).map((__, c) => {
+              const isHighlighted = r < hoveredSize.rows && c < hoveredSize.cols;
+              return (
+                <div
+                  key={`${r}-${c}`}
+                  onMouseEnter={() => setHoveredSize({ rows: r + 1, cols: c + 1 })}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    insertTable(r + 1, c + 1);
+                  }}
+                  className={cn(
+                    'w-4 h-4 rounded-xs border transition-colors',
+                    isHighlighted
+                      ? 'bg-primary border-primary'
+                      : 'bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700'
+                  )}
+                />
+              );
+            })
           )}
         </div>
-      )}
+
+        <div className="text-center text-xs text-zinc-600 dark:text-zinc-400 font-semibold mb-2">
+          {hoveredSize.rows > 0 ? `${hoveredSize.rows} rows × ${hoveredSize.cols} columns` : 'Hover to choose grid size'}
+        </div>
+
+        {insideTable && (
+          <div className="border-t border-zinc-200 dark:border-zinc-800 pt-2 space-y-1">
+            <div className="text-[11px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider px-1">
+              Table Row & Col Tools
+            </div>
+            <button
+              type="button"
+              onMouseDown={(e) => { e.preventDefault(); insertRow(true); }}
+              className="flex items-center gap-2.5 w-full px-2.5 py-1.5 text-xs text-left text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors"
+            >
+              <ArrowUp className="w-3.5 h-3.5 text-zinc-400" />
+              <span>Insert row above</span>
+            </button>
+            <button
+              type="button"
+              onMouseDown={(e) => { e.preventDefault(); insertRow(false); }}
+              className="flex items-center gap-2.5 w-full px-2.5 py-1.5 text-xs text-left text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors"
+            >
+              <ArrowDown className="w-3.5 h-3.5 text-zinc-400" />
+              <span>Insert row below</span>
+            </button>
+            <button
+              type="button"
+              onMouseDown={(e) => { e.preventDefault(); deleteRow(); }}
+              className="flex items-center gap-2.5 w-full px-2.5 py-1.5 text-xs text-left text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors"
+            >
+              <X className="w-3.5 h-3.5 text-zinc-400" />
+              <span>Delete row</span>
+            </button>
+            <button
+              type="button"
+              onMouseDown={(e) => { e.preventDefault(); insertCol(true); }}
+              className="flex items-center gap-2.5 w-full px-2.5 py-1.5 text-xs text-left text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors"
+            >
+              <ArrowLeft className="w-3.5 h-3.5 text-zinc-400" />
+              <span>Insert column left</span>
+            </button>
+            <button
+              type="button"
+              onMouseDown={(e) => { e.preventDefault(); insertCol(false); }}
+              className="flex items-center gap-2.5 w-full px-2.5 py-1.5 text-xs text-left text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors"
+            >
+              <ArrowRight className="w-3.5 h-3.5 text-zinc-400" />
+              <span>Insert column right</span>
+            </button>
+            <button
+              type="button"
+              onMouseDown={(e) => { e.preventDefault(); deleteCol(); }}
+              className="flex items-center gap-2.5 w-full px-2.5 py-1.5 text-xs text-left text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors"
+            >
+              <X className="w-3.5 h-3.5 text-zinc-400" />
+              <span>Delete column</span>
+            </button>
+            <button
+              type="button"
+              onMouseDown={(e) => { e.preventDefault(); deleteTable(); }}
+              className="flex items-center gap-2.5 w-full px-2.5 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-md transition-colors"
+            >
+              <Trash2 className="w-3.5 h-3.5 text-red-500" />
+              <span>Delete table</span>
+            </button>
+          </div>
+        )}
+      </PortalPopover>
     </div>
   );
 }
@@ -1212,18 +1215,7 @@ const EMOJI_LIST = [
 
 function EmojiToolbarButton({ editor }: { editor: any }) {
   const [open, setOpen] = React.useState(false);
-  const [search, setSearch] = React.useState('');
-  const dropdownRef = React.useRef<HTMLDivElement>(null);
-
-  React.useEffect(() => {
-    const handleOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    if (open) document.addEventListener('mousedown', handleOutside);
-    return () => document.removeEventListener('mousedown', handleOutside);
-  }, [open]);
+  const anchorRef = React.useRef<HTMLDivElement>(null);
 
   const insertEmoji = (emoji: string) => {
     editor?.tf?.insertText?.(emoji);
@@ -1232,39 +1224,42 @@ function EmojiToolbarButton({ editor }: { editor: any }) {
   };
 
   return (
-    <div ref={dropdownRef} className="relative">
+    <div ref={anchorRef} className="relative">
       <ToolbarButton
         isDropdown
         onClick={() => setOpen(!open)}
         tooltip="Emoji"
-        className="px-1.5"
+        className="px-2 h-8.5"
       >
-        <Smile className="w-3.5 h-3.5" />
-        <ChevronDown className="w-3 h-3 text-zinc-400 ml-0.5" />
+        <Smile className="w-4 h-4" />
+        <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
       </ToolbarButton>
 
-      {open && (
-        <div className="absolute top-full left-0 mt-1 w-64 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xl p-3 z-50 animate-in fade-in zoom-in-95 duration-100">
-          <div className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider mb-2">
-            Emojis
-          </div>
-          <div className="grid grid-cols-8 gap-1.5 place-items-center max-h-48 overflow-y-auto">
-            {EMOJI_LIST.map((emoji) => (
-              <button
-                key={emoji}
-                type="button"
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  insertEmoji(emoji);
-                }}
-                className="w-7 h-7 flex items-center justify-center text-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-transform hover:scale-125"
-              >
-                {emoji}
-              </button>
-            ))}
-          </div>
+      <PortalPopover
+        anchorRef={anchorRef}
+        open={open}
+        onClose={() => setOpen(false)}
+        className="w-72 p-3.5"
+      >
+        <div className="text-[11px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-2.5">
+          Insert Emoji
         </div>
-      )}
+        <div className="grid grid-cols-8 gap-1.5 place-items-center max-h-56 overflow-y-auto p-1">
+          {EMOJI_LIST.map((emoji) => (
+            <button
+              key={emoji}
+              type="button"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                insertEmoji(emoji);
+              }}
+              className="w-8 h-8 flex items-center justify-center text-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-transform hover:scale-125 cursor-pointer"
+            >
+              {emoji}
+            </button>
+          ))}
+        </div>
+      </PortalPopover>
     </div>
   );
 }
@@ -1283,18 +1278,8 @@ function MediaToolbarButton({ editor, nodeType, tooltip, icon: Icon, accept }: M
   const [open, setOpen] = React.useState(false);
   const [urlDialogOpen, setUrlDialogOpen] = React.useState(false);
   const [inputUrl, setInputUrl] = React.useState('');
-  const dropdownRef = React.useRef<HTMLDivElement>(null);
+  const anchorRef = React.useRef<HTMLDivElement>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
-
-  React.useEffect(() => {
-    const handleOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    if (open) document.addEventListener('mousedown', handleOutside);
-    return () => document.removeEventListener('mousedown', handleOutside);
-  }, [open]);
 
   const insertMedia = (url: string, name?: string) => {
     editor?.tf?.insertNodes?.([
@@ -1328,7 +1313,7 @@ function MediaToolbarButton({ editor, nodeType, tooltip, icon: Icon, accept }: M
   };
 
   return (
-    <div ref={dropdownRef} className="relative">
+    <div ref={anchorRef} className="relative">
       <input
         ref={fileInputRef}
         type="file"
@@ -1341,81 +1326,87 @@ function MediaToolbarButton({ editor, nodeType, tooltip, icon: Icon, accept }: M
         isDropdown
         onClick={() => setOpen(!open)}
         tooltip={tooltip}
-        className="px-1.5"
+        className="px-2 h-8.5"
       >
-        <Icon className="w-3.5 h-3.5" />
-        <ChevronDown className="w-3 h-3 text-zinc-400 ml-0.5" />
+        <Icon className="w-4 h-4" />
+        <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
       </ToolbarButton>
 
-      {open && (
-        <div className="absolute top-full left-0 mt-1 w-48 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xl py-1 z-50 animate-in fade-in zoom-in-95 duration-100">
-          <button
-            type="button"
-            onMouseDown={(e) => {
-              e.preventDefault();
-              setOpen(false);
-              fileInputRef.current?.click();
-            }}
-            className="flex items-center gap-2.5 w-full px-3 py-1.5 text-xs text-left text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-          >
-            <Icon className="w-3.5 h-3.5 text-zinc-500" />
-            <span>Upload from computer</span>
-          </button>
-          <button
-            type="button"
-            onMouseDown={(e) => {
-              e.preventDefault();
-              setOpen(false);
-              setUrlDialogOpen(true);
-            }}
-            className="flex items-center gap-2.5 w-full px-3 py-1.5 text-xs text-left text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-          >
-            <Link2 className="w-3.5 h-3.5 text-zinc-500" />
-            <span>Insert via URL</span>
-          </button>
-        </div>
-      )}
+      <PortalPopover
+        anchorRef={anchorRef}
+        open={open}
+        onClose={() => setOpen(false)}
+        className="w-52 p-1.5"
+      >
+        <button
+          type="button"
+          onMouseDown={(e) => {
+            e.preventDefault();
+            setOpen(false);
+            fileInputRef.current?.click();
+          }}
+          className="flex items-center gap-3 w-full px-3 py-2 text-xs font-medium rounded-lg text-left text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+        >
+          <Icon className="w-4 h-4 text-zinc-500" />
+          <span>Upload from computer</span>
+        </button>
+        <button
+          type="button"
+          onMouseDown={(e) => {
+            e.preventDefault();
+            setOpen(false);
+            setUrlDialogOpen(true);
+          }}
+          className="flex items-center gap-3 w-full px-3 py-2 text-xs font-medium rounded-lg text-left text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+        >
+          <Link2 className="w-4 h-4 text-zinc-500" />
+          <span>Insert via URL</span>
+        </button>
+      </PortalPopover>
 
       {/* URL Input Modal */}
-      {urlDialogOpen && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
-          <div className="w-full max-w-sm rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-4 shadow-2xl space-y-3">
-            <div className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-              Insert {tooltip}
-            </div>
-            <input
-              type="url"
-              placeholder="https://..."
-              value={inputUrl}
-              onChange={(e) => setInputUrl(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') handleUrlSubmit();
-              }}
-              autoFocus
-              className="w-full px-3 py-2 text-xs rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-primary/40"
-            />
-            <div className="flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setUrlDialogOpen(false);
-                  setInputUrl('');
+      {urlDialogOpen &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <div className="fixed inset-0 bg-black/50 z-[999999] flex items-center justify-center p-4 backdrop-blur-xs animate-in fade-in">
+            <div className="w-full max-w-sm rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-5 shadow-2xl space-y-4">
+              <div className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
+                Insert {tooltip}
+              </div>
+              <input
+                type="url"
+                placeholder="https://..."
+                value={inputUrl}
+                onChange={(e) => setInputUrl(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleUrlSubmit();
                 }}
-                className="px-3 py-1.5 text-xs font-medium rounded-lg text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleUrlSubmit}
-                className="px-3 py-1.5 text-xs font-medium rounded-lg bg-primary text-primary-foreground hover:bg-primary/90"
-              >
-                Insert
-              </button>
+                autoFocus
+                className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+              <div className="flex justify-end gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUrlDialogOpen(false);
+                    setInputUrl('');
+                  }}
+                  className="px-3.5 py-2 text-xs font-medium rounded-lg text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleUrlSubmit}
+                  className="px-4 py-2 text-xs font-semibold rounded-lg bg-primary text-primary-foreground hover:bg-primary/90"
+                >
+                  Insert
+                </button>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
     </div>
   );
 }
@@ -1433,61 +1424,54 @@ const LINE_HEIGHT_OPTIONS = [
 
 function LineHeightToolbarButton({ editor }: { editor: any }) {
   const [open, setOpen] = React.useState(false);
-  const dropdownRef = React.useRef<HTMLDivElement>(null);
-
-  React.useEffect(() => {
-    const handleOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    if (open) document.addEventListener('mousedown', handleOutside);
-    return () => document.removeEventListener('mousedown', handleOutside);
-  }, [open]);
+  const anchorRef = React.useRef<HTMLDivElement>(null);
 
   const block = getActiveBlock(editor);
   const currentHeight = Number(block?.lineHeight) || 1.5;
 
   return (
-    <div ref={dropdownRef} className="relative">
+    <div ref={anchorRef} className="relative">
       <ToolbarButton
         isDropdown
         onClick={() => setOpen(!open)}
         tooltip="Line Spacing"
-        className="px-1.5"
+        className="px-2 h-8.5"
       >
-        <WrapText className="w-3.5 h-3.5" />
-        <ChevronDown className="w-3 h-3 text-zinc-400 ml-0.5" />
+        <WrapText className="w-4 h-4" />
+        <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
       </ToolbarButton>
 
-      {open && (
-        <div className="absolute top-full left-0 mt-1 w-36 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xl py-1 z-50 animate-in fade-in zoom-in-95 duration-100">
-          <div className="px-2.5 py-1 text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">
-            Line Spacing
-          </div>
-          {LINE_HEIGHT_OPTIONS.map((opt) => (
-            <button
-              key={opt.value}
-              type="button"
-              onMouseDown={(e) => {
-                e.preventDefault();
-                setBlockProperty(editor, 'lineHeight', opt.value);
-                setOpen(false);
-                editor?.tf?.focus?.();
-              }}
-              className={cn(
-                'flex items-center justify-between w-full px-2.5 py-1.5 text-xs text-left transition-colors',
-                currentHeight === opt.value
-                  ? 'bg-primary/10 text-primary font-medium'
-                  : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-              )}
-            >
-              <span>{opt.label}</span>
-              {currentHeight === opt.value && <Check className="w-3 h-3 text-primary" />}
-            </button>
-          ))}
+      <PortalPopover
+        anchorRef={anchorRef}
+        open={open}
+        onClose={() => setOpen(false)}
+        className="w-44 p-1.5"
+      >
+        <div className="px-3 py-1 text-[11px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
+          Line Spacing
         </div>
-      )}
+        {LINE_HEIGHT_OPTIONS.map((opt) => (
+          <button
+            key={opt.value}
+            type="button"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              setBlockProperty(editor, 'lineHeight', opt.value);
+              setOpen(false);
+              editor?.tf?.focus?.();
+            }}
+            className={cn(
+              'flex items-center justify-between w-full px-3 py-2 text-xs font-medium rounded-lg text-left transition-colors',
+              currentHeight === opt.value
+                ? 'bg-primary/15 text-primary font-semibold'
+                : 'text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+            )}
+          >
+            <span>{opt.label}</span>
+            {currentHeight === opt.value && <Check className="w-3.5 h-3.5 text-primary" />}
+          </button>
+        ))}
+      </PortalPopover>
     </div>
   );
 }
@@ -1496,103 +1480,96 @@ function LineHeightToolbarButton({ editor }: { editor: any }) {
 
 function MoreToolbarButton({ editor }: { editor: any }) {
   const [open, setOpen] = React.useState(false);
-  const dropdownRef = React.useRef<HTMLDivElement>(null);
-
-  React.useEffect(() => {
-    const handleOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    if (open) document.addEventListener('mousedown', handleOutside);
-    return () => document.removeEventListener('mousedown', handleOutside);
-  }, [open]);
+  const anchorRef = React.useRef<HTMLDivElement>(null);
 
   const isSub = isMarkActive(editor, 'subscript');
   const isSup = isMarkActive(editor, 'superscript');
   const isKbd = isMarkActive(editor, 'kbd');
 
   return (
-    <div ref={dropdownRef} className="relative">
+    <div ref={anchorRef} className="relative">
       <ToolbarButton
         onClick={() => setOpen(!open)}
         tooltip="More formatting"
-        className="px-1.5"
+        className="px-2 h-8.5"
       >
-        <MoreHorizontal className="w-3.5 h-3.5" />
+        <MoreHorizontal className="w-4 h-4" />
       </ToolbarButton>
 
-      {open && (
-        <div className="absolute top-full left-0 mt-1 w-44 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xl py-1 z-50 animate-in fade-in zoom-in-95 duration-100">
-          <button
-            type="button"
-            onMouseDown={(e) => {
-              e.preventDefault();
-              toggleMark(editor, 'superscript');
-              removeMark(editor, 'subscript');
-              setOpen(false);
-              editor?.tf?.focus?.();
-            }}
-            className={cn(
-              'flex items-center justify-between w-full px-3 py-1.5 text-xs text-left transition-colors',
-              isSup
-                ? 'bg-primary/10 text-primary font-medium'
-                : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-            )}
-          >
-            <div className="flex items-center gap-2">
-              <Superscript className="w-3.5 h-3.5" />
-              <span>Superscript</span>
-            </div>
-            {isSup && <Check className="w-3 h-3 text-primary" />}
-          </button>
+      <PortalPopover
+        anchorRef={anchorRef}
+        open={open}
+        onClose={() => setOpen(false)}
+        className="w-48 p-1.5"
+      >
+        <button
+          type="button"
+          onMouseDown={(e) => {
+            e.preventDefault();
+            toggleMark(editor, 'superscript');
+            removeMark(editor, 'subscript');
+            setOpen(false);
+            editor?.tf?.focus?.();
+          }}
+          className={cn(
+            'flex items-center justify-between w-full px-3 py-2 text-xs font-medium rounded-lg text-left transition-colors',
+            isSup
+              ? 'bg-primary/15 text-primary font-semibold'
+              : 'text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+          )}
+        >
+          <div className="flex items-center gap-2.5">
+            <Superscript className="w-4 h-4" />
+            <span>Superscript</span>
+          </div>
+          {isSup && <Check className="w-3.5 h-3.5 text-primary" />}
+        </button>
 
-          <button
-            type="button"
-            onMouseDown={(e) => {
-              e.preventDefault();
-              toggleMark(editor, 'subscript');
-              removeMark(editor, 'superscript');
-              setOpen(false);
-              editor?.tf?.focus?.();
-            }}
-            className={cn(
-              'flex items-center justify-between w-full px-3 py-1.5 text-xs text-left transition-colors',
-              isSub
-                ? 'bg-primary/10 text-primary font-medium'
-                : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-            )}
-          >
-            <div className="flex items-center gap-2">
-              <Subscript className="w-3.5 h-3.5" />
-              <span>Subscript</span>
-            </div>
-            {isSub && <Check className="w-3 h-3 text-primary" />}
-          </button>
+        <button
+          type="button"
+          onMouseDown={(e) => {
+            e.preventDefault();
+            toggleMark(editor, 'subscript');
+            removeMark(editor, 'superscript');
+            setOpen(false);
+            editor?.tf?.focus?.();
+          }}
+          className={cn(
+            'flex items-center justify-between w-full px-3 py-2 text-xs font-medium rounded-lg text-left transition-colors',
+            isSub
+              ? 'bg-primary/15 text-primary font-semibold'
+              : 'text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+          )}
+        >
+          <div className="flex items-center gap-2.5">
+            <Subscript className="w-4 h-4" />
+            <span>Subscript</span>
+          </div>
+          {isSub && <Check className="w-3.5 h-3.5 text-primary" />}
+        </button>
 
-          <button
-            type="button"
-            onMouseDown={(e) => {
-              e.preventDefault();
-              toggleMark(editor, 'kbd');
-              setOpen(false);
-              editor?.tf?.focus?.();
-            }}
-            className={cn(
-              'flex items-center justify-between w-full px-3 py-1.5 text-xs text-left transition-colors',
-              isKbd
-                ? 'bg-primary/10 text-primary font-medium'
-                : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-            )}
-          >
-            <div className="flex items-center gap-2">
-              <Keyboard className="w-3.5 h-3.5" />
-              <span>Keyboard input</span>
-            </div>
-            {isKbd && <Check className="w-3 h-3 text-primary" />}
-          </button>
-        </div>
-      )}
+        <button
+          type="button"
+          onMouseDown={(e) => {
+            e.preventDefault();
+            toggleMark(editor, 'kbd');
+            setOpen(false);
+            editor?.tf?.focus?.();
+          }}
+          className={cn(
+            'flex items-center justify-between w-full px-3 py-2 text-xs font-medium rounded-lg text-left transition-colors',
+            isKbd
+              ? 'bg-primary/15 text-primary font-semibold'
+              : 'text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+          )}
+        >
+          <div className="flex items-center gap-2.5">
+            <Keyboard className="w-4 h-4" />
+            <span>Keyboard input</span>
+          </div>
+          {isKbd && <Check className="w-3.5 h-3.5 text-primary" />}
+        </button>
+      </PortalPopover>
     </div>
   );
 }
@@ -1604,7 +1581,6 @@ export interface FixedToolbarButtonsProps {
 }
 
 export function FixedToolbarButtons({ editor }: FixedToolbarButtonsProps) {
-  // Re-render when editor state changes
   const [, forceUpdate] = React.useReducer((x) => x + 1, 0);
 
   React.useEffect(() => {
@@ -1653,7 +1629,7 @@ export function FixedToolbarButtons({ editor }: FixedToolbarButtonsProps) {
   };
 
   return (
-    <div className="flex w-full items-center gap-0.5 flex-wrap">
+    <div className="flex w-full items-center gap-1 flex-wrap">
       {/* 1. Insert (+ v), Turn Into (Heading 1 v), Font Size ([- 12 +]) */}
       <ToolbarGroup>
         <InsertToolbarButton editor={editor} />
@@ -1668,7 +1644,7 @@ export function FixedToolbarButtons({ editor }: FixedToolbarButtonsProps) {
           onClick={() => toggleMark(editor, 'bold')}
           tooltip="Bold (Ctrl+B)"
         >
-          <Bold className="w-3.5 h-3.5" />
+          <Bold className="w-4 h-4" />
         </ToolbarButton>
 
         <ToolbarButton
@@ -1676,7 +1652,7 @@ export function FixedToolbarButtons({ editor }: FixedToolbarButtonsProps) {
           onClick={() => toggleMark(editor, 'italic')}
           tooltip="Italic (Ctrl+I)"
         >
-          <Italic className="w-3.5 h-3.5" />
+          <Italic className="w-4 h-4" />
         </ToolbarButton>
 
         <ToolbarButton
@@ -1684,7 +1660,7 @@ export function FixedToolbarButtons({ editor }: FixedToolbarButtonsProps) {
           onClick={() => toggleMark(editor, 'underline')}
           tooltip="Underline (Ctrl+U)"
         >
-          <Underline className="w-3.5 h-3.5" />
+          <Underline className="w-4 h-4" />
         </ToolbarButton>
 
         <ToolbarButton
@@ -1692,7 +1668,7 @@ export function FixedToolbarButtons({ editor }: FixedToolbarButtonsProps) {
           onClick={() => toggleMark(editor, 'strikethrough')}
           tooltip="Strikethrough"
         >
-          <Strikethrough className="w-3.5 h-3.5" />
+          <Strikethrough className="w-4 h-4" />
         </ToolbarButton>
 
         <ToolbarButton
@@ -1700,7 +1676,7 @@ export function FixedToolbarButtons({ editor }: FixedToolbarButtonsProps) {
           onClick={() => toggleMark(editor, 'code')}
           tooltip="Inline Code"
         >
-          <Code className="w-3.5 h-3.5" />
+          <Code className="w-4 h-4" />
         </ToolbarButton>
 
         <ColorPickerDropdown
@@ -1729,7 +1705,7 @@ export function FixedToolbarButtons({ editor }: FixedToolbarButtonsProps) {
           onClick={() => setBlockType(editor, isTodo ? 'p' : 'todo')}
           tooltip="To-do checklist"
         >
-          <ListTodo className="w-3.5 h-3.5" />
+          <ListTodo className="w-4 h-4" />
         </ToolbarButton>
 
         <ToolbarButton
@@ -1737,14 +1713,14 @@ export function FixedToolbarButtons({ editor }: FixedToolbarButtonsProps) {
           onClick={() => setBlockType(editor, isToggle ? 'p' : 'toggle')}
           tooltip="Toggle list"
         >
-          <ListCollapse className="w-3.5 h-3.5" />
+          <ListCollapse className="w-4 h-4" />
         </ToolbarButton>
       </ToolbarGroup>
 
       {/* 4. Link, Table, Emoji */}
       <ToolbarGroup>
         <ToolbarButton onClick={handleLink} tooltip="Insert Link">
-          <Link2 className="w-3.5 h-3.5" />
+          <Link2 className="w-4 h-4" />
         </ToolbarButton>
 
         <TableToolbarButton editor={editor} />
@@ -1791,11 +1767,11 @@ export function FixedToolbarButtons({ editor }: FixedToolbarButtonsProps) {
         <LineHeightToolbarButton editor={editor} />
 
         <ToolbarButton onClick={handleOutdent} tooltip="Decrease Indent">
-          <OutdentIcon className="w-3.5 h-3.5" />
+          <OutdentIcon className="w-4 h-4" />
         </ToolbarButton>
 
         <ToolbarButton onClick={handleIndent} tooltip="Increase Indent">
-          <IndentIcon className="w-3.5 h-3.5" />
+          <IndentIcon className="w-4 h-4" />
         </ToolbarButton>
       </ToolbarGroup>
 
@@ -1808,7 +1784,7 @@ export function FixedToolbarButtons({ editor }: FixedToolbarButtonsProps) {
           onClick={() => toggleMark(editor, 'highlight')}
           tooltip="Highlight"
         >
-          <Highlighter className="w-3.5 h-3.5 text-amber-500" />
+          <Highlighter className="w-4 h-4 text-amber-500" />
         </ToolbarButton>
       </ToolbarGroup>
     </div>
