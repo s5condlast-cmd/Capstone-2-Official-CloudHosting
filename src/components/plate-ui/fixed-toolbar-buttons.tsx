@@ -69,6 +69,8 @@ import {
   Minimize2,
   ZoomIn,
   ZoomOut,
+  Undo2,
+  Redo2,
   ExternalLink,
   Unlink,
 } from 'lucide-react';
@@ -2472,8 +2474,60 @@ export function FixedToolbarButtons({
     }
   };
 
+  const handleUndo = () => {
+    if (isViewing) return;
+    try {
+      if (editor?.undo) {
+        editor.undo();
+      } else if (editor?.api?.undo) {
+        editor.api.undo();
+      } else if (editor?.tf?.undo) {
+        editor.tf.undo();
+      }
+      editor?.tf?.focus?.();
+    } catch { /* non-fatal */ }
+  };
+
+  const handleRedo = () => {
+    if (isViewing) return;
+    try {
+      if (editor?.redo) {
+        editor.redo();
+      } else if (editor?.api?.redo) {
+        editor.api.redo();
+      } else if (editor?.tf?.redo) {
+        editor.tf.redo();
+      }
+      editor?.tf?.focus?.();
+    } catch { /* non-fatal */ }
+  };
+
+  const canUndo = editor?.history?.undos ? editor.history.undos.length > 0 : true;
+  const canRedo = editor?.history?.redos ? editor.history.redos.length > 0 : true;
+
   return (
     <div className="flex w-full items-center gap-1 flex-wrap">
+      {/* 0. History: Undo & Redo */}
+      <ToolbarGroup className={cn(isViewing && 'opacity-40 pointer-events-none')}>
+        <ToolbarButton
+          disabled={isViewing || !canUndo}
+          onClick={handleUndo}
+          tooltip="Undo (Ctrl+Z)"
+          aria-label="Undo"
+        >
+          <Undo2 className="w-4 h-4 text-zinc-700 dark:text-zinc-200" />
+        </ToolbarButton>
+
+        <ToolbarButton
+          disabled={isViewing || !canRedo}
+          onClick={handleRedo}
+          tooltip="Redo (Ctrl+Y)"
+          aria-label="Redo"
+        >
+          <Redo2 className="w-4 h-4 text-zinc-700 dark:text-zinc-200" />
+        </ToolbarButton>
+      </ToolbarGroup>
+
       {/* 1. Insert (+ v), Turn Into (Heading 1 v), Font Size ([- 12 +]) */}
       <ToolbarGroup className={cn(isViewing && 'opacity-40 pointer-events-none')}>
         <InsertToolbarButton editor={editor} />

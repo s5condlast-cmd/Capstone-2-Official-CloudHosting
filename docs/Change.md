@@ -2007,3 +2007,18 @@ Per user feedback with screenshot `media_1789465389183.png` (showing Numbered an
      - Mode switcher dropdown (`Editing v`)
      - Zoom preset dropdown (`100% v`)
    - All dropdown arrows are now immediately visible, crisp, and legible in both dark and light modes.
+
+---
+
+## 18. Toolbar History Controls: Undo & Redo Buttons
+
+Per user feedback with screenshot `media_1789465433512.png` (showing `+ v` insert button):
+
+1. **Placed Undo & Redo to the Left of `+ v`**:
+   - In `src/components/plate-ui/fixed-toolbar-buttons.tsx`, added a dedicated history toolbar group on the far left before the `+ v` Insert button.
+   - **Undo (`↺` / `Undo2`)**: Executes `editor.undo()` or `editor.api.undo()` with keyboard shortcut tooltip `Undo (Ctrl+Z)`.
+   - **Redo (`↻` / `Redo2`)**: Executes `editor.redo()` or `editor.api.redo()` with keyboard shortcut tooltip `Redo (Ctrl+Y)`.
+2. **Defensive History State Handling**:
+   - Safely checks `editor.history.undos` and `editor.history.redos` with automatic fallback to enabled.
+   - Preserves focus in editor after executing undo/redo.
+   - High-contrast icons rendered in `text-zinc-700 dark:text-zinc-200` matching the rest of the toolbar.
