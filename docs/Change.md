@@ -1949,8 +1949,17 @@ Per user feedback with screenshot `media_1789462838757.png`:
      - 📄 **File Attachment** (1-click file picker)
    - Added clean divider followed by a dedicated **Insert via URL** option with unified media type switcher modal.
 
+---
 
+## 15. Fixed Toolbar Right-Alignment & Separator Deduplication
 
+Per user feedback with screenshot `media_1789465275790.png`:
 
-
-
+1. **Right-Edge Alignment (`ml-auto`)**:
+   - Pinned the Comment (`CommentToolbarButton`), Mode Switcher (`ModeToolbarButton`), and Fullscreen (`ToolbarButton`) cluster flush against the right edge of the fixed toolbar container using `ml-auto flex items-center gap-1 shrink-0`.
+   - Prevents auxiliary action buttons from floating in the middle of wide viewports.
+2. **Separator Deduplication (Single-Line Divider Standard)**:
+   - Eliminated duplicate adjacent vertical dividers (`| |`).
+   - Suppressed the trailing separator of Group 6 (`Line Height, Outdent, Indent`) using `[&>div[role=separator]]:hidden` to eliminate orphan dividers in empty space.
+   - Placed strictly one `<ToolbarSeparator />` before Comment, one between Comment and Mode Switcher, and one between Mode Switcher and Fullscreen.
+   - Removed trailing separator after the Fullscreen toggle to ensure clean alignment touching the container boundary.

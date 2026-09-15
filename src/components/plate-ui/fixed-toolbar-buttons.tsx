@@ -2325,7 +2325,7 @@ export function FixedToolbarButtons({
       </ToolbarGroup>
 
       {/* 6. Line Height, Outdent, Indent */}
-      <ToolbarGroup className={cn(isViewing && 'opacity-40 pointer-events-none')}>
+      <ToolbarGroup className={cn(isViewing && 'opacity-40 pointer-events-none', '[&>div[role=separator]]:hidden')}>
         <LineHeightToolbarButton editor={editor} />
 
         <ToolbarButton onClick={handleOutdent} tooltip="Decrease Indent">
@@ -2337,32 +2337,21 @@ export function FixedToolbarButtons({
         </ToolbarButton>
       </ToolbarGroup>
 
-      <ToolbarSeparator />
-
-      {/* 7. Comment Icon */}
-      <ToolbarGroup>
+      {/* 7. Right-Aligned Actions (Comment, Mode, Fullscreen) touching container edge */}
+      <div className="ml-auto flex items-center gap-1 shrink-0">
+        <ToolbarSeparator />
         <CommentToolbarButton
           editor={editor}
           comments={comments}
           onAddComment={onAddComment}
           onResolveComment={onResolveComment}
         />
-      </ToolbarGroup>
-
-      <ToolbarSeparator />
-
-      {/* 8. Mode Switcher (Editing, Suggesting, Viewing) */}
-      <ToolbarGroup>
+        <ToolbarSeparator />
         <ModeToolbarButton
           mode={mode}
           onModeChange={onModeChange}
         />
-      </ToolbarGroup>
-
-      <ToolbarSeparator />
-
-      {/* 10. Fullscreen Toggle */}
-      <ToolbarGroup>
+        <ToolbarSeparator />
         <ToolbarButton
           active={isFullscreen}
           onClick={onToggleFullscreen}
@@ -2374,7 +2363,7 @@ export function FixedToolbarButtons({
             <Maximize2 className="w-4 h-4" />
           )}
         </ToolbarButton>
-      </ToolbarGroup>
+      </div>
     </div>
   );
 }
