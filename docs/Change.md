@@ -1886,4 +1886,27 @@ Based on targeted page feedback on `/student/editor`:
    - **Review & Controls**: Comment Icon (with badge & selection popover), Mode Switcher (`Editing` / `Suggesting` / `Viewing`), Fullscreen Toggle (`Maximize2` / `Minimize2`)
    - **Zoom**: Canvas mousewheel & trackpad pinch zoom with auto-fading status pill.
 
+---
+
+## 11. Unified Media Suite & Speech-to-Text Voice Dictation
+
+In response to page feedback requesting 1 icon that can handle all media and adding speech-to-text:
+
+1. **Unified Media Toolbar Button (`MediaToolbarButton`)**:
+   - Consolidated 4 separate buttons (Image, Video, Audio, File) into a single compact dropdown button (`ImageIcon` with chevron).
+   - Clicking opens a high-contrast portal popover categorizing:
+     - 🖼️ **Image**: 1-click computer upload or URL prompt modal.
+     - 🎬 **Video**: 1-click computer upload or URL prompt modal.
+     - 🎵 **Audio**: 1-click computer upload or URL prompt modal.
+     - 📄 **File Attachment**: 1-click computer upload or URL prompt modal.
+   - Saves significant horizontal space on the top toolbar and keeps all media insertion tools accessible in one place.
+
+2. **Speech-to-Text Voice Dictation (`SpeechToTextToolbarButton`)**:
+   - Added a dedicated microphone icon (`Mic`) to the toolbar.
+   - Utilizes browser Web Speech API (`webkitSpeechRecognition` / `SpeechRecognition`) with continuous listening.
+   - Streams recognized speech directly into the Plate editor at the active selection cursor (`editor.tf.insertText`).
+   - Active state displays an animated pulsing red microphone (`animate-pulse text-red-500`) and a red highlight on the toolbar button.
+   - Renders a floating status pill (`Listening... Speak into your microphone · Done`) at the bottom of the screen with a 1-click stop button.
+
+
 

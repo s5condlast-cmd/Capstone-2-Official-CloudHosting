@@ -41,6 +41,7 @@ import {
   Film,
   AudioLines,
   FileUp,
+  Mic,
   WrapText,
   Indent as IndentIcon,
   Outdent as OutdentIcon,
@@ -1273,50 +1274,66 @@ function EmojiToolbarButton({ editor }: { editor: any }) {
   );
 }
 
-// ─── 9. Media Toolbar Button (Image, Video, Audio, File) ──────────────────────
+// ─── 9. Unified Media Toolbar Button (Image, Video, Audio, File) ────────────────
 
-interface MediaToolbarButtonProps {
-  editor: any;
-  nodeType: 'img' | 'video' | 'audio' | 'file';
-  tooltip: string;
-  icon: React.ComponentType<{ className?: string }>;
-  accept: string;
-}
+const MEDIA_TYPES = [
+  { type: 'img' as const, label: 'Image', icon: ImageIcon, accept: 'image/*', color: 'text-sky-500' },
+  { type: 'video' as const, label: 'Video', icon: Film, accept: 'video/*', color: 'text-purple-500' },
+  { type: 'audio' as const, label: 'Audio', icon: AudioLines, accept: 'audio/*', color: 'text-emerald-500' },
+  { type: 'file' as const, label: 'File Attachment', icon: FileUp, accept: '*', color: 'text-amber-500' },
+];
 
-function MediaToolbarButton({ editor, nodeType, tooltip, icon: Icon, accept }: MediaToolbarButtonProps) {
+function MediaToolbarButton({ editor }: { editor: any }) {
   const [open, setOpen] = React.useState(false);
+  const [activeMedia, setActiveMedia] = React.useState<typeof MEDIA_TYPES[number] | null>(null);
   const [urlDialogOpen, setUrlDialogOpen] = React.useState(false);
   const [inputUrl, setInputUrl] = React.useState('');
   const anchorRef = React.useRef<HTMLDivElement>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-  const insertMedia = (url: string, name?: string) => {
+  const insertMedia = (type: 'img' | 'video' | 'audio' | 'file', url: string, name?: string) => {
     editor?.tf?.insertNodes?.([
       {
-        type: nodeType,
+        type,
         url,
-        name: name || url.split('/').pop() || nodeType,
+        name: name || url.split('/').pop() || type,
         children: [{ text: '' }],
       },
     ]);
     editor?.tf?.focus?.();
   };
 
+  const handleTriggerUpload = (media: typeof MEDIA_TYPES[number]) => {
+    setActiveMedia(media);
+    setOpen(false);
+    if (fileInputRef.current) {
+      fileInputRef.current.accept = media.accept;
+      fileInputRef.current.click();
+    }
+  };
+
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file || !activeMedia) return;
     const reader = new FileReader();
     reader.onload = () => {
       const result = reader.result as string;
-      insertMedia(result, file.name);
+      insertMedia(activeMedia.type, result, file.name);
     };
     reader.readAsDataURL(file);
     e.target.value = '';
   };
 
+  const handleTriggerUrl = (media: typeof MEDIA_TYPES[number]) => {
+    setActiveMedia(media);
+    setOpen(false);
+    setInputUrl('');
+    setUrlDialogOpen(true);
+  };
+
   const handleUrlSubmit = () => {
-    if (!inputUrl.trim()) return;
-    insertMedia(inputUrl.trim());
+    if (!inputUrl.trim() || !activeMedia) return;
+    insertMedia(activeMedia.type, inputUrl.trim());
     setInputUrl('');
     setUrlDialogOpen(false);
   };
@@ -1326,7 +1343,6 @@ function MediaToolbarButton({ editor, nodeType, tooltip, icon: Icon, accept }: M
       <input
         ref={fileInputRef}
         type="file"
-        accept={accept}
         onChange={handleFileUpload}
         className="hidden"
       />
@@ -1334,10 +1350,10 @@ function MediaToolbarButton({ editor, nodeType, tooltip, icon: Icon, accept }: M
       <ToolbarButton
         isDropdown
         onClick={() => setOpen(!open)}
-        tooltip={tooltip}
+        tooltip="Insert Media (Image, Video, Audio, File)"
         className="px-2 h-8.5"
       >
-        <Icon className="w-4 h-4" />
+        <ImageIcon className="w-4 h-4" />
         <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
       </ToolbarButton>
 
@@ -1345,42 +1361,59 @@ function MediaToolbarButton({ editor, nodeType, tooltip, icon: Icon, accept }: M
         anchorRef={anchorRef}
         open={open}
         onClose={() => setOpen(false)}
-        className="w-52 p-1.5"
+        className="w-64 p-2"
       >
-        <button
-          type="button"
-          onMouseDown={(e) => {
-            e.preventDefault();
-            setOpen(false);
-            fileInputRef.current?.click();
-          }}
-          className="flex items-center gap-3 w-full px-3 py-2 text-xs font-medium rounded-lg text-left text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-        >
-          <Icon className="w-4 h-4 text-zinc-500" />
-          <span>Upload from computer</span>
-        </button>
-        <button
-          type="button"
-          onMouseDown={(e) => {
-            e.preventDefault();
-            setOpen(false);
-            setUrlDialogOpen(true);
-          }}
-          className="flex items-center gap-3 w-full px-3 py-2 text-xs font-medium rounded-lg text-left text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-        >
-          <Link2 className="w-4 h-4 text-zinc-500" />
-          <span>Insert via URL</span>
-        </button>
+        <div className="px-2.5 py-1 text-[11px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
+          Insert Media
+        </div>
+        <div className="space-y-1 mt-1">
+          {MEDIA_TYPES.map((media) => {
+            const Icon = media.icon;
+            return (
+              <div
+                key={media.type}
+                className="flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800/70 transition-colors"
+              >
+                <div className="flex items-center gap-2.5 text-xs font-medium text-zinc-800 dark:text-zinc-200">
+                  <Icon className={cn('w-4 h-4', media.color)} />
+                  <span>{media.label}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      handleTriggerUpload(media);
+                    }}
+                    className="px-2 py-0.5 text-[11px] font-medium rounded-md text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+                  >
+                    Upload
+                  </button>
+                  <button
+                    type="button"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      handleTriggerUrl(media);
+                    }}
+                    className="px-2 py-0.5 text-[11px] font-medium rounded-md text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+                  >
+                    URL
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </PortalPopover>
 
       {/* URL Input Modal */}
-      {urlDialogOpen &&
+      {urlDialogOpen && activeMedia &&
         typeof document !== 'undefined' &&
         createPortal(
           <div className="fixed inset-0 bg-black/50 z-[999999] flex items-center justify-center p-4 backdrop-blur-xs animate-in fade-in">
             <div className="w-full max-w-sm rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-5 shadow-2xl space-y-4">
               <div className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
-                Insert {tooltip}
+                Insert {activeMedia.label} via URL
               </div>
               <input
                 type="url"
@@ -1417,6 +1450,129 @@ function MediaToolbarButton({ editor, nodeType, tooltip, icon: Icon, accept }: M
           document.body
         )}
     </div>
+  );
+}
+
+// ─── 9b. Speech to Text Toolbar Button (Voice Dictation) ─────────────────────
+
+function SpeechToTextToolbarButton({ editor, disabled }: { editor: any; disabled?: boolean }) {
+  const [isListening, setIsListening] = React.useState(false);
+  const [isSupported, setIsSupported] = React.useState(true);
+  const recognitionRef = React.useRef<any>(null);
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      setIsSupported(false);
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
+
+    recognition.onstart = () => {
+      setIsListening(true);
+    };
+
+    recognition.onresult = (event: any) => {
+      let finalStr = '';
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        if (event.results[i].isFinal) {
+          const text = event.results[i][0].transcript?.trim();
+          if (text) {
+            finalStr += text + ' ';
+          }
+        }
+      }
+
+      if (finalStr && editor) {
+        try {
+          editor?.tf?.focus?.();
+          editor?.tf?.insertText?.(finalStr);
+        } catch (err) {
+          console.warn('Speech insert text error:', err);
+        }
+      }
+    };
+
+    recognition.onerror = (event: any) => {
+      console.warn('Speech recognition error:', event.error);
+      setIsListening(false);
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    recognitionRef.current = recognition;
+
+    return () => {
+      try {
+        recognition.abort();
+      } catch (err) {}
+    };
+  }, [editor]);
+
+  const toggleListening = () => {
+    if (disabled) return;
+    if (!isSupported) {
+      alert('Speech-to-text is not supported by your browser. Please use Google Chrome or Microsoft Edge.');
+      return;
+    }
+
+    if (isListening) {
+      try {
+        recognitionRef.current?.stop();
+      } catch (err) {}
+      setIsListening(false);
+    } else {
+      try {
+        recognitionRef.current?.start();
+        setIsListening(true);
+      } catch (err) {
+        console.warn('Could not start speech recognition:', err);
+      }
+    }
+  };
+
+  return (
+    <>
+      <ToolbarButton
+        active={isListening}
+        onClick={toggleListening}
+        tooltip={isListening ? 'Listening... Click to stop dictation' : 'Speech to Text (Voice Dictation)'}
+        disabled={disabled}
+        className={cn(
+          isListening && 'bg-red-500/15 text-red-600 dark:text-red-400 font-semibold'
+        )}
+      >
+        <Mic className={cn('w-4 h-4', isListening && 'animate-pulse text-red-500')} />
+      </ToolbarButton>
+
+      {/* Floating Status Pill during voice dictation */}
+      {isListening &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[999999] flex items-center gap-3 px-4 py-2 rounded-full bg-zinc-900/95 dark:bg-zinc-100/95 text-white dark:text-zinc-900 shadow-2xl backdrop-blur-md text-xs font-medium border border-zinc-700/50 dark:border-zinc-300/50 animate-in fade-in slide-in-from-bottom-2">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500" />
+            </span>
+            <span>Listening... Speak into your microphone</span>
+            <button
+              type="button"
+              onClick={toggleListening}
+              className="ml-1 px-2.5 py-0.5 text-[11px] font-semibold rounded-full bg-white/20 dark:bg-black/20 hover:bg-white/30 dark:hover:bg-black/30 transition-colors"
+            >
+              Done
+            </button>
+          </div>,
+          document.body
+        )}
+    </>
   );
 }
 
@@ -2181,36 +2337,10 @@ export function FixedToolbarButtons({
         <EmojiToolbarButton editor={editor} />
       </ToolbarGroup>
 
-      {/* 5. Media Suite: Image, Video, Audio, File */}
+      {/* 5. Unified Media Suite & Speech to Text */}
       <ToolbarGroup className={cn(isViewing && 'opacity-40 pointer-events-none')}>
-        <MediaToolbarButton
-          editor={editor}
-          nodeType="img"
-          tooltip="Insert Image"
-          icon={ImageIcon}
-          accept="image/*"
-        />
-        <MediaToolbarButton
-          editor={editor}
-          nodeType="video"
-          tooltip="Insert Video"
-          icon={Film}
-          accept="video/*"
-        />
-        <MediaToolbarButton
-          editor={editor}
-          nodeType="audio"
-          tooltip="Insert Audio"
-          icon={AudioLines}
-          accept="audio/*"
-        />
-        <MediaToolbarButton
-          editor={editor}
-          nodeType="file"
-          tooltip="Attach File"
-          icon={FileUp}
-          accept="*"
-        />
+        <MediaToolbarButton editor={editor} />
+        <SpeechToTextToolbarButton editor={editor} disabled={isViewing} />
       </ToolbarGroup>
 
       {/* 6. Line Height, Outdent, Indent */}
