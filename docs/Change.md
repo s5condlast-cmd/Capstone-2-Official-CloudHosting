@@ -1932,6 +1932,24 @@ Per user feedback with screenshot `media_1789462822304.png`:
    - Removed the amber/orange `text-amber-500` color styling.
    - Styled the icon to render in clean white in dark mode (`text-zinc-700 dark:text-white`).
 
+---
+
+## 14. Media Menu Simplification & Color Removal
+
+Per user feedback with screenshot `media_1789462838757.png`:
+
+1. **Removed All Colors (Monochrome / Neutral)**:
+   - Removed cyan, purple, green, and orange colors from media icons.
+   - All icons now render in neutral monochrome (`text-zinc-600 dark:text-zinc-300`).
+2. **Simplified Menu Layout**:
+   - Replaced multi-button table rows (`Upload` and `URL` side-by-side) with clean, single-action full-width menu items:
+     - 🖼️ **Image** (1-click file picker)
+     - 🎬 **Video** (1-click file picker)
+     - 🎵 **Audio** (1-click file picker)
+     - 📄 **File Attachment** (1-click file picker)
+   - Added clean divider followed by a dedicated **Insert via URL** option with unified media type switcher modal.
+
+
 
 
 
