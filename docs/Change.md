@@ -1699,3 +1699,36 @@ Direct requests to legacy student routes are gracefully caught and redirected to
 - **Production Build (`npm run build` / `vite build`)**: Succeeded in 1m 44s with zero bundle errors.
 - **Git Diff Whitespace Check (`git diff --check`)**: Clean exit code 0.
 
+---
+
+## 6. Removal of AI Features from Document Editor
+
+Per explicit page feedback (`/student/editor`), all AI-related UI components, triggers, dialogs, and backend routes were removed from the Student Document Editor suite, restoring a pure, distraction-free document editor experience:
+
+### 6.1. Client-Side AI Removal
+1. **`src/components/editor/plate-editor.tsx`**:
+   - Removed `<AiMenuDialog />` modal and overlay container.
+   - Removed `showAiDialog` state and `Cmd+J` / `Ctrl+J` keyboard listener.
+   - Updated placeholder from `"Type your document content or press Cmd+J for AI…"` to `"Type your document content here…"`.
+   - Removed `onOpenAi` callbacks passed to fixed and floating toolbars.
+2. **`src/components/plate-ui/fixed-toolbar-buttons.tsx`**:
+   - Removed the `"Ask AI"` sparkles button and its `ToolbarGroup`.
+   - Cleaned unused `Sparkles` icon import and `onOpenAi` prop.
+3. **`src/components/plate-ui/floating-toolbar.tsx`**:
+   - Removed `"Ask AI"` action button and adjacent divider.
+   - Floating toolbar now strictly provides text formatting marks: Bold, Italic, Underline, Strikethrough, and Highlight.
+4. **Deleted Component**:
+   - Removed `src/components/plate-ui/ai-menu.tsx`.
+
+### 6.2. Backend Cleanup
+1. **`backend/routes/aiEditor.ts`**: Deleted unused Express route.
+2. **`backend/server.ts`**: Unmounted `aiEditorRouter` from `/api` and root `/`.
+3. **`backend/services/aiService.ts`**: Removed unused `assistEditorText` helper.
+
+### 6.3. Verification
+- **`npm run lint`**: 0 errors.
+- **`npm run test:editor`**: 44 passed, 0 failed.
+- **`npm run test:auth`**: 48 passed, 0 failed.
+- **`npm run build`**: Succeeded in 53s with 0 errors.
+- **`git diff --check`**: Clean (Exit code 0).
+

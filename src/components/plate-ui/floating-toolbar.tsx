@@ -5,7 +5,6 @@
  */
 import * as React from 'react';
 import {
-  Sparkles,
   Bold,
   Italic,
   Underline,
@@ -18,10 +17,9 @@ import { ToolbarButton } from './toolbar';
 
 export interface FloatingToolbarProps {
   editor: any;
-  onOpenAi?: () => void;
 }
 
-export function FloatingToolbar({ editor, onOpenAi }: FloatingToolbarProps) {
+export function FloatingToolbar({ editor }: FloatingToolbarProps) {
   const [position, setPosition] = React.useState<{ top: number; left: number } | null>(null);
   const [visible, setVisible] = React.useState(false);
   const toolbarRef = React.useRef<HTMLDivElement>(null);
@@ -108,17 +106,6 @@ export function FloatingToolbar({ editor, onOpenAi }: FloatingToolbarProps) {
         'animate-in fade-in-50 zoom-in-95 duration-100 print:hidden'
       )}
     >
-      <ToolbarButton
-        onClick={() => onOpenAi?.()}
-        tooltip="Ask AI"
-        variant="accent"
-        className="px-2 gap-1 text-primary hover:bg-primary/15 font-semibold text-xs"
-      >
-        <Sparkles className="w-3.5 h-3.5 text-primary" />
-        <span>Ask AI</span>
-      </ToolbarButton>
-
-      <div className="mx-1 h-3.5 w-px bg-zinc-200 dark:bg-zinc-800" />
 
       <ToolbarButton
         active={isMarkActive('bold')}

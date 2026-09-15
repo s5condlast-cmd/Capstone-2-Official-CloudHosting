@@ -7,7 +7,6 @@ import * as React from 'react';
 import {
   Undo,
   Redo,
-  Sparkles,
   Bold,
   Italic,
   Underline,
@@ -178,10 +177,9 @@ function TurnIntoDropdown({ editor, activeBlock }: { editor: any; activeBlock: s
 
 export interface FixedToolbarButtonsProps {
   editor: any;
-  onOpenAi?: () => void;
 }
 
-export function FixedToolbarButtons({ editor, onOpenAi }: FixedToolbarButtonsProps) {
+export function FixedToolbarButtons({ editor }: FixedToolbarButtonsProps) {
   // Trigger update when editor state changes
   const [, forceUpdate] = React.useReducer((x) => x + 1, 0);
 
@@ -278,18 +276,6 @@ export function FixedToolbarButtons({ editor, onOpenAi }: FixedToolbarButtonsPro
           </ToolbarButton>
         </ToolbarGroup>
 
-        {/* AI Assistant Group */}
-        <ToolbarGroup>
-          <ToolbarButton
-            onClick={() => onOpenAi?.()}
-            tooltip="AI Writing Assistant (Cmd+J)"
-            variant="accent"
-            className="px-2 gap-1.5 font-medium text-primary border border-primary/20 hover:border-primary/40 bg-primary/5 hover:bg-primary/10 shadow-2xs"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-primary animate-pulse" />
-            <span className="text-[11px] font-semibold tracking-wide">Ask AI</span>
-          </ToolbarButton>
-        </ToolbarGroup>
 
         {/* Turn Into Block Dropdown */}
         <ToolbarGroup>

@@ -1,14 +1,12 @@
 /**
  * plate-editor.tsx
- * Core Plate.js v53 editor component matching the official @plate/editor-ai template.
+ * Core Plate.js v53 editor component matching the official Plate template layout.
  *
  * Implements:
- * - FixedToolbar with FixedToolbarButtons (Undo, Redo, Ask AI, Turn Into, Marks, Align, Lists, Table, Links)
+ * - FixedToolbar with FixedToolbarButtons (Undo, Redo, Turn Into, Marks, Align, Lists, Table, Links)
  * - EditorContainer (scrollable paper canvas)
  * - Editor variant="demo" (authentic centered document page sheet with drop shadow and margins)
  * - FloatingToolbar (contextual floating action bar on text selection)
- * - AiMenuDialog (AI writing assistance dialog for quick actions and custom prompts)
- * - Keyboard shortcut (Cmd+J / Ctrl+J) for AI prompt
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { cn } from '@/src/lib/utils';
@@ -17,7 +15,6 @@ import { EditorContainer, Editor } from '@/src/components/plate-ui/editor';
 import { FixedToolbar } from '@/src/components/plate-ui/fixed-toolbar';
 import { FixedToolbarButtons } from '@/src/components/plate-ui/fixed-toolbar-buttons';
 import { FloatingToolbar } from '@/src/components/plate-ui/floating-toolbar';
-import { AiMenuDialog } from '@/src/components/plate-ui/ai-menu';
 import '@/src/styles/print-document.css';
 
 // ─── Plate v53 dynamic import bridge ──────────────────────────────────────────
@@ -88,14 +85,13 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
       onChange,
       readOnly = false,
     className,
-    placeholder = 'Type your document content or press Cmd+J for AI…',
+    placeholder = 'Type your document content here…',
   },
   ref
 ) {
   const [plateReady, setPlateReady] = useState(false);
   const [PlateComp, setPlateComp] = useState<React.ComponentType<any> | null>(null);
   const [createEditorFn, setCreateEditorFn] = useState<((opts: any) => any) | null>(null);
-  const [showAiDialog, setShowAiDialog] = useState(false);
 
   const editorRef = useRef<HTMLDivElement | null>(null);
   const contentRef = useRef<object[]>(initialContent);
@@ -136,19 +132,6 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [createEditorFn]);
-
-  // ── Cmd+J / Ctrl+J hotkey for AI prompt ─────────────────────────────────
-  useEffect(() => {
-    if (readOnly) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'j') {
-        e.preventDefault();
-        setShowAiDialog(true);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [readOnly]);
 
   // Store editor reference on forwarded ref
   useEffect(() => {
@@ -199,13 +182,10 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
           className
         )}
       >
-        {/* Fixed top toolbar matching @plate/editor-ai */}
+        {/* Fixed top toolbar matching official Plate layout */}
         {!readOnly && (
           <FixedToolbar>
-            <FixedToolbarButtons
-              editor={editor}
-              onOpenAi={() => setShowAiDialog(true)}
-            />
+            <FixedToolbarButtons editor={editor} />
           </FixedToolbar>
         )}
 
@@ -222,21 +202,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
         </EditorContainer>
 
         {/* Floating formatting toolbar on text selection */}
-        {!readOnly && (
-          <FloatingToolbar
-            editor={editor}
-            onOpenAi={() => setShowAiDialog(true)}
-          />
-        )}
-
-        {/* AI Writing Assistant Modal / Dialog */}
-        {!readOnly && (
-          <AiMenuDialog
-            open={showAiDialog}
-            onClose={() => setShowAiDialog(false)}
-            editor={editor}
-          />
-        )}
+        {!readOnly && <FloatingToolbar editor={editor} />}
       </div>
     </PlateComp>
   );

@@ -7,7 +7,6 @@ import analyzeRouter from './routes/analyze';
 import onedriveRouter from './routes/onedrive';
 import authRouter from './routes/auth';
 import templatesRouter from './routes/templates';
-import { aiEditorRouter } from './routes/aiEditor';
 
 // Load environment variables from CWD .env
 dotenv.config();
@@ -63,13 +62,11 @@ app.use('/api', analyzeRouter);
 app.use('/api', onedriveRouter);
 app.use('/api', authRouter);
 app.use('/api', templatesRouter);
-app.use('/api', aiEditorRouter);
 
 app.use('/', analyzeRouter);
 app.use('/', onedriveRouter);
 app.use('/', authRouter);
 app.use('/', templatesRouter);
-app.use('/', aiEditorRouter);
 
 // 404 JSON fallback for unmatched API endpoints
 app.use((req, res) => {
