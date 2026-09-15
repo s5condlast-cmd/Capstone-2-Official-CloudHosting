@@ -159,3 +159,80 @@ export const ToolbarButton = React.forwardRef<HTMLButtonElement, ToolbarButtonPr
 
 ToolbarButton.displayName = 'ToolbarButton';
 
+export function ToolbarSplitButton({
+  className,
+  pressed = false,
+  children,
+  ...props
+}: React.ComponentProps<'div'> & { pressed?: boolean }) {
+  return (
+    <div
+      data-state={pressed ? 'on' : 'off'}
+      className={cn(
+        'group inline-flex items-center rounded-md text-xs font-medium transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800/70',
+        pressed && 'bg-zinc-200 dark:bg-zinc-800',
+        className
+      )}
+      {...props}
+    >
+      {children}
+    </div>
+  );
+}
+
+export function ToolbarSplitButtonPrimary({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<'button'>) {
+  return (
+    <button
+      type="button"
+      onMouseDown={(e) => e.preventDefault()}
+      className={cn(
+        'inline-flex h-8 items-center justify-center px-1.5 rounded-l-md text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors',
+        className
+      )}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+}
+
+export function ToolbarSplitButtonSecondary({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<'button'>) {
+  return (
+    <button
+      type="button"
+      onMouseDown={(e) => e.preventDefault()}
+      className={cn(
+        'inline-flex h-8 w-4 items-center justify-center rounded-r-md text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors',
+        className
+      )}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+}
+
+export function ToolbarMenuGroup({
+  label,
+  children,
+  className,
+}: React.ComponentProps<'div'> & { label?: string }) {
+  return (
+    <div className={cn('py-1', className)}>
+      {label && (
+        <div className="px-2.5 py-1 text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">
+          {label}
+        </div>
+      )}
+      {children}
+    </div>
+  );
+}

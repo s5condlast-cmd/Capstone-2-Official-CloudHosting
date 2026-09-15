@@ -1732,3 +1732,59 @@ Per explicit page feedback (`/student/editor`), all AI-related UI components, tr
 - **`npm run build`**: Succeeded in 53s with 0 errors.
 - **`git diff --check`**: Clean (Exit code 0).
 
+---
+
+## 7. Full Functional Plate.js Fixed Toolbar Suite Matching Reference Screenshot
+
+Implemented the complete fixed toolbar layout, controls, and functionality shown in uploaded screenshot `media_1789455979370.png` for the Student Document Editor (`/student/editor`). All components are scraped directly from official Plate.js v53 registry specifications (`platejs.org/r/`).
+
+### 7.1. Complete Toolbar Sequence (Left to Right)
+1. `+ v` (`InsertToolbarButton`): Categorized dropdown with Basic blocks (Paragraph, H1-H3, Table, Code, Quote, Divider), Lists (Bulleted, Numbered, Todo, Toggle), Media (Image, Video, Audio, File), and Inline (Link, Date).
+2. `Heading 1 v` (`TurnIntoToolbarButton`): Dynamic block switcher showing current active block name with checkmark indicators.
+3. `[- | 12 | +]` (`FontSizeToolbarButton`): Stepper pill with minus, font size popover picker (8-72pt), and plus.
+4. Vertical separator `|`
+5. `B` (Bold mark)
+6. `I` (Italic mark)
+7. `U` (Underline mark)
+8. `S` (Strikethrough mark)
+9. `</>` (Inline code mark)
+10. `A_` (`FontColorToolbarButton`): Text color picker with 10-column palette grid (70 colors) + Custom hex input + Clear button.
+11. Paint bucket (`BackgroundColorToolbarButton`): Background fill color picker with 10-column palette + Custom hex input + Clear button.
+12. Vertical separator `|`
+13. `≡ v` (`AlignToolbarButton`): Text alignment dropdown (Left, Center, Right, Justify).
+14. `1. v` (`NumberedListToolbarButton`): Split button with 1-click toggle and dropdown for Decimal, Lower Alpha, Upper Alpha, Lower Roman, Upper Roman.
+15. `• v` (`BulletedListToolbarButton`): Split button with 1-click toggle and dropdown for Disc, Circle, Square.
+16. `☑` (`TodoListToolbarButton`): Interactive check-list item.
+17. `▶≡` (`ToggleToolbarButton`): Collapsible toggle list item.
+18. Vertical separator `|`
+19. `🔗` (`LinkToolbarButton`): URL insertion dialog.
+20. `⊞ v` (`TableToolbarButton`): Interactive 8x8 hover grid picker + Table/Cell/Row/Column tools when inside a table.
+21. `😊 v` (`EmojiToolbarButton`): Categorized emoji picker popover with 60+ common document emojis.
+22. Vertical separator `|`
+23. `🖼 v` (`MediaToolbarButton` for `img`): Upload from computer or URL dialog.
+24. `🎬 v` (`MediaToolbarButton` for `video`): Upload from computer or URL dialog.
+25. `🎵 v` (`MediaToolbarButton` for `audio`): Upload from computer or URL dialog.
+26. `📄 v` (`MediaToolbarButton` for `file`): Upload attachment or URL dialog.
+27. Vertical separator `|`
+28. `↕ v` (`LineHeightToolbarButton`): Line spacing dropdown (1.0, 1.15, 1.5, 2.0, 2.5, 3.0).
+29. `<≡` (`OutdentToolbarButton`): Decrease block indent.
+30. `>≡` (`IndentToolbarButton`): Increase block indent.
+31. Vertical separator `|`
+32. `...` (`MoreToolbarButton`): Dropdown offering Superscript, Subscript, and Keyboard input (`<kbd>`).
+33. Highlighter pen (`HighlightToolbarButton`): Highlight mark toggle.
+34. Vertical separator `|`
+
+### 7.2. Supporting Plate Plugins & Renderers Added
+- **`FontSizePlugin`**: `node: { isLeaf: true, type: 'fontSize' }`
+- **`FontColorPlugin`**: `node: { isLeaf: true, type: 'color' }`
+- **`BackgroundColorPlugin`**: `node: { isLeaf: true, type: 'backgroundColor' }`
+- **`SubscriptPlugin`**: `node: { isLeaf: true, type: 'subscript' }`
+- **`SuperscriptPlugin`**: `node: { isLeaf: true, type: 'superscript' }`
+- **`KbdPlugin`**: `node: { isLeaf: true, type: 'kbd' }`
+- **`MediaPlugin`**: `img`, `video`, `audio`, `file` element types
+- **`TodoPlugin`** & **`TogglePlugin`**: Check-list and collapsible details elements
+- **`LineHeightPlugin`** & **`IndentPlugin`**: Injected block level properties
+
+### 7.3. DOCX Export Serialization
+- Extended `leafToRuns` in `docxSerializer.ts` to serialize font size, font color, background highlight, strikethrough, subscript, superscript, and monospace code/kbd runs directly to Word DOCX elements.
+

@@ -73,16 +73,49 @@ function toHeadingLevel(type: string): typeof HeadingLevel[keyof typeof HeadingL
 /** Convert Plate leaf nodes to docx TextRun(s) */
 function leafToRuns(node: PlateText): TextRun[] {
   const text = node.text ?? '';
-  if (!text && !node.bold && !node.italic && !node.underline) {
+  if (!text && !node.bold && !node.italic && !node.underline && !node.strikethrough && !node.strike) {
     // Empty run — preserve spacing
     return [new TextRun({ text: '' })];
   }
+
+  // Parse font size if specified (e.g. '16px' or '12pt' or 16)
+  let halfPoints: number | undefined;
+  if (typeof node.fontSize === 'string') {
+    const num = parseFloat(node.fontSize);
+    if (!isNaN(num) && num > 0) {
+      halfPoints = Math.round(num * 2);
+    }
+  } else if (typeof node.fontSize === 'number' && node.fontSize > 0) {
+    halfPoints = Math.round(node.fontSize * 2);
+  }
+
+  // Parse hex color if specified (strip #)
+  let textColor: string | undefined;
+  if (typeof node.color === 'string') {
+    textColor = node.color.replace(/^#/, '');
+  }
+
+  // Parse background color / highlight
+  let shadingFill: string | undefined;
+  if (typeof node.backgroundColor === 'string') {
+    shadingFill = node.backgroundColor.replace(/^#/, '');
+  } else if (node.highlight) {
+    shadingFill = 'FFF2A8';
+  }
+
   return [
     new TextRun({
       text,
       bold: !!node.bold,
       italics: !!node.italic,
       underline: node.underline ? { type: UnderlineType.SINGLE } : undefined,
+      strike: !!(node.strikethrough || node.strike),
+      size: halfPoints,
+      color: textColor,
+      shading: shadingFill ? { fill: shadingFill } : undefined,
+      subScript: !!(node.subscript || node.sub),
+      superScript: !!(node.superscript || node.sup),
+      font: (node.code || node.kbd) ? 'Courier New' : undefined,
     }),
   ];
 }
