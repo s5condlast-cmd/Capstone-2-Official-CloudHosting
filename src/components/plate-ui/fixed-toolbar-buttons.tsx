@@ -2266,14 +2266,19 @@ export function FixedToolbarButtons({
 
       <ToolbarSeparator />
 
-      {/* 10. Make It Big: Zoom Controls & Fullscreen Toggle */}
+      {/* 10. Fullscreen Toggle */}
       <ToolbarGroup>
-        <FullscreenAndZoomButtons
-          isFullscreen={isFullscreen}
-          onToggleFullscreen={onToggleFullscreen}
-          zoomLevel={zoomLevel}
-          onZoomChange={onZoomChange}
-        />
+        <ToolbarButton
+          active={isFullscreen}
+          onClick={onToggleFullscreen}
+          tooltip={isFullscreen ? 'Exit full screen (Esc)' : 'Full screen'}
+        >
+          {isFullscreen ? (
+            <Minimize2 className="w-4 h-4 text-primary" />
+          ) : (
+            <Maximize2 className="w-4 h-4" />
+          )}
+        </ToolbarButton>
       </ToolbarGroup>
     </div>
   );

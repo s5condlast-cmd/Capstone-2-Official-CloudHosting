@@ -118,6 +118,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [zoomLevel, setZoomLevel] = useState(100);
     const [internalComments, setInternalComments] = useState<EditorComment[]>([]);
+    const [showZoomIndicator, setShowZoomIndicator] = useState(false);
 
     const activeMode: EditorMode = readOnly ? 'viewing' : (mode ?? internalMode);
     const isEffectivelyReadOnly = readOnly || activeMode === 'viewing';
@@ -125,6 +126,8 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
     const editorRef = useRef<HTMLDivElement | null>(null);
     const contentRef = useRef<object[]>(initialContent);
     const editorInstanceRef = useRef<any>(null);
+    const canvasRef = useRef<HTMLDivElement | null>(null);
+    const zoomTimerRef = useRef<any>(null);
 
     // ── Fullscreen Escape Listener ──────────────────────────────────────────
     useEffect(() => {
@@ -137,6 +140,38 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
       window.addEventListener('keydown', handleKeyDown);
       return () => window.removeEventListener('keydown', handleKeyDown);
     }, [isFullscreen]);
+
+    // ── Mousewheel scroll zoom inside canvas ─────────────────────────────────
+    useEffect(() => {
+      const el = canvasRef.current;
+      if (!el) return;
+
+      const handleWheel = (e: WheelEvent) => {
+        // Zoom if Ctrl/Cmd is held OR if cursor is over the canvas workspace outside editable text
+        const isCtrl = e.ctrlKey || e.metaKey;
+        const target = e.target as HTMLElement | null;
+        const isInsideText = target?.closest?.('[data-editor-content]');
+
+        if (isCtrl || !isInsideText) {
+          e.preventDefault();
+          const step = 5;
+          const delta = e.deltaY > 0 ? -step : step;
+          setZoomLevel((prev) => Math.min(200, Math.max(50, Math.round((prev + delta) / step) * step)));
+
+          setShowZoomIndicator(true);
+          if (zoomTimerRef.current) clearTimeout(zoomTimerRef.current);
+          zoomTimerRef.current = setTimeout(() => {
+            setShowZoomIndicator(false);
+          }, 1800);
+        }
+      };
+
+      el.addEventListener('wheel', handleWheel, { passive: false });
+      return () => {
+        el.removeEventListener('wheel', handleWheel);
+        if (zoomTimerRef.current) clearTimeout(zoomTimerRef.current);
+      };
+    }, []);
 
     // ── Load Plate runtime ──────────────────────────────────────────────────
     useEffect(() => {
@@ -235,8 +270,6 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
               }}
               isFullscreen={isFullscreen}
               onToggleFullscreen={() => setIsFullscreen((prev) => !prev)}
-              zoomLevel={zoomLevel}
-              onZoomChange={setZoomLevel}
               comments={comments ?? internalComments}
               onAddComment={(t, s) => {
                 const newC: EditorComment = {
@@ -298,33 +331,60 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
           )}
 
           {/* Scrollable canvas containing the paper document sheet */}
-          <EditorContainer
-            variant={isFullscreen ? 'fullWidth' : 'demo'}
-            className={cn(
-              isFullscreen && 'flex-1 overflow-y-auto p-4 md:p-8',
-              zoomLevel > 100 && 'overflow-x-auto'
-            )}
-          >
-            <div
-              style={{
-                transform: zoomLevel !== 100 ? `scale(${zoomLevel / 100})` : undefined,
-                transformOrigin: 'top center',
-                transition: 'transform 0.15s ease-out',
-                width: zoomLevel > 100 ? `${zoomLevel}%` : '100%',
-                display: 'flex',
-                justifyContent: 'center',
-              }}
+          <div ref={canvasRef} className="relative flex-1 flex flex-col min-h-0 overflow-hidden">
+            <EditorContainer
+              variant={isFullscreen ? 'fullWidth' : 'demo'}
+              className={cn(
+                'flex-1 overflow-y-auto p-4 md:p-8',
+                zoomLevel > 100 && 'overflow-x-auto'
+              )}
             >
-              <Editor
-                ref={editorRef}
-                variant="demo"
-                placeholder={placeholder}
-                readOnly={isEffectivelyReadOnly}
-                spellCheck
-                autoFocus={!isEffectivelyReadOnly}
-              />
-            </div>
-          </EditorContainer>
+              <div
+                style={{
+                  transform: zoomLevel !== 100 ? `scale(${zoomLevel / 100})` : undefined,
+                  transformOrigin: 'top center',
+                  transition: 'transform 0.1s ease-out',
+                  width: zoomLevel > 100 ? `${zoomLevel}%` : '100%',
+                  display: 'flex',
+                  justifyContent: 'center',
+                }}
+              >
+                <Editor
+                  ref={editorRef}
+                  variant="demo"
+                  placeholder={placeholder}
+                  readOnly={isEffectivelyReadOnly}
+                  spellCheck
+                  autoFocus={!isEffectivelyReadOnly}
+                />
+              </div>
+            </EditorContainer>
+
+            {/* Floating subtle zoom indicator */}
+            {showZoomIndicator && (
+              <div
+                className={cn(
+                  'absolute bottom-4 right-4 z-40 flex items-center gap-2 px-3 py-1.5 rounded-full',
+                  'bg-zinc-900/90 dark:bg-zinc-100/90 text-white dark:text-zinc-900 shadow-md',
+                  'text-xs font-semibold backdrop-blur-sm select-none'
+                )}
+              >
+                <span>Zoom: {zoomLevel}%</span>
+                {zoomLevel !== 100 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setZoomLevel(100);
+                      setShowZoomIndicator(false);
+                    }}
+                    className="text-[11px] px-1.5 py-0.5 rounded bg-white/20 dark:bg-zinc-900/20 hover:bg-white/30 dark:hover:bg-zinc-900/30 font-medium transition-colors"
+                  >
+                    Reset
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
 
           {/* Floating formatting toolbar on text selection */}
           {!isEffectivelyReadOnly && <FloatingToolbar editor={editor} />}

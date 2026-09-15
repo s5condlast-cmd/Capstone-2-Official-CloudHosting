@@ -1838,16 +1838,25 @@ Completed the remaining right-aligned toolbar controls:
 5. `|` (`ToolbarSeparator`)
 6. `✏️ Editing v` (`ModeToolbarButton`) with 3 modes: Editing, Suggesting, Viewing
 7. `|` (`ToolbarSeparator`)
-8. "Make It Big" controls:
-   - Zoom Stepper (`[-] 100% [+]`) with preset popover (`50%`–`200%`)
-   - Fullscreen / Maximize toggle (`Maximize2` / `Minimize2`) with `Esc` listener
+8. Fullscreen toggle (`Maximize2` / `Minimize2`) matching standard icon button height and style
 
-### 9.2. Comment & Annotation Architecture (`CommentToolbarButton`)
+### 9.2. Unified Toolbar Button Height & Ghost Styling
+- **Sleek Mode Button**: Replaced custom border box with standard `ToolbarButton` (`isDropdown`), matching the exact height (`h-8.5`), padding, and hover states of the other buttons on the toolbar.
+- **Icon-Only Fullscreen Button**: Clean icon button (`Maximize2` / `Minimize2`) styled identically to all other toolbar icon buttons without oversized cards or bulky borders.
+
+### 9.3. Inside Canvas Scroll Zoom
+- **Removed Toolbar Stepper**: Completely eliminated the bulky `[- 100% +]` number stepper from the top toolbar per user request.
+- **Wheel & Pinch Scroll Zoom**: Added active mousewheel listener on the editor container (`canvasRef`).
+  - When the cursor is on the canvas background, rolling the scroll wheel zooms smoothly in/out between 50% and 200%.
+  - When the cursor is over document text, `Ctrl + scroll` (or trackpad pinch) zooms in/out, while normal scroll navigates the text vertically.
+- **Subtle Zoom Toast Indicator**: A clean floating pill at the bottom-right of the canvas displays `Zoom: {zoomLevel}%` with a 1-click `Reset` button that auto-fades after 1.8 seconds.
+
+### 9.4. Comment & Annotation Architecture (`CommentToolbarButton`)
 - **Selection-Aware Capture**: Automatically queries `window.getSelection()?.toString()`. If text is highlighted when opening the comment popover, a quoted reference banner is attached to the note.
 - **Thread & Notes Storage**: Supports adding feedback notes, displaying author name, timestamp, and resolve/delete action (`Trash2`).
 - **Badge Indicator**: Real-time counter badge on the toolbar icon indicates active comment count.
 
-### 9.3. Mode Switcher Dropdown (`ModeToolbarButton`)
+### 9.5. Mode Switcher Dropdown (`ModeToolbarButton`)
 - **Editing Mode** (Pencil icon, default): Read-write interactive editing with full formatting suite.
 - **Suggesting Mode** (Sparkles icon): Shows amber indicator banner informing the student that edits become suggestions and review notes.
 - **Viewing Mode** (Eye icon):
@@ -1855,13 +1864,4 @@ Completed the remaining right-aligned toolbar controls:
   - Visually dims and disables formatting buttons (`opacity-40 pointer-events-none`).
   - Displays a clean Viewing banner with a 1-click "Switch to Editing" shortcut.
   - Keeps toolbar, mode switcher, comments, and zoom controls accessible.
-
-### 9.4. "Make It Big" Fullscreen & Zoom Suite (`FullscreenAndZoomButtons`)
-- **Fullscreen Mode**:
-  - Toggles `.plate-editor-wrapper` into `fixed inset-0 z-[100] w-screen h-screen bg-zinc-100 dark:bg-zinc-950 flex flex-col`.
-  - Hides application navigation, sidebar, and headers for 100% edge-to-edge document focus.
-  - Supports `Escape` keyboard shortcut to instantly restore windowed view.
-- **Zoom Scale Controls**:
-  - Stepper buttons (`[-]`, `[+]`) and preset picker (`50%`, `75%`, `100%`, `125%`, `150%`, `175%`, `200%`).
-  - Smooth hardware-accelerated CSS scaling (`transform: scale(...)`, `transform-origin: top center`) to enlarge document sheet and text for effortless reading.
 
