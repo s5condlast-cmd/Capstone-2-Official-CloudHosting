@@ -69,6 +69,8 @@ import {
   Minimize2,
   ZoomIn,
   ZoomOut,
+  ExternalLink,
+  Unlink,
 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import {
@@ -431,9 +433,16 @@ function InsertToolbarButton({ editor }: { editor: any }) {
           icon: Link2,
           label: 'Link',
           action: (ed) => {
-            const url = window.prompt('Enter link URL:');
-            if (!url) return;
-            ed?.tf?.insertNodes?.([{ type: 'a', url, children: [{ text: url }] }]);
+            let selectedText = '';
+            try {
+              if (ed?.selection && ed?.api?.string) {
+                selectedText = ed.api.string(ed.selection);
+              }
+            } catch { /* non-fatal */ }
+            ed?.tf?.insertNodes?.([
+              { type: 'a', url: 'https://', children: [{ text: selectedText || 'https://' }] },
+            ]);
+            ed?.tf?.focus?.();
           },
         },
         {
@@ -997,6 +1006,246 @@ function BulletedListToolbarButton({ editor }: { editor: any }) {
             {st.label}
           </button>
         ))}
+      </PortalPopover>
+    </div>
+  );
+}
+
+// ─── 6.5. Link Toolbar Button (Interactive Dropview / Popover) ────────────────
+
+function LinkToolbarButton({ editor }: { editor: any }) {
+  const [open, setOpen] = React.useState(false);
+  const [url, setUrl] = React.useState('');
+  const [text, setText] = React.useState('');
+  const anchorRef = React.useRef<HTMLDivElement>(null);
+  const inputRef = React.useRef<HTMLInputElement>(null);
+  const savedSelectionRef = React.useRef<any>(null);
+
+  // Check if cursor/selection is inside an existing link
+  const linkEntry = editor?.api?.above?.({ match: (n: any) => n.type === 'a' });
+  const isLinkActive = Boolean(linkEntry);
+
+  const handleOpen = () => {
+    if (open) {
+      setOpen(false);
+      return;
+    }
+
+    // Save current editor selection
+    savedSelectionRef.current = editor?.selection;
+
+    // Check if cursor is on an existing link
+    const activeLink = editor?.api?.above?.({ match: (n: any) => n.type === 'a' });
+    if (activeLink) {
+      const [linkNode] = activeLink;
+      setUrl(linkNode.url || '');
+      const linkText = linkNode.children?.map((c: any) => c.text || '').join('') || '';
+      setText(linkText);
+    } else {
+      // Not on a link - get selected text if any
+      let selectedText = '';
+      try {
+        if (editor?.selection && editor?.api?.string) {
+          selectedText = editor.api.string(editor.selection);
+        }
+      } catch { /* non-fatal */ }
+      setText(selectedText);
+      setUrl('');
+    }
+
+    setOpen(true);
+  };
+
+  // Auto-focus URL input when popover opens
+  React.useEffect(() => {
+    if (open) {
+      const timer = setTimeout(() => {
+        inputRef.current?.focus();
+        inputRef.current?.select();
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [open]);
+
+  const handleSaveLink = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    const cleanUrl = url.trim();
+    if (!cleanUrl) return;
+
+    // Normalize protocol
+    let formattedUrl = cleanUrl;
+    if (!/^https?:\/\//i.test(formattedUrl) && !/^mailto:/i.test(formattedUrl) && !/^tel:/i.test(formattedUrl)) {
+      formattedUrl = `https://${formattedUrl}`;
+    }
+
+    const displayText = text.trim() || formattedUrl;
+
+    // Restore selection in editor
+    if (savedSelectionRef.current && editor?.tf?.select) {
+      try {
+        editor.tf.select(savedSelectionRef.current);
+      } catch { /* non-fatal */ }
+    }
+
+    try {
+      const activeLink = editor?.api?.above?.({ match: (n: any) => n.type === 'a' });
+      if (activeLink) {
+        // Update existing link
+        const [, path] = activeLink;
+        editor?.tf?.setNodes?.({ url: formattedUrl }, { at: path });
+        if (text.trim()) {
+          editor?.tf?.setNodes?.(
+            { text: text.trim() },
+            { at: [...path, 0], match: (n: any) => n.text !== undefined }
+          );
+        }
+      } else {
+        // Insert new link node
+        editor?.tf?.insertNodes?.([
+          {
+            type: 'a',
+            url: formattedUrl,
+            children: [{ text: displayText }],
+          },
+        ]);
+      }
+      editor?.tf?.focus?.();
+    } catch (err) {
+      console.error('Failed to insert link:', err);
+    }
+
+    setOpen(false);
+  };
+
+  const handleRemoveLink = () => {
+    if (savedSelectionRef.current && editor?.tf?.select) {
+      try {
+        editor.tf.select(savedSelectionRef.current);
+      } catch { /* non-fatal */ }
+    }
+    try {
+      editor?.tf?.unwrapNodes?.({ match: (n: any) => n.type === 'a' });
+      editor?.tf?.focus?.();
+    } catch { /* non-fatal */ }
+    setOpen(false);
+  };
+
+  const handleOpenLink = () => {
+    if (!url) return;
+    let target = url.trim();
+    if (!/^https?:\/\//i.test(target) && !/^mailto:/i.test(target)) {
+      target = `https://${target}`;
+    }
+    window.open(target, '_blank', 'noopener,noreferrer');
+  };
+
+  return (
+    <div ref={anchorRef} className="relative inline-flex">
+      <ToolbarButton
+        active={open || isLinkActive}
+        onClick={handleOpen}
+        tooltip={isLinkActive ? 'Edit Link' : 'Insert Link'}
+        className="px-2 h-8.5"
+      >
+        <Link2 className={cn('w-4 h-4', isLinkActive && 'text-primary')} />
+      </ToolbarButton>
+
+      <PortalPopover
+        anchorRef={anchorRef}
+        open={open}
+        onClose={() => setOpen(false)}
+        className="w-80 p-3.5 flex flex-col gap-3"
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-2">
+          <div className="flex items-center gap-1.5 font-bold text-xs text-zinc-900 dark:text-zinc-100">
+            <Link2 className="w-3.5 h-3.5 text-primary" />
+            <span>{isLinkActive ? 'Edit Link' : 'Insert Link'}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setOpen(false)}
+            className="p-1 rounded-md text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {/* Inputs */}
+        <form onSubmit={handleSaveLink} className="flex flex-col gap-2.5">
+          <div className="flex flex-col gap-1">
+            <label className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">
+              Link URL
+            </label>
+            <input
+              ref={inputRef}
+              type="text"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="https://example.com or paste URL…"
+              className="w-full text-xs px-2.5 py-1.5 rounded-md border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-primary placeholder:text-zinc-400"
+            />
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">
+              Text to display
+            </label>
+            <input
+              type="text"
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              placeholder="Display text (optional)"
+              className="w-full text-xs px-2.5 py-1.5 rounded-md border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-primary placeholder:text-zinc-400"
+            />
+          </div>
+
+          {/* Footer Actions */}
+          <div className="flex items-center justify-between pt-2 border-t border-zinc-100 dark:border-zinc-800">
+            {isLinkActive ? (
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={handleRemoveLink}
+                  className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
+                  title="Remove link"
+                >
+                  <Unlink className="w-3 h-3" />
+                  <span>Unlink</span>
+                </button>
+                {url && (
+                  <button
+                    type="button"
+                    onClick={handleOpenLink}
+                    className="p-1 rounded-md text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors"
+                    title="Open link in new tab"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            ) : (
+              <span />
+            )}
+
+            <div className="flex items-center gap-1.5 ml-auto">
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="px-2.5 py-1.5 rounded-md text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={!url.trim()}
+                className="px-3 py-1.5 rounded-md text-xs font-semibold bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-40 transition-opacity"
+              >
+                {isLinkActive ? 'Save' : 'Insert Link'}
+              </button>
+            </div>
+          </div>
+        </form>
       </PortalPopover>
     </div>
   );
@@ -2201,14 +2450,6 @@ export function FixedToolbarButtons({
   const isTodo = activeType === 'todo';
   const isToggle = activeType === 'toggle';
 
-  const handleLink = () => {
-    if (isViewing) return;
-    const url = window.prompt('Enter link URL:');
-    if (!url) return;
-    editor?.tf?.insertNodes?.([{ type: 'a', url, children: [{ text: url }] }]);
-    editor?.tf?.focus?.();
-  };
-
   const handleOutdent = () => {
     if (isViewing) return;
     const block = getActiveBlock(editor);
@@ -2310,10 +2551,7 @@ export function FixedToolbarButtons({
 
       {/* 4. Link, Table, Emoji */}
       <ToolbarGroup className={cn(isViewing && 'opacity-40 pointer-events-none')}>
-        <ToolbarButton onClick={handleLink} tooltip="Insert Link">
-          <Link2 className="w-4 h-4" />
-        </ToolbarButton>
-
+        <LinkToolbarButton editor={editor} />
         <TableToolbarButton editor={editor} />
         <EmojiToolbarButton editor={editor} />
       </ToolbarGroup>

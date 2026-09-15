@@ -1963,3 +1963,23 @@ Per user feedback with screenshot `media_1789465275790.png`:
    - Suppressed the trailing separator of Group 6 (`Line Height, Outdent, Indent`) using `[&>div[role=separator]]:hidden` to eliminate orphan dividers in empty space.
    - Placed strictly one `<ToolbarSeparator />` before Comment, one between Comment and Mode Switcher, and one between Mode Switcher and Fullscreen.
    - Removed trailing separator after the Fullscreen toggle to ensure clean alignment touching the container boundary.
+
+---
+
+## 16. Link Toolbar Dropdown ("Dropview") & Browser Prompt Elimination
+
+Per user feedback with screenshots `media_1789465341061.png` (Link icon) and `media_1789465375166.png` (`window.prompt` dialog):
+
+1. **Replaced `window.prompt` with First-Class `LinkToolbarButton`**:
+   - Replaced the raw `<ToolbarButton>` and `window.prompt('Enter link URL:')` with an interactive, portal-backed popover (`LinkToolbarButton`).
+   - Never blocked or clipped by toolbar scroll or container boundaries using `PortalPopover`.
+2. **Interactive Dropview Capabilities**:
+   - **URL Input with Auto-Focus**: Automatically focuses and selects the URL input field upon opening for immediate paste (`Ctrl+V`) and Enter insertion.
+   - **Protocol Normalization**: Auto-prefixes `https://` if no protocol (`http://`, `https://`, `mailto:`, `tel:`) was entered.
+   - **Display Text**: Pre-populates selected text when available, or allows custom label text.
+   - **Link Detection & Edit Mode**: When cursor is inside an existing link, the toolbar icon lights up active (`text-primary`), the popover title switches to "Edit Link", and displays:
+     - Current URL and display text for in-place editing.
+     - One-click **Unlink** button (`Unlink`) to remove the hyperlink.
+     - **Open in new tab** button (`ExternalLink`) to test or preview the link.
+3. **Purged `window.prompt` from `InsertToolbarButton`**:
+   - Updated the "Link" action in the `+ v` insert dropdown to perform non-blocking inline node insertion without triggering browser prompt dialogs.
