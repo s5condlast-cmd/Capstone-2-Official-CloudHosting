@@ -2040,3 +2040,23 @@ Per user request ("add back the upload and link") with reference screenshot `med
    - Retained neutral, non-distracting monochrome icon styling (`text-zinc-600 dark:text-zinc-300`) satisfying previous simplification instructions while restoring full dual functionality.
    - Preserved dark-mode high-contrast dropdown chevron (`text-zinc-600 dark:text-zinc-200`).
 
+---
+
+## 20. Table Toolbar Dropview: Hierarchical Submenus (Table, Cell, Row, Column, Delete Table)
+
+Per user request with reference screenshot `media_1789468746934.png`:
+
+1. **Exact 5-Item Dropview Structure**:
+   - Replaced flat table popover with a clean, hierarchical dropview in `TableToolbarButton`:
+     - **Table**: `Grid3X3` icon, label `"Table"`, and `ChevronRight` (`>`) arrow. Hovering or clicking opens the 8x8 interactive grid picker flyout.
+     - **Cell**: Left gutter alignment, label `"Cell"`, and `ChevronRight` (`>`) arrow. Active when cursor is inside a table. Opens flyout with *Insert cell left*, *Insert cell right*, and *Delete cell*.
+     - **Row**: Left gutter alignment, label `"Row"`, and `ChevronRight` (`>`) arrow. Active when cursor is inside a table. Opens flyout with *Insert row above*, *Insert row below*, and *Delete row*.
+     - **Column**: Left gutter alignment, label `"Column"`, and `ChevronRight` (`>`) arrow. Active when cursor is inside a table. Opens flyout with *Insert column left*, *Insert column right*, and *Delete column*.
+     - **Delete table**: `Trash2` icon on left, label `"Delete table"`. Directly deletes the active table when clicked inside a table.
+2. **Context-Aware Visual States Matching Screenshot**:
+   - When the cursor is outside a table, `"Cell"`, `"Row"`, `"Column"`, and `"Delete table"` are rendered in a light, muted color (`text-zinc-400 dark:text-zinc-500`) with `cursor-not-allowed`, exactly matching `media_1789468746934.png`.
+   - When inside a table, all items become fully interactive with smooth hover highlights and dark-mode contrast.
+3. **Adaptive Viewport Collision**:
+   - Submenus automatically determine `flyoutSide` (`'right'` or `'left'`) based on viewport boundaries, preventing any offscreen overflow.
+
+

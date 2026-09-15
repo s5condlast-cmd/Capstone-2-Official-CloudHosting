@@ -47,6 +47,8 @@ import {
   MoreHorizontal,
   Highlighter,
   ChevronDown,
+  ChevronRight,
+  Grid3X3,
   Check,
   Trash2,
   ArrowUp,
@@ -1261,12 +1263,30 @@ function LinkToolbarButton({ editor }: { editor: any }) {
 
 function TableToolbarButton({ editor }: { editor: any }) {
   const [open, setOpen] = React.useState(false);
+  const [activeSubmenu, setActiveSubmenu] = React.useState<'table' | 'cell' | 'row' | 'col' | null>(null);
   const [hoveredSize, setHoveredSize] = React.useState({ rows: 0, cols: 0 });
+  const [flyoutSide, setFlyoutSide] = React.useState<'right' | 'left'>('right');
   const anchorRef = React.useRef<HTMLDivElement>(null);
 
   const insideTable = Boolean(
     editor?.api?.above?.({ match: (n: any) => n.type === 'table' })
   );
+
+  React.useEffect(() => {
+    if (!open || !anchorRef.current) return;
+    const rect = anchorRef.current.getBoundingClientRect();
+    if (rect.left + 440 > window.innerWidth) {
+      setFlyoutSide('left');
+    } else {
+      setFlyoutSide('right');
+    }
+  }, [open]);
+
+  const handleClose = () => {
+    setOpen(false);
+    setActiveSubmenu(null);
+    setHoveredSize({ rows: 0, cols: 0 });
+  };
 
   const insertTable = (rows: number, cols: number) => {
     const tableRows = [];
@@ -1281,8 +1301,8 @@ function TableToolbarButton({ editor }: { editor: any }) {
       tableRows.push({ type: 'tr', children: cells });
     }
     editor?.tf?.insertNodes?.([{ type: 'table', children: tableRows }]);
-    setOpen(false);
     editor?.tf?.focus?.();
+    handleClose();
   };
 
   const insertRow = (before = false) => {
@@ -1297,14 +1317,18 @@ function TableToolbarButton({ editor }: { editor: any }) {
       const newRow = { type: 'tr', children: newCells };
       const insertPath = before ? rowPath : [rowPath[0], rowPath[1] + 1];
       editor.tf.insertNodes([newRow], { at: insertPath });
+      editor?.tf?.focus?.();
     }
-    setOpen(false);
+    handleClose();
   };
 
   const deleteRow = () => {
     const rowEntry = editor?.api?.above?.({ match: (n: any) => n.type === 'tr' });
-    if (rowEntry) editor.tf.removeNodes({ at: rowEntry[1] });
-    setOpen(false);
+    if (rowEntry) {
+      editor.tf.removeNodes({ at: rowEntry[1] });
+      editor?.tf?.focus?.();
+    }
+    handleClose();
   };
 
   const insertCol = (before = false) => {
@@ -1320,8 +1344,9 @@ function TableToolbarButton({ editor }: { editor: any }) {
         const newCell = { type: 'td', children: [{ type: 'p', children: [{ text: '' }] }] };
         editor.tf.insertNodes([newCell], { at: cellPath });
       }
+      editor?.tf?.focus?.();
     }
-    setOpen(false);
+    handleClose();
   };
 
   const deleteCol = () => {
@@ -1335,133 +1360,335 @@ function TableToolbarButton({ editor }: { editor: any }) {
         const cellPath = [...tablePath, r, colIdx];
         editor.tf.removeNodes({ at: cellPath });
       }
+      editor?.tf?.focus?.();
     }
-    setOpen(false);
+    handleClose();
+  };
+
+  const insertCell = (before = false) => {
+    const cellEntry = editor?.api?.above?.({ match: (n: any) => n.type === 'td' || n.type === 'th' });
+    if (cellEntry) {
+      const cellPath = cellEntry[1];
+      const targetIdx = before ? cellPath[cellPath.length - 1] : cellPath[cellPath.length - 1] + 1;
+      const parentPath = cellPath.slice(0, -1);
+      const newCell = { type: 'td', children: [{ type: 'p', children: [{ text: '' }] }] };
+      editor.tf.insertNodes([newCell], { at: [...parentPath, targetIdx] });
+      editor?.tf?.focus?.();
+    }
+    handleClose();
+  };
+
+  const deleteCell = () => {
+    const cellEntry = editor?.api?.above?.({ match: (n: any) => n.type === 'td' || n.type === 'th' });
+    if (cellEntry) {
+      editor.tf.removeNodes({ at: cellEntry[1] });
+      editor?.tf?.focus?.();
+    }
+    handleClose();
   };
 
   const deleteTable = () => {
     const tableEntry = editor?.api?.above?.({ match: (n: any) => n.type === 'table' });
-    if (tableEntry) editor.tf.removeNodes({ at: tableEntry[1] });
-    setOpen(false);
+    if (tableEntry) {
+      editor.tf.removeNodes({ at: tableEntry[1] });
+      editor?.tf?.focus?.();
+    }
+    handleClose();
   };
 
   return (
     <div ref={anchorRef} className="relative">
       <ToolbarButton
         isDropdown
-        onClick={() => setOpen(!open)}
+        onClick={() => {
+          if (open) {
+            handleClose();
+          } else {
+            setOpen(true);
+            setActiveSubmenu(null);
+          }
+        }}
         tooltip="Table"
         className="px-2 h-8.5"
       >
-        <TableIcon className="w-4 h-4" />
+        <Grid3X3 className="w-4 h-4" />
         <ChevronDown className="w-3.5 h-3.5 text-zinc-600 dark:text-zinc-200" />
       </ToolbarButton>
 
       <PortalPopover
         anchorRef={anchorRef}
         open={open}
-        onClose={() => setOpen(false)}
-        className="w-60 p-3.5"
+        onClose={handleClose}
+        className="w-48 p-1 flex flex-col gap-0.5"
       >
-        <div className="text-[11px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-2.5">
-          Insert Table Grid
-        </div>
-
-        {/* 8x8 Interactive Grid */}
+        {/* 1. Table */}
         <div
-          className="grid grid-cols-8 gap-1.5 p-1.5 bg-zinc-50 dark:bg-zinc-800/70 rounded-lg border border-zinc-200 dark:border-zinc-700/80 mb-2.5 cursor-pointer"
-          onMouseLeave={() => setHoveredSize({ rows: 0, cols: 0 })}
+          className="relative"
+          onMouseEnter={() => setActiveSubmenu('table')}
         >
-          {Array.from({ length: 8 }).map((_, r) =>
-            Array.from({ length: 8 }).map((__, c) => {
-              const isHighlighted = r < hoveredSize.rows && c < hoveredSize.cols;
-              return (
-                <div
-                  key={`${r}-${c}`}
-                  onMouseEnter={() => setHoveredSize({ rows: r + 1, cols: c + 1 })}
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    insertTable(r + 1, c + 1);
-                  }}
-                  className={cn(
-                    'w-4 h-4 rounded-xs border transition-colors',
-                    isHighlighted
-                      ? 'bg-primary border-primary'
-                      : 'bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700'
-                  )}
-                />
-              );
-            })
+          <button
+            type="button"
+            onClick={() => setActiveSubmenu(activeSubmenu === 'table' ? null : 'table')}
+            className={cn(
+              'flex items-center gap-3 w-full px-2.5 py-2 text-sm font-medium rounded-lg text-left transition-colors cursor-pointer',
+              activeSubmenu === 'table'
+                ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100'
+                : 'text-zinc-800 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+            )}
+          >
+            <Grid3X3 className="w-4 h-4 text-zinc-800 dark:text-zinc-200 shrink-0" />
+            <span>Table</span>
+            <ChevronRight className="w-4 h-4 ml-auto text-zinc-700 dark:text-zinc-300" />
+          </button>
+
+          {/* Table Grid Flyout Submenu */}
+          {activeSubmenu === 'table' && (
+            <div
+              className={cn(
+                'absolute top-0 z-50 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xl p-3 w-56 animate-in fade-in zoom-in-95 duration-100',
+                flyoutSide === 'left' ? 'right-full mr-1.5' : 'left-full ml-1.5'
+              )}
+            >
+              <div className="text-[11px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-2">
+                Insert Table Grid
+              </div>
+              <div
+                className="grid grid-cols-8 gap-1.5 p-1.5 bg-zinc-50 dark:bg-zinc-800/70 rounded-lg border border-zinc-200 dark:border-zinc-700/80 mb-2 cursor-pointer"
+                onMouseLeave={() => setHoveredSize({ rows: 0, cols: 0 })}
+              >
+                {Array.from({ length: 8 }).map((_, r) =>
+                  Array.from({ length: 8 }).map((__, c) => {
+                    const isHighlighted = r < hoveredSize.rows && c < hoveredSize.cols;
+                    return (
+                      <div
+                        key={`${r}-${c}`}
+                        onMouseEnter={() => setHoveredSize({ rows: r + 1, cols: c + 1 })}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          insertTable(r + 1, c + 1);
+                        }}
+                        className={cn(
+                          'w-4 h-4 rounded-xs border transition-colors',
+                          isHighlighted
+                            ? 'bg-primary border-primary'
+                            : 'bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700'
+                        )}
+                      />
+                    );
+                  })
+                )}
+              </div>
+              <div className="text-center text-xs text-zinc-600 dark:text-zinc-400 font-medium">
+                {hoveredSize.rows > 0 ? `${hoveredSize.rows} rows × ${hoveredSize.cols} columns` : 'Hover to choose grid size'}
+              </div>
+            </div>
           )}
         </div>
 
-        <div className="text-center text-xs text-zinc-600 dark:text-zinc-400 font-semibold mb-2">
-          {hoveredSize.rows > 0 ? `${hoveredSize.rows} rows × ${hoveredSize.cols} columns` : 'Hover to choose grid size'}
+        {/* 2. Cell */}
+        <div
+          className="relative"
+          onMouseEnter={() => insideTable && setActiveSubmenu('cell')}
+        >
+          <button
+            type="button"
+            disabled={!insideTable}
+            onClick={() => insideTable && setActiveSubmenu(activeSubmenu === 'cell' ? null : 'cell')}
+            className={cn(
+              'flex items-center gap-3 w-full px-2.5 py-2 text-sm font-medium rounded-lg text-left transition-colors',
+              insideTable
+                ? activeSubmenu === 'cell'
+                  ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 cursor-pointer'
+                  : 'text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer'
+                : 'text-zinc-400 dark:text-zinc-500 cursor-not-allowed select-none opacity-60'
+            )}
+          >
+            <div className="w-4 h-4 shrink-0" />
+            <span>Cell</span>
+            <ChevronRight className={cn('w-4 h-4 ml-auto', insideTable ? 'text-zinc-700 dark:text-zinc-300' : 'text-zinc-400 dark:text-zinc-500')} />
+          </button>
+
+          {/* Cell Submenu */}
+          {insideTable && activeSubmenu === 'cell' && (
+            <div
+              className={cn(
+                'absolute top-0 z-50 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xl p-1.5 w-48 flex flex-col gap-0.5 animate-in fade-in zoom-in-95 duration-100',
+                flyoutSide === 'left' ? 'right-full mr-1.5' : 'left-full ml-1.5'
+              )}
+            >
+              <button
+                type="button"
+                onMouseDown={(e) => { e.preventDefault(); insertCell(true); }}
+                className="flex items-center gap-2.5 w-full px-2.5 py-1.5 text-xs text-left text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors cursor-pointer"
+              >
+                <ArrowLeft className="w-3.5 h-3.5 text-zinc-400" />
+                <span>Insert cell left</span>
+              </button>
+              <button
+                type="button"
+                onMouseDown={(e) => { e.preventDefault(); insertCell(false); }}
+                className="flex items-center gap-2.5 w-full px-2.5 py-1.5 text-xs text-left text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors cursor-pointer"
+              >
+                <ArrowRight className="w-3.5 h-3.5 text-zinc-400" />
+                <span>Insert cell right</span>
+              </button>
+              <div className="my-0.5 h-px bg-zinc-100 dark:bg-zinc-800" />
+              <button
+                type="button"
+                onMouseDown={(e) => { e.preventDefault(); deleteCell(); }}
+                className="flex items-center gap-2.5 w-full px-2.5 py-1.5 text-xs text-left text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-md transition-colors cursor-pointer"
+              >
+                <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                <span>Delete cell</span>
+              </button>
+            </div>
+          )}
         </div>
 
-        {insideTable && (
-          <div className="border-t border-zinc-200 dark:border-zinc-800 pt-2 space-y-1">
-            <div className="text-[11px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider px-1">
-              Table Row & Col Tools
+        {/* 3. Row */}
+        <div
+          className="relative"
+          onMouseEnter={() => insideTable && setActiveSubmenu('row')}
+        >
+          <button
+            type="button"
+            disabled={!insideTable}
+            onClick={() => insideTable && setActiveSubmenu(activeSubmenu === 'row' ? null : 'row')}
+            className={cn(
+              'flex items-center gap-3 w-full px-2.5 py-2 text-sm font-medium rounded-lg text-left transition-colors',
+              insideTable
+                ? activeSubmenu === 'row'
+                  ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 cursor-pointer'
+                  : 'text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer'
+                : 'text-zinc-400 dark:text-zinc-500 cursor-not-allowed select-none opacity-60'
+            )}
+          >
+            <div className="w-4 h-4 shrink-0" />
+            <span>Row</span>
+            <ChevronRight className={cn('w-4 h-4 ml-auto', insideTable ? 'text-zinc-700 dark:text-zinc-300' : 'text-zinc-400 dark:text-zinc-500')} />
+          </button>
+
+          {/* Row Submenu */}
+          {insideTable && activeSubmenu === 'row' && (
+            <div
+              className={cn(
+                'absolute top-0 z-50 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xl p-1.5 w-48 flex flex-col gap-0.5 animate-in fade-in zoom-in-95 duration-100',
+                flyoutSide === 'left' ? 'right-full mr-1.5' : 'left-full ml-1.5'
+              )}
+            >
+              <button
+                type="button"
+                onMouseDown={(e) => { e.preventDefault(); insertRow(true); }}
+                className="flex items-center gap-2.5 w-full px-2.5 py-1.5 text-xs text-left text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors cursor-pointer"
+              >
+                <ArrowUp className="w-3.5 h-3.5 text-zinc-400" />
+                <span>Insert row above</span>
+              </button>
+              <button
+                type="button"
+                onMouseDown={(e) => { e.preventDefault(); insertRow(false); }}
+                className="flex items-center gap-2.5 w-full px-2.5 py-1.5 text-xs text-left text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors cursor-pointer"
+              >
+                <ArrowDown className="w-3.5 h-3.5 text-zinc-400" />
+                <span>Insert row below</span>
+              </button>
+              <div className="my-0.5 h-px bg-zinc-100 dark:bg-zinc-800" />
+              <button
+                type="button"
+                onMouseDown={(e) => { e.preventDefault(); deleteRow(); }}
+                className="flex items-center gap-2.5 w-full px-2.5 py-1.5 text-xs text-left text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-md transition-colors cursor-pointer"
+              >
+                <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                <span>Delete row</span>
+              </button>
             </div>
-            <button
-              type="button"
-              onMouseDown={(e) => { e.preventDefault(); insertRow(true); }}
-              className="flex items-center gap-2.5 w-full px-2.5 py-1.5 text-xs text-left text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors"
+          )}
+        </div>
+
+        {/* 4. Column */}
+        <div
+          className="relative"
+          onMouseEnter={() => insideTable && setActiveSubmenu('col')}
+        >
+          <button
+            type="button"
+            disabled={!insideTable}
+            onClick={() => insideTable && setActiveSubmenu(activeSubmenu === 'col' ? null : 'col')}
+            className={cn(
+              'flex items-center gap-3 w-full px-2.5 py-2 text-sm font-medium rounded-lg text-left transition-colors',
+              insideTable
+                ? activeSubmenu === 'col'
+                  ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 cursor-pointer'
+                  : 'text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer'
+                : 'text-zinc-400 dark:text-zinc-500 cursor-not-allowed select-none opacity-60'
+            )}
+          >
+            <div className="w-4 h-4 shrink-0" />
+            <span>Column</span>
+            <ChevronRight className={cn('w-4 h-4 ml-auto', insideTable ? 'text-zinc-700 dark:text-zinc-300' : 'text-zinc-400 dark:text-zinc-500')} />
+          </button>
+
+          {/* Column Submenu */}
+          {insideTable && activeSubmenu === 'col' && (
+            <div
+              className={cn(
+                'absolute top-0 z-50 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xl p-1.5 w-48 flex flex-col gap-0.5 animate-in fade-in zoom-in-95 duration-100',
+                flyoutSide === 'left' ? 'right-full mr-1.5' : 'left-full ml-1.5'
+              )}
             >
-              <ArrowUp className="w-3.5 h-3.5 text-zinc-400" />
-              <span>Insert row above</span>
-            </button>
-            <button
-              type="button"
-              onMouseDown={(e) => { e.preventDefault(); insertRow(false); }}
-              className="flex items-center gap-2.5 w-full px-2.5 py-1.5 text-xs text-left text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors"
-            >
-              <ArrowDown className="w-3.5 h-3.5 text-zinc-400" />
-              <span>Insert row below</span>
-            </button>
-            <button
-              type="button"
-              onMouseDown={(e) => { e.preventDefault(); deleteRow(); }}
-              className="flex items-center gap-2.5 w-full px-2.5 py-1.5 text-xs text-left text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors"
-            >
-              <X className="w-3.5 h-3.5 text-zinc-400" />
-              <span>Delete row</span>
-            </button>
-            <button
-              type="button"
-              onMouseDown={(e) => { e.preventDefault(); insertCol(true); }}
-              className="flex items-center gap-2.5 w-full px-2.5 py-1.5 text-xs text-left text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors"
-            >
-              <ArrowLeft className="w-3.5 h-3.5 text-zinc-400" />
-              <span>Insert column left</span>
-            </button>
-            <button
-              type="button"
-              onMouseDown={(e) => { e.preventDefault(); insertCol(false); }}
-              className="flex items-center gap-2.5 w-full px-2.5 py-1.5 text-xs text-left text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors"
-            >
-              <ArrowRight className="w-3.5 h-3.5 text-zinc-400" />
-              <span>Insert column right</span>
-            </button>
-            <button
-              type="button"
-              onMouseDown={(e) => { e.preventDefault(); deleteCol(); }}
-              className="flex items-center gap-2.5 w-full px-2.5 py-1.5 text-xs text-left text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors"
-            >
-              <X className="w-3.5 h-3.5 text-zinc-400" />
-              <span>Delete column</span>
-            </button>
-            <button
-              type="button"
-              onMouseDown={(e) => { e.preventDefault(); deleteTable(); }}
-              className="flex items-center gap-2.5 w-full px-2.5 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-md transition-colors"
-            >
-              <Trash2 className="w-3.5 h-3.5 text-red-500" />
-              <span>Delete table</span>
-            </button>
-          </div>
-        )}
+              <button
+                type="button"
+                onMouseDown={(e) => { e.preventDefault(); insertCol(true); }}
+                className="flex items-center gap-2.5 w-full px-2.5 py-1.5 text-xs text-left text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors cursor-pointer"
+              >
+                <ArrowLeft className="w-3.5 h-3.5 text-zinc-400" />
+                <span>Insert column left</span>
+              </button>
+              <button
+                type="button"
+                onMouseDown={(e) => { e.preventDefault(); insertCol(false); }}
+                className="flex items-center gap-2.5 w-full px-2.5 py-1.5 text-xs text-left text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors cursor-pointer"
+              >
+                <ArrowRight className="w-3.5 h-3.5 text-zinc-400" />
+                <span>Insert column right</span>
+              </button>
+              <div className="my-0.5 h-px bg-zinc-100 dark:bg-zinc-800" />
+              <button
+                type="button"
+                onMouseDown={(e) => { e.preventDefault(); deleteCol(); }}
+                className="flex items-center gap-2.5 w-full px-2.5 py-1.5 text-xs text-left text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-md transition-colors cursor-pointer"
+              >
+                <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                <span>Delete column</span>
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* 5. Delete table */}
+        <div
+          className="relative"
+          onMouseEnter={() => setActiveSubmenu(null)}
+        >
+          <button
+            type="button"
+            disabled={!insideTable}
+            onMouseDown={(e) => {
+              if (!insideTable) return;
+              e.preventDefault();
+              deleteTable();
+            }}
+            className={cn(
+              'flex items-center gap-3 w-full px-2.5 py-2 text-sm font-medium rounded-lg text-left transition-colors',
+              insideTable
+                ? 'text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 cursor-pointer'
+                : 'text-zinc-400 dark:text-zinc-500 cursor-not-allowed select-none opacity-60'
+            )}
+          >
+            <Trash2 className={cn('w-4 h-4 shrink-0', insideTable ? 'text-red-500' : 'text-zinc-400 dark:text-zinc-500')} />
+            <span>Delete table</span>
+          </button>
+        </div>
       </PortalPopover>
     </div>
   );
