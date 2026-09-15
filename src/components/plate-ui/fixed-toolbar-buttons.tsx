@@ -1586,8 +1586,8 @@ function MediaToolbarButton({ editor }: { editor: any }) {
   };
 
   const handleUrlSubmit = () => {
-    if (!inputUrl.trim()) return;
-    insertMedia(activeMedia?.type || 'img', inputUrl.trim());
+    if (!inputUrl.trim() || !activeMedia) return;
+    insertMedia(activeMedia.type, inputUrl.trim());
     setInputUrl('');
     setUrlDialogOpen(false);
   };
@@ -1604,7 +1604,7 @@ function MediaToolbarButton({ editor }: { editor: any }) {
       <ToolbarButton
         isDropdown
         onClick={() => setOpen(!open)}
-        tooltip="Insert Media"
+        tooltip="Insert Media (Image, Video, Audio, File)"
         className="px-2 h-8.5"
       >
         <ImageIcon className="w-4 h-4" />
@@ -1615,50 +1615,64 @@ function MediaToolbarButton({ editor }: { editor: any }) {
         anchorRef={anchorRef}
         open={open}
         onClose={() => setOpen(false)}
-        className="w-48 p-1 flex flex-col gap-0.5"
+        className="w-64 p-2"
       >
-        {MEDIA_TYPES.map((media) => {
-          const Icon = media.icon;
-          return (
-            <button
-              key={media.type}
-              type="button"
-              onMouseDown={(e) => {
-                e.preventDefault();
-                handleTriggerUpload(media);
-              }}
-              className="flex items-center gap-2.5 w-full px-2.5 py-1.5 text-xs font-medium rounded-md text-left text-zinc-800 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-            >
-              <Icon className="w-4 h-4 text-zinc-600 dark:text-zinc-300" />
-              <span>{media.label}</span>
-            </button>
-          );
-        })}
-
-        <div className="my-1 h-px bg-zinc-200 dark:bg-zinc-800" />
-
-        <button
-          type="button"
-          onMouseDown={(e) => {
-            e.preventDefault();
-            setOpen(false);
-            setUrlDialogOpen(true);
-          }}
-          className="flex items-center gap-2.5 w-full px-2.5 py-1.5 text-xs font-medium rounded-md text-left text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-        >
-          <Link2 className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
-          <span>Insert via URL</span>
-        </button>
+        <div className="px-2.5 py-1 text-[11px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
+          Insert Media
+        </div>
+        <div className="space-y-1 mt-1">
+          {MEDIA_TYPES.map((media) => {
+            const Icon = media.icon;
+            return (
+              <div
+                key={media.type}
+                className="flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800/70 transition-colors"
+              >
+                <div
+                  onClick={() => handleTriggerUpload(media)}
+                  className="flex items-center gap-2.5 text-xs font-medium text-zinc-800 dark:text-zinc-200 cursor-pointer flex-1"
+                >
+                  <Icon className="w-4 h-4 text-zinc-600 dark:text-zinc-300" />
+                  <span>{media.label}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleTriggerUpload(media);
+                    }}
+                    className="px-2 py-0.5 text-[11px] font-medium rounded-md text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
+                  >
+                    Upload
+                  </button>
+                  <button
+                    type="button"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleTriggerUrl(media);
+                    }}
+                    className="px-2 py-0.5 text-[11px] font-medium rounded-md text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
+                  >
+                    URL
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </PortalPopover>
 
       {/* URL Input Modal */}
-      {urlDialogOpen &&
+      {urlDialogOpen && activeMedia &&
         typeof document !== 'undefined' &&
         createPortal(
           <div className="fixed inset-0 bg-black/50 z-[999999] flex items-center justify-center p-4 backdrop-blur-xs animate-in fade-in">
             <div className="w-full max-w-sm rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-5 shadow-2xl space-y-4">
               <div className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
-                Insert Media via URL
+                Insert {activeMedia.label} via URL
               </div>
               <input
                 type="url"

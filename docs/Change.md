@@ -2022,3 +2022,21 @@ Per user feedback with screenshot `media_1789465433512.png` (showing `+ v` inser
    - Safely checks `editor.history.undos` and `editor.history.redos` with automatic fallback to enabled.
    - Preserves focus in editor after executing undo/redo.
    - High-contrast icons rendered in `text-zinc-700 dark:text-zinc-200` matching the rest of the toolbar.
+
+---
+
+## 19. Media Dropdown: Restored Side-by-Side Upload and URL Action Buttons
+
+Per user request ("add back the upload and link") with reference screenshot `media_1789468639575.png` and original layout `media_1789462838757.png`:
+
+1. **Restored Dual Action Buttons per Media Row**:
+   - In `src/components/plate-ui/fixed-toolbar-buttons.tsx`, updated `MediaToolbarButton` so each media type row (Image, Video, Audio, File Attachment) renders side-by-side action buttons on the right:
+     - **Upload**: Directly opens the local OS file picker with the appropriate MIME filter (`image/*`, `video/*`, `audio/*`, `*`).
+     - **URL**: Opens the URL insertion modal targeted specifically to the clicked media type (`Insert Image via URL`, `Insert Video via URL`, etc.).
+   - Clicking the left half of the row (icon or label) also triggers file upload as an intuitive primary shortcut.
+2. **Removed Trailing "Insert via URL" Button**:
+   - Eliminated the redundant bottom divider and standalone "Insert via URL" row, consolidating URL insertion directly into each media row.
+3. **Preserved Monochrome & Clean Aesthetic**:
+   - Retained neutral, non-distracting monochrome icon styling (`text-zinc-600 dark:text-zinc-300`) satisfying previous simplification instructions while restoring full dual functionality.
+   - Preserved dark-mode high-contrast dropdown chevron (`text-zinc-600 dark:text-zinc-200`).
+
