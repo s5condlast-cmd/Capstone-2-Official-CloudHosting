@@ -1908,5 +1908,18 @@ In response to page feedback requesting 1 icon that can handle all media and add
    - Active state displays an animated pulsing red microphone (`animate-pulse text-red-500`) and a red highlight on the toolbar button.
    - Renders a floating status pill (`Listening... Speak into your microphone · Done`) at the bottom of the screen with a 1-click stop button.
 
+---
+
+## 12. Formatting Suite Refinement: Inline Code Button Removal
+
+Per user feedback with screenshot `media_1789462774780.png`:
+
+1. **Removed `<>` (Inline Code) Toolbar Button**:
+   - Removed the `<>` inline code button from the text formatting group in [`src/components/plate-ui/fixed-toolbar-buttons.tsx`](file:///c:/Users/johnd/Downloads/MainCode/src/components/plate-ui/fixed-toolbar-buttons.tsx).
+   - Removed unused `isCode` state and `Code` icon import.
+2. **Preserved Formatting Suite**:
+   - The marks group now contains: Bold (`B`), Italic (`I`), Underline (`U`), Strikethrough (`S`), Text Color (`A_`), and Background Color (paint bucket).
+
+
 
 

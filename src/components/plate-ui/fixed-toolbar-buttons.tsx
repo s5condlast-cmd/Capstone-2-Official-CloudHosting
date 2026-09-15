@@ -23,7 +23,6 @@ import {
   Italic,
   Underline,
   Strikethrough,
-  Code,
   Baseline,
   PaintBucket,
   AlignLeft,
@@ -2205,7 +2204,6 @@ export function FixedToolbarButtons({
   const isItalic = isMarkActive(editor, 'italic');
   const isUnderline = isMarkActive(editor, 'underline');
   const isStrikethrough = isMarkActive(editor, 'strikethrough');
-  const isCode = isMarkActive(editor, 'code');
 
   // Block state
   const activeType = getActiveBlockType(editor);
@@ -2279,14 +2277,6 @@ export function FixedToolbarButtons({
           tooltip="Strikethrough"
         >
           <Strikethrough className="w-4 h-4" />
-        </ToolbarButton>
-
-        <ToolbarButton
-          active={isCode}
-          onClick={() => toggleMark(editor, 'code')}
-          tooltip="Inline Code"
-        >
-          <Code className="w-4 h-4" />
         </ToolbarButton>
 
         <ColorPickerDropdown
