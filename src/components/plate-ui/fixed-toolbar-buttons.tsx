@@ -61,11 +61,20 @@ import {
   Keyboard,
   Eraser,
   X,
+  MessageSquareText,
+  Pencil,
+  Eye,
+  Sparkles,
+  Maximize2,
+  Minimize2,
+  ZoomIn,
+  ZoomOut,
 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import {
   ToolbarGroup,
   ToolbarButton,
+  ToolbarSeparator,
   ToolbarSplitButton,
   ToolbarSplitButtonPrimary,
   ToolbarSplitButtonSecondary,
@@ -1574,13 +1583,454 @@ function MoreToolbarButton({ editor }: { editor: any }) {
   );
 }
 
+// ─── Comment & Annotation Toolbar Button ──────────────────────────────────────
+
+export interface EditorComment {
+  id: string;
+  author: string;
+  text: string;
+  createdAt: string;
+  selectedText?: string;
+  resolved?: boolean;
+}
+
+interface CommentToolbarButtonProps {
+  editor: any;
+  comments?: EditorComment[];
+  onAddComment?: (text: string, selectedText?: string) => void;
+  onResolveComment?: (id: string) => void;
+}
+
+export function CommentToolbarButton({
+  editor,
+  comments = [],
+  onAddComment,
+  onResolveComment,
+}: CommentToolbarButtonProps) {
+  const [open, setOpen] = React.useState(false);
+  const [text, setText] = React.useState('');
+  const [selectedSnippet, setSelectedSnippet] = React.useState('');
+  const buttonRef = React.useRef<HTMLDivElement>(null);
+
+  const handleOpen = () => {
+    const sel = typeof window !== 'undefined' ? window.getSelection()?.toString()?.trim() || '' : '';
+    setSelectedSnippet(sel);
+    setOpen((prev) => !prev);
+  };
+
+  const handlePost = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!text.trim()) return;
+    onAddComment?.(text.trim(), selectedSnippet || undefined);
+    setText('');
+    setSelectedSnippet('');
+  };
+
+  const activeComments = comments.filter((c) => !c.resolved);
+
+  return (
+    <div ref={buttonRef} className="relative inline-flex">
+      <ToolbarButton
+        active={open}
+        onClick={handleOpen}
+        tooltip="Comments & feedback notes"
+        className="relative"
+      >
+        <MessageSquareText className="w-4 h-4 text-zinc-700 dark:text-zinc-200" />
+        {activeComments.length > 0 && (
+          <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground shadow-xs">
+            {activeComments.length > 9 ? '9+' : activeComments.length}
+          </span>
+        )}
+      </ToolbarButton>
+
+      <PortalPopover
+        anchorRef={buttonRef}
+        open={open}
+        onClose={() => setOpen(false)}
+        align="end"
+        className="w-80 sm:w-96 p-3 flex flex-col gap-3"
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-2">
+          <div className="flex items-center gap-2">
+            <MessageSquareText className="w-4 h-4 text-primary" />
+            <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100">
+              Comments & Notes
+            </span>
+            {activeComments.length > 0 && (
+              <span className="text-[11px] font-semibold text-zinc-500">
+                ({activeComments.length})
+              </span>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={() => setOpen(false)}
+            className="p-1 rounded-md text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {/* Input Form */}
+        <form onSubmit={handlePost} className="flex flex-col gap-2">
+          {selectedSnippet && (
+            <div className="flex items-start justify-between gap-1.5 p-2 rounded-md bg-zinc-100 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 text-xs">
+              <div className="flex items-start gap-1.5 overflow-hidden">
+                <Quote className="w-3.5 h-3.5 text-zinc-400 shrink-0 mt-0.5" />
+                <span className="italic text-zinc-600 dark:text-zinc-300 truncate max-w-[240px]">
+                  "{selectedSnippet}"
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedSnippet('')}
+                className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
+                title="Clear selection reference"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+          )}
+
+          <textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder={selectedSnippet ? 'Comment on selected text…' : 'Add a document note or comment…'}
+            rows={2}
+            className="w-full text-xs p-2 rounded-md border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-primary resize-none placeholder:text-zinc-400"
+          />
+
+          <div className="flex justify-end gap-1.5">
+            <button
+              type="submit"
+              disabled={!text.trim()}
+              className="px-3 py-1 rounded-md text-xs font-semibold bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-40 transition-opacity"
+            >
+              Post Comment
+            </button>
+          </div>
+        </form>
+
+        {/* Comments List */}
+        <div className="flex flex-col gap-2 max-h-56 overflow-y-auto pt-1 border-t border-zinc-100 dark:border-zinc-800">
+          {comments.length === 0 ? (
+            <p className="text-center py-4 text-xs text-zinc-400">
+              No comments yet. Highlight text or write a note above.
+            </p>
+          ) : (
+            comments.map((comment) => (
+              <div
+                key={comment.id}
+                className={cn(
+                  'p-2.5 rounded-lg border text-xs flex flex-col gap-1.5 transition-colors',
+                  comment.resolved
+                    ? 'bg-zinc-50 dark:bg-zinc-900/40 border-zinc-200 dark:border-zinc-800 opacity-60'
+                    : 'bg-white dark:bg-zinc-800/80 border-zinc-200 dark:border-zinc-700 shadow-xs'
+                )}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-bold text-zinc-900 dark:text-zinc-100">
+                      {comment.author}
+                    </span>
+                    <span className="text-[10px] text-zinc-400">
+                      {comment.createdAt}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => onResolveComment?.(comment.id)}
+                    className="p-1 rounded text-zinc-400 hover:text-red-500 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+                    title={comment.resolved ? 'Delete' : 'Resolve / Delete'}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                {comment.selectedText && (
+                  <div className="pl-2 border-l-2 border-primary/40 text-[11px] italic text-zinc-500 dark:text-zinc-400">
+                    "{comment.selectedText}"
+                  </div>
+                )}
+
+                <p className="text-zinc-700 dark:text-zinc-200 leading-relaxed break-words whitespace-pre-wrap">
+                  {comment.text}
+                </p>
+              </div>
+            ))
+          )}
+        </div>
+      </PortalPopover>
+    </div>
+  );
+}
+
+// ─── Mode Switcher Dropdown (Editing, Suggesting, Viewing) ─────────────────────
+
+export type EditorMode = 'editing' | 'viewing' | 'suggestion';
+
+interface ModeToolbarButtonProps {
+  mode?: EditorMode;
+  onModeChange?: (mode: EditorMode) => void;
+}
+
+export function ModeToolbarButton({
+  mode = 'editing',
+  onModeChange,
+}: ModeToolbarButtonProps) {
+  const [open, setOpen] = React.useState(false);
+  const buttonRef = React.useRef<HTMLDivElement>(null);
+
+  const MODES: { id: EditorMode; label: string; icon: React.ComponentType<any>; desc: string }[] = [
+    {
+      id: 'editing',
+      label: 'Editing',
+      icon: Pencil,
+      desc: 'Edit document directly',
+    },
+    {
+      id: 'suggestion',
+      label: 'Suggesting',
+      icon: Sparkles,
+      desc: 'Edits become suggestions and notes',
+    },
+    {
+      id: 'viewing',
+      label: 'Viewing',
+      icon: Eye,
+      desc: 'Read or print document (read-only)',
+    },
+  ];
+
+  const currentMode = MODES.find((m) => m.id === mode) || MODES[0];
+  const CurrentIcon = currentMode.icon;
+
+  const handleSelect = (newMode: EditorMode) => {
+    onModeChange?.(newMode);
+    setOpen(false);
+  };
+
+  return (
+    <div ref={buttonRef} className="relative inline-flex">
+      <button
+        type="button"
+        onClick={() => setOpen((prev) => !prev)}
+        className={cn(
+          'inline-flex h-8.5 items-center gap-1.5 px-2 rounded-md text-xs font-semibold',
+          'border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 shadow-xs',
+          'text-zinc-800 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors'
+        )}
+        title="Switch document editing mode"
+      >
+        <CurrentIcon className={cn(
+          'w-4 h-4 shrink-0',
+          mode === 'editing' && 'text-primary',
+          mode === 'suggestion' && 'text-amber-500',
+          mode === 'viewing' && 'text-zinc-400'
+        )} />
+        <span>{currentMode.label}</span>
+        <ChevronDown className="w-3.5 h-3.5 opacity-60 shrink-0" />
+      </button>
+
+      <PortalPopover
+        anchorRef={buttonRef}
+        open={open}
+        onClose={() => setOpen(false)}
+        align="end"
+        className="w-64 p-1.5 flex flex-col gap-1"
+      >
+        {MODES.map((item) => {
+          const Icon = item.icon;
+          const isActive = item.id === mode;
+          return (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => handleSelect(item.id)}
+              className={cn(
+                'flex items-start gap-2.5 p-2 rounded-md text-left transition-colors w-full',
+                isActive
+                  ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-950 dark:text-white'
+                  : 'hover:bg-zinc-50 dark:hover:bg-zinc-800/60 text-zinc-700 dark:text-zinc-300'
+              )}
+            >
+              <Icon className={cn(
+                'w-4 h-4 shrink-0 mt-0.5',
+                item.id === 'editing' && 'text-primary',
+                item.id === 'suggestion' && 'text-amber-500',
+                item.id === 'viewing' && 'text-zinc-400'
+              )} />
+              <div className="flex-1 flex flex-col">
+                <span className="text-xs font-bold leading-tight flex items-center justify-between">
+                  {item.label}
+                  {isActive && <Check className="w-3.5 h-3.5 text-primary ml-2" />}
+                </span>
+                <span className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 leading-snug">
+                  {item.desc}
+                </span>
+              </div>
+            </button>
+          );
+        })}
+      </PortalPopover>
+    </div>
+  );
+}
+
+// ─── Fullscreen & Zoom "Make It Big" Controls ─────────────────────────────────
+
+interface FullscreenAndZoomButtonsProps {
+  isFullscreen?: boolean;
+  onToggleFullscreen?: () => void;
+  zoomLevel?: number;
+  onZoomChange?: (zoom: number) => void;
+}
+
+export function FullscreenAndZoomButtons({
+  isFullscreen = false,
+  onToggleFullscreen,
+  zoomLevel = 100,
+  onZoomChange,
+}: FullscreenAndZoomButtonsProps) {
+  const [zoomOpen, setZoomOpen] = React.useState(false);
+  const zoomAnchorRef = React.useRef<HTMLDivElement>(null);
+
+  const ZOOM_PRESETS = [50, 75, 100, 125, 150, 175, 200];
+
+  const handleZoomIn = () => {
+    const next = ZOOM_PRESETS.find((z) => z > zoomLevel) ?? 200;
+    onZoomChange?.(next);
+  };
+
+  const handleZoomOut = () => {
+    const prev = [...ZOOM_PRESETS].reverse().find((z) => z < zoomLevel) ?? 50;
+    onZoomChange?.(prev);
+  };
+
+  return (
+    <div className="flex items-center gap-1">
+      {/* Zoom Stepper Pill */}
+      <div
+        ref={zoomAnchorRef}
+        className="flex items-center rounded-md border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 shadow-xs h-8.5"
+      >
+        <button
+          type="button"
+          onClick={handleZoomOut}
+          disabled={zoomLevel <= 50}
+          className="h-full px-1.5 flex items-center justify-center text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 disabled:opacity-30 rounded-l-md transition-colors"
+          title="Zoom out"
+        >
+          <Minus className="w-3.5 h-3.5" />
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setZoomOpen((prev) => !prev)}
+          className="h-full px-2 text-xs font-bold text-zinc-800 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-700 flex items-center gap-1 transition-colors min-w-[50px] justify-center"
+          title="Zoom preset"
+        >
+          <span>{zoomLevel}%</span>
+          <ChevronDown className="w-3 h-3 opacity-60" />
+        </button>
+
+        <button
+          type="button"
+          onClick={handleZoomIn}
+          disabled={zoomLevel >= 200}
+          className="h-full px-1.5 flex items-center justify-center text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 disabled:opacity-30 rounded-r-md transition-colors"
+          title="Zoom in"
+        >
+          <Plus className="w-3.5 h-3.5" />
+        </button>
+      </div>
+
+      <PortalPopover
+        anchorRef={zoomAnchorRef}
+        open={zoomOpen}
+        onClose={() => setZoomOpen(false)}
+        align="end"
+        className="w-36 p-1 flex flex-col gap-0.5"
+      >
+        <div className="px-2 py-1 text-[11px] font-semibold text-zinc-400">
+          Zoom Level
+        </div>
+        {ZOOM_PRESETS.map((z) => (
+          <button
+            key={z}
+            type="button"
+            onClick={() => {
+              onZoomChange?.(z);
+              setZoomOpen(false);
+            }}
+            className={cn(
+              'flex items-center justify-between px-2.5 py-1.5 rounded-md text-xs font-medium w-full text-left transition-colors',
+              zoomLevel === z
+                ? 'bg-zinc-100 dark:bg-zinc-800 font-bold text-zinc-950 dark:text-white'
+                : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800/60'
+            )}
+          >
+            <span>{z}%</span>
+            {zoomLevel === z && <Check className="w-3.5 h-3.5 text-primary" />}
+          </button>
+        ))}
+      </PortalPopover>
+
+      {/* Fullscreen / Make Big Toggle */}
+      <ToolbarButton
+        active={isFullscreen}
+        onClick={onToggleFullscreen}
+        tooltip={isFullscreen ? 'Exit Fullscreen (Esc)' : 'Make big / Fullscreen'}
+        className={cn(
+          'h-8.5 px-2.5 font-semibold text-xs border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 shadow-xs flex items-center gap-1.5',
+          isFullscreen && 'bg-primary/15 text-primary border-primary/30'
+        )}
+      >
+        {isFullscreen ? (
+          <>
+            <Minimize2 className="w-4 h-4 text-primary shrink-0" />
+            <span className="hidden sm:inline">Exit</span>
+          </>
+        ) : (
+          <>
+            <Maximize2 className="w-4 h-4 shrink-0" />
+            <span className="hidden sm:inline">Full screen</span>
+          </>
+        )}
+      </ToolbarButton>
+    </div>
+  );
+}
+
 // ─── FixedToolbarButtons Master Component ─────────────────────────────────────
 
 export interface FixedToolbarButtonsProps {
   editor: any;
+  mode?: EditorMode;
+  onModeChange?: (mode: EditorMode) => void;
+  isFullscreen?: boolean;
+  onToggleFullscreen?: () => void;
+  zoomLevel?: number;
+  onZoomChange?: (zoom: number) => void;
+  comments?: EditorComment[];
+  onAddComment?: (text: string, selectedText?: string) => void;
+  onResolveComment?: (id: string) => void;
 }
 
-export function FixedToolbarButtons({ editor }: FixedToolbarButtonsProps) {
+export function FixedToolbarButtons({
+  editor,
+  mode = 'editing',
+  onModeChange,
+  isFullscreen = false,
+  onToggleFullscreen,
+  zoomLevel = 100,
+  onZoomChange,
+  comments = [],
+  onAddComment,
+  onResolveComment,
+}: FixedToolbarButtonsProps) {
   const [, forceUpdate] = React.useReducer((x) => x + 1, 0);
 
   React.useEffect(() => {
@@ -1591,6 +2041,8 @@ export function FixedToolbarButtons({ editor }: FixedToolbarButtonsProps) {
     } catch { /* non-fatal */ }
     return () => unsub?.();
   }, [editor]);
+
+  const isViewing = mode === 'viewing';
 
   // Marks state
   const isBold = isMarkActive(editor, 'bold');
@@ -1606,6 +2058,7 @@ export function FixedToolbarButtons({ editor }: FixedToolbarButtonsProps) {
   const isToggle = activeType === 'toggle';
 
   const handleLink = () => {
+    if (isViewing) return;
     const url = window.prompt('Enter link URL:');
     if (!url) return;
     editor?.tf?.insertNodes?.([{ type: 'a', url, children: [{ text: url }] }]);
@@ -1613,6 +2066,7 @@ export function FixedToolbarButtons({ editor }: FixedToolbarButtonsProps) {
   };
 
   const handleOutdent = () => {
+    if (isViewing) return;
     const block = getActiveBlock(editor);
     const currentIndent = Number(block?.indent) || 0;
     if (currentIndent > 0) {
@@ -1621,6 +2075,7 @@ export function FixedToolbarButtons({ editor }: FixedToolbarButtonsProps) {
   };
 
   const handleIndent = () => {
+    if (isViewing) return;
     const block = getActiveBlock(editor);
     const currentIndent = Number(block?.indent) || 0;
     if (currentIndent < 10) {
@@ -1631,14 +2086,14 @@ export function FixedToolbarButtons({ editor }: FixedToolbarButtonsProps) {
   return (
     <div className="flex w-full items-center gap-1 flex-wrap">
       {/* 1. Insert (+ v), Turn Into (Heading 1 v), Font Size ([- 12 +]) */}
-      <ToolbarGroup>
+      <ToolbarGroup className={cn(isViewing && 'opacity-40 pointer-events-none')}>
         <InsertToolbarButton editor={editor} />
         <TurnIntoToolbarButton editor={editor} />
         <FontSizeToolbarButton editor={editor} />
       </ToolbarGroup>
 
       {/* 2. Marks: Bold, Italic, Underline, Strikethrough, Inline Code, Text Color, Background Color */}
-      <ToolbarGroup>
+      <ToolbarGroup className={cn(isViewing && 'opacity-40 pointer-events-none')}>
         <ToolbarButton
           active={isBold}
           onClick={() => toggleMark(editor, 'bold')}
@@ -1682,20 +2137,20 @@ export function FixedToolbarButtons({ editor }: FixedToolbarButtonsProps) {
         <ColorPickerDropdown
           editor={editor}
           nodeType="color"
-          tooltip="Text Color"
           icon={Baseline}
+          tooltip="Text Color"
         />
 
         <ColorPickerDropdown
           editor={editor}
           nodeType="backgroundColor"
-          tooltip="Background / Fill Color"
           icon={PaintBucket}
+          tooltip="Background Color"
         />
       </ToolbarGroup>
 
-      {/* 3. Alignment, Numbered List, Bulleted List, To-do List, Toggle List */}
-      <ToolbarGroup>
+      {/* 3. Alignment, Numbered List, Bulleted List, To-do list, Toggle list */}
+      <ToolbarGroup className={cn(isViewing && 'opacity-40 pointer-events-none')}>
         <AlignToolbarButton editor={editor} />
         <NumberedListToolbarButton editor={editor} />
         <BulletedListToolbarButton editor={editor} />
@@ -1718,7 +2173,7 @@ export function FixedToolbarButtons({ editor }: FixedToolbarButtonsProps) {
       </ToolbarGroup>
 
       {/* 4. Link, Table, Emoji */}
-      <ToolbarGroup>
+      <ToolbarGroup className={cn(isViewing && 'opacity-40 pointer-events-none')}>
         <ToolbarButton onClick={handleLink} tooltip="Insert Link">
           <Link2 className="w-4 h-4" />
         </ToolbarButton>
@@ -1727,43 +2182,40 @@ export function FixedToolbarButtons({ editor }: FixedToolbarButtonsProps) {
         <EmojiToolbarButton editor={editor} />
       </ToolbarGroup>
 
-      {/* 5. Media: Image, Video, Audio, File */}
-      <ToolbarGroup>
+      {/* 5. Media Suite: Image, Video, Audio, File */}
+      <ToolbarGroup className={cn(isViewing && 'opacity-40 pointer-events-none')}>
         <MediaToolbarButton
           editor={editor}
           nodeType="img"
-          tooltip="Image"
+          tooltip="Insert Image"
           icon={ImageIcon}
           accept="image/*"
         />
-
         <MediaToolbarButton
           editor={editor}
           nodeType="video"
-          tooltip="Video"
+          tooltip="Insert Video"
           icon={Film}
           accept="video/*"
         />
-
         <MediaToolbarButton
           editor={editor}
           nodeType="audio"
-          tooltip="Audio"
+          tooltip="Insert Audio"
           icon={AudioLines}
           accept="audio/*"
         />
-
         <MediaToolbarButton
           editor={editor}
           nodeType="file"
-          tooltip="File Attachment"
+          tooltip="Attach File"
           icon={FileUp}
           accept="*"
         />
       </ToolbarGroup>
 
       {/* 6. Line Height, Outdent, Indent */}
-      <ToolbarGroup>
+      <ToolbarGroup className={cn(isViewing && 'opacity-40 pointer-events-none')}>
         <LineHeightToolbarButton editor={editor} />
 
         <ToolbarButton onClick={handleOutdent} tooltip="Decrease Indent">
@@ -1775,17 +2227,53 @@ export function FixedToolbarButtons({ editor }: FixedToolbarButtonsProps) {
         </ToolbarButton>
       </ToolbarGroup>
 
-      {/* 7. More Formatting (...), Highlighter Pen */}
-      <ToolbarGroup>
+      {/* 7. More Formatting (...) */}
+      <ToolbarGroup className={cn(isViewing && 'opacity-40 pointer-events-none')}>
         <MoreToolbarButton editor={editor} />
+      </ToolbarGroup>
 
+      <ToolbarSeparator />
+
+      {/* 8. Highlighter Pen & Comment Icon */}
+      <ToolbarGroup>
         <ToolbarButton
           active={isHighlight}
           onClick={() => toggleMark(editor, 'highlight')}
           tooltip="Highlight"
+          disabled={isViewing}
+          className={cn(isViewing && 'opacity-40 pointer-events-none')}
         >
           <Highlighter className="w-4 h-4 text-amber-500" />
         </ToolbarButton>
+
+        <CommentToolbarButton
+          editor={editor}
+          comments={comments}
+          onAddComment={onAddComment}
+          onResolveComment={onResolveComment}
+        />
+      </ToolbarGroup>
+
+      <ToolbarSeparator />
+
+      {/* 9. Mode Switcher (Editing, Suggesting, Viewing) */}
+      <ToolbarGroup>
+        <ModeToolbarButton
+          mode={mode}
+          onModeChange={onModeChange}
+        />
+      </ToolbarGroup>
+
+      <ToolbarSeparator />
+
+      {/* 10. Make It Big: Zoom Controls & Fullscreen Toggle */}
+      <ToolbarGroup>
+        <FullscreenAndZoomButtons
+          isFullscreen={isFullscreen}
+          onToggleFullscreen={onToggleFullscreen}
+          zoomLevel={zoomLevel}
+          onZoomChange={onZoomChange}
+        />
       </ToolbarGroup>
     </div>
   );

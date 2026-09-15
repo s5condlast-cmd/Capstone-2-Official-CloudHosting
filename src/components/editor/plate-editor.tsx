@@ -9,11 +9,16 @@
  * - FloatingToolbar (contextual floating action bar on text selection)
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Sparkles, Eye } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import { editorPlugins } from './editor-kit';
 import { EditorContainer, Editor } from '@/src/components/plate-ui/editor';
 import { FixedToolbar } from '@/src/components/plate-ui/fixed-toolbar';
-import { FixedToolbarButtons } from '@/src/components/plate-ui/fixed-toolbar-buttons';
+import {
+  FixedToolbarButtons,
+  type EditorMode,
+  type EditorComment,
+} from '@/src/components/plate-ui/fixed-toolbar-buttons';
 import { FloatingToolbar } from '@/src/components/plate-ui/floating-toolbar';
 import '@/src/styles/print-document.css';
 
@@ -41,6 +46,16 @@ export interface PlateEditorProps {
   className?: string;
   /** Placeholder text when the document is empty */
   placeholder?: string;
+  /** Active editing mode: 'editing', 'viewing', or 'suggestion' */
+  mode?: EditorMode;
+  /** Mode change callback */
+  onModeChange?: (mode: EditorMode) => void;
+  /** Comments list */
+  comments?: EditorComment[];
+  /** Comment added callback */
+  onAddComment?: (text: string, selectedText?: string) => void;
+  /** Comment resolved/deleted callback */
+  onResolveComment?: (id: string) => void;
 }
 
 // ─── Default empty content ────────────────────────────────────────────────────
@@ -84,129 +99,240 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
       initialContent = DEFAULT_CONTENT,
       onChange,
       readOnly = false,
-    className,
-    placeholder = 'Type your document content here…',
-  },
-  ref
-) {
-  const [plateReady, setPlateReady] = useState(false);
-  const [PlateComp, setPlateComp] = useState<React.ComponentType<any> | null>(null);
-  const [createEditorFn, setCreateEditorFn] = useState<((opts: any) => any) | null>(null);
-
-  const editorRef = useRef<HTMLDivElement | null>(null);
-  const contentRef = useRef<object[]>(initialContent);
-  const editorInstanceRef = useRef<any>(null);
-
-  // ── Load Plate runtime ──────────────────────────────────────────────────
-  useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      try {
-        const mod = await getPlateModule();
-        if (cancelled) return;
-        const { Plate, createPlateEditor } = mod as any;
-        setPlateComp(() => Plate);
-        setCreateEditorFn(() => createPlateEditor);
-        setPlateReady(true);
-      } catch {
-        setPlateReady(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  // ── Create editor instance ──────────────────────────────────────────────
-  const editor = useMemo(() => {
-    if (!createEditorFn) return null;
-    try {
-      const instance = createEditorFn({
-        plugins: editorPlugins,
-        value: initialContent,
-      });
-      editorInstanceRef.current = instance;
-      return instance;
-    } catch {
-      return null;
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [createEditorFn]);
-
-  // Store editor reference on forwarded ref
-  useEffect(() => {
-    if (!ref) return;
-    const handle = {
-      getContent: () => contentRef.current,
-      getWordCount: () => countWordsInContent(contentRef.current),
-      getEditorInstance: () => editorInstanceRef.current,
-    };
-    if (typeof ref === 'function') {
-      ref(handle);
-    } else {
-      (ref as React.MutableRefObject<typeof handle>).current = handle;
-    }
-  }, [ref]);
-
-  const handleChange = useCallback(
-    ({ value }: { value: object[] }) => {
-      contentRef.current = value;
-      onChange?.(value, countWordsInContent(value));
+      className,
+      placeholder = 'Type your document content here…',
+      mode,
+      onModeChange,
+      comments,
+      onAddComment,
+      onResolveComment,
     },
-    [onChange]
-  );
+    ref
+  ) {
+    const [plateReady, setPlateReady] = useState(false);
+    const [PlateComp, setPlateComp] = useState<React.ComponentType<any> | null>(null);
+    const [createEditorFn, setCreateEditorFn] = useState<((opts: any) => any) | null>(null);
 
-  // ── Fallback while loading ──────────────────────────────────────────────
-  if (!plateReady || !PlateComp || !editor) {
-    return (
-      <div
-        className={cn(
-          'plate-editor-loading min-h-[600px] p-8 bg-zinc-50 dark:bg-zinc-950/80 border border-zinc-200 dark:border-zinc-800 rounded-xl flex items-center justify-center',
-          className
-        )}
-        aria-label="Loading editor"
-      >
-        <div className="flex flex-col items-center gap-3 text-zinc-400">
-          <div className="w-6 h-6 border-2 border-zinc-300 border-t-zinc-700 dark:border-zinc-700 dark:border-t-zinc-300 rounded-full animate-spin" />
-          <span className="text-sm font-medium">Loading document editor…</span>
+    // View mode, fullscreen, and zoom state
+    const [internalMode, setInternalMode] = useState<EditorMode>('editing');
+    const [isFullscreen, setIsFullscreen] = useState(false);
+    const [zoomLevel, setZoomLevel] = useState(100);
+    const [internalComments, setInternalComments] = useState<EditorComment[]>([]);
+
+    const activeMode: EditorMode = readOnly ? 'viewing' : (mode ?? internalMode);
+    const isEffectivelyReadOnly = readOnly || activeMode === 'viewing';
+
+    const editorRef = useRef<HTMLDivElement | null>(null);
+    const contentRef = useRef<object[]>(initialContent);
+    const editorInstanceRef = useRef<any>(null);
+
+    // ── Fullscreen Escape Listener ──────────────────────────────────────────
+    useEffect(() => {
+      if (!isFullscreen) return;
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          setIsFullscreen(false);
+        }
+      };
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isFullscreen]);
+
+    // ── Load Plate runtime ──────────────────────────────────────────────────
+    useEffect(() => {
+      let cancelled = false;
+      void (async () => {
+        try {
+          const mod = await getPlateModule();
+          if (cancelled) return;
+          const { Plate, createPlateEditor } = mod as any;
+          setPlateComp(() => Plate);
+          setCreateEditorFn(() => createPlateEditor);
+          setPlateReady(true);
+        } catch {
+          setPlateReady(false);
+        }
+      })();
+      return () => {
+        cancelled = true;
+      };
+    }, []);
+
+    // ── Create editor instance ──────────────────────────────────────────────
+    const editor = useMemo(() => {
+      if (!createEditorFn) return null;
+      try {
+        const instance = createEditorFn({
+          plugins: editorPlugins,
+          value: initialContent,
+        });
+        editorInstanceRef.current = instance;
+        return instance;
+      } catch {
+        return null;
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [createEditorFn]);
+
+    // Store editor reference on forwarded ref
+    useEffect(() => {
+      if (!ref) return;
+      const handle = {
+        getContent: () => contentRef.current,
+        getWordCount: () => countWordsInContent(contentRef.current),
+        getEditorInstance: () => editorInstanceRef.current,
+      };
+      if (typeof ref === 'function') {
+        ref(handle);
+      } else {
+        (ref as React.MutableRefObject<typeof handle>).current = handle;
+      }
+    }, [ref]);
+
+    const handleChange = useCallback(
+      ({ value }: { value: object[] }) => {
+        contentRef.current = value;
+        onChange?.(value, countWordsInContent(value));
+      },
+      [onChange]
+    );
+
+    // ── Fallback while loading ──────────────────────────────────────────────
+    if (!plateReady || !PlateComp || !editor) {
+      return (
+        <div
+          className={cn(
+            'plate-editor-loading min-h-[600px] p-8 bg-zinc-50 dark:bg-zinc-950/80 border border-zinc-200 dark:border-zinc-800 rounded-xl flex items-center justify-center',
+            className
+          )}
+          aria-label="Loading editor"
+        >
+          <div className="flex flex-col items-center gap-3 text-zinc-400">
+            <div className="w-6 h-6 border-2 border-zinc-300 border-t-zinc-700 dark:border-zinc-700 dark:border-t-zinc-300 rounded-full animate-spin" />
+            <span className="text-sm font-medium">Loading document editor…</span>
+          </div>
         </div>
-      </div>
+      );
+    }
+
+    return (
+      <PlateComp editor={editor} onChange={handleChange} readOnly={isEffectivelyReadOnly}>
+        <div
+          className={cn(
+            'plate-editor-wrapper relative flex flex-col rounded-xl overflow-hidden shadow-xs transition-all',
+            isFullscreen && 'fixed inset-0 z-[100] w-screen h-screen rounded-none bg-zinc-100 dark:bg-zinc-950',
+            className
+          )}
+        >
+          {/* Fixed top toolbar matching official Plate layout */}
+          <FixedToolbar>
+            <FixedToolbarButtons
+              editor={editor}
+              mode={activeMode}
+              onModeChange={(m) => {
+                setInternalMode(m);
+                onModeChange?.(m);
+              }}
+              isFullscreen={isFullscreen}
+              onToggleFullscreen={() => setIsFullscreen((prev) => !prev)}
+              zoomLevel={zoomLevel}
+              onZoomChange={setZoomLevel}
+              comments={comments ?? internalComments}
+              onAddComment={(t, s) => {
+                const newC: EditorComment = {
+                  id: crypto.randomUUID(),
+                  author: 'Student',
+                  text: t,
+                  createdAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                  selectedText: s,
+                };
+                setInternalComments((prev) => [newC, ...prev]);
+                onAddComment?.(t, s);
+              }}
+              onResolveComment={(id) => {
+                setInternalComments((prev) => prev.filter((c) => c.id !== id));
+                onResolveComment?.(id);
+              }}
+            />
+          </FixedToolbar>
+
+          {/* Mode banner indicator */}
+          {activeMode === 'suggestion' && (
+            <div className="flex items-center justify-between px-4 py-1.5 bg-amber-500/10 border-b border-amber-500/20 text-amber-800 dark:text-amber-200 text-xs font-medium shrink-0">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                <span>Suggestion Mode: Select text and click the comment icon to suggest changes or leave feedback notes.</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setInternalMode('editing');
+                  onModeChange?.('editing');
+                }}
+                className="text-amber-600 dark:text-amber-400 hover:underline text-[11px] font-semibold"
+              >
+                Exit to Editing
+              </button>
+            </div>
+          )}
+
+          {activeMode === 'viewing' && (
+            <div className="flex items-center justify-between px-4 py-1.5 bg-zinc-100 dark:bg-zinc-800/60 border-b border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 text-xs font-medium shrink-0">
+              <div className="flex items-center gap-2">
+                <Eye className="w-3.5 h-3.5 text-zinc-500" />
+                <span>Viewing Mode: Document is read-only. Switch mode to make edits.</span>
+              </div>
+              {!readOnly && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setInternalMode('editing');
+                    onModeChange?.('editing');
+                  }}
+                  className="text-primary hover:underline text-[11px] font-semibold"
+                >
+                  Switch to Editing
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Scrollable canvas containing the paper document sheet */}
+          <EditorContainer
+            variant={isFullscreen ? 'fullWidth' : 'demo'}
+            className={cn(
+              isFullscreen && 'flex-1 overflow-y-auto p-4 md:p-8',
+              zoomLevel > 100 && 'overflow-x-auto'
+            )}
+          >
+            <div
+              style={{
+                transform: zoomLevel !== 100 ? `scale(${zoomLevel / 100})` : undefined,
+                transformOrigin: 'top center',
+                transition: 'transform 0.15s ease-out',
+                width: zoomLevel > 100 ? `${zoomLevel}%` : '100%',
+                display: 'flex',
+                justifyContent: 'center',
+              }}
+            >
+              <Editor
+                ref={editorRef}
+                variant="demo"
+                placeholder={placeholder}
+                readOnly={isEffectivelyReadOnly}
+                spellCheck
+                autoFocus={!isEffectivelyReadOnly}
+              />
+            </div>
+          </EditorContainer>
+
+          {/* Floating formatting toolbar on text selection */}
+          {!isEffectivelyReadOnly && <FloatingToolbar editor={editor} />}
+        </div>
+      </PlateComp>
     );
   }
-
-  return (
-    <PlateComp editor={editor} onChange={handleChange} readOnly={readOnly}>
-      <div
-        className={cn(
-          'plate-editor-wrapper relative flex flex-col rounded-xl overflow-hidden shadow-xs',
-          className
-        )}
-      >
-        {/* Fixed top toolbar matching official Plate layout */}
-        {!readOnly && (
-          <FixedToolbar>
-            <FixedToolbarButtons editor={editor} />
-          </FixedToolbar>
-        )}
-
-        {/* Scrollable canvas containing the paper document sheet */}
-        <EditorContainer variant="demo">
-          <Editor
-            ref={editorRef}
-            variant="demo"
-            placeholder={placeholder}
-            readOnly={readOnly}
-            spellCheck
-            autoFocus={!readOnly}
-          />
-        </EditorContainer>
-
-        {/* Floating formatting toolbar on text selection */}
-        {!readOnly && <FloatingToolbar editor={editor} />}
-      </div>
-    </PlateComp>
-  );
-});
+);
 
 PlateEditor.displayName = 'PlateEditor';
 

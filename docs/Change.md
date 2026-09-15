@@ -1825,3 +1825,43 @@ Implemented the complete fixed toolbar layout, controls, and functionality shown
 - **Dark Mode Visibility**:
   - Upgraded text/icon token contrast in dark mode from muted `text-zinc-400` to vibrant `text-zinc-200 dark:text-zinc-100` with subtle hover backdrops `hover:bg-zinc-200 dark:hover:bg-zinc-800`.
 
+---
+
+## 9. Mode Switcher (`Editing`, `Suggesting`, `Viewing`), Comments & Annotations, and Fullscreen / Zoom ("Make It Big") Suite
+
+### 9.1. Exact Match to Reference Screenshot (`media_1789457701399.png`)
+Completed the remaining right-aligned toolbar controls:
+1. `...` (`MoreToolbarButton`)
+2. `|` (`ToolbarSeparator`)
+3. `Highlighter` pen icon (`HighlighterToolbarButton`)
+4. `Comment` icon (`CommentToolbarButton`) with badge count and selection-aware popover
+5. `|` (`ToolbarSeparator`)
+6. `✏️ Editing v` (`ModeToolbarButton`) with 3 modes: Editing, Suggesting, Viewing
+7. `|` (`ToolbarSeparator`)
+8. "Make It Big" controls:
+   - Zoom Stepper (`[-] 100% [+]`) with preset popover (`50%`–`200%`)
+   - Fullscreen / Maximize toggle (`Maximize2` / `Minimize2`) with `Esc` listener
+
+### 9.2. Comment & Annotation Architecture (`CommentToolbarButton`)
+- **Selection-Aware Capture**: Automatically queries `window.getSelection()?.toString()`. If text is highlighted when opening the comment popover, a quoted reference banner is attached to the note.
+- **Thread & Notes Storage**: Supports adding feedback notes, displaying author name, timestamp, and resolve/delete action (`Trash2`).
+- **Badge Indicator**: Real-time counter badge on the toolbar icon indicates active comment count.
+
+### 9.3. Mode Switcher Dropdown (`ModeToolbarButton`)
+- **Editing Mode** (Pencil icon, default): Read-write interactive editing with full formatting suite.
+- **Suggesting Mode** (Sparkles icon): Shows amber indicator banner informing the student that edits become suggestions and review notes.
+- **Viewing Mode** (Eye icon):
+  - Sets Plate editor to `readOnly={true}`.
+  - Visually dims and disables formatting buttons (`opacity-40 pointer-events-none`).
+  - Displays a clean Viewing banner with a 1-click "Switch to Editing" shortcut.
+  - Keeps toolbar, mode switcher, comments, and zoom controls accessible.
+
+### 9.4. "Make It Big" Fullscreen & Zoom Suite (`FullscreenAndZoomButtons`)
+- **Fullscreen Mode**:
+  - Toggles `.plate-editor-wrapper` into `fixed inset-0 z-[100] w-screen h-screen bg-zinc-100 dark:bg-zinc-950 flex flex-col`.
+  - Hides application navigation, sidebar, and headers for 100% edge-to-edge document focus.
+  - Supports `Escape` keyboard shortcut to instantly restore windowed view.
+- **Zoom Scale Controls**:
+  - Stepper buttons (`[-]`, `[+]`) and preset picker (`50%`, `75%`, `100%`, `125%`, `150%`, `175%`, `200%`).
+  - Smooth hardware-accelerated CSS scaling (`transform: scale(...)`, `transform-origin: top center`) to enlarge document sheet and text for effortless reading.
+
