@@ -64,7 +64,7 @@ import {
   MessageSquareText,
   Pencil,
   Eye,
-  Sparkles,
+  PenLine,
   Maximize2,
   Minimize2,
   ZoomIn,
@@ -1948,7 +1948,7 @@ export function ModeToolbarButton({
     {
       id: 'suggestion',
       label: 'Suggesting',
-      icon: Sparkles,
+      icon: PenLine,
       desc: 'Edits become suggestions and notes',
     },
     {
@@ -1982,7 +1982,7 @@ export function ModeToolbarButton({
         <CurrentIcon className={cn(
           'w-4 h-4 shrink-0',
           mode === 'editing' && 'text-primary',
-          mode === 'suggestion' && 'text-amber-500',
+          mode === 'suggestion' && 'text-zinc-700 dark:text-white',
           mode === 'viewing' && 'text-zinc-400'
         )} />
         <span>{currentMode.label}</span>
@@ -2014,7 +2014,7 @@ export function ModeToolbarButton({
               <Icon className={cn(
                 'w-4 h-4 shrink-0 mt-0.5',
                 item.id === 'editing' && 'text-primary',
-                item.id === 'suggestion' && 'text-amber-500',
+                item.id === 'suggestion' && 'text-zinc-700 dark:text-white',
                 item.id === 'viewing' && 'text-zinc-400'
               )} />
               <div className="flex-1 flex flex-col">

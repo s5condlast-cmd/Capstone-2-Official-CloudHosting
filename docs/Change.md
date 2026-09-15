@@ -1920,6 +1920,19 @@ Per user feedback with screenshot `media_1789462774780.png`:
 2. **Preserved Formatting Suite**:
    - The marks group now contains: Bold (`B`), Italic (`I`), Underline (`U`), Strikethrough (`S`), Text Color (`A_`), and Background Color (paint bucket).
 
+---
+
+## 13. Mode Switcher: Suggesting Icon & Color Refinement
+
+Per user feedback with screenshot `media_1789462822304.png`:
+
+1. **Icon Replacement**:
+   - Replaced `Sparkles` icon with `PenLine` for the "Suggesting" mode (`ModeToolbarButton`) in [`src/components/plate-ui/fixed-toolbar-buttons.tsx`](file:///c:/Users/johnd/Downloads/MainCode/src/components/plate-ui/fixed-toolbar-buttons.tsx).
+2. **Color Neutralization (Just White)**:
+   - Removed the amber/orange `text-amber-500` color styling.
+   - Styled the icon to render in clean white in dark mode (`text-zinc-700 dark:text-white`).
+
+
 
 
 
