@@ -75,8 +75,10 @@ import {
   Redo2,
   ExternalLink,
   Unlink,
+  MoreVertical,
 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
+import { SidebarContext } from '@/components/ui/sidebar';
 import {
   ToolbarGroup,
   ToolbarButton,
@@ -2646,6 +2648,279 @@ export function FullscreenAndZoomButtons({
   );
 }
 
+// ─── Right-Edge Overflow Menu (Vertical 3-Dots for Comment, Mode, Fullscreen) ───
+
+interface RightOverflowMenuProps {
+  editor: any;
+  mode?: EditorMode;
+  onModeChange?: (mode: EditorMode) => void;
+  isFullscreen?: boolean;
+  onToggleFullscreen?: () => void;
+  comments?: EditorComment[];
+  onAddComment?: (text: string, selectedText?: string) => void;
+  onResolveComment?: (id: string) => void;
+}
+
+function RightOverflowMenu({
+  editor,
+  mode = 'editing',
+  onModeChange,
+  isFullscreen = false,
+  onToggleFullscreen,
+  comments = [],
+  onAddComment,
+  onResolveComment,
+}: RightOverflowMenuProps) {
+  const [moreOpen, setMoreOpen] = React.useState(false);
+  const [commentOpen, setCommentOpen] = React.useState(false);
+  const [commentText, setCommentText] = React.useState('');
+  const [selectedSnippet, setSelectedSnippet] = React.useState('');
+  const anchorRef = React.useRef<HTMLDivElement>(null);
+
+  const MODES: { id: EditorMode; label: string; icon: React.ComponentType<any>; desc: string }[] = [
+    { id: 'editing', label: 'Editing', icon: Pencil, desc: 'Edit document directly' },
+    { id: 'suggestion', label: 'Suggesting', icon: PenLine, desc: 'Edits become suggestions and notes' },
+    { id: 'viewing', label: 'Viewing', icon: Eye, desc: 'Read or print document (read-only)' },
+  ];
+
+  const activeComments = (comments || []).filter((c) => !c.resolved);
+
+  const handlePostComment = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!commentText.trim()) return;
+    onAddComment?.(commentText.trim(), selectedSnippet || undefined);
+    setCommentText('');
+    setSelectedSnippet('');
+  };
+
+  const handleOpenComments = () => {
+    const sel = typeof window !== 'undefined' ? window.getSelection()?.toString()?.trim() || '' : '';
+    setSelectedSnippet(sel);
+    setMoreOpen(false);
+    setCommentOpen(true);
+  };
+
+  return (
+    <div ref={anchorRef} className="relative inline-flex items-center">
+      <ToolbarButton
+        active={moreOpen}
+        onClick={() => setMoreOpen(!moreOpen)}
+        tooltip="More options"
+        className={cn(
+          'h-8.5 px-2 text-zinc-700 dark:text-zinc-200',
+          moreOpen && 'bg-zinc-100 dark:bg-zinc-800'
+        )}
+      >
+        <MoreVertical className="w-4 h-4" />
+        {activeComments.length > 0 && (
+          <span className="absolute -top-1 -right-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-primary-foreground">
+            {activeComments.length > 9 ? '9+' : activeComments.length}
+          </span>
+        )}
+      </ToolbarButton>
+
+      {/* Main Overflow Dropview */}
+      <PortalPopover
+        anchorRef={anchorRef}
+        open={moreOpen}
+        onClose={() => setMoreOpen(false)}
+        align="end"
+        className="w-56 p-1.5 space-y-1"
+      >
+        <div className="px-2.5 py-1 text-[11px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
+          Document Mode
+        </div>
+        <div className="space-y-0.5">
+          {MODES.map((m) => {
+            const Icon = m.icon;
+            const isActive = mode === m.id;
+            return (
+              <button
+                key={m.id}
+                type="button"
+                onClick={() => {
+                  onModeChange?.(m.id);
+                  setMoreOpen(false);
+                }}
+                className={cn(
+                  'flex items-center justify-between w-full px-2.5 py-1.5 text-xs font-medium rounded-lg text-left transition-colors cursor-pointer',
+                  isActive
+                    ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 font-semibold'
+                    : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800/60'
+                )}
+              >
+                <div className="flex items-center gap-2.5">
+                  <Icon className={cn('w-4 h-4', isActive ? 'text-primary' : 'text-zinc-500 dark:text-zinc-400')} />
+                  <span>{m.label}</span>
+                </div>
+                {isActive && <Check className="w-3.5 h-3.5 text-primary" />}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="h-px bg-zinc-200 dark:bg-zinc-800 my-1" />
+
+        {/* Comments option */}
+        <button
+          type="button"
+          onClick={handleOpenComments}
+          className="flex items-center justify-between w-full px-2.5 py-1.5 text-xs font-medium rounded-lg text-left text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+        >
+          <div className="flex items-center gap-2.5">
+            <MessageSquareText className="w-4 h-4 text-zinc-600 dark:text-zinc-300" />
+            <span>Comments & Notes</span>
+          </div>
+          {activeComments.length > 0 && (
+            <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-primary text-primary-foreground font-bold">
+              {activeComments.length}
+            </span>
+          )}
+        </button>
+
+        <div className="h-px bg-zinc-200 dark:bg-zinc-800 my-1" />
+
+        {/* Fullscreen option */}
+        <button
+          type="button"
+          onClick={() => {
+            onToggleFullscreen?.();
+            setMoreOpen(false);
+          }}
+          className="flex items-center gap-2.5 w-full px-2.5 py-1.5 text-xs font-medium rounded-lg text-left text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+        >
+          {isFullscreen ? (
+            <Minimize2 className="w-4 h-4 text-primary shrink-0" />
+          ) : (
+            <Maximize2 className="w-4 h-4 text-zinc-600 dark:text-zinc-300 shrink-0" />
+          )}
+          <span>{isFullscreen ? 'Exit full screen' : 'Full screen'}</span>
+        </button>
+      </PortalPopover>
+
+      {/* Comments Popover (opened from overflow menu) */}
+      <PortalPopover
+        anchorRef={anchorRef}
+        open={commentOpen}
+        onClose={() => setCommentOpen(false)}
+        align="end"
+        className="w-80 sm:w-96 p-3 flex flex-col gap-3"
+      >
+        <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-2">
+          <div className="flex items-center gap-2">
+            <MessageSquareText className="w-4 h-4 text-primary" />
+            <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100">
+              Comments & Notes
+            </span>
+            {activeComments.length > 0 && (
+              <span className="text-[11px] font-semibold text-zinc-500">
+                ({activeComments.length})
+              </span>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={() => setCommentOpen(false)}
+            className="p-1 rounded-md text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {/* Input Form */}
+        <form onSubmit={handlePostComment} className="flex flex-col gap-2">
+          {selectedSnippet && (
+            <div className="flex items-start justify-between gap-1.5 p-2 rounded-md bg-zinc-100 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 text-xs">
+              <div className="flex items-start gap-1.5 overflow-hidden">
+                <Quote className="w-3.5 h-3.5 text-zinc-400 shrink-0 mt-0.5" />
+                <span className="italic text-zinc-600 dark:text-zinc-300 truncate max-w-[240px]">
+                  "{selectedSnippet}"
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedSnippet('')}
+                className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
+                title="Clear selection reference"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+          )}
+
+          <textarea
+            value={commentText}
+            onChange={(e) => setCommentText(e.target.value)}
+            placeholder={selectedSnippet ? 'Comment on selected text…' : 'Add a document note or comment…'}
+            rows={2}
+            className="w-full text-xs p-2 rounded-md border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-primary resize-none placeholder:text-zinc-400"
+          />
+
+          <div className="flex justify-end gap-1.5">
+            <button
+              type="submit"
+              disabled={!commentText.trim()}
+              className="px-3 py-1 rounded-md text-xs font-semibold bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-40 transition-opacity"
+            >
+              Post Comment
+            </button>
+          </div>
+        </form>
+
+        {/* Comments List */}
+        <div className="flex flex-col gap-2 max-h-56 overflow-y-auto pt-1 border-t border-zinc-100 dark:border-zinc-800">
+          {(comments || []).length === 0 ? (
+            <p className="text-center py-4 text-xs text-zinc-400">
+              No comments yet. Highlight text or write a note above.
+            </p>
+          ) : (
+            (comments || []).map((comment) => (
+              <div
+                key={comment.id}
+                className={cn(
+                  'p-2.5 rounded-lg border text-xs flex flex-col gap-1.5 transition-colors',
+                  comment.resolved
+                    ? 'bg-zinc-50 dark:bg-zinc-900/40 border-zinc-200 dark:border-zinc-800 opacity-60'
+                    : 'bg-white dark:bg-zinc-800/80 border-zinc-200 dark:border-zinc-700 shadow-xs'
+                )}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-bold text-zinc-900 dark:text-zinc-100">
+                      {comment.author}
+                    </span>
+                    <span className="text-[10px] text-zinc-400">
+                      {comment.createdAt}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => onResolveComment?.(comment.id)}
+                    className="p-1 rounded text-zinc-400 hover:text-red-500 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+                    title={comment.resolved ? 'Delete' : 'Resolve / Delete'}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                {comment.selectedText && (
+                  <div className="pl-2 border-l-2 border-primary/40 text-[11px] italic text-zinc-500 dark:text-zinc-400">
+                    "{comment.selectedText}"
+                  </div>
+                )}
+
+                <p className="text-zinc-700 dark:text-zinc-200 leading-relaxed break-words whitespace-pre-wrap">
+                  {comment.text}
+                </p>
+              </div>
+            ))
+          )}
+        </div>
+      </PortalPopover>
+    </div>
+  );
+}
+
 // ─── FixedToolbarButtons Master Component ─────────────────────────────────────
 
 export interface FixedToolbarButtonsProps {
@@ -2674,6 +2949,22 @@ export function FixedToolbarButtons({
   onResolveComment,
 }: FixedToolbarButtonsProps) {
   const [, forceUpdate] = React.useReducer((x) => x + 1, 0);
+
+  const sidebar = React.useContext(SidebarContext);
+  const isSidebarOpen = sidebar ? sidebar.open : false;
+
+  const [isNarrow, setIsNarrow] = React.useState(false);
+
+  React.useEffect(() => {
+    const handleResize = () => {
+      setIsNarrow(window.innerWidth < 1180);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const showOverflowMenu = isSidebarOpen || isNarrow;
 
   React.useEffect(() => {
     if (!editor?.on) return;
@@ -2747,7 +3038,7 @@ export function FixedToolbarButtons({
   const canRedo = editor?.history?.redos ? editor.history.redos.length > 0 : true;
 
   return (
-    <div className="flex w-full items-center gap-1 flex-wrap">
+    <div className="flex w-full items-center gap-1 flex-nowrap">
       {/* 0. History: Undo & Redo */}
       <ToolbarGroup className={cn(isViewing && 'opacity-40 pointer-events-none')}>
         <ToolbarButton
@@ -2876,30 +3167,48 @@ export function FixedToolbarButtons({
 
       {/* 7. Right-Aligned Actions (Comment, Mode, Fullscreen) touching container edge */}
       <div className="ml-auto flex items-center gap-1 shrink-0">
-        <ToolbarSeparator />
-        <CommentToolbarButton
-          editor={editor}
-          comments={comments}
-          onAddComment={onAddComment}
-          onResolveComment={onResolveComment}
-        />
-        <ToolbarSeparator />
-        <ModeToolbarButton
-          mode={mode}
-          onModeChange={onModeChange}
-        />
-        <ToolbarSeparator />
-        <ToolbarButton
-          active={isFullscreen}
-          onClick={onToggleFullscreen}
-          tooltip={isFullscreen ? 'Exit full screen (Esc)' : 'Full screen'}
-        >
-          {isFullscreen ? (
-            <Minimize2 className="w-4 h-4 text-primary" />
-          ) : (
-            <Maximize2 className="w-4 h-4" />
-          )}
-        </ToolbarButton>
+        {showOverflowMenu ? (
+          <>
+            <ToolbarSeparator />
+            <RightOverflowMenu
+              editor={editor}
+              mode={mode}
+              onModeChange={onModeChange}
+              isFullscreen={isFullscreen}
+              onToggleFullscreen={onToggleFullscreen}
+              comments={comments}
+              onAddComment={onAddComment}
+              onResolveComment={onResolveComment}
+            />
+          </>
+        ) : (
+          <>
+            <ToolbarSeparator />
+            <CommentToolbarButton
+              editor={editor}
+              comments={comments}
+              onAddComment={onAddComment}
+              onResolveComment={onResolveComment}
+            />
+            <ToolbarSeparator />
+            <ModeToolbarButton
+              mode={mode}
+              onModeChange={onModeChange}
+            />
+            <ToolbarSeparator />
+            <ToolbarButton
+              active={isFullscreen}
+              onClick={onToggleFullscreen}
+              tooltip={isFullscreen ? 'Exit full screen (Esc)' : 'Full screen'}
+            >
+              {isFullscreen ? (
+                <Minimize2 className="w-4 h-4 text-primary" />
+              ) : (
+                <Maximize2 className="w-4 h-4" />
+              )}
+            </ToolbarButton>
+          </>
+        )}
       </div>
     </div>
   );

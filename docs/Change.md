@@ -2059,4 +2059,25 @@ Per user request with reference screenshot `media_1789468746934.png`:
 3. **Adaptive Viewport Collision**:
    - Submenus automatically determine `flyoutSide` (`'right'` or `'left'`) based on viewport boundaries, preventing any offscreen overflow.
 
+---
+
+## 21. Responsive Right-Edge Toolbar Overflow (Vertical 3-Dots Dropview)
+
+Per user request with screenshot `media_1789470743517.png` (showing Comment, Editing, and Fullscreen wrapping onto a 2nd row when the sidebar is open):
+
+1. **Strict Single Horizontal Line Invariant (`flex-nowrap`)**:
+   - In `src/components/plate-ui/fixed-toolbar-buttons.tsx`, replaced `flex-wrap` with `flex-nowrap` on the master toolbar container, guaranteeing the toolbar remains strictly a single straight horizontal line at all times.
+2. **Dynamic Sidebar & Viewport-Aware Overflow (`RightOverflowMenu`)**:
+   - Integrated with `SidebarContext` exported from `@/components/ui/sidebar.tsx` to detect whether the application sidebar is open or collapsed.
+   - **When Sidebar is Open (or width < 1180px)**:
+     - Right-edge actions (Comment, Mode Switcher, Fullscreen) are collapsed into a vertical 3-dots button (`MoreVertical` / `⋮`), saving ~160px of horizontal space.
+     - Active comments count badge is displayed on the 3-dots button when notes exist.
+     - Clicking the 3-dots button opens a clean dropview with:
+       - **Document Mode**: Direct switcher between Editing (`Pencil`), Suggesting (`PenLine`), and Viewing (`Eye`) with active checkmark.
+       - **Comments & Notes**: Direct action opening the comments dialog/list with unread count.
+       - **Full screen**: Direct toggle between Fullscreen (`Maximize2`) and Exit Fullscreen (`Minimize2`).
+   - **When Sidebar is Collapsed**:
+     - The available width expands by 256px, and `FixedToolbarButtons` instantly reveals all three controls horizontally inline: `CommentToolbarButton`, `ToolbarSeparator`, `ModeToolbarButton`, `ToolbarSeparator`, `Fullscreen ToolbarButton`.
+
+
 
