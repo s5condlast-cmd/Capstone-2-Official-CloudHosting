@@ -2050,7 +2050,6 @@ export function FixedToolbarButtons({
   const isUnderline = isMarkActive(editor, 'underline');
   const isStrikethrough = isMarkActive(editor, 'strikethrough');
   const isCode = isMarkActive(editor, 'code');
-  const isHighlight = isMarkActive(editor, 'highlight');
 
   // Block state
   const activeType = getActiveBlockType(editor);
@@ -2227,25 +2226,10 @@ export function FixedToolbarButtons({
         </ToolbarButton>
       </ToolbarGroup>
 
-      {/* 7. More Formatting (...) */}
-      <ToolbarGroup className={cn(isViewing && 'opacity-40 pointer-events-none')}>
-        <MoreToolbarButton editor={editor} />
-      </ToolbarGroup>
-
       <ToolbarSeparator />
 
-      {/* 8. Highlighter Pen & Comment Icon */}
+      {/* 7. Comment Icon */}
       <ToolbarGroup>
-        <ToolbarButton
-          active={isHighlight}
-          onClick={() => toggleMark(editor, 'highlight')}
-          tooltip="Highlight"
-          disabled={isViewing}
-          className={cn(isViewing && 'opacity-40 pointer-events-none')}
-        >
-          <Highlighter className="w-4 h-4 text-amber-500" />
-        </ToolbarButton>
-
         <CommentToolbarButton
           editor={editor}
           comments={comments}
@@ -2256,7 +2240,7 @@ export function FixedToolbarButtons({
 
       <ToolbarSeparator />
 
-      {/* 9. Mode Switcher (Editing, Suggesting, Viewing) */}
+      {/* 8. Mode Switcher (Editing, Suggesting, Viewing) */}
       <ToolbarGroup>
         <ModeToolbarButton
           mode={mode}

@@ -1865,3 +1865,25 @@ Completed the remaining right-aligned toolbar controls:
   - Displays a clean Viewing banner with a 1-click "Switch to Editing" shortcut.
   - Keeps toolbar, mode switcher, comments, and zoom controls accessible.
 
+---
+
+## 10. Toolbar Streamlining & User Feedback Refinements
+
+Based on targeted page feedback on `/student/editor`:
+
+1. **Removed `MoreToolbarButton` (`...`)**:
+   - Removed the `MoreToolbarButton` trigger and its wrapper from `FixedToolbarButtons` to declutter the toolbar.
+2. **Removed Standalone Highlighter Pen Button**:
+   - Removed the highlighter pen button from the comment group in `FixedToolbarButtons` per user feedback.
+3. **Streamlined Final Toolbar Layout**:
+   - **Left Group**: Undo / Redo
+   - **Block Group**: Heading & Block Selector (`Heading 1-3`, `Paragraph`, `Quote`)
+   - **Text Formatting Group**: Bold, Italic, Underline, Strikethrough, Code
+   - **Color & Style Group**: Font Family, Font Size Stepper, Text Color, Background Color
+   - **Alignment & Line Height**: Align Left / Center / Right / Justify, Line Height Stepper
+   - **Lists & Indentation**: Bulleted List, Numbered List, Outdent, Indent
+   - **Insert & Media**: Link, Image, Table Grid Picker, Divider / HR, Date Field, Emoji Picker
+   - **Review & Controls**: Comment Icon (with badge & selection popover), Mode Switcher (`Editing` / `Suggesting` / `Viewing`), Fullscreen Toggle (`Maximize2` / `Minimize2`)
+   - **Zoom**: Canvas mousewheel & trackpad pinch zoom with auto-fading status pill.
+
+
