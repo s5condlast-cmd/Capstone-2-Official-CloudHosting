@@ -1983,3 +1983,27 @@ Per user feedback with screenshots `media_1789465341061.png` (Link icon) and `me
      - **Open in new tab** button (`ExternalLink`) to test or preview the link.
 3. **Purged `window.prompt` from `InsertToolbarButton`**:
    - Updated the "Link" action in the `+ v` insert dropdown to perform non-blocking inline node insertion without triggering browser prompt dialogs.
+
+---
+
+## 17. List Dropdown Arrow Visibility & Universal Dark Mode Chevron Enhancement
+
+Per user feedback with screenshot `media_1789465389183.png` (showing Numbered and Bulleted list icons with invisible dropdown arrows in dark mode):
+
+1. **Restored Missing Dropdown Arrows on List Split Buttons**:
+   - In `src/components/plate-ui/fixed-toolbar-buttons.tsx`, updated `NumberedListToolbarButton` and `BulletedListToolbarButton` to explicitly render `<ChevronDown className="w-3.5 h-3.5 text-zinc-600 dark:text-zinc-200" />` within `ToolbarSplitButtonSecondary`.
+   - In `src/components/plate-ui/toolbar.tsx`, updated `ToolbarSplitButtonSecondary` to provide a built-in default `<ChevronDown className="w-3.5 h-3.5 text-zinc-600 dark:text-zinc-200" />` so the dropdown arrow is guaranteed to render.
+2. **Universal Dark Mode Contrast Enhancement Across All Toolbar Dropdowns**:
+   - Upgraded all dropdown chevrons from low-contrast `text-zinc-400` / `opacity-60` to crisp, high-contrast `text-zinc-600 dark:text-zinc-200`:
+     - Numbered List dropdown
+     - Bulleted List dropdown
+     - Insert dropdown (`+ v`)
+     - Turn Into dropdown (`Heading 1 v`)
+     - Align dropdown (`Align v`)
+     - Table grid dropdown (`Table v`)
+     - Emoji picker dropdown (`Emoji v`)
+     - Media suite dropdown (`Media v`)
+     - Line spacing dropdown (`Line Height v`)
+     - Mode switcher dropdown (`Editing v`)
+     - Zoom preset dropdown (`100% v`)
+   - All dropdown arrows are now immediately visible, crisp, and legible in both dark and light modes.

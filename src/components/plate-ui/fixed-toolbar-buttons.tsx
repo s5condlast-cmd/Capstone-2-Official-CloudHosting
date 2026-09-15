@@ -470,7 +470,7 @@ function InsertToolbarButton({ editor }: { editor: any }) {
         className="px-2.5 h-8.5 font-medium gap-1"
       >
         <Plus className="w-4 h-4 text-zinc-800 dark:text-zinc-200" />
-        <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
+        <ChevronDown className="w-3.5 h-3.5 text-zinc-600 dark:text-zinc-200" />
       </ToolbarButton>
 
       <PortalPopover
@@ -542,7 +542,7 @@ function TurnIntoToolbarButton({ editor }: { editor: any }) {
         <span className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">
           {currentOption.label}
         </span>
-        <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
+        <ChevronDown className="w-3.5 h-3.5 text-zinc-600 dark:text-zinc-200" />
       </ToolbarButton>
 
       <PortalPopover
@@ -829,7 +829,7 @@ function AlignToolbarButton({ editor }: { editor: any }) {
         className="px-2 h-8.5"
       >
         <CurrentIcon className="w-4 h-4" />
-        <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
+        <ChevronDown className="w-3.5 h-3.5 text-zinc-600 dark:text-zinc-200" />
       </ToolbarButton>
 
       <PortalPopover
@@ -912,7 +912,9 @@ function NumberedListToolbarButton({ editor }: { editor: any }) {
         <ToolbarSplitButtonSecondary
           onClick={() => setOpen(!open)}
           title="Numbered list options"
-        />
+        >
+          <ChevronDown className="w-3.5 h-3.5 text-zinc-600 dark:text-zinc-200" />
+        </ToolbarSplitButtonSecondary>
       </ToolbarSplitButton>
 
       <PortalPopover
@@ -980,7 +982,9 @@ function BulletedListToolbarButton({ editor }: { editor: any }) {
         <ToolbarSplitButtonSecondary
           onClick={() => setOpen(!open)}
           title="Bulleted list options"
-        />
+        >
+          <ChevronDown className="w-3.5 h-3.5 text-zinc-600 dark:text-zinc-200" />
+        </ToolbarSplitButtonSecondary>
       </ToolbarSplitButton>
 
       <PortalPopover
@@ -1348,7 +1352,7 @@ function TableToolbarButton({ editor }: { editor: any }) {
         className="px-2 h-8.5"
       >
         <TableIcon className="w-4 h-4" />
-        <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
+        <ChevronDown className="w-3.5 h-3.5 text-zinc-600 dark:text-zinc-200" />
       </ToolbarButton>
 
       <PortalPopover
@@ -1490,7 +1494,7 @@ function EmojiToolbarButton({ editor }: { editor: any }) {
         className="px-2 h-8.5"
       >
         <Smile className="w-4 h-4" />
-        <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
+        <ChevronDown className="w-3.5 h-3.5 text-zinc-600 dark:text-zinc-200" />
       </ToolbarButton>
 
       <PortalPopover
@@ -1602,7 +1606,7 @@ function MediaToolbarButton({ editor }: { editor: any }) {
         className="px-2 h-8.5"
       >
         <ImageIcon className="w-4 h-4" />
-        <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
+        <ChevronDown className="w-3.5 h-3.5 text-zinc-600 dark:text-zinc-200" />
       </ToolbarButton>
 
       <PortalPopover
@@ -1842,7 +1846,7 @@ function LineHeightToolbarButton({ editor }: { editor: any }) {
         className="px-2 h-8.5"
       >
         <WrapText className="w-4 h-4" />
-        <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
+        <ChevronDown className="w-3.5 h-3.5 text-zinc-600 dark:text-zinc-200" />
       </ToolbarButton>
 
       <PortalPopover
@@ -2226,7 +2230,7 @@ export function ModeToolbarButton({
           mode === 'viewing' && 'text-zinc-400'
         )} />
         <span>{currentMode.label}</span>
-        <ChevronDown className="w-3.5 h-3.5 opacity-60 shrink-0" />
+        <ChevronDown className="w-3.5 h-3.5 text-zinc-600 dark:text-zinc-200 shrink-0" />
       </button>
 
       <PortalPopover
@@ -2328,7 +2332,7 @@ export function FullscreenAndZoomButtons({
           title="Zoom preset"
         >
           <span>{zoomLevel}%</span>
-          <ChevronDown className="w-3 h-3 opacity-60" />
+          <ChevronDown className="w-3 h-3 text-zinc-600 dark:text-zinc-200" />
         </button>
 
         <button

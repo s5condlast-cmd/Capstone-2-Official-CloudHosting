@@ -4,6 +4,7 @@
  * Matches @plate/editor-ai toolbar styling with theme tokens and accessible buttons.
  */
 import * as React from 'react';
+import { ChevronDown } from 'lucide-react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/src/lib/utils';
 
@@ -210,12 +211,12 @@ export function ToolbarSplitButtonSecondary({
       type="button"
       onMouseDown={(e) => e.preventDefault()}
       className={cn(
-        'inline-flex h-8.5 w-5 items-center justify-center rounded-r-md text-zinc-400 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-200/70 dark:hover:bg-zinc-800 transition-colors',
+        'inline-flex h-8.5 w-5 items-center justify-center rounded-r-md text-zinc-600 dark:text-zinc-200 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-200/70 dark:hover:bg-zinc-800 transition-colors',
         className
       )}
       {...props}
     >
-      {children}
+      {children || <ChevronDown className="w-3.5 h-3.5 text-zinc-600 dark:text-zinc-200" />}
     </button>
   );
 }
