@@ -333,7 +333,7 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
       if (isPdf) {
         try {
           await submissionStorage.updateAiFindings(doc.id, 'Processing', null);
-          const docUrl = submissionStorage.getFileUrl(doc.file_path);
+          const docUrl = await submissionStorage.getFileUrl(doc.file_path);
           const findings = await aiService.analyzeDocument(doc.id, docUrl, {
             name: studentName,
             course: studentCourse,

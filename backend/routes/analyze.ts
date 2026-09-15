@@ -1,75 +1,32 @@
 import { Router } from 'express';
-import { supabase } from '../config/supabase';
+import { z } from 'zod';
+import { requireIdentity, requirePortal, requireRole, asyncRoute } from '../middleware/auth';
 import { analyzeDocumentText } from '../services/aiService';
 
 const router = Router();
-
-router.post('/analyze', async (req, res) => {
-  const { docId, pdfUrl, studentName, course, docType, company } = req.body || {};
-
-  if (!docId || !pdfUrl) {
-    return res.status(400).json({ error: 'Missing docId or pdfUrl in request body.' });
-  }
-
-  console.log(`[Backend Route] Starting analysis for Doc ID: ${docId}`);
-
+router.post('/analyze', requireIdentity, requirePortal, requireRole('admin','adviser','supervisor'), asyncRoute(async (req, res) => {
+  if (!z.string().uuid().safeParse(req.body?.docId).success) return res.status(400).json({ error: 'A valid document ID is required.' });
+  const client = req.identity!.client;
+  const { data: doc, error } = await client.from('student_documents').select('*').eq('id', req.body.docId).single();
+  if (error || !doc) return res.status(404).json({ error: 'Document not found or access denied.' });
+  // Resolve only authorized storage objects. Ignore arbitrary client-supplied URLs and metadata.
+  const path = doc.file_path?.replace(/^submissions\//, '');
+  if (!path || path.includes('://') || !path.toLowerCase().endsWith('.pdf')) return res.status(400).json({ error: 'Upload a PDF to practicum storage before analysis.' });
+  const file = await client.storage.from('student_submissions').download(path);
+  if (file.error || !file.data) return res.status(502).json({ error: 'Unable to retrieve this document.' });
+  if (file.data.size > 10 * 1024 * 1024) return res.status(413).json({ error: 'PDF must be smaller than 10 MB.' });
   try {
-    // 1. Set DB status to Processing
-    await supabase
-      .from('student_documents')
-      .update({ ai_status: 'Processing', ai_findings: null })
-      .eq('id', docId);
-
-    // 2. Fetch the PDF buffer from the public URL
-    const fileResponse = await fetch(pdfUrl);
-    if (!fileResponse.ok) {
-      throw new Error(`Failed to fetch PDF file from URL: ${pdfUrl}`);
-    }
-
-    const fileBuffer = Buffer.from(await fileResponse.arrayBuffer());
-
-    // 3. Extract text from the PDF buffer via lazy dynamic import
-    let docText = '';
-    try {
-      const { extractTextFromPdfBuffer } = await import('../utils/pdfParser');
-      docText = await extractTextFromPdfBuffer(fileBuffer);
-    } catch (parseErr: any) {
-      console.warn('[Backend Route] PDF text extraction failed or native binary unavailable:', parseErr);
-      throw new Error(`PDF text extraction unavailable: ${parseErr?.message || 'Unsupported runtime environment'}`);
-    }
-
-    // 4. Run AI analysis
-    const findings = await analyzeDocumentText(docText, {
-      name: studentName,
-      course,
-      docType,
-      company
-    });
-
-    // 5. Save findings back to Supabase
-    const { error: updateError } = await supabase
-      .from('student_documents')
-      .update({ ai_status: 'Completed', ai_findings: findings })
-      .eq('id', docId);
-
-    if (updateError) {
-      throw new Error(`Failed to save findings to Supabase: ${updateError.message}`);
-    }
-
-    console.log(`[Backend Route] Analysis successfully saved for Doc ID: ${docId}`);
-    return res.json(findings);
-
-  } catch (error: any) {
-    console.error(`[Backend Route] Error analyzing Doc ID: ${docId}:`, error);
-
-    // Update status to Failed in database
-    await supabase
-      .from('student_documents')
-      .update({ ai_status: 'Failed' })
-      .eq('id', docId);
-
-    return res.status(500).json({ error: error.message || 'An error occurred during analysis.' });
+    const processing = await client.from('student_documents').update({ ai_status: 'Processing' }).eq('id', doc.id).select('id').single();
+    if (processing.error) throw processing.error;
+    const { extractTextFromPdfBuffer } = await import('../utils/pdfParser');
+    const text = await extractTextFromPdfBuffer(Buffer.from(await file.data.arrayBuffer()));
+    const findings = await analyzeDocumentText(text, { name: doc.student_name, course: doc.course, docType: doc.doc_type, company: '' });
+    const updated = await client.from('student_documents').update({ ai_status: 'Completed', ai_findings: findings }).eq('id', doc.id).select('id').single();
+    if (updated.error) throw updated.error;
+    res.json(findings);
+  } catch {
+    await client.from('student_documents').update({ ai_status: 'Failed' }).eq('id', doc.id);
+    res.status(502).json({ error: 'Document analysis failed. Please retry.' });
   }
-});
-
+}));
 export default router;

@@ -153,32 +153,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
             group: 'Overview',
             items: [
               { to: '/student', icon: LayoutDashboardIcon, label: 'Dashboard' },
-              { to: '/student/generative-ui', icon: SparklesIcon, label: 'AI Assistant' },
-            ],
-          },
-          {
-            group: 'Before OJT',
-            items: [
-              { to: '/student/application-letter', icon: FileTextIcon, label: 'Student Application Letter', locked: locks.beforeOjt },
-              { to: '/student/consent', icon: UserCheckIcon, label: 'Consent Form', locked: locks.beforeOjt },
-              { to: '/student/proposal', icon: FilePlus2Icon, label: 'Proposal Letter', locked: locks.beforeOjt },
-              { to: '/student/moa', icon: UsersIcon, label: 'Memorandum of Agreement', locked: locks.beforeOjt },
-              { to: '/student/endorsement', icon: ClipboardCheckIcon, label: 'Endorsement Letter', locked: locks.beforeOjt },
-            ],
-          },
-          {
-            group: 'In OJT',
-            items: [
-              { to: '/student/journal', icon: BookOpenIcon, label: 'Weekly Journal', locked: locks.inOjt },
-              { to: '/student/dtr', icon: CalendarIcon, label: 'Daily Time Record', locked: locks.inOjt },
-              { to: '/student/training-plan', icon: ClipboardListIcon, label: 'OJT Training Plan', locked: locks.inOjt },
-            ],
-          },
-          {
-            group: 'Final',
-            items: [
-              { to: '/student/completion', icon: AwardIcon, label: 'Integration Paper', locked: locks.finals },
-              { to: '/student/evaluation', icon: CheckCircleIcon, label: 'Performance Appraisal', locked: locks.finals },
+              { to: '/student/documents', icon: FileTextIcon, label: 'Document Repository' },
+              { to: '/student/editor', icon: FilePlus2Icon, label: 'Document Editor' },
             ],
           },
         ];

@@ -83,19 +83,19 @@ The system utilizes **11 core environment variables and API keys** distributed b
 
 | Variable Name | Environment Scope | Service / Provider | Purpose in Plain English | Primary Code Location |
 | :--- | :--- | :--- | :--- | :--- |
-| `GEMINI_API_KEY` | Backend (`process.env`) | **Google Gemini AI** | Backup AI engine for reviewing document grammar, structure, and missing details | [`backend/services/aiService.ts`](file:///c:/Users/johnd/Downloads/MainCode/backend/services/aiService.ts#L42) |
-| `VITE_GROQ_API_KEY` | Backend (`process.env`) | **Groq Cloud (Llama 3.3)** | Ultra-fast primary AI engine (750 tokens/sec) that analyzes student document text | [`backend/services/aiService.ts`](file:///c:/Users/johnd/Downloads/MainCode/backend/services/aiService.ts#L41) |
-| `VITE_SUPABASE_URL` | Frontend & Backend | **Supabase (PostgreSQL)** | Web endpoint address of our cloud PostgreSQL database and auth server | [`src/lib/supabase.ts`](file:///c:/Users/johnd/Downloads/MainCode/src/lib/supabase.ts#L3), [`backend/config/supabase.ts`](file:///c:/Users/johnd/Downloads/MainCode/backend/config/supabase.ts#L6) |
-| `VITE_SUPABASE_ANON_KEY` | Frontend & Backend | **Supabase Auth / Public** | Public anonymous API key allowing browser client to query data protected by RLS | [`src/lib/supabase.ts`](file:///c:/Users/johnd/Downloads/MainCode/src/lib/supabase.ts#L4), [`backend/config/supabase.ts`](file:///c:/Users/johnd/Downloads/MainCode/backend/config/supabase.ts#L7) |
-| `CLOUDINARY_CLOUD_NAME` | Backend (`process.env`) | **Cloudinary CDN** *(Dormant)* | Optional CDN bucket for files/signatures (preserved in comments in code) | [`backend/config/cloudinaryConfig.ts`](file:///c:/Users/johnd/Downloads/MainCode/backend/config/cloudinaryConfig.ts#L14) |
-| `CLOUDINARY_API_KEY` | Backend (`process.env`) | **Cloudinary CDN** *(Dormant)* | Identifier for authenticating uploads (preserved in comments) | [`backend/config/cloudinaryConfig.ts`](file:///c:/Users/johnd/Downloads/MainCode/backend/config/cloudinaryConfig.ts#L15) |
-| `CLOUDINARY_API_SECRET` | Backend (`process.env`) | **Cloudinary CDN** *(Dormant)* | Secret cryptographic key for CDN signing (preserved in comments) | [`backend/config/cloudinaryConfig.ts`](file:///c:/Users/johnd/Downloads/MainCode/backend/config/cloudinaryConfig.ts#L16) |
-| `MICROSOFT_CLIENT_ID` | Backend (`process.env`) | **Azure App Registration** | Application ID generated in Microsoft Entra ID for STI Microsoft 365 | [`backend/services/onedriveService.ts`](file:///c:/Users/johnd/Downloads/MainCode/backend/services/onedriveService.ts#L55) |
-| `MICROSOFT_TENANT_ID` | Backend (`process.env`) | **Azure App Registration** | Directory ID identifying STI College's educational Microsoft 365 organization | [`backend/services/onedriveService.ts`](file:///c:/Users/johnd/Downloads/MainCode/backend/services/onedriveService.ts#L56) |
-| `MICROSOFT_CLIENT_SECRET` | Backend (`process.env`) | **Azure App Registration** | Confidential password generated in Azure used during OAuth2 token exchange | [`backend/services/onedriveService.ts`](file:///c:/Users/johnd/Downloads/MainCode/backend/services/onedriveService.ts#L72) |
-| `ONEDRIVE_USER_EMAIL` | Backend (`process.env`) | **Microsoft 365 User** | Official coordinator email (e.g. `@marikina.sti.edu.ph`) owning the OneDrive | [`backend/services/onedriveService.ts`](file:///c:/Users/johnd/Downloads/MainCode/backend/services/onedriveService.ts#L57) |
-| `ONEDRIVE_ROOT_FOLDER` | Backend (`process.env`) | **OneDrive Root** | Master folder name (default: `STI_Practicum_Archive`) where files are organized | [`backend/services/onedriveService.ts`](file:///c:/Users/johnd/Downloads/MainCode/backend/services/onedriveService.ts#L251) |
-| `APP_URL` | Frontend & Backend | **Environment** | The base web address of the application (`http://localhost:3000` or production) | [`.env.example`](file:///c:/Users/johnd/Downloads/MainCode/.env.example#L6) |
+| `GEMINI_API_KEY` | Backend (`process.env`) | **Google Gemini AI** | Backup AI engine for reviewing document grammar, structure, and missing details | [`backend/services/aiService.ts`](../backend/services/aiService.ts#L42) |
+| `VITE_GROQ_API_KEY` | Backend (`process.env`) | **Groq Cloud (Llama 3.3)** | Ultra-fast primary AI engine (750 tokens/sec) that analyzes student document text | [`backend/services/aiService.ts`](../backend/services/aiService.ts#L41) |
+| `VITE_SUPABASE_URL` | Frontend & Backend | **Supabase (PostgreSQL)** | Web endpoint address of our cloud PostgreSQL database and auth server | [`src/lib/supabase.ts`](../src/lib/supabase.ts#L3), [`backend/config/supabase.ts`](../backend/config/supabase.ts#L6) |
+| `VITE_SUPABASE_ANON_KEY` | Frontend & Backend | **Supabase Auth / Public** | Public anonymous API key allowing browser client to query data protected by RLS | [`src/lib/supabase.ts`](../src/lib/supabase.ts#L4), [`backend/config/supabase.ts`](../backend/config/supabase.ts#L7) |
+| `CLOUDINARY_CLOUD_NAME` | Backend (`process.env`) | **Cloudinary CDN** *(Dormant)* | Optional CDN bucket for files/signatures (preserved in comments in code) | [`backend/config/cloudinaryConfig.ts`](../backend/config/cloudinaryConfig.ts#L14) |
+| `CLOUDINARY_API_KEY` | Backend (`process.env`) | **Cloudinary CDN** *(Dormant)* | Identifier for authenticating uploads (preserved in comments) | [`backend/config/cloudinaryConfig.ts`](../backend/config/cloudinaryConfig.ts#L15) |
+| `CLOUDINARY_API_SECRET` | Backend (`process.env`) | **Cloudinary CDN** *(Dormant)* | Secret cryptographic key for CDN signing (preserved in comments) | [`backend/config/cloudinaryConfig.ts`](../backend/config/cloudinaryConfig.ts#L16) |
+| `MICROSOFT_CLIENT_ID` | Backend (`process.env`) | **Azure App Registration** | Application ID generated in Microsoft Entra ID for STI Microsoft 365 | [`backend/services/onedriveService.ts`](../backend/services/onedriveService.ts#L55) |
+| `MICROSOFT_TENANT_ID` | Backend (`process.env`) | **Azure App Registration** | Directory ID identifying STI College's educational Microsoft 365 organization | [`backend/services/onedriveService.ts`](../backend/services/onedriveService.ts#L56) |
+| `MICROSOFT_CLIENT_SECRET` | Backend (`process.env`) | **Azure App Registration** | Confidential password generated in Azure used during OAuth2 token exchange | [`backend/services/onedriveService.ts`](../backend/services/onedriveService.ts#L72) |
+| `ONEDRIVE_USER_EMAIL` | Backend (`process.env`) | **Microsoft 365 User** | Official coordinator email (e.g. `@marikina.sti.edu.ph`) owning the OneDrive | [`backend/services/onedriveService.ts`](../backend/services/onedriveService.ts#L57) |
+| `ONEDRIVE_ROOT_FOLDER` | Backend (`process.env`) | **OneDrive Root** | Master folder name (default: `STI_Practicum_Archive`) where files are organized | [`backend/services/onedriveService.ts`](../backend/services/onedriveService.ts#L251) |
+| `APP_URL` | Frontend & Backend | **Environment** | The base web address of the application (`http://localhost:3000` or production) | [`.env.example`](../.env.example#L6) |
 
 ---
 
@@ -105,27 +105,27 @@ The system utilizes **11 core environment variables and API keys** distributed b
 
 - **What it does**: Groq is an AI hardware and cloud service that runs large language models (LLMs) on specialized chips (LPUs) at extreme speeds (over 700 tokens per second).
 - **Why we use it**: Checking student documents requires analyzing several pages of text. Groq returns the full analysis in less than 2 seconds, compared to 10–15 seconds with traditional AI APIs.
-- **Where in code**: [`backend/services/aiService.ts`](file:///c:/Users/johnd/Downloads/MainCode/backend/services/aiService.ts#L49-L65). The server sends the extracted document text and student metadata to `https://api.groq.com/openai/v1/chat/completions` with a strict JSON output schema.
+- **Where in code**: [`backend/services/aiService.ts`](../backend/services/aiService.ts#L49-L65). The server sends the extracted document text and student metadata to `https://api.groq.com/openai/v1/chat/completions` with a strict JSON output schema.
 - **Model Used**: `llama-3.3-70b-versatile`.
 
 ### 2. `GEMINI_API_KEY` (Google Gemini 1.5 Flash)
 
 - **What it does**: Google's multi-modal AI model provided by Google DeepMind / Google Cloud.
 - **Why we use it**: It serves as an **automatic high-reliability fallback**. If Groq reaches its daily rate limit or is temporarily unreachable, the system automatically redirects the request to Google Gemini so the adviser never encounters a broken screen or error.
-- **Where in code**: [`backend/services/aiService.ts`](file:///c:/Users/johnd/Downloads/MainCode/backend/services/aiService.ts#L83-L123). Sends the request to `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`.
+- **Where in code**: [`backend/services/aiService.ts`](../backend/services/aiService.ts#L83-L123). Sends the request to `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`.
 
 ### 3. `VITE_SUPABASE_URL` & `VITE_SUPABASE_ANON_KEY`
 
 - **What it does**: Connects our frontend and backend to our managed PostgreSQL database, authentication system, and real-time listeners hosted on Supabase.
 - **Why `VITE_` prefix?**: In Vite applications, only environment variables prefixed with `VITE_` are exposed to client-side code (`import.meta.env.VITE_*`).
 - **Where in code**:
-  - Frontend: [`src/lib/supabase.ts`](file:///c:/Users/johnd/Downloads/MainCode/src/lib/supabase.ts#L10) creates the client singleton:
+  - Frontend: [`src/lib/supabase.ts`](../src/lib/supabase.ts#L10) creates the client singleton:
 
     ```typescript
     export const supabase = createClient(supabaseUrl, supabaseAnonKey);
     ```
 
-  - Backend: [`backend/config/supabase.ts`](file:///c:/Users/johnd/Downloads/MainCode/backend/config/supabase.ts#L10) creates the server-side Supabase client.
+  - Backend: [`backend/config/supabase.ts`](../backend/config/supabase.ts#L10) creates the server-side Supabase client.
 
 ### 4. `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` *(Optional / Dormant)*
 
@@ -138,7 +138,7 @@ The system utilizes **11 core environment variables and API keys** distributed b
 
 - **What it does**: Authenticates our application with the **Microsoft Graph API** via an Azure App Registration.
 - **Why we use it**: STI College uses Microsoft 365 for students and faculty. By integrating Microsoft Graph, every approved student submission is automatically archived directly into the Practicum Coordinator's official STI OneDrive storage without manual file downloads or flash drives.
-- **Where in code**: [`backend/services/onedriveService.ts`](file:///c:/Users/johnd/Downloads/MainCode/backend/services/onedriveService.ts). Handles OAuth2 token refresh and Graph endpoints `/me/drive/root:/...:/content`.
+- **Where in code**: [`backend/services/onedriveService.ts`](../backend/services/onedriveService.ts). Handles OAuth2 token refresh and Graph endpoints `/me/drive/root:/...:/content`.
 
 ---
 
@@ -194,7 +194,7 @@ If the panelist asks: *"If you were to deploy this system for another STI campus
 3. Open **Project Settings** → **API**.
 4. Copy the **Project URL** → Paste into `.env` as `VITE_SUPABASE_URL`.
 5. Copy the **anon / public** key → Paste into `.env` as `VITE_SUPABASE_ANON_KEY`.
-6. Open **SQL Editor** and run the database schema migration script located in [`backend/config/supabase.ts`](file:///c:/Users/johnd/Downloads/MainCode/backend/config/supabase.ts).
+6. Open **SQL Editor** and run the database schema migration script located in [`backend/config/supabase.ts`](../backend/config/supabase.ts).
 
 ### Step 2: Groq AI Setup (2 Minutes)
 
@@ -244,13 +244,13 @@ Consistency in naming is one of the clearest signs of professional software engi
 
 | Asset Type | Convention | Examples from Codebase | Rationale |
 | :--- | :--- | :--- | :--- |
-| **React Page Components** | `PascalCase.tsx` | [`StudentDocumentPage.tsx`](file:///c:/Users/johnd/Downloads/MainCode/src/components/compose/StudentDocumentPage.tsx), [`ProposalLetterToTheIndustry.tsx`](file:///c:/Users/johnd/Downloads/MainCode/src/components/student/ProposalLetterToTheIndustry.tsx) | Standard React convention; strictly descriptive names matching the 13 official templates. Generic names like `DocumentSubmission.tsx` or `Proposal.tsx` are forbidden. |
-| **Shared UI Primitives** | `PascalCase.tsx` | [`Button.tsx`](file:///c:/Users/johnd/Downloads/MainCode/src/components/ui/Button.tsx), [`Badge.tsx`](file:///c:/Users/johnd/Downloads/MainCode/src/components/ui/Badge.tsx), [`EmptyState.tsx`](file:///c:/Users/johnd/Downloads/MainCode/src/components/ui/EmptyState.tsx) | Reusable design system tokens compatible with Radix/Shadcn primitives. |
-| **Custom Hooks** | `useCamelCase.ts` | [`useDocumentStatus.ts`](file:///c:/Users/johnd/Downloads/MainCode/src/hooks/useDocumentStatus.ts), [`useSpeechToText.ts`](file:///c:/Users/johnd/Downloads/MainCode/src/hooks/useSpeechToText.ts), [`usePhaseLock.ts`](file:///c:/Users/johnd/Downloads/MainCode/src/hooks/usePhaseLock.ts) | React Rules of Hooks convention enabling ESLint hook linting. |
-| **Backend Route Modules** | `camelCase.ts` | [`analyze.ts`](file:///c:/Users/johnd/Downloads/MainCode/backend/routes/analyze.ts), [`onedrive.ts`](file:///c:/Users/johnd/Downloads/MainCode/backend/routes/onedrive.ts), [`cloudinary.ts`](file:///c:/Users/johnd/Downloads/MainCode/backend/routes/cloudinary.ts) | Express RESTful route grouping. |
-| **Backend Services** | `camelCaseService.ts` | [`aiService.ts`](file:///c:/Users/johnd/Downloads/MainCode/backend/services/aiService.ts), [`onedriveService.ts`](file:///c:/Users/johnd/Downloads/MainCode/backend/services/onedriveService.ts) | Service layer pattern separating business logic from route controllers. |
-| **Utility Modules** | `camelCase.ts` | [`documentGenerator.ts`](file:///c:/Users/johnd/Downloads/MainCode/src/lib/documentGenerator.ts), [`excelGenerator.ts`](file:///c:/Users/johnd/Downloads/MainCode/src/lib/excelGenerator.ts), [`pdfParser.ts`](file:///c:/Users/johnd/Downloads/MainCode/backend/utils/pdfParser.ts) | Standard TypeScript utility modules exporting pure functions. |
-| **Markdown Documentation** | `SCREAMING_SNAKE_CASE.md` or Numbered Prefix | [`ARCHITECTURE.md`](file:///c:/Users/johnd/Downloads/MainCode/docs/architecture/ARCHITECTURE.md), [`01_STUDENT_PORTAL_CHECKLIST.md`](file:///c:/Users/johnd/Downloads/MainCode/docs/features/01_STUDENT_PORTAL_CHECKLIST.md) | Standard Obsidian/GitHub MOC convention for documentation sorting and visual clarity. |
+| **React Page Components** | `PascalCase.tsx` | [`StudentDocumentPage.tsx`](../src/components/compose/StudentDocumentPage.tsx), [`ProposalLetterToTheIndustry.tsx`](../src/pages/student/ProposalLetterToTheIndustry.tsx) | Standard React convention; strictly descriptive names matching the 13 official templates. Generic names like `DocumentSubmission.tsx` or `Proposal.tsx` are forbidden. |
+| **Shared UI Primitives** | `PascalCase.tsx` | [`Button.tsx`](../src/components/ui/Button.tsx), [`Badge.tsx`](../src/components/ui/Badge.tsx), [`EmptyState.tsx`](../src/components/ui/EmptyState.tsx) | Reusable design system tokens compatible with Radix/Shadcn primitives. |
+| **Custom Hooks** | `useCamelCase.ts` | [`useDocumentStatus.ts`](../src/hooks/useDocumentStatus.ts), [`useSpeechToText.ts`](../src/hooks/useSpeechToText.ts), [`usePhaseLock.ts`](../src/hooks/usePhaseLock.ts) | React Rules of Hooks convention enabling ESLint hook linting. |
+| **Backend Route Modules** | `camelCase.ts` | [`analyze.ts`](../backend/routes/analyze.ts), [`onedrive.ts`](../backend/routes/onedrive.ts), [`cloudinary.ts`](../backend/routes/cloudinary.ts) | Express RESTful route grouping. |
+| **Backend Services** | `camelCaseService.ts` | [`aiService.ts`](../backend/services/aiService.ts), [`onedriveService.ts`](../backend/services/onedriveService.ts) | Service layer pattern separating business logic from route controllers. |
+| **Utility Modules** | `camelCase.ts` | [`documentGenerator.ts`](../src/lib/documentGenerator.ts), [`excelGenerator.ts`](../src/lib/excelGenerator.ts), [`pdfParser.ts`](../backend/utils/pdfParser.ts) | Standard TypeScript utility modules exporting pure functions. |
+| **Markdown Documentation** | `SCREAMING_SNAKE_CASE.md` or Numbered Prefix | [`ARCHITECTURE.md`](architecture/ARCHITECTURE.md), [`01_STUDENT_PORTAL_CHECKLIST.md`](features/01_STUDENT_PORTAL_CHECKLIST.md) | Standard Obsidian/GitHub MOC convention for documentation sorting and visual clarity. |
 
 ---
 
@@ -293,7 +293,7 @@ Our PostgreSQL database hosted on Supabase strictly enforces relational naming s
 To maintain visual harmony and support dynamic institutional color theming:
 
 1. **The `cn()` Helper Rule**:
-   Always merge dynamic Tailwind classes using `cn()` from [`src/lib/utils.ts`](file:///c:/Users/johnd/Downloads/MainCode/src/lib/utils.ts) (`clsx` + `tailwind-merge`) to resolve style collisions safely:
+   Always merge dynamic Tailwind classes using `cn()` from [`src/lib/utils.ts`](../src/lib/utils.ts) (`clsx` + `tailwind-merge`) to resolve style collisions safely:
 
    ```typescript
    import { cn } from '@/src/lib/utils';
@@ -427,7 +427,7 @@ Exporting supervisor signatures into Excel spreadsheets (`.xlsx`) usually result
 
 When a supervisor signs on a canvas, the output image contains massive empty transparent or white borders. If inserted directly into Excel, the actual signature appears tiny and shifted out of place.
 
-### How We Solved It in Code ([`src/lib/excelGenerator.ts`](file:///c:/Users/johnd/Downloads/MainCode/src/lib/excelGenerator.ts))
+### How We Solved It in Code ([`src/lib/excelGenerator.ts`](../src/lib/excelGenerator.ts))
 
 1. **Dynamic Physical Cell Dimension Calculation**:
    Excel column widths and row heights are measured in points, not pixels. We dynamically calculate physical pixel dimensions (e.g. Column G width 30 = 225px, Row height 45 = 60px -> ratio 3.75:1).
@@ -542,7 +542,7 @@ Every data-driven component adheres to a strict 4-phase lifecycle:
 Component Mounts ──> loading = true ──> Fetch Supabase ──> loading = false ──> Render Data OR EmptyState
 ```
 
-If a record does not exist, the component aggressively renders the project's standardized [`EmptyState.tsx`](file:///c:/Users/johnd/Downloads/MainCode/src/components/ui/EmptyState.tsx) component rather than breaking or showing simulated loading spinners.
+If a record does not exist, the component aggressively renders the project's standardized [`EmptyState.tsx`](../src/components/ui/EmptyState.tsx) component rather than breaking or showing simulated loading spinners.
 
 ### 3. PostgreSQL InitPlan Optimization
 
@@ -635,7 +635,7 @@ Use this section to prepare for panel questions. For each question, memorize the
 - **Simple 1-Sentence Answer:**
   *"Our backend features an automated dual-model fallback architecture: if Groq is slow or unavailable, our system automatically switches to Google Gemini without the user noticing any failure."*
 - **In-Depth Technical Answer:**
-  In [`backend/services/aiService.ts`](file:///c:/Users/johnd/Downloads/MainCode/backend/services/aiService.ts), the AI execution is wrapped in a resilient try-catch fallback block:
+  In [`backend/services/aiService.ts`](../backend/services/aiService.ts), the AI execution is wrapped in a resilient try-catch fallback block:
   1. It first queries the primary Groq Llama 3.3 70B endpoint.
   2. If Groq throws an HTTP error, network timeout, or rate-limit code (429), the error is caught and logged.
   3. The service immediately dispatches the identical payload to Google Gemini 1.5 Flash.
@@ -651,7 +651,7 @@ Use this section to prepare for panel questions. For each question, memorize the
 - **Simple 1-Sentence Answer:**
   *"A DOCX file is actually a zipped folder of XML files; our system unzips the template in browser memory using JSZip, replaces the blank spaces and placeholders with the student's text, and zips it back up for instant download."*
 - **In-Depth Technical Answer:**
-  DOCX files adhere to the Office Open XML (OOXML) standard. In [`src/lib/documentGenerator.ts`](file:///c:/Users/johnd/Downloads/MainCode/src/lib/documentGenerator.ts):
+  DOCX files adhere to the Office Open XML (OOXML) standard. In [`src/lib/documentGenerator.ts`](../src/lib/documentGenerator.ts):
   - We use `JSZip` to read the binary array buffer of the official template.
   - We open `word/document.xml` where the document text resides.
   - For sequential blanks (`____`), we run regex replacement matched against an array of sequential student inputs.

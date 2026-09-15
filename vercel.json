@@ -1,6 +1,9 @@
 {
   "version": 2,
   "outputDirectory": "dist",
+  "env": {
+    "APP_URL": "https://capstone-2-official-cloud-hosting.vercel.app"
+  },
   "functions": {
     "api/server.ts": {
       "memory": 1024,

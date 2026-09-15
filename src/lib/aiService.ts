@@ -1,3 +1,4 @@
+import { apiFetch } from './api';
 import { AiFindings } from '@/src/types';
 export type { AiFindings };
 
@@ -8,7 +9,7 @@ export const aiService = {
     metadata: { name: string; course: string; docType: string; company: string }
   ): Promise<AiFindings> {
     try {
-      const response = await fetch('/api/analyze', {
+      const response = await apiFetch('/api/analyze', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

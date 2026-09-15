@@ -1,239 +1,101 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { User, Role } from '@/src/types';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import { User } from '@/src/types';
 import { supabase } from '@/src/lib/supabase';
-import { toast } from 'sonner';
+import { apiJson } from '@/src/lib/api';
+
+export interface PortalAuthResult {
+  user: User;
+  portalReady: boolean;
+}
 
 interface AuthContextType {
   user: User | null;
+  pendingUser: User | null;
   loading: boolean;
+  authError: string;
   isAuthenticated: boolean;
-  login: (email: string, password: string, roleHint?: Role) => Promise<User>;
-  loginWithDemo: (role: Role, username?: string) => void;
-  loginWithMicrosoft: () => Promise<void>;
+  login: (email: string, password: string) => Promise<PortalAuthResult>;
   logout: () => Promise<void>;
-  setSessionUser: (user: User) => void;
-  refreshProfile: () => Promise<void>;
+  refreshProfile: () => Promise<PortalAuthResult | null>;
 }
-
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-const STORAGE_KEY = 'practicum_session';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [pendingUser, setPendingUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [authError, setAuthError] = useState('');
+  const generation = useRef(0);
+  const interactiveSignIn = useRef(false);
 
-  // Sync profile from Supabase profiles table
-  const fetchProfile = useCallback(async (userId: string, email: string): Promise<User | null> => {
+  const refreshProfile = useCallback(async () => {
+    const version = ++generation.current;
     try {
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-
-      if (error || !profile) {
+      const { data, error } = await supabase.auth.getSession();
+      if (error) throw error;
+      if (!data.session) {
+        if (version === generation.current) { setUser(null); setPendingUser(null); setAuthError(''); }
         return null;
       }
-
-      const role = (profile.role as Role) || 'student';
-      return {
-        id: profile.id,
-        username: email.split('@')[0],
-        name: profile.full_name,
-        role,
-        email: profile.email,
-        studentId: profile.student_id,
-        course: profile.section || profile.program || 'BSIT 402',
-        section: profile.section,
-        contactNumber: profile.contact_number,
-        department: profile.department || 'College of Computer Studies',
-        companyName: profile.company_name,
-        companyId: profile.company_id,
-        supervisorId: profile.supervisor_id,
-        adviserId: profile.adviser_id,
-      };
-    } catch {
+      const result = await apiJson<PortalAuthResult>('/api/auth/me');
+      if (version !== generation.current) return null;
+      setPendingUser(result.user);
+      setUser(result.portalReady && window.location.pathname !== '/reset-password' ? result.user : null);
+      setAuthError('');
+      return result;
+    } catch (error) {
+      if (version !== generation.current) return;
+      setUser(null);
+      setPendingUser(null);
+      setAuthError(error instanceof Error ? error.message : 'Unable to verify your session.');
       return null;
-    }
+    } finally { if (version === generation.current) setLoading(false); }
   }, []);
 
-  // Initialize session on mount
   useEffect(() => {
-    const initAuth = async () => {
-      try {
-        // 1. Check existing localStorage session first for instant render
-        const cached = localStorage.getItem(STORAGE_KEY);
-        if (cached) {
-          try {
-            const parsedUser: User = JSON.parse(cached);
-            setUser(parsedUser);
-          } catch {
-            localStorage.removeItem(STORAGE_KEY);
-          }
-        }
-
-        // 2. Check live Supabase Auth session
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user) {
-          const profileUser = await fetchProfile(session.user.id, session.user.email || '');
-          if (profileUser) {
-            setUser(profileUser);
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(profileUser));
-          }
-        }
-      } catch (err) {
-        console.error('[AuthContext] Session init error:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    initAuth();
-
-    // Listen to Supabase auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && session?.user) {
-        const profileUser = await fetchProfile(session.user.id, session.user.email || '');
-        if (profileUser) {
-          setUser(profileUser);
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(profileUser));
-        }
-      } else if (event === 'SIGNED_OUT') {
-        setUser(null);
-        localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem('practicum_session');
+    void refreshProfile();
+    // Do not await Supabase calls inside its auth-state callback (it holds an auth lock).
+    const timers = new Set<ReturnType<typeof setTimeout>>();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_OUT') { ++generation.current; setUser(null); setPendingUser(null); setAuthError(''); setLoading(false); }
+      // login() performs its own awaited profile refresh. Starting a second one
+      // from SIGNED_IN can supersede that request and produce a false failure.
+      else if (event === 'SIGNED_IN' && interactiveSignIn.current) return;
+      else {
+        const timer = setTimeout(() => { timers.delete(timer); void refreshProfile(); }, 0);
+        timers.add(timer);
       }
     });
+    const onFocus = () => { void refreshProfile(); };
+    window.addEventListener('focus', onFocus);
+    const interval = setInterval(onFocus, 60000);
+    return () => { ++generation.current; subscription.unsubscribe(); timers.forEach(clearTimeout); clearInterval(interval); window.removeEventListener('focus', onFocus); };
+  }, [refreshProfile]);
 
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [fetchProfile]);
-
-  // Set session user manually (e.g. after registration or quick login)
-  const setSessionUser = useCallback((newUser: User) => {
-    setUser(newUser);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(newUser));
-  }, []);
-
-  // 1-Click Role Switcher for Thesis Defense & Testing (Backed by production seed records)
-  const loginWithDemo = useCallback((role: Role, username?: string) => {
-    const defaultUsername = username || role;
-    const seedInfo: Record<Role, { id: string; name: string; email?: string; dept: string; studentId?: string }> = {
-      student: { id: 'e5555555-5555-4555-8555-555555555555', name: 'John Dwayne B. Guaniso', email: 'student@practicum.edu', dept: 'BSIT 402', studentId: '02000249822' },
-      admin: { id: '44e3adc7-7b59-423e-a746-a8a055882458', name: 'John Dwayne Guaniso', email: 'johndwayneguaniso.05242004@gmail.com', dept: 'System Administration' },
-      adviser: { id: 'a3333333-3333-4333-8333-333333333333', name: 'Jiro', email: 'adviser@practicum.edu', dept: 'College of Computer Studies' },
-      supervisor: { id: 'b4444444-4444-4444-8444-444444444444', name: 'Kerin', email: 'supervisor@practicum.edu', dept: 'InnoTech Labs' },
-    };
-
-    const targetSeed = seedInfo[role] || {
-      id: `seed-${role}`,
-      name: `${role.charAt(0).toUpperCase() + role.slice(1)} User`,
-      email: `${defaultUsername}@practicum.edu`,
-      dept: 'College of Computer Studies',
-    };
-
-    const newUser: User = {
-      id: targetSeed.id,
-      username: defaultUsername,
-      name: targetSeed.name,
-      role,
-      email: targetSeed.email || `${defaultUsername}@practicum.edu`,
-      studentId: targetSeed.studentId,
-      course: role === 'student' ? 'BSIT 402' : undefined,
-      section: role === 'student' ? 'BSIT 402' : undefined,
-      department: targetSeed.dept,
-    };
-
-    setSessionUser(newUser);
-    toast.success(`Logged in as ${targetSeed.name} (${role.toUpperCase()})`);
-  }, [setSessionUser]);
-
-  // Credentials Login (via API / Supabase)
-  const login = useCallback(async (email: string, password: string, roleHint?: Role): Promise<User> => {
-    const res = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, role: roleHint }),
-    });
-
-    const contentType = res.headers.get('content-type') || '';
-    let data: any = {};
-    if (contentType.includes('application/json')) {
-      data = await res.json();
-    } else {
-      const text = await res.text();
-      console.warn('[AuthContext] Non-JSON API response received:', text);
-      throw new Error(`Authentication server returned an unexpected response (${res.status}).`);
-    }
-
-    if (!res.ok || !data.user) {
-      throw new Error(data.error || 'Authentication failed. Please check your credentials.');
-    }
-
-    // Do NOT set session user here; Login.tsx will complete sign-in after MFA & password update
-    return data.user;
-  }, []);
-
-  // Microsoft 365 Single Sign-On (SSO)
-  const loginWithMicrosoft = useCallback(async () => {
+  const login = useCallback(async (email: string, password: string) => {
+    setUser(null); setPendingUser(null); setAuthError('');
+    interactiveSignIn.current = true;
     try {
-      // 1. Try Supabase Azure provider OAuth
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'azure',
-        options: {
-          scopes: 'email profile User.Read',
-          redirectTo: `${window.location.origin}/login`,
-        },
-      });
-
-      if (error) {
-        // Fallback to Microsoft Graph OAuth Login endpoint
-        window.location.href = '/api/onedrive/auth/login';
-      }
-    } catch {
-      window.location.href = '/api/onedrive/auth/login';
+      const { error } = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
+      if (error) throw error;
+      const result = await refreshProfile();
+      if (!result) throw new Error('Unable to verify your portal account. Please retry.');
+      return result;
+    } finally {
+      interactiveSignIn.current = false;
     }
-  }, []);
-
-  // Logout
+  }, [refreshProfile]);
   const logout = useCallback(async () => {
-    try {
-      await supabase.auth.signOut();
-    } catch {}
-    setUser(null);
-    localStorage.removeItem(STORAGE_KEY);
-    toast.success('Signed out successfully.');
+    ++generation.current; setUser(null); setPendingUser(null);
+    const { error } = await supabase.auth.signOut({ scope: 'global' });
+    if (error) { setAuthError('Sign-out could not reach the server. Retry to revoke all sessions.'); throw error; }
+    setAuthError('');
   }, []);
-
-  // Refresh user profile
-  const refreshProfile = useCallback(async () => {
-    if (!user) return;
-    const refreshed = await fetchProfile(user.id, user.email);
-    if (refreshed) {
-      setSessionUser(refreshed);
-    }
-  }, [user, fetchProfile, setSessionUser]);
-
-  const value: AuthContextType = {
-    user,
-    loading,
-    isAuthenticated: !!user,
-    login,
-    loginWithDemo,
-    loginWithMicrosoft,
-    logout,
-    setSessionUser,
-    refreshProfile,
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={{ user, pendingUser, loading, authError, isAuthenticated: !!user, login, logout, refreshProfile }}>{children}</AuthContext.Provider>;
 };
-
-export const useAuth = (): AuthContextType => {
+export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
+  if (!context) throw new Error('useAuth must be used within AuthProvider');
   return context;
 };

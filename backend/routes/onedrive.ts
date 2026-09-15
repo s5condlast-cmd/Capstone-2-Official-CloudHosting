@@ -1,3 +1,7 @@
+import crypto from 'node:crypto';
+import { getAppOrigin } from '../config/app';
+import { requireIdentity, requirePortal, requireRole, asyncRoute } from '../middleware/auth';
+import { supabaseAdmin, isServiceRoleAvailable } from '../config/supabase';
 import { Router, Request, Response } from 'express';
 import multer from 'multer';
 import fs from 'fs/promises';
@@ -14,97 +18,40 @@ import {
 import os from 'os';
 import path from 'path';
 
-const upload = multer({ dest: path.join(os.tmpdir(), 'uploads') });
+const upload = multer({ dest: path.join(os.tmpdir(), 'uploads'), limits: { fileSize: 4 * 1024 * 1024, files: 1 } });
 const router = Router();
 
-/**
- * Returns the effective redirect URI for OAuth callback.
- */
-function getRedirectUri(req: Request): string {
-  const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'http';
-  const host = req.get('host') || 'localhost:3001';
-  return `${protocol}://${host}/api/onedrive/auth/callback`;
+function getRedirectUri(): string {
+  const origin = getAppOrigin();
+  return origin + '/api/onedrive/auth/callback';
 }
-
-/**
- * GET /api/onedrive/auth/login
- * Initiates Microsoft 365 / OneDrive OAuth2 login.
- */
-router.get('/onedrive/auth/login', (req: Request, res: Response) => {
-  try {
-    const redirectUri = getRedirectUri(req);
-    const authUrl = getAuthorizationUrl(redirectUri);
-    return res.redirect(authUrl);
-  } catch (err: any) {
-    console.error('[OneDrive] Failed to generate auth URL:', err);
-    return res.status(500).json({ error: err.message });
-  }
-});
-
-/**
- * GET /api/onedrive/auth/callback
- * Handles OAuth callback from Microsoft identity platform.
- */
-router.get('/onedrive/auth/callback', async (req: Request, res: Response) => {
-  const { code, error, error_description } = req.query;
-
-  if (error) {
-    return res.status(400).send(`
-      <div style="font-family: sans-serif; padding: 40px; text-align: center;">
-        <h2 style="color: #ef4444;">OneDrive Connection Failed</h2>
-        <p>${error_description || error}</p>
-        <a href="/api/onedrive/auth/login" style="display: inline-block; padding: 10px 20px; background: #2563eb; color: white; text-decoration: none; border-radius: 8px;">Try Again</a>
-      </div>
-    `);
-  }
-
-  if (!code || typeof code !== 'string') {
-    return res.status(400).send('Authorization code missing from callback.');
-  }
-
-  try {
-    const redirectUri = getRedirectUri(req);
-    const tokenData = await exchangeCodeForTokens(code, redirectUri);
-
-    return res.send(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>OneDrive Connected</title>
-          <style>
-            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #f8fafc; }
-            .card { background: white; padding: 40px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); text-align: center; max-width: 480px; border: 1px solid #e2e8f0; }
-            .icon { width: 64px; height: 64px; background: #dcfce7; color: #16a34a; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 32px; }
-            h2 { margin: 0 0 10px; color: #0f172a; }
-            p { color: #64748b; font-size: 14px; line-height: 1.6; margin: 0 0 24px; }
-            .badge { display: inline-block; background: #f1f5f9; padding: 6px 12px; border-radius: 9999px; font-weight: 600; color: #334155; font-size: 13px; margin-bottom: 24px; }
-            .btn { display: inline-block; padding: 10px 24px; background: #0284c7; color: white; text-decoration: none; border-radius: 10px; font-size: 14px; font-weight: 500; }
-          </style>
-        </head>
-        <body>
-          <div class="card">
-            <div class="icon">✓</div>
-            <h2>OneDrive Connected Successfully!</h2>
-            <p>Your system is now linked to Microsoft OneDrive. Approved practicum documents will automatically archive to your cloud storage.</p>
-            <div class="badge">Account: ${tokenData.accountName || tokenData.accountEmail || 'Connected'}</div>
-            <div>
-              <a href="http://localhost:3000" class="btn">Return to System Dashboard</a>
-            </div>
-          </div>
-        </body>
-      </html>
-    `);
-  } catch (err: any) {
-    console.error('[OneDrive] Code exchange error:', err);
-    return res.status(500).send(`
-      <div style="font-family: sans-serif; padding: 40px; text-align: center;">
-        <h2 style="color: #ef4444;">Error Exchanging Token</h2>
-        <p>${err.message}</p>
-        <a href="/api/onedrive/auth/login" style="display: inline-block; padding: 10px 20px; background: #2563eb; color: white; text-decoration: none; border-radius: 8px;">Try Again</a>
-      </div>
-    `);
-  }
-});
+router.get('/onedrive/auth/login', requireIdentity, requirePortal, requireRole('admin'), asyncRoute(async (req,res) => {
+  if (!isServiceRoleAvailable) return res.status(503).json({ error: 'OneDrive administration is not configured.' });
+  const state = crypto.randomBytes(32).toString('hex');
+  const claims = JSON.parse(Buffer.from(req.identity!.token.split('.')[1], 'base64url').toString());
+  const saved = await supabaseAdmin.from('oauth_pending').insert({
+    state_hash: crypto.createHash('sha256').update(state).digest('hex'), actor_id: req.identity!.id,
+    session_id: claims.session_id, expires_at: new Date(Date.now()+300000).toISOString(),
+  });
+  if (saved.error) throw saved.error;
+  res.cookie('practicum_onedrive_state',state,{httpOnly:true,sameSite:'lax',secure:getRedirectUri().startsWith('https:'),maxAge:300000,path:'/api/onedrive/auth/callback'});
+  const url = new URL(getAuthorizationUrl(getRedirectUri())); url.searchParams.set('state',state);
+  res.json({url:url.toString()});
+}));
+router.get('/onedrive/auth/callback', asyncRoute(async (req,res) => {
+  res.setHeader('Cache-Control','no-store');
+  const state = req.query.state;
+  const cookie = (req.headers.cookie || '').split(';').map(v=>v.trim()).find(v=>v.startsWith('practicum_onedrive_state='))?.split('=')[1];
+  res.clearCookie('practicum_onedrive_state',{path:'/api/onedrive/auth/callback'});
+  if (typeof state !== 'string' || !/^[a-f0-9]{64}$/.test(state) || state !== cookie || !isServiceRoleAvailable)
+    return res.status(400).send('Invalid or expired OneDrive connection request. Start again from Settings.');
+  const consumed = await supabaseAdmin.rpc('consume_onedrive_state',{state_digest:crypto.createHash('sha256').update(state).digest('hex')});
+  if (consumed.error || !consumed.data) return res.status(400).send('This connection request is expired or no longer authorized.');
+  if (req.query.error || typeof req.query.code !== 'string') return res.status(400).send('Microsoft authorization was not completed.');
+  await exchangeCodeForTokens(req.query.code, getRedirectUri());
+  res.redirect(`${getAppOrigin()}/admin/settings`);
+}));
+router.use('/onedrive',requireIdentity,requirePortal,requireRole('admin'));
 
 /**
  * GET /api/onedrive/status

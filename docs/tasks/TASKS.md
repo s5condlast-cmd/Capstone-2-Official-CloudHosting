@@ -157,6 +157,6 @@
   - [x] Linked into `README.md` and `docs/README.md`
   - [x] Cleaned repository-wide UTF-8 mojibake across 10 markdown documentation files
 
-# Web editor research
+## Web editor research
 
 first outlook:https://platejs.org/editors

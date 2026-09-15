@@ -4,6 +4,7 @@ import { Agentation } from 'agentation';
 import { Toaster } from 'sonner';
 import { LandingPage } from './pages/public/LandingPage';
 import { ForgotPassword } from './pages/public/ForgotPassword';
+import { ResetPassword } from './pages/public/ResetPassword';
 import { Login } from './pages/public/Login';
 import { MainLayout } from './components/layout/MainLayout';
 import { ProtectedRoute } from './components/layout/ProtectedRoute';
@@ -20,16 +21,8 @@ import { CompanyManagement } from './pages/admin/CompanyManagement';
 import { AdviserDashboard } from './pages/adviser/AdviserDashboard';
 import { StudentDashboard } from './pages/student/StudentDashboard';
 
-import { DTR } from './pages/student/DTR';
-import { WeeklyJournal } from './pages/student/WeeklyJournal';
-import { StudentApplicationLetter } from './pages/student/StudentApplicationLetter';
-import { MemorandumOfAgreement } from './pages/student/MemorandumOfAgreement';
-import { STIOJTEndorsementLetter } from './pages/student/STIOJTEndorsementLetter';
-import { LetterOfConsent } from './pages/student/LetterOfConsent';
-import { PerformanceAppraisal } from './pages/student/PerformanceAppraisal';
-import { OJTTrainingPlan } from './pages/student/OJTTrainingPlan';
-import { IntegrationPaper } from './pages/student/IntegrationPaper';
-import { ProposalLetterToTheIndustry } from './pages/student/ProposalLetterToTheIndustry';
+import { StudentDocumentRepository } from './pages/student/StudentDocumentRepository';
+import { StudentDocumentEditor } from './pages/student/StudentDocumentEditor';
 import { ReviewDocs } from './pages/adviser/ReviewDocs';
 import { Endorsements } from './pages/adviser/Endorsements';
 import { ClassReports } from './pages/adviser/ClassReports';
@@ -65,7 +58,7 @@ const Placeholder = ({ name }: { name: string }) => (
 );
 
 function AppRoutes() {
-  const { user, loading, loginWithDemo, logout } = useAuth();
+  const { user, loading, logout } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -86,17 +79,13 @@ function AppRoutes() {
           localStorage.removeItem(key);
         }
       });
-      templateStorage.purgeTrollMetadata().catch(() => {});
+
     } catch (e) { }
   }, []);
 
-  const handleLogin = (role: Role, username: string) => {
-    loginWithDemo(role, username);
-  };
-
-  const handleLogout = () => {
-    logout();
-    navigate('/', { replace: true });
+  const handleLogout = async () => {
+    try { await logout(); navigate('/login', { replace: true }); }
+    catch { navigate('/login', { replace: true }); }
   };
 
   if (loading && !user) {
@@ -138,6 +127,7 @@ function AppRoutes() {
           element={!user ? <Login /> : <Navigate to={`/${user.role}`} replace />}
         />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
         {/* Admin Routes */}
         <Route path="/admin" element={
@@ -188,16 +178,18 @@ function AppRoutes() {
           </ProtectedRoute>
         }>
           <Route index element={<StudentDashboard />} />
-          <Route path="application-letter" element={<PhaseGuard phase="beforeOjt"><StudentApplicationLetter /></PhaseGuard>} />
-          <Route path="consent" element={<PhaseGuard phase="beforeOjt"><LetterOfConsent /></PhaseGuard>} />
-          <Route path="moa" element={<PhaseGuard phase="beforeOjt"><MemorandumOfAgreement /></PhaseGuard>} />
-          <Route path="endorsement" element={<PhaseGuard phase="beforeOjt"><STIOJTEndorsementLetter /></PhaseGuard>} />
-          <Route path="proposal" element={<PhaseGuard phase="beforeOjt"><ProposalLetterToTheIndustry /></PhaseGuard>} />
-          <Route path="dtr" element={<PhaseGuard phase="inOjt"><DTR /></PhaseGuard>} />
-          <Route path="journal" element={<PhaseGuard phase="inOjt"><WeeklyJournal /></PhaseGuard>} />
-          <Route path="training-plan" element={<PhaseGuard phase="inOjt"><OJTTrainingPlan /></PhaseGuard>} />
-          <Route path="evaluation" element={<PhaseGuard phase="finals"><PerformanceAppraisal /></PhaseGuard>} />
-          <Route path="completion" element={<PhaseGuard phase="finals"><IntegrationPaper /></PhaseGuard>} />
+          <Route path="application-letter" element={<Navigate to="/student/documents" replace />} />
+          <Route path="consent" element={<Navigate to="/student/documents" replace />} />
+          <Route path="moa" element={<Navigate to="/student/documents" replace />} />
+          <Route path="endorsement" element={<Navigate to="/student/documents" replace />} />
+          <Route path="proposal" element={<Navigate to="/student/documents" replace />} />
+          <Route path="dtr" element={<Navigate to="/student/documents" replace />} />
+          <Route path="journal" element={<Navigate to="/student/documents" replace />} />
+          <Route path="training-plan" element={<Navigate to="/student/documents" replace />} />
+          <Route path="evaluation" element={<Navigate to="/student/documents" replace />} />
+          <Route path="completion" element={<Navigate to="/student/documents" replace />} />
+          <Route path="documents" element={<StudentDocumentRepository />} />
+          <Route path="editor" element={<StudentDocumentEditor />} />
           <Route path="progress" element={<Placeholder name="Progress Tracker" />} />
           <Route path="calendar" element={<CalendarPage user={user} />} />
           <Route path="notifications" element={<Notifications user={user} />} />

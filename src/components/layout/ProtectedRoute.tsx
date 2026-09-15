@@ -33,7 +33,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   // If not logged in, redirect to landing page
   if (!activeUser) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   // If role doesn't match, strictly prevent privilege escalation and redirect to assigned portal

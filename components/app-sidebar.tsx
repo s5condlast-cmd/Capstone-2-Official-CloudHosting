@@ -123,31 +123,8 @@ export function AppSidebar({ user, onLogout, onSearchClick, ...props }: AppSideb
             group: 'Overview',
             items: [
               { title: 'Dashboard', url: '/student', icon: LayoutDashboardIcon },
-            ],
-          },
-          {
-            group: 'Before OJT',
-            items: [
-              { title: 'Application Letter', url: '/student/application-letter', icon: FileTextIcon, locked: locks.beforeOjt },
-              { title: 'Consent Form', url: '/student/consent', icon: UserCheckIcon, locked: locks.beforeOjt },
-              { title: 'Proposal Letter', url: '/student/proposal', icon: FilePlus2Icon, locked: locks.beforeOjt },
-              { title: 'Memorandum of Agreement', url: '/student/moa', icon: UsersIcon, locked: locks.beforeOjt },
-              { title: 'Endorsement Letter', url: '/student/endorsement', icon: ClipboardCheckIcon, locked: locks.beforeOjt },
-            ],
-          },
-          {
-            group: 'In OJT',
-            items: [
-              { title: 'Weekly Journal', url: '/student/journal', icon: BookOpenIcon, locked: locks.inOjt },
-              { title: 'Daily Time Record', url: '/student/dtr', icon: CalendarIcon, locked: locks.inOjt },
-              { title: 'OJT Training Plan', url: '/student/training-plan', icon: ClipboardListIcon, locked: locks.inOjt },
-            ],
-          },
-          {
-            group: 'Final Phase',
-            items: [
-              { title: 'Integration Paper', url: '/student/completion', icon: AwardIcon, locked: locks.finals },
-              { title: 'Performance Appraisal', url: '/student/evaluation', icon: CheckCircleIcon, locked: locks.finals },
+              { title: 'Document Repository', url: '/student/documents', icon: FileTextIcon },
+              { title: 'Document Editor', url: '/student/editor', icon: FilePlus2Icon },
             ],
           },
         ]

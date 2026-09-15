@@ -1,642 +1,82 @@
 import { supabase } from './supabase';
-import { documentGenerator } from './documentGenerator';
 
 export type DocumentStatus = 'Pending' | 'Pending Adviser Review' | 'Pending Final Approval' | 'Revision Required' | 'Approved' | 'Returned';
-
 export interface StudentDocument {
-  id: string;
-  student_name: string;
-  course: string;
-  doc_type: string;
-  status: DocumentStatus;
-  urgency: 'low' | 'medium' | 'high';
-  file_path: string;
-  created_at: string;
-  ai_status?: 'Pending' | 'Processing' | 'Completed' | 'Failed';
-  ai_findings?: any;
-  adviser_feedback?: string;
-  comments?: { author: string; msg: string; time: string }[];
-  onedrive_url?: string;
+  id: string; owner_id?: string; student_name: string; course: string; doc_type: string;
+  status: DocumentStatus; urgency: 'low' | 'medium' | 'high'; file_path: string; created_at: string;
+  ai_status?: 'Pending' | 'Processing' | 'Completed' | 'Failed'; ai_findings?: any;
+  adviser_feedback?: string; comments?: { author: string; msg: string; time: string }[]; onedrive_url?: string;
 }
 
-// IndexedDB helper for student submissions
-const SUBMISSION_DB_NAME = 'CapstoneSubmissionDB';
-const SUBMISSION_STORE_NAME = 'submissions_store';
-
-const getSubmissionIDB = (): Promise<IDBDatabase> => {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(SUBMISSION_DB_NAME, 1);
-    request.onupgradeneeded = () => {
-      const db = request.result;
-      if (!db.objectStoreNames.contains(SUBMISSION_STORE_NAME)) {
-        db.createObjectStore(SUBMISSION_STORE_NAME);
-      }
-    };
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
-  });
-};
-
-const saveSubmissionBuffer = async (key: string, buffer: ArrayBuffer): Promise<void> => {
-  try {
-    const db = await getSubmissionIDB();
-    const tx = db.transaction(SUBMISSION_STORE_NAME, 'readwrite');
-    tx.objectStore(SUBMISSION_STORE_NAME).put(buffer, key);
-    await new Promise((res, rej) => {
-      tx.oncomplete = res;
-      tx.onerror = rej;
-    });
-  } catch (e) {
-    console.warn('Submission IDB Save failed:', e);
+async function listDocuments(statuses: DocumentStatus[]): Promise<StudentDocument[]> {
+  const { data, error } = await supabase.from('student_documents').select('*').in('status', statuses).order('created_at', { ascending: false });
+  if (error) throw new Error('Unable to load documents. Please retry.');
+  return data as StudentDocument[];
+}
+async function saveDocument(file: Blob, filename: string, ownerId: string, name: string, course: string,
+  docType: string, status: DocumentStatus, urgency = 'medium'): Promise<StudentDocument> {
+  const extension = filename.split('.').pop()?.toLowerCase();
+  if (!extension || !['pdf','docx','xlsx'].includes(extension)) throw new Error('Upload a PDF, DOCX, or XLSX document.');
+  if (file.size > 10 * 1024 * 1024) throw new Error('Documents must be smaller than 10 MB.');
+  const path = `${ownerId}/${crypto.randomUUID()}.${extension}`;
+  const upload = await supabase.storage.from('student_submissions').upload(path, file, { contentType: file.type, upsert: false });
+  if (upload.error) throw new Error('Your document was not uploaded. Please retry.');
+  const inserted = await supabase.from('student_documents').insert({ owner_id: ownerId, student_name: name, course,
+    doc_type: docType, status, urgency, file_path: path, ai_status: 'Pending' }).select('*').single();
+  if (inserted.error || !inserted.data) {
+    await supabase.storage.from('student_submissions').remove([path]);
+    throw new Error('Your submission was not saved. Please retry.');
   }
-};
-
-const getSubmissionBuffer = async (key: string): Promise<ArrayBuffer | undefined> => {
-  try {
-    const db = await getSubmissionIDB();
-    const tx = db.transaction(SUBMISSION_STORE_NAME, 'readonly');
-    const req = tx.objectStore(SUBMISSION_STORE_NAME).get(key);
-    const res = await new Promise<any>((resolve) => {
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => resolve(undefined);
-    });
-    if (!res) return undefined;
-    if (res instanceof Blob) return await res.arrayBuffer();
-    if (res instanceof ArrayBuffer) return res;
-    if (res.buffer && res.buffer instanceof ArrayBuffer) return res.buffer;
-    return undefined;
-  } catch (e) {
-    return undefined;
-  }
-};
-
+  return inserted.data as StudentDocument;
+}
 export const submissionStorage = {
-  // Upload a student document to Supabase Storage and insert a record
-  async uploadSubmission(file: File, studentName: string, course: string, docType: string, urgency: 'low' | 'medium' | 'high' = 'medium'): Promise<StudentDocument> {
-    const fileExt = file.name.split('.').pop() || 'docx';
-    const fileName = `${studentName.replace(/\s+/g, '_')}_${docType.replace(/\s+/g, '_')}_${Date.now()}.${fileExt}`;
-    let filePath = `submissions/${fileName}`;
-    let onedriveUrl: string | undefined = undefined;
-
-    // Cache file buffer locally in IndexedDB immediately
-    let fileBuffer: ArrayBuffer | null = null;
-    try {
-      fileBuffer = await file.arrayBuffer();
-      await saveSubmissionBuffer(fileName, fileBuffer);
-      await saveSubmissionBuffer(filePath, fileBuffer);
-    } catch (bufErr) {
-      console.warn('Failed to read file buffer:', bufErr);
-    }
-
-    try {
-      /*
-      // Preserved Cloudinary Upload (Commented out for future redesign)
-      const formData = new FormData();
-      formData.append('file', file);
-      const uploadRes = await fetch(`/api/cloudinary/upload?folder=practicum/submissions`, {
-        method: 'POST',
-        body: formData,
-      });
-      const uploadData = await uploadRes.json();
-      if (!uploadRes.ok) {
-        console.warn('Cloudinary Upload Notice (proceeding with DB record):', uploadData.error);
-      } else {
-        // Use the Cloudinary URL as file_path
-        filePath = uploadData.url;
-      }
-      */
-
-      // Automatically archive signed letter to Microsoft OneDrive
-      try {
-        const onedriveFormData = new FormData();
-        onedriveFormData.append('file', file);
-        const folder = `Practicum_AY_2025_2026/${course.replace(/\s+/g, '_')}/${studentName.replace(/\s+/g, '_')}/${docType.replace(/\s+/g, '_')}`;
-        const onedriveRes = await fetch(`/api/onedrive/upload?folder=${encodeURIComponent(folder)}`, {
-          method: 'POST',
-          body: onedriveFormData,
-        });
-        const onedriveData = await onedriveRes.json();
-        if (onedriveData?.success && onedriveData.file?.webUrl) {
-          onedriveUrl = onedriveData.file.webUrl;
-          console.log('[OneDrive] Signed letter archived to OneDrive:', onedriveUrl);
-        }
-      } catch (onedriveErr) {
-        console.warn('[OneDrive] Background archive notice:', onedriveErr);
-      }
-
-      // Also upload file to Supabase Storage bucket 'student_submissions' for direct download fallback
-      try {
-        await supabase.storage.from('student_submissions').upload(fileName, file, {
-          cacheControl: '3600',
-          upsert: true
-        });
-      } catch (storageErr) {
-        console.warn('Supabase storage upload notice:', storageErr);
-      }
-
-      // Insert database record
-      const { data, error: insertError } = await supabase
-        .from('student_documents')
-        .insert([
-          {
-            student_name: studentName,
-            course: course,
-            doc_type: docType,
-            status: 'Pending',
-            urgency: urgency,
-            file_path: filePath,
-            ai_status: 'Pending'
-          }
-        ])
-        .select()
-        .single();
-
-      const resultDoc: StudentDocument = insertError || !data
-        ? {
-            id: `doc-${Date.now()}`,
-            student_name: studentName,
-            course: course,
-            doc_type: docType,
-            status: 'Pending',
-            urgency: urgency,
-            file_path: filePath,
-            onedrive_url: onedriveUrl,
-            created_at: new Date().toISOString(),
-            ai_status: 'Pending'
-          }
-        : { ...(data as StudentDocument), onedrive_url: onedriveUrl };
-
-      // Cache buffers in IndexedDB for the document
-      if (fileBuffer) {
-        await saveSubmissionBuffer(resultDoc.id, fileBuffer);
-        const isPdf = file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf';
-        if (isPdf) {
-          await saveSubmissionBuffer(`${resultDoc.id}_pdf`, fileBuffer);
-        } else {
-          // Generate companion PDF for EmbedPDF preview
-          try {
-            const companionPdf = await documentGenerator.generatePdf(docType, {
-              studentName,
-              programName: course,
-              date: new Date().toISOString()
-            });
-            const companionBuffer = await companionPdf.arrayBuffer();
-            await saveSubmissionBuffer(`${resultDoc.id}_pdf`, companionBuffer);
-          } catch (pdfGenErr) {
-            console.warn('Companion PDF generation notice:', pdfGenErr);
-          }
-        }
-      }
-
-      this.savePublishedSubmission(resultDoc);
-      return resultDoc;
-    } catch (err: any) {
-      console.warn('Supabase integration notice:', err);
-      const fallbackDoc: StudentDocument = {
-        id: `doc-${Date.now()}`,
-        student_name: studentName,
-        course: course,
-        doc_type: docType,
-        status: 'Pending',
-        urgency: urgency,
-        file_path: filePath,
-        onedrive_url: onedriveUrl,
-        created_at: new Date().toISOString(),
-        ai_status: 'Pending'
-      };
-
-      if (fileBuffer) {
-        await saveSubmissionBuffer(fallbackDoc.id, fileBuffer);
-        const isPdf = file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf';
-        if (isPdf) {
-          await saveSubmissionBuffer(`${fallbackDoc.id}_pdf`, fileBuffer);
-        } else {
-          try {
-            const companionPdf = await documentGenerator.generatePdf(docType, {
-              studentName,
-              programName: course,
-              date: new Date().toISOString()
-            });
-            const companionBuffer = await companionPdf.arrayBuffer();
-            await saveSubmissionBuffer(`${fallbackDoc.id}_pdf`, companionBuffer);
-          } catch (pdfGenErr) {
-            console.warn('Companion PDF generation notice for fallback:', pdfGenErr);
-          }
-        }
-      }
-
-      this.savePublishedSubmission(fallbackDoc);
-      return fallbackDoc;
-    }
+  async uploadSubmission(file: File, _studentName: string, _course: string, docType: string, urgency: 'low' | 'medium' | 'high' = 'medium'): Promise<StudentDocument> {
+    const auth = await supabase.auth.getUser();
+    if (auth.error || !auth.data.user) throw new Error('Sign in before submitting.');
+    const profile = await supabase.from('profiles').select('id,full_name,section,program').eq('id', auth.data.user.id).single();
+    if (profile.error || !profile.data) throw new Error('Unable to verify your student profile.');
+    return saveDocument(file, file.name, profile.data.id, profile.data.full_name, profile.data.section || profile.data.program || '', docType, 'Pending', urgency);
   },
-
-  // Helper to load locally saved student submissions from localStorage fallback
-  getPublishedSubmissions(): StudentDocument[] {
-    try {
-      const saved = localStorage.getItem('student_submissions_cache');
-      if (saved) return JSON.parse(saved);
-    } catch (e) {}
-    return [];
+  async publishSignedDTR(_name: string, _course: string, week: string | number, blob: Blob, studentId?: string): Promise<StudentDocument> {
+    if (!studentId) throw new Error('An assigned student ID is required to publish a DTR.');
+    const target = await supabase.from('profiles').select('id,full_name,section,program').eq('student_id', studentId).eq('role','student').single();
+    if (target.error || !target.data) throw new Error('This student is not uniquely identified or assigned to you.');
+    return saveDocument(blob, 'signed-dtr.xlsx', target.data.id, target.data.full_name, target.data.section || target.data.program || '', `DTR Form (Week ${week})`, 'Pending Adviser Review');
   },
-
-  savePublishedSubmission(doc: StudentDocument): void {
-    try {
-      const existing = this.getPublishedSubmissions().filter(d => d.id !== doc.id && !(d.student_name === doc.student_name && d.doc_type === doc.doc_type));
-      localStorage.setItem('student_submissions_cache', JSON.stringify([doc, ...existing]));
-    } catch (e) {}
+  async getFileUrl(filePath: string): Promise<string> {
+    // Private storage: do not resurrect public links or arbitrary third-party URLs.
+    if (!filePath || filePath.includes('://')) throw new Error('This legacy file needs migration into private practicum storage.');
+    const path = filePath.replace(/^submissions\//, '');
+    const { data, error } = await supabase.storage.from('student_submissions').createSignedUrl(path, 60);
+    if (error || !data) throw new Error('Document unavailable or access denied.');
+    return data.signedUrl;
   },
-
-  // Helper to load locally published DTRs from localStorage fallback
-  getPublishedDTRs(): StudentDocument[] {
-    try {
-      const saved = localStorage.getItem('published_dtrs');
-      if (saved) return JSON.parse(saved);
-    } catch (e) {}
-    return [
-      {
-        id: 'dtr-demo-1',
-        student_name: 'John Dwayne B. Guaniso',
-        course: 'BSIT',
-        doc_type: 'DTR Form (Week 1)',
-        status: 'Pending Adviser Review',
-        urgency: 'medium',
-        file_path: 'submissions/Signed_DTR_Week_1.xlsx',
-        created_at: new Date().toISOString(),
-        ai_status: 'Completed'
-      }
-    ];
-  },
-
-  // Publish a signed DTR spreadsheet (.xlsx) from Supervisor to Supabase Storage & Database for Adviser Review
-  async publishSignedDTR(studentName: string, course: string, weekNumber: number | string, xlsxBlob: Blob): Promise<StudentDocument> {
-    const fileName = `Signed_DTR_Week_${weekNumber}_${studentName.replace(/\s+/g, '_')}_${Date.now()}.xlsx`;
-    let filePath = `submissions/${fileName}`;
-    const docType = `DTR Form (Week ${weekNumber})`;
-
-    const newDoc: StudentDocument = {
-      id: `dtr-doc-${Date.now()}`,
-      student_name: studentName,
-      course: course,
-      doc_type: docType,
-      status: 'Pending Adviser Review',
-      urgency: 'medium',
-      file_path: filePath,
-      created_at: new Date().toISOString(),
-      ai_status: 'Completed'
-    };
-
-    // Save to local cache so Adviser & Admin see it immediately
-    try {
-      const existing = this.getPublishedDTRs();
-      const updated = [newDoc, ...existing.filter(d => d.id !== newDoc.id)];
-      localStorage.setItem('published_dtrs', JSON.stringify(updated));
-    } catch (e) {}
-
-    try {
-      /*
-      // Preserved Cloudinary Upload for Signed DTR (Commented out for future redesign)
-      const formData = new FormData();
-      formData.append('file', new File([xlsxBlob], fileName, { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
-      const uploadRes = await fetch(`/api/cloudinary/upload?folder=practicum/submissions`, {
-        method: 'POST',
-        body: formData,
-      });
-      const uploadData = await uploadRes.json();
-      if (!uploadRes.ok) {
-        console.warn('Cloudinary Upload Notice for Signed DTR (proceeding with DB record):', uploadData.error);
-      } else {
-        filePath = uploadData.url;
-        newDoc.file_path = uploadData.url;
-      }
-      */
-
-      // Automatically archive signed DTR to Microsoft OneDrive
-      try {
-        const onedriveFormData = new FormData();
-        const dtrFile = new File([xlsxBlob], fileName, { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-        onedriveFormData.append('file', dtrFile);
-        const folder = `Practicum_AY_2025_2026/${course.replace(/\s+/g, '_')}/${studentName.replace(/\s+/g, '_')}/Signed_DTR`;
-        const onedriveRes = await fetch(`/api/onedrive/upload?folder=${encodeURIComponent(folder)}`, {
-          method: 'POST',
-          body: onedriveFormData,
-        });
-        const onedriveData = await onedriveRes.json();
-        if (onedriveData?.success && onedriveData.file?.webUrl) {
-          newDoc.onedrive_url = onedriveData.file.webUrl;
-          console.log('[OneDrive] Signed DTR archived to OneDrive:', onedriveData.file.webUrl);
-        }
-      } catch (onedriveErr) {
-        console.warn('[OneDrive] Signed DTR background archive notice:', onedriveErr);
-      }
-
-      const { data, error: insertError } = await supabase
-        .from('student_documents')
-        .insert([
-          {
-            student_name: studentName,
-            course: course,
-            doc_type: docType,
-            status: 'Pending Adviser Review',
-            urgency: 'medium',
-            file_path: filePath,
-            ai_status: 'Completed'
-          }
-        ])
-        .select()
-        .single();
-
-      if (insertError) {
-        console.warn('DB Insert Notice for Signed DTR (using cached doc):', insertError);
-        return newDoc;
-      }
-
-      return data as StudentDocument;
-    } catch (err) {
-      console.warn('Supabase publishSignedDTR integration notice:', err);
-      return newDoc;
-    }
-  },
-
-  // Get a public URL for the document
-  getFileUrl(filePath: string): string {
-    // If already a full URL (Cloudinary or OneDrive), return directly
-    if (filePath.startsWith('http') || filePath.startsWith('blob:')) {
-      return filePath;
-    }
-    // Supabase Storage: bucket 'student_submissions'
-    const cleanPath = filePath.startsWith('submissions/') ? filePath.replace('submissions/', '') : filePath;
-    const { data } = supabase.storage
-      .from('student_submissions')
-      .getPublicUrl(cleanPath);
-    return data.publicUrl;
-  },
-
-  // Resolve a guaranteed viewable PDF URL for EmbedPDF preview
-  async resolvePdfUrl(doc: StudentDocument): Promise<string> {
-    try {
-      // 1. Check if companion PDF exists in IndexedDB
-      const pdfBuf = await getSubmissionBuffer(`${doc.id}_pdf`);
-      if (pdfBuf && pdfBuf.byteLength > 0) {
-        return URL.createObjectURL(new Blob([pdfBuf], { type: 'application/pdf' }));
-      }
-
-      // 2. Check if original submission buffer in IndexedDB is already a PDF
-      const baseFilename = doc.file_path.split('/').pop() || '';
-      const originalBuf = (await getSubmissionBuffer(doc.id)) 
-        || (await getSubmissionBuffer(doc.file_path))
-        || (baseFilename ? await getSubmissionBuffer(baseFilename) : undefined);
-
-      if (originalBuf && originalBuf.byteLength > 0) {
-        const u = new Uint8Array(originalBuf.slice(0, 5));
-        const isPdf = u[0] === 0x25 && u[1] === 0x50 && u[2] === 0x44 && u[3] === 0x46; // %PDF
-        if (isPdf) {
-          await saveSubmissionBuffer(`${doc.id}_pdf`, originalBuf);
-          return URL.createObjectURL(new Blob([originalBuf], { type: 'application/pdf' }));
-        }
-      }
-
-      // 3. Try fetching from remote URL if available
-      const remoteUrl = this.getFileUrl(doc.file_path);
-      if (remoteUrl && (remoteUrl.startsWith('http://') || remoteUrl.startsWith('https://'))) {
-        try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 3000);
-          const res = await fetch(remoteUrl, { signal: controller.signal });
-          clearTimeout(timeoutId);
-          if (res.ok) {
-            const buf = await res.arrayBuffer();
-            const u = new Uint8Array(buf.slice(0, 5));
-            const isPdf = u[0] === 0x25 && u[1] === 0x50 && u[2] === 0x44 && u[3] === 0x46;
-            if (isPdf) {
-              await saveSubmissionBuffer(`${doc.id}_pdf`, buf);
-              return URL.createObjectURL(new Blob([buf], { type: 'application/pdf' }));
-            }
-          }
-        } catch (fetchErr) {
-          // Fall through to PDF generation
-        }
-      }
-
-      // 4. Generate high-fidelity STI document PDF for this student and document type
-      const generatedBlob = await documentGenerator.generatePdf(doc.doc_type, {
-        studentName: doc.student_name,
-        programName: doc.course,
-        date: doc.created_at || new Date().toISOString(),
-      });
-      const generatedBuf = await generatedBlob.arrayBuffer();
-      await saveSubmissionBuffer(`${doc.id}_pdf`, generatedBuf);
-      return URL.createObjectURL(generatedBlob);
-    } catch (err) {
-      console.error('Failed to resolve PDF for EmbedPDF preview:', err);
-      return this.getFileUrl(doc.file_path);
-    }
-  },
-
-  // Resolve the original DOCX file URL if the submission was made in Word format
-  async resolveOriginalDocxUrl(doc: StudentDocument): Promise<string | undefined> {
-    const isDocx = doc.file_path.toLowerCase().endsWith('.docx') || doc.file_path.toLowerCase().endsWith('.doc');
-    if (!isDocx) return undefined;
-
-    try {
-      const baseFilename = doc.file_path.split('/').pop() || '';
-      const buf = (await getSubmissionBuffer(doc.id))
-        || (await getSubmissionBuffer(doc.file_path))
-        || (baseFilename ? await getSubmissionBuffer(baseFilename) : undefined);
-
-      if (buf && buf.byteLength > 0) {
-        return URL.createObjectURL(new Blob([buf], {
-          type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-        }));
-      }
-    } catch (e) {}
-
-    return this.getFileUrl(doc.file_path);
-  },
-
-  // Fetch all pending documents for the adviser review tables
-  async getPendingDocuments(): Promise<StudentDocument[]> {
-    const localDtrs = this.getPublishedDTRs();
-    const localSubmissions = this.getPublishedSubmissions().filter(d => ['Pending', 'Pending Adviser Review', 'Pending Final Approval'].includes(d.status));
-    try {
-      const { data, error } = await supabase
-        .from('student_documents')
-        .select('*')
-        .in('status', ['Pending', 'Pending Adviser Review', 'Pending Final Approval'])
-        .order('created_at', { ascending: false });
-
-      const map = new Map<string, StudentDocument>();
-      [...localDtrs, ...localSubmissions, ...(data || [] as StudentDocument[])].forEach(d => map.set(d.id, d));
-      return Array.from(map.values()).filter(d => ['Pending', 'Pending Adviser Review', 'Pending Final Approval'].includes(d.status));
-    } catch (err) {
-      return [...localSubmissions, ...localDtrs];
-    }
-  },
-
-  // Fetch document history (Approved / Revision Required)
-  async getHistoryDocuments(): Promise<StudentDocument[]> {
-    const localSubmissions = this.getPublishedSubmissions().filter(d => ['Approved', 'Revision Required', 'Returned'].includes(d.status));
-    try {
-      const { data, error } = await supabase
-        .from('student_documents')
-        .select('*')
-        .in('status', ['Approved', 'Revision Required', 'Returned'])
-        .order('created_at', { ascending: false });
-
-      const map = new Map<string, StudentDocument>();
-      [...localSubmissions, ...(data || [] as StudentDocument[])].forEach(d => map.set(d.id, d));
-      return Array.from(map.values());
-    } catch (err) {
-      return localSubmissions;
-    }
-  },
-
-  // Fetch all pending documents for the admin review tables
-  async getPendingAdminDocuments(): Promise<StudentDocument[]> {
-    const localDtrs = this.getPublishedDTRs();
-    const localSubmissions = this.getPublishedSubmissions();
-    try {
-      const { data, error } = await supabase
-        .from('student_documents')
-        .select('*')
-        .in('status', ['Pending', 'Pending Final Approval', 'Pending Adviser Review', 'Approved'])
-        .order('created_at', { ascending: false });
-
-      const map = new Map<string, StudentDocument>();
-      [...localDtrs, ...localSubmissions, ...(data || [] as StudentDocument[])].forEach(d => map.set(d.id, d));
-      return Array.from(map.values());
-    } catch (err) {
-      return [...localSubmissions, ...localDtrs];
-    }
-  },
-
-  // Get a single document by ID
+  async resolvePdfUrl(doc: StudentDocument): Promise<string> { return /\.(pdf|xlsx)$/i.test(doc.file_path) ? this.getFileUrl(doc.file_path) : ''; },
+  async resolveOriginalDocxUrl(doc: StudentDocument): Promise<string | undefined> { return doc.file_path.toLowerCase().endsWith('.docx') ? this.getFileUrl(doc.file_path) : undefined; },
+  async getPendingDocuments() { return listDocuments(['Pending','Pending Adviser Review','Pending Final Approval']); },
+  async getHistoryDocuments() { return listDocuments(['Approved','Revision Required','Returned']); },
+  async getPendingAdminDocuments() { return listDocuments(['Pending','Pending Adviser Review','Pending Final Approval','Approved']); },
   async getDocumentById(id: string): Promise<StudentDocument> {
-    try {
-      const { data, error } = await supabase
-        .from('student_documents')
-        .select('*')
-        .eq('id', id)
-        .single();
-
-      if (!error && data) {
-        return data as StudentDocument;
-      }
-    } catch (err) {}
-
-    const localSub = this.getPublishedSubmissions().find(d => d.id === id);
-    if (localSub) return localSub;
-
-    const localMatch = this.getPublishedDTRs().find(d => d.id === id);
-    if (localMatch) return localMatch;
-
-    return {
-      id: id,
-      student_name: 'John Dwayne B. Guaniso',
-      course: 'BSIT',
-      doc_type: 'Proposal Letter to the Industry',
-      status: 'Pending',
-      urgency: 'medium',
-      file_path: 'submissions/Proposal_Letter.docx',
-      created_at: new Date().toISOString(),
-      ai_status: 'Completed'
-    };
+    const { data, error } = await supabase.from('student_documents').select('*').eq('id', id).single();
+    if (error || !data) throw new Error('Document not found or access denied.');
+    return data as StudentDocument;
   },
-
-  // Get the latest document by student name and type
   async getLatestDocumentByType(studentName: string, docType: string): Promise<StudentDocument | null> {
-    const localMatch = this.getPublishedSubmissions().find(
-      d => (d.student_name === studentName || !studentName) && d.doc_type === docType
-    );
-
-    try {
-      const { data, error } = await supabase
-        .from('student_documents')
-        .select('*')
-        .eq('student_name', studentName)
-        .eq('doc_type', docType)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (!error && data) {
-        return {
-          ...(data as StudentDocument),
-          onedrive_url: localMatch?.onedrive_url || (data as any).onedrive_url || "https://onedrive.live.com?cid=D9646D9033CEACF0&id=D9646D9033CEACF0!sbcec97914ef14503aaaa786bd628bc60"
-        };
-      }
-    } catch (err) {
-      console.warn('Fetch Latest DB notice:', err);
-    }
-
-    return localMatch || null;
+    const { data, error } = await supabase.from('student_documents').select('*').eq('student_name', studentName).eq('doc_type',docType)
+      .order('created_at', { ascending: false }).limit(1).maybeSingle();
+    if (error) throw new Error('Unable to load submission status.');
+    return data as StudentDocument | null;
   },
-
-  // Update document status
   async updateDocumentStatus(id: string, status: DocumentStatus, feedback?: string): Promise<void> {
-    const updateData: any = { status };
-    if (feedback !== undefined) {
-      updateData.adviser_feedback = feedback;
-    }
-    try {
-      await supabase
-        .from('student_documents')
-        .update(updateData)
-        .eq('id', id);
-    } catch (err) {
-      console.warn('DB update notice:', err);
-    }
-
-    // Also update local cache
-    try {
-      const subs = this.getPublishedSubmissions();
-      const match = subs.find(d => d.id === id);
-      if (match) {
-        match.status = status;
-        if (feedback !== undefined) match.adviser_feedback = feedback;
-        localStorage.setItem('student_submissions_cache', JSON.stringify(subs));
-      }
-    } catch (e) {}
+    const { error } = await supabase.from('student_documents').update({ status, ...(feedback !== undefined ? { adviser_feedback: feedback } : {}) }).eq('id',id).select('id').single();
+    if (error) throw new Error('Document status was not saved.');
   },
-
-  // Post a comment to a document
-  async postComment(id: string, author: string, msg: string): Promise<void> {
-    const doc = await this.getDocumentById(id);
-    const existingComments = doc.comments || [];
-    const newComment = {
-      author,
-      msg,
-      time: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })
-    };
-    const updatedComments = [...existingComments, newComment];
-    try {
-      await supabase
-        .from('student_documents')
-        .update({ comments: updatedComments })
-        .eq('id', id);
-    } catch (err) {
-      console.warn('DB post comment notice:', err);
-    }
-
-    try {
-      const subs = this.getPublishedSubmissions();
-      const match = subs.find(d => d.id === id);
-      if (match) {
-        match.comments = updatedComments;
-        localStorage.setItem('student_submissions_cache', JSON.stringify(subs));
-      }
-    } catch (e) {}
+  async postComment(id: string, _author: string, msg: string): Promise<void> {
+    const { error } = await supabase.rpc('add_document_comment', { document_id: id, message: msg });
+    if (error) throw new Error('Your comment was not saved.');
   },
-
-  // Update AI status and findings
-  async updateAiFindings(id: string, aiStatus: 'Pending' | 'Processing' | 'Completed' | 'Failed', aiFindings: any | null): Promise<void> {
-    const { error } = await supabase
-      .from('student_documents')
-      .update({ ai_status: aiStatus, ai_findings: aiFindings })
-      .eq('id', id);
-
-    if (error) {
-      console.error('Update AI Findings Error:', error);
-      throw new Error(`Failed to update AI findings: ${error.message}`);
-    }
-  }
+  async updateAiFindings(id: string, aiStatus: StudentDocument['ai_status'], aiFindings: any): Promise<void> {
+    const { error } = await supabase.from('student_documents').update({ ai_status: aiStatus, ai_findings: aiFindings }).eq('id',id).select('id').single();
+    if (error) throw new Error('AI findings were not saved.');
+  },
 };

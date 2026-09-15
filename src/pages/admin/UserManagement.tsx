@@ -3,6 +3,8 @@ import { Card } from '@/src/components/ui/Card';
 import { Badge } from '@/src/components/ui/Badge';
 import { Button } from '@/src/components/ui/Button';
 import { EmptyState } from '@/src/components/ui/EmptyState';
+import { apiJson } from '@/src/lib/api';
+import { useAuth } from '@/src/contexts/AuthContext';
 import { supabase } from '@/src/lib/supabase';
 import { 
   GraduationCap, 
@@ -24,7 +26,8 @@ import {
   Trash2,
   QrCode,
   ShieldAlert,
-  Smartphone
+  Smartphone,
+  Copy
 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
@@ -41,8 +44,16 @@ interface UserRecord {
   status: 'Active' | 'Suspended' | 'Pending';
   dept: string;
   studentId?: string;
+  adviserId?: string;
+  supervisorId?: string;
   resetRequested?: boolean;
   mfaEnrolled?: boolean;
+}
+
+interface CredentialReceipt {
+  user: Pick<UserRecord, 'id' | 'name' | 'email' | 'role'>;
+  temporaryPassword: string;
+  portalLink: string;
 }
 
 const tabs: { key: TabKey; label: string; icon: React.ElementType; roleFilter?: UserRole }[] = [
@@ -53,20 +64,8 @@ const tabs: { key: TabKey; label: string; icon: React.ElementType; roleFilter?: 
   { key: 'admins', label: 'Admins', icon: Shield, roleFilter: 'Admin' },
 ];
 
-const isUuid = (val?: string): boolean =>
-  typeof val === 'string' &&
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(val.trim());
-
-async function safeParseJson(res: Response): Promise<any> {
-  const contentType = res.headers.get('content-type') || '';
-  if (contentType.includes('application/json')) {
-    return res.json();
-  }
-  const text = await res.text();
-  return { error: `Server error (${res.status}): ${text.slice(0, 120)}` };
-}
-
 export const UserManagement: React.FC = () => {
+  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<UserRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabKey>('all');
@@ -79,81 +78,26 @@ export const UserManagement: React.FC = () => {
   const [formEmail, setFormEmail] = useState('');
   const [formRole, setFormRole] = useState<UserRole>('Student');
   const [formStudentId, setFormStudentId] = useState('');
+  const [formAdviserId, setFormAdviserId] = useState('');
+  const [formSupervisorId, setFormSupervisorId] = useState('');
+  const [assignmentUser, setAssignmentUser] = useState<UserRecord | null>(null);
   const [formDept, setFormDept] = useState('BSIT 402');
   const [formCompanyName, setFormCompanyName] = useState('');
-  const [formPassword, setFormPassword] = useState('123');
+
   const [formSubmitting, setFormSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
+  const [credentialReceipt, setCredentialReceipt] = useState<CredentialReceipt | null>(null);
 
   // ── Fetch Users from Supabase Database and backend directory on mount ──
   const fetchUsers = async () => {
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-
-      // 1. Fetch from unified API endpoint (auto-seeds institutional users and synchronizes persistent stores)
-      try {
-        const res = await fetch('/api/users');
-        if (res.ok) {
-          const contentType = res.headers.get('content-type') || '';
-          if (contentType.includes('application/json')) {
-            const data = await res.json();
-            if (data?.users && Array.isArray(data.users) && data.users.length > 0) {
-              setUsers(data.users);
-              setIsLoading(false);
-              return;
-            }
-          }
-        }
-      } catch {
-        // Non-blocking fallback to direct Supabase query
-      }
-
-      // 2. Direct Supabase Database query fallback
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('[UserManagement] Supabase fetch error:', error);
-        toast.error('Failed to load user directory from database');
-        return;
-      }
-
-      if (data) {
-        const mappedUsers: UserRecord[] = data.map((p: any) => {
-          const roleRaw = (p.role || 'student').toLowerCase();
-          const roleCapitalized: UserRole =
-            roleRaw === 'admin' ? 'Admin' :
-            roleRaw === 'adviser' ? 'Adviser' :
-            roleRaw === 'supervisor' ? 'Supervisor' : 'Student';
-
-          const status: 'Active' | 'Suspended' | 'Pending' =
-            p.status ? p.status : (p.is_activated === false ? 'Suspended' : 'Active');
-
-          const dept =
-            p.section || p.department || p.company_name || p.program || (roleCapitalized === 'Student' ? 'BSIT 402' : 'General');
-
-          return {
-            id: p.id,
-            name: p.full_name || p.email.split('@')[0],
-            role: roleCapitalized,
-            email: p.email,
-            status,
-            dept,
-            studentId: p.student_id || undefined,
-            resetRequested: !!p.requires_password_change,
-            mfaEnrolled: !!p.mfa_enrolled,
-          };
-        });
-        setUsers(mappedUsers);
-      }
-    } catch (err: any) {
-      console.error('[UserManagement] Fetch exception:', err);
-      toast.error('Error connecting to database');
-    } finally {
-      setIsLoading(false);
-    }
+      const data = await apiJson<{ users: UserRecord[] }>('/api/users');
+      setUsers(data.users);
+    } catch (error) {
+      setUsers([]);
+      toast.error(error instanceof Error ? error.message : 'Unable to load users.');
+    } finally { setIsLoading(false); }
   };
 
   useEffect(() => {
@@ -167,7 +111,7 @@ export const UserManagement: React.FC = () => {
     const matchSearch = u.name.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase());
     
     let matchFilter = true;
-    if (activeFilter === 'Password Resets') matchFilter = !!u.resetRequested;
+    if (activeFilter === 'Password Setup Required') matchFilter = !!u.resetRequested;
     if (activeFilter === 'Inactive Users') matchFilter = u.status === 'Suspended';
     if (activeFilter === 'Pending Approval') matchFilter = u.status === 'Pending';
 
@@ -178,285 +122,121 @@ export const UserManagement: React.FC = () => {
 
   // ── Handle Add User Submission directly into Supabase & Persistent Backend ──
   const handleAddUserSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setFormError('');
-
-    if (!formName.trim()) {
-      setFormError('Please enter the user\'s full name.');
-      return;
-    }
-    if (!formEmail.trim()) {
-      setFormError('Please enter a username or institutional email address.');
-      return;
-    }
-
-    setFormSubmitting(true);
+    e.preventDefault(); setFormError(''); setFormSubmitting(true);
     try {
-      const trimmedInput = formEmail.trim().toLowerCase();
-      const normalizedEmail = trimmedInput.includes('@')
-        ? trimmedInput
-        : `${trimmedInput}@practicum.edu`;
-      const roleLower = formRole.toLowerCase();
-      const initialPassword = formPassword.trim() || '123';
-      const assignedStudentId = formRole === 'Student' ? (formStudentId.trim() || undefined) : undefined;
-      const deptInfo = formRole === 'Student' 
-        ? formDept.trim() 
-        : (formRole === 'Supervisor' ? formCompanyName.trim() : formDept.trim());
-
-      // 1. Call backend provisioning API as the primary authority (persists to userStore, memory cache, and Supabase)
-      const res = await fetch('/api/users', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: formName.trim(),
-          email: normalizedEmail,
-          role: formRole,
-          studentId: assignedStudentId,
-          dept: deptInfo,
-          companyName: formRole === 'Supervisor' ? formCompanyName.trim() : undefined,
-          password: initialPassword,
-        }),
+      const result = await apiJson<CredentialReceipt>('/api/users', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: formName.trim(), email: formEmail.trim().toLowerCase(), role: formRole,
+          studentId: formStudentId.trim() || undefined, dept: formDept.trim(), companyName: formCompanyName.trim() || undefined,
+          adviserId: formRole === 'Student' ? formAdviserId || undefined : undefined,
+          supervisorId: formRole === 'Student' ? formSupervisorId || undefined : undefined }),
       });
-
-      const data = await safeParseJson(res);
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to create user in directory.');
-      }
-
-      // Clear any previous local storage verification for this email
-      const cleanKey = normalizedEmail.replace(/[^a-zA-Z0-9]/g, '');
-      localStorage.removeItem(`pwd_changed_${cleanKey}`);
-      localStorage.removeItem(`mfa_enrolled_${cleanKey}`);
-      localStorage.removeItem(`mfa_trusted_${cleanKey}`);
-
-      // 2. Direct best-effort Supabase client sync (non-blocking)
-      try {
-        const coreProfile: any = {
-          email: normalizedEmail,
-          full_name: formName.trim(),
-          role: roleLower,
-          student_id: assignedStudentId || null,
-          program: roleLower === 'student' ? (deptInfo.split(' ')[0] || 'BSIT') : null,
-          section: roleLower === 'student' ? deptInfo : null,
-          department: roleLower === 'adviser' ? deptInfo : null,
-          company_name: roleLower === 'supervisor' ? deptInfo : null,
-          is_activated: true,
-          status: 'Active',
-          requires_password_change: true,
-          mfa_enrolled: false,
-          updated_at: new Date().toISOString(),
-        };
-        await supabase.from('profiles').upsert(coreProfile, { onConflict: 'email' });
-      } catch (clientSyncErr) {
-        console.warn('[UserManagement] Client-side Supabase sync note:', clientSyncErr);
-      }
-
-      toast.success(`User ${formName.trim()} created! Initial password: ${initialPassword}`);
-      setIsAddUserOpen(false);
-
-      // Reset form fields
-      setFormName('');
-      setFormEmail('');
-      setFormRole('Student');
-      setFormStudentId('');
-      setFormDept('BSIT 402');
-      setFormCompanyName('');
-      setFormPassword('123');
-
-      // Refresh directory list
+      toast.success('Account created. Copy the credentials before closing the dialog.');
+      setIsAddUserOpen(false); setFormName(''); setFormEmail(''); setFormStudentId('');
+      setCredentialReceipt(result);
       await fetchUsers();
-    } catch (err: any) {
-      setFormError(err.message || 'An error occurred while creating user.');
-    } finally {
-      setFormSubmitting(false);
-    }
+    } catch (error) { setFormError(error instanceof Error ? error.message : 'Account creation failed.'); }
+    finally { setFormSubmitting(false); }
   };
-
-  // ── Handle Admin Reset of Credentials & Google Authenticator ──
+  const performUserAction = async (user: UserRecord, suffix: string, method: string, message: string, body?: object) => {
+    try {
+      await apiJson('/api/users/' + encodeURIComponent(user.id) + suffix, { method,
+        headers: { 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined });
+      toast.success(message); await fetchUsers();
+    } catch (error) { toast.error(error instanceof Error ? error.message : 'Account update failed.'); }
+  };
   const handleResetPassword = async (user: UserRecord) => {
-    if (!confirm(`Reset credentials and Google Authenticator for ${user.name}?\n\nThis will:\n1. Reset temporary password to '123'\n2. Require password update on next login\n3. Reset Google Authenticator verification\n\nThe user will be required to change their password and re-verify Google Authenticator on their next login.`)) {
-      return;
-    }
-
+    if (!confirm(`Reset ${user.email}'s password and revoke all existing sessions? A temporary password will be shown once.`)) return;
     try {
-      // 1. Clear verification cache
-      const cleanKey = user.email.toLowerCase().replace(/[^a-zA-Z0-9]/g, '');
-      localStorage.removeItem(`mfa_enrolled_${cleanKey}`);
-      localStorage.removeItem(`mfa_trusted_${cleanKey}`);
-      localStorage.removeItem(`pwd_changed_${cleanKey}`);
-      if (user.email.includes('@')) {
-        const prefixKey = user.email.split('@')[0].toLowerCase().replace(/[^a-zA-Z0-9]/g, '');
-        localStorage.removeItem(`mfa_enrolled_${prefixKey}`);
-        localStorage.removeItem(`mfa_trusted_${prefixKey}`);
-        localStorage.removeItem(`pwd_changed_${prefixKey}`);
-      }
-      if (user.email.toLowerCase() === 'johndwayneguaniso.05242004@gmail.com') {
-        ['johndwayne', 'johndwayneguaniso', 'john.dwayne'].forEach((alias) => {
-          const aKey = alias.replace(/[^a-zA-Z0-9]/g, '');
-          localStorage.removeItem(`mfa_enrolled_${aKey}`);
-          localStorage.removeItem(`mfa_trusted_${aKey}`);
-          localStorage.removeItem(`pwd_changed_${aKey}`);
-        });
-      }
-
-      // 2. Call backend reset endpoint to reset password to 123 and clear MFA
-      await fetch(`/api/users/${encodeURIComponent(user.email || user.id)}/reset-password`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ newPassword: '123', email: user.email }),
-      }).catch((e) => console.warn('[UserManagement] Reset API notice:', e));
-
-      // 3. Safe UUID Supabase update
-      try {
-        const filter = isUuid(user.id)
-          ? `id.eq.${user.id},email.ilike.${user.email}`
-          : `email.ilike.${user.email}`;
-
-        await supabase
-          .from('profiles')
-          .update({ 
-            requires_password_change: true, 
-            mfa_enrolled: false, 
-            updated_at: new Date().toISOString() 
-          })
-          .or(filter);
-      } catch (dbErr) {
-        console.warn('[UserManagement] Supabase reset update notice:', dbErr);
-      }
-
-      setUsers(prev => prev.map(u => (u.id === user.id || u.email.toLowerCase() === user.email.toLowerCase()) ? { ...u, resetRequested: true, mfaEnrolled: false } : u));
-      toast.success(`Reset complete for ${user.name}! Password set to '123' and Google Authenticator reset.`);
-    } catch {
-      toast.error('Failed to reset user credentials.');
-    }
+      const result = await apiJson<Omit<CredentialReceipt, 'user'>>(`/api/users/${encodeURIComponent(user.id)}/reset-password`, { method: 'POST' });
+      setCredentialReceipt({ ...result, user });
+      toast.success('Password reset. Copy the credentials before closing the dialog.');
+      await fetchUsers();
+    } catch (error) { toast.error(error instanceof Error ? error.message : 'Password reset failed.'); }
   };
 
-  // ── Handle Admin Reset of Google Authenticator (MFA) Only ──
+  const credentialMessage = credentialReceipt ? `Practicum Portal Account
+
+Name: ${credentialReceipt.user.name}
+Email: ${credentialReceipt.user.email}
+Temporary Password: ${credentialReceipt.temporaryPassword}
+Portal: ${credentialReceipt.portalLink}
+
+Sign in and immediately create your private password. Do not share these credentials. Delete this message after changing your password.` : '';
+  const closeCredentialReceipt = () => setCredentialReceipt(null);
+  const copyCredentials = async () => {
+    try { await navigator.clipboard.writeText(credentialMessage); toast.success('Credentials copied. Send them only in a private message.'); }
+    catch { toast.error('Clipboard access failed. Select and copy the credentials manually.'); }
+  };
   const handleResetMfa = async (user: UserRecord) => {
-    if (!confirm(`Reset Google Authenticator verification for ${user.name}?\n\nThe user will be prompted to scan a new Google Authenticator QR code on their next login.`)) {
-      return;
-    }
-
+    const isSelfReset = user.id === currentUser?.id;
+    const prompt = isSelfReset
+      ? 'Reset your authenticator? This immediately signs you out. Delete the old entry from your authenticator app, then sign in and scan the new QR code.'
+      : 'Have you verified ' + user.name + "'s identity? This removes their Supabase authenticator factor and revokes existing sessions. They must also delete the old entry from their authenticator app.";
+    if (!confirm(prompt)) return;
     try {
-      const cleanKey = user.email.toLowerCase().replace(/[^a-zA-Z0-9]/g, '');
-      localStorage.removeItem(`mfa_enrolled_${cleanKey}`);
-      localStorage.removeItem(`mfa_trusted_${cleanKey}`);
-      if (user.email.includes('@')) {
-        const prefixKey = user.email.split('@')[0].toLowerCase().replace(/[^a-zA-Z0-9]/g, '');
-        localStorage.removeItem(`mfa_enrolled_${prefixKey}`);
-        localStorage.removeItem(`mfa_trusted_${prefixKey}`);
+      const result = await apiJson<{ message: string }>(`/api/users/${encodeURIComponent(user.id)}/reset-mfa`, { method: 'POST' });
+      toast.success(result.message);
+      if (isSelfReset) {
+        await supabase.auth.signOut({ scope: 'local' }).catch(() => undefined);
+        window.location.assign('/login');
+        return;
       }
-      if (user.email.toLowerCase() === 'johndwayneguaniso.05242004@gmail.com') {
-        ['johndwayne', 'johndwayneguaniso', 'john.dwayne'].forEach((alias) => {
-          const aKey = alias.replace(/[^a-zA-Z0-9]/g, '');
-          localStorage.removeItem(`mfa_enrolled_${aKey}`);
-          localStorage.removeItem(`mfa_trusted_${aKey}`);
-        });
-      }
-
-      // Call backend reset MFA endpoint
-      await fetch(`/api/users/${encodeURIComponent(user.email || user.id)}/reset-mfa`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: user.email }),
-      }).catch((e) => console.warn('[UserManagement] Reset MFA API notice:', e));
-
-      // Safe UUID Supabase update
-      try {
-        const filter = isUuid(user.id)
-          ? `id.eq.${user.id},email.ilike.${user.email}`
-          : `email.ilike.${user.email}`;
-
-        await supabase
-          .from('profiles')
-          .update({ 
-            mfa_enrolled: false, 
-            updated_at: new Date().toISOString() 
-          })
-          .or(filter);
-      } catch (dbErr) {
-        console.warn('[UserManagement] Supabase MFA update notice:', dbErr);
-      }
-
-      setUsers(prev => prev.map(u => (u.id === user.id || u.email.toLowerCase() === user.email.toLowerCase()) ? { ...u, mfaEnrolled: false } : u));
-      toast.success(`Google Authenticator reset for ${user.name}!`);
-    } catch {
-      toast.error('Failed to reset Google Authenticator.');
-    }
+      await fetchUsers();
+    } catch (error) { toast.error(error instanceof Error ? error.message : 'Authenticator reset failed.'); }
   };
-
-  // ── Handle Delete User from Directory and Persistent Stores ──
   const handleDeleteUser = async (user: UserRecord) => {
-    if (user.email.toLowerCase() === 'johndwayneguaniso.05242004@gmail.com') {
-      toast.error('The primary system administrator account cannot be deleted.');
-      return;
-    }
-
-    if (!confirm(`Are you sure you want to delete ${user.name} from the directory?`)) return;
-    try {
-      // 1. Call backend delete API (removes from userStore, persistent blacklist, and Supabase Auth admin)
-      await fetch(`/api/users/${encodeURIComponent(user.id || user.email)}`, {
-        method: 'DELETE',
-      }).catch((e) => console.warn('[UserManagement] Backend delete notice:', e));
-
-      // 2. Safe UUID Supabase delete
-      try {
-        const filter = isUuid(user.id)
-          ? `id.eq.${user.id},email.ilike.${user.email}`
-          : `email.ilike.${user.email}`;
-
-        await supabase.from('profiles').delete().or(filter);
-      } catch (dbErr) {
-        console.warn('[UserManagement] Supabase delete note:', dbErr);
-      }
-
-      setUsers(prev => prev.filter(u => u.id !== user.id && u.email.toLowerCase() !== user.email.toLowerCase()));
-      toast.success(`User ${user.name} removed from directory.`);
-    } catch (err: any) {
-      toast.error('Failed to delete user from directory.');
-    }
+    if (!confirm('Disable and delete the login for ' + user.name + '? Historical records will be retained.')) return;
+    await performUserAction(user, '', 'DELETE', 'Account access removed.');
   };
-
-  // ── Handle Status Toggle across Database and Backend Stores ──
   const handleToggleStatus = async (user: UserRecord) => {
-    const nextStatus = user.status === 'Active' ? 'Suspended' : 'Active';
-    const nextIsActivated = nextStatus === 'Active';
-    setUsers(prev => prev.map(u => u.id === user.id ? { ...u, status: nextStatus } : u));
-    try {
-      // 1. Call backend status PATCH API (updates userStore and in-memory store)
-      await fetch(`/api/users/${encodeURIComponent(user.id || user.email)}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: nextStatus }),
-      }).catch((e) => console.warn('[UserManagement] Backend status notice:', e));
-
-      // 2. Safe UUID Supabase profiles update
-      try {
-        const filter = isUuid(user.id)
-          ? `id.eq.${user.id},email.ilike.${user.email}`
-          : `email.ilike.${user.email}`;
-
-        await supabase
-          .from('profiles')
-          .update({ 
-            status: nextStatus,
-            is_activated: nextIsActivated, 
-            updated_at: new Date().toISOString() 
-          })
-          .or(filter);
-      } catch (dbErr) {
-        console.warn('[UserManagement] Supabase status update note:', dbErr);
-      }
-
-      toast.info(`${user.name} status updated to ${nextStatus}`);
-    } catch (err: any) {
-      setUsers(prev => prev.map(u => u.id === user.id ? { ...u, status: user.status } : u));
-      toast.error('Failed to update user status in database');
-    }
+    const status = user.status === 'Active' ? 'Suspended' : 'Active';
+    await performUserAction(user, '/status', 'PATCH', 'Account status updated.', { status });
   };
 
+  const reviewerFields = <div className="space-y-3">
+    <label className="block text-sm">Assigned adviser<select className="mt-1 w-full rounded-lg border border-zinc-300 bg-white p-2 dark:bg-zinc-900" value={formAdviserId} onChange={e => setFormAdviserId(e.target.value)}>
+      <option value="">Not assigned</option>{users.filter(u => u.role === 'Adviser' && u.status === 'Active').map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+    </select></label>
+    <label className="block text-sm">Assigned supervisor<select className="mt-1 w-full rounded-lg border border-zinc-300 bg-white p-2 dark:bg-zinc-900" value={formSupervisorId} onChange={e => setFormSupervisorId(e.target.value)}>
+      <option value="">Not assigned</option>{users.filter(u => u.role === 'Supervisor' && u.status === 'Active').map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+    </select></label>
+    <p className="text-xs text-zinc-500">Only assigned reviewers and administrators can access this student's submissions.</p>
+  </div>;
   return (
     <div className="space-y-8 pb-12">
+      {credentialReceipt && <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-5">
+        <div role="dialog" aria-modal="true" aria-label="Temporary account credentials" className="w-full max-w-lg space-y-5 rounded-2xl bg-white p-6 shadow-2xl dark:bg-zinc-950">
+          <div className="flex items-start justify-between gap-4">
+            <div><h2 className="text-lg font-semibold">Temporary credentials</h2>
+              <p className="mt-1 text-sm text-zinc-500">Shown once. Send privately through Messenger, SMS, or another verified direct channel.</p></div>
+            <button type="button" onClick={closeCredentialReceipt} aria-label="Close and clear credentials" className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"><X size={17} /></button>
+          </div>
+          <div className="space-y-3 rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-sm dark:border-zinc-800 dark:bg-zinc-900">
+            <div><span className="text-zinc-500">Name</span><p className="font-semibold">{credentialReceipt.user.name}</p></div>
+            <div><span className="text-zinc-500">Email</span><p className="font-mono font-semibold select-all">{credentialReceipt.user.email}</p></div>
+            <div><span className="text-zinc-500">Temporary password</span><p className="break-all font-mono text-base font-bold select-all">{credentialReceipt.temporaryPassword}</p></div>
+            <div><span className="text-zinc-500">Role</span><p className="font-semibold">{credentialReceipt.user.role}</p></div>
+          </div>
+          <p className="text-xs text-amber-700 dark:text-amber-400">Do not post credentials in a group chat or save them in a spreadsheet. Verify the recipient before sending.</p>
+          <div className="flex justify-end gap-3"><Button type="button" variant="outline" onClick={closeCredentialReceipt}>Close & Clear</Button>
+            <Button type="button" icon={<Copy size={14} />} onClick={copyCredentials}>Copy Credentials</Button></div>
+        </div>
+      </div>}
+      {assignmentUser && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-5">
+        <form role="dialog" aria-modal="true" aria-label="Assign student reviewers" className="w-full max-w-md space-y-4 rounded-xl bg-white p-6 dark:bg-zinc-950" onSubmit={async e => {
+          e.preventDefault(); setFormSubmitting(true); setFormError('');
+          try {
+            await apiJson(`/api/users/${assignmentUser.id}/assignment`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ adviserId: formAdviserId || null, supervisorId: formSupervisorId || null }) });
+            setAssignmentUser(null); await fetchUsers(); toast.success('Reviewer assignments saved.');
+          } catch (error) { setFormError(error instanceof Error ? error.message : 'Assignments were not saved.'); }
+          finally { setFormSubmitting(false); }
+        }}>
+          <h2 className="text-lg font-semibold">Reviewers for {assignmentUser.name}</h2>{reviewerFields}
+          {formError && <p role="alert" className="text-sm text-red-600">{formError}</p>}
+          <div className="flex justify-end gap-3"><button type="button" disabled={formSubmitting} onClick={() => setAssignmentUser(null)}>Cancel</button><Button type="submit" disabled={formSubmitting}>Save assignments</Button></div>
+        </form>
+      </div>}
       {/* Tabs */}
       <div className="flex items-center gap-1 p-1 bg-zinc-100 dark:bg-zinc-900 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 w-fit">
         {tabs.map(tab => (
@@ -485,7 +265,7 @@ export const UserManagement: React.FC = () => {
       </div>
 
       <div className="flex flex-wrap gap-2">
-         {['Password Resets', 'Inactive Users', 'Pending Approval'].map((tag, i) => (
+         {['Password Setup Required', 'Inactive Users', 'Pending Approval'].map((tag, i) => (
            <button 
              key={i} 
              onClick={() => setActiveFilter(activeFilter === tag ? null : tag)}
@@ -497,7 +277,7 @@ export const UserManagement: React.FC = () => {
              )}
            >
              {tag}
-             {tag === 'Password Resets' && activeFilter !== tag && users.some(u => u.resetRequested) && (
+             {tag === 'Password Setup Required' && activeFilter !== tag && users.some(u => u.resetRequested) && (
                <span className="ml-2 w-2 h-2 inline-block rounded-full bg-red-500 animate-pulse"></span>
              )}
            </button>
@@ -533,6 +313,7 @@ export const UserManagement: React.FC = () => {
               icon={<UserPlus size={14} />} 
               onClick={() => {
                 setFormError('');
+                setFormAdviserId(''); setFormSupervisorId('');
                 setIsAddUserOpen(true);
               }}
               className="whitespace-nowrap"
@@ -571,7 +352,7 @@ export const UserManagement: React.FC = () => {
                           {u.name}
                           {u.resetRequested && (
                             <span className="px-2 py-0.5 rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 text-[9px] uppercase tracking-wider font-bold animate-pulse">
-                              Reset Requested
+                               Password Setup Required
                             </span>
                           )}
                         </span>
@@ -601,21 +382,25 @@ export const UserManagement: React.FC = () => {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-2">
+                       {u.role === 'Student' && <Button size="sm" variant="outline" title="Assign reviewers" onClick={() => {
+                         setFormAdviserId(u.adviserId || ''); setFormSupervisorId(u.supervisorId || ''); setFormError(''); setAssignmentUser(u);
+                       }}><Users size={14} /></Button>}
                        <Button 
                          size="sm" 
                          variant={u.resetRequested ? "default" : "outline"}
                          className={cn("p-2", u.resetRequested ? "bg-red-600 hover:bg-red-700 text-white" : "border-transparent hover:bg-zinc-100 dark:hover:bg-zinc-800")}
                          onClick={() => handleResetPassword(u)}
-                         title="Reset Password to '123' & Reset Authenticator"
+                         title="Issue a one-time temporary password"
                        >
                          <KeyRound size={14} className={u.resetRequested ? "animate-pulse" : ""} />
                        </Button>
                        <Button 
                          size="sm" 
                          variant="outline" 
+                         disabled={!u.mfaEnrolled}
                          className={cn("p-2", !u.mfaEnrolled ? "text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-900/40 hover:bg-amber-50 dark:hover:bg-amber-950/40" : "border-transparent hover:bg-zinc-100 dark:hover:bg-zinc-800")}
                          onClick={() => handleResetMfa(u)}
-                         title={u.mfaEnrolled ? "Reset Google Authenticator (prompt new QR code)" : "Authenticator pending verification"}
+                         title={u.id === currentUser?.id ? "Reset my authenticator, sign out, and require a new QR code" : u.mfaEnrolled ? "Remove this factor and require a new QR code" : "Authenticator enrollment is already required"}
                        >
                          <QrCode size={14} />
                        </Button>
@@ -775,18 +560,18 @@ export const UserManagement: React.FC = () => {
                 {/* Email Address / Username */}
                 <div>
                   <label className="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider block mb-1">
-                    Username, Student ID, or Institutional Email
+                    Account Email
                   </label>
                   <input
-                    type="text"
+                    type="email"
                     required
-                    placeholder="e.g. carlos, 02000249822, or student@practicum.edu"
+                    placeholder="e.g. student@practicum.edu"
                     value={formEmail}
                     onChange={(e) => setFormEmail(e.target.value)}
                     className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl px-3.5 py-2 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:border-zinc-900 dark:focus:border-zinc-100 transition-all placeholder:text-zinc-400"
                   />
                   <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-1">
-                    No Gmail required. You can enter a simple username, student ID, or institutional email.
+                    This email is the account name. It does not need to be a Gmail address.
                   </p>
                 </div>
 
@@ -865,25 +650,8 @@ export const UserManagement: React.FC = () => {
                   </div>
                 )}
 
-                {/* Initial Password */}
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                      Initial Password
-                    </label>
-                    <span className="text-[10px] text-zinc-400 font-medium">Default is 123</span>
-                  </div>
-                  <input
-                    type="text"
-                    required
-                    value={formPassword}
-                    onChange={(e) => setFormPassword(e.target.value)}
-                    className="w-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl px-3.5 py-2 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:border-zinc-900 dark:focus:border-zinc-100 transition-all font-mono"
-                  />
-                  <p className="text-[11px] text-zinc-400 dark:text-zinc-500 mt-1">
-                    The user can immediately sign in with this password from the Login page.
-                  </p>
-                </div>
+                {formRole === 'Student' && reviewerFields}
+                <p className="text-sm text-zinc-500">A unique temporary password will be generated. Send it only through a private message to the verified user.</p>
 
                 {/* Modal Footer */}
                 <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-zinc-100 dark:border-zinc-800/80">
@@ -908,7 +676,7 @@ export const UserManagement: React.FC = () => {
                     ) : (
                       <>
                         <CheckCircle2 size={14} />
-                        <span>Create User</span>
+                        <span>Create account</span>
                       </>
                     )}
                   </Button>

@@ -1,0 +1,1701 @@
+# Change Log: Official `@plate/editor-ai` Template Adoption & Student Document Editor Suite
+
+This document records the full architecture, code changes, and files implemented to adopt Plate's official shadcn `@plate/editor-ai` template (`npx shadcn@latest add @plate/editor-ai`) for the Student Document Editor (`/student/editor`).
+
+---
+
+## 1. Overview of Changes
+
+1. **Document Sheet & Canvas Layout (`src/components/plate-ui/editor.tsx`)**:
+   - Replaced flat generic container with `EditorContainer` (scrollable gray workspace canvas) and `Editor` (`variant="demo"`, centered paper document card with realistic drop shadow, page margins, and 12pt serif typography).
+2. **Fixed Top Toolbar (`src/components/plate-ui/fixed-toolbar.tsx` & `fixed-toolbar-buttons.tsx`)**:
+   - Implemented the full button suite from `@plate/editor-ai`: Undo/Redo, "Ask AI" sparkles button, Turn Into block dropdown (Heading 1–3, Paragraph, Quote), Text marks (Bold, Italic, Underline, Strikethrough, Code, Highlight), Alignment (Left, Center, Right, Justify), Lists (Bulleted, Numbered), and Insert tools (Link, Table, Date field, Divider line).
+3. **Floating Contextual Toolbar (`src/components/plate-ui/floating-toolbar.tsx`)**:
+   - Contextual toolbar that floats above selected text for quick mark toggling and inline AI prompts.
+4. **AI Writing Assistant Dialog (`src/components/plate-ui/ai-menu.tsx`)**:
+   - Interactive dialog triggered via button or `Cmd+J` / `Ctrl+J`.
+   - Actions: *"Improve writing"*, *"Fix grammar & spelling"*, *"Make more formal"*, *"Summarize text"*, *"Continue writing"*, and custom prompts.
+   - 1-click *"Replace Selection"* or *"Insert into Document"*.
+5. **Backend AI Route & Service (`backend/routes/aiEditor.ts` & `backend/services/aiService.ts`)**:
+   - Added `POST /api/ai/editor-assist` leveraging dual Groq (`llama-3.3-70b-versatile`) and Gemini (`gemini-1.5-flash`) fallback pipeline.
+6. **Core Editor & Page Updates (`src/components/editor/plate-editor.tsx`, `editor-kit.tsx`, `StudentDocumentEditor.tsx`)**:
+   - Wired the template primitives into `PlateEditor` while preserving auto-saving, IndexedDB offline caching, Supabase OCC sync, document history drawer, locked submission states, and DOCX/PDF export.
+
+---
+
+## 2. File Directory Map
+
+| Path | Type | Description |
+| :--- | :--- | :--- |
+| `src/components/plate-ui/editor.tsx` | **NEW** | `EditorContainer` canvas and `Editor` paper sheet primitives |
+| `src/components/plate-ui/toolbar.tsx` | **NEW** | Accessible `Toolbar`, `ToolbarGroup`, `ToolbarButton`, `ToolbarSeparator` |
+| `src/components/plate-ui/fixed-toolbar.tsx` | **NEW** | Sticky top toolbar container with glassmorphic backdrop blur |
+| `src/components/plate-ui/fixed-toolbar-buttons.tsx` | **NEW** | Full button suite matching `@plate/editor-ai` specification |
+| `src/components/plate-ui/floating-toolbar.tsx` | **NEW** | Contextual floating toolbar positioned over text selection |
+| `src/components/plate-ui/ai-menu.tsx` | **NEW** | AI Writing Assistant dialog with quick actions and custom prompts |
+| `backend/routes/aiEditor.ts` | **NEW** | Express endpoint `POST /api/ai/editor-assist` |
+| `backend/services/aiService.ts` | **MODIFIED** | Added `assistEditorText` with Groq -> Gemini fallback |
+| `backend/server.ts` | **MODIFIED** | Mounted `aiEditorRouter` on `/api` and `/` |
+| `src/components/editor/plate-editor.tsx` | **MODIFIED** | Refactored `PlateEditor` to wrap `@plate/editor-ai` layout |
+| `src/components/editor/editor-kit.tsx` | **MODIFIED** | Added `StrikethroughPlugin`, `CodePlugin`, `HighlightPlugin` |
+| `src/pages/student/StudentDocumentEditor.tsx` | **MODIFIED** | Strongly typed `editorRef` with `PlateEditorRef` |
+
+---
+
+## 3. Full Source Code of New & Modified Files
+
+### 3.1. `src/components/plate-ui/editor.tsx`
+
+```tsx
+/**
+ * editor.tsx
+ * Official Plate UI container and sheet editor components.
+ * Matches @plate/editor-ai template specification with authentic paper sheet aesthetics.
+ */
+import * as React from 'react';
+import { cva, type VariantProps } from 'class-variance-authority';
+import { PlateContainer, PlateContent, type PlateContentProps } from 'platejs/react';
+import { cn } from '@/src/lib/utils';
+
+export const editorContainerVariants = cva(
+  'relative w-full cursor-text select-text overflow-y-auto caret-primary selection:bg-primary/20 focus-visible:outline-none [&_.slate-selection-area]:z-50 [&_.slate-selection-area]:border [&_.slate-selection-area]:border-primary/25 [&_.slate-selection-area]:bg-primary/15',
+  {
+    defaultVariants: {
+      variant: 'default',
+    },
+    variants: {
+      variant: {
+        default: 'h-full bg-zinc-100/70 dark:bg-zinc-950/80 p-4 md:p-8 flex justify-center',
+        demo: 'min-h-[750px] bg-zinc-100/70 dark:bg-zinc-950/80 p-4 md:p-8 flex justify-center rounded-b-xl border-x border-b border-zinc-200 dark:border-zinc-800',
+        fullWidth: 'size-full px-6 md:px-12 py-8 bg-zinc-100/70 dark:bg-zinc-950/80',
+        sheet: 'min-h-[850px] bg-zinc-100/80 dark:bg-zinc-950 p-6 md:p-10 flex justify-center',
+      },
+    },
+  }
+);
+
+export function EditorContainer({
+  className,
+  variant,
+  ...props
+}: React.ComponentProps<'div'> & VariantProps<typeof editorContainerVariants>) {
+  return (
+    <PlateContainer
+      className={cn(
+        'ignore-click-outside/toolbar',
+        editorContainerVariants({ variant }),
+        className
+      )}
+      {...props}
+    />
+  );
+}
+
+export const editorVariants = cva(
+  cn(
+    'group/editor plate-editor-content',
+    'relative w-full cursor-text select-text overflow-x-hidden whitespace-break-spaces break-words',
+    'focus-visible:outline-none',
+    'placeholder:text-zinc-400 dark:placeholder:text-zinc-500',
+    '[&_strong]:font-bold'
+  ),
+  {
+    defaultVariants: {
+      variant: 'default',
+    },
+    variants: {
+      disabled: {
+        true: 'cursor-not-allowed opacity-60',
+      },
+      focused: {
+        true: '',
+      },
+      variant: {
+        default:
+          'size-full max-w-[850px] bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 shadow-sm rounded-xl px-12 py-12 text-base text-zinc-900 dark:text-zinc-100 font-serif leading-relaxed',
+        demo:
+          'w-full max-w-[850px] min-h-[750px] bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 shadow-md rounded-xl px-8 md:px-14 py-10 md:py-12 text-base text-zinc-900 dark:text-zinc-100 font-serif leading-relaxed',
+        fullWidth:
+          'size-full max-w-none bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 shadow-sm rounded-xl px-8 py-8 text-base font-serif',
+        none: '',
+      },
+    },
+  }
+);
+
+export type EditorProps = PlateContentProps &
+  VariantProps<typeof editorVariants> & {
+    ref?: React.Ref<HTMLDivElement>;
+  };
+
+export const Editor = React.forwardRef<HTMLDivElement, EditorProps>(function Editor(
+  { className, disabled, focused, variant = 'demo', ...props },
+  ref
+) {
+  return (
+    <PlateContent
+      ref={ref}
+      className={cn(
+        editorVariants({
+          disabled,
+          focused,
+          variant,
+        }),
+        className
+      )}
+      disabled={disabled}
+      disableDefaultStyles
+      data-editor-content
+      style={{
+        fontFamily: "'Times New Roman', Times, serif",
+        fontSize: '12pt',
+        lineHeight: 1.5,
+      }}
+      {...props}
+    />
+  );
+});
+
+Editor.displayName = 'Editor';
+```
+
+---
+
+### 3.2. `src/components/plate-ui/toolbar.tsx`
+
+```tsx
+/**
+ * toolbar.tsx
+ * Plate UI Toolbar primitive components.
+ * Matches @plate/editor-ai toolbar styling with theme tokens and accessible buttons.
+ */
+import * as React from 'react';
+import { cva, type VariantProps } from 'class-variance-authority';
+import { cn } from '@/src/lib/utils';
+
+export const toolbarVariants = cva(
+  'relative flex select-none items-center gap-0.5',
+  {
+    defaultVariants: {
+      variant: 'default',
+    },
+    variants: {
+      variant: {
+        default: 'w-full',
+        floating: 'rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-lg p-1',
+      },
+    },
+  }
+);
+
+export function Toolbar({
+  className,
+  variant,
+  children,
+  ...props
+}: React.ComponentProps<'div'> & VariantProps<typeof toolbarVariants>) {
+  return (
+    <div
+      role="toolbar"
+      data-editor-toolbar
+      className={cn(toolbarVariants({ variant }), className)}
+      {...props}
+    >
+      {children}
+    </div>
+  );
+}
+
+export function ToolbarGroup({
+  children,
+  className,
+}: React.ComponentProps<'div'>) {
+  return (
+    <div
+      className={cn(
+        'group/toolbar-group flex items-center gap-0.5 shrink-0',
+        className
+      )}
+    >
+      {children}
+      <ToolbarSeparator />
+    </div>
+  );
+}
+
+export function ToolbarSeparator({
+  className,
+  ...props
+}: React.ComponentProps<'div'>) {
+  return (
+    <div
+      role="separator"
+      className={cn(
+        'mx-1 h-4 w-px bg-zinc-200 dark:bg-zinc-800 shrink-0 group-last/toolbar-group:hidden',
+        className
+      )}
+      {...props}
+    />
+  );
+}
+
+export const toolbarButtonVariants = cva(
+  cn(
+    'inline-flex cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium text-xs outline-none',
+    'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800/70',
+    'focus-visible:ring-1 focus-visible:ring-primary focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50',
+    'aria-checked:bg-zinc-200 dark:aria-checked:bg-zinc-800 aria-checked:text-zinc-900 dark:aria-checked:text-zinc-100',
+    'transition-colors'
+  ),
+  {
+    defaultVariants: {
+      size: 'default',
+      variant: 'default',
+    },
+    variants: {
+      size: {
+        default: 'h-8 min-w-8 px-2',
+        sm: 'h-7 min-w-7 px-1.5',
+        lg: 'h-9 min-w-9 px-2.5',
+      },
+      variant: {
+        default: 'bg-transparent',
+        active: 'bg-zinc-200 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 font-semibold',
+        accent: 'bg-primary/10 text-primary hover:bg-primary/20',
+      },
+    },
+  }
+);
+
+export interface ToolbarButtonProps
+  extends React.ComponentProps<'button'>,
+    VariantProps<typeof toolbarButtonVariants> {
+  active?: boolean;
+  tooltip?: string;
+  isDropdown?: boolean;
+}
+
+export const ToolbarButton = React.forwardRef<HTMLButtonElement, ToolbarButtonProps>(
+  function ToolbarButton(
+    {
+      active = false,
+      children,
+      className,
+      disabled,
+      isDropdown = false,
+      onClick,
+      size = 'sm',
+      title,
+      tooltip,
+      variant,
+      ...props
+    },
+    ref
+  ) {
+    const tooltipText = tooltip || title;
+
+    return (
+      <button
+        ref={ref}
+        type="button"
+        disabled={disabled}
+        aria-pressed={active}
+        aria-checked={active}
+        title={tooltipText}
+        onMouseDown={(e) => {
+          // Prevent losing text focus and selection in the Slate editor
+          e.preventDefault();
+          onClick?.(e as any);
+        }}
+        className={cn(
+          toolbarButtonVariants({
+            size,
+            variant: active ? 'active' : variant,
+          }),
+          isDropdown && 'pr-1.5 gap-1',
+          className
+        )}
+        {...props}
+      >
+        {children}
+      </button>
+    );
+  }
+);
+
+ToolbarButton.displayName = 'ToolbarButton';
+```
+
+---
+
+### 3.3. `src/components/plate-ui/fixed-toolbar.tsx`
+
+```tsx
+/**
+ * fixed-toolbar.tsx
+ * Plate UI FixedToolbar component matching @plate/editor-ai specification.
+ * Stays sticky at the top of the editor canvas with backdrop blur and responsive horizontal scroll.
+ */
+import * as React from 'react';
+import { cn } from '@/src/lib/utils';
+import { Toolbar } from './toolbar';
+
+export function FixedToolbar({ className, ...props }: React.ComponentProps<typeof Toolbar>) {
+  return (
+    <Toolbar
+      {...props}
+      className={cn(
+        'sticky top-0 left-0 z-30 w-full justify-between overflow-x-auto rounded-t-xl',
+        'border border-zinc-200 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/95 p-1.5',
+        'backdrop-blur-sm shadow-xs select-none print:hidden',
+        '[&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]',
+        className
+      )}
+    />
+  );
+}
+```
+
+---
+
+### 3.4. `src/components/plate-ui/fixed-toolbar-buttons.tsx`
+
+```tsx
+/**
+ * fixed-toolbar-buttons.tsx
+ * Full button layout matching @plate/editor-ai template specification.
+ * Includes History, AI Assistant, Turn Into Block dropdown, Marks, Alignment, Lists, Table, and Inserts.
+ */
+import * as React from 'react';
+import {
+  Undo,
+  Redo,
+  Sparkles,
+  Bold,
+  Italic,
+  Underline,
+  Strikethrough,
+  Code,
+  Highlighter,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  AlignJustify,
+  List,
+  ListOrdered,
+  Heading1,
+  Heading2,
+  Heading3,
+  Quote,
+  Type,
+  ChevronDown,
+  Table as TableIcon,
+  Link as LinkIcon,
+  Calendar,
+  Minus,
+} from 'lucide-react';
+import { cn } from '@/src/lib/utils';
+import { ToolbarButton, ToolbarGroup } from './toolbar';
+
+// ─── Helpers for Plate Transforms ─────────────────────────────────────────────
+
+function toggleMark(editor: any, key: string) {
+  try {
+    if (editor?.tf?.toggle?.mark) {
+      editor.tf.toggle.mark({ key });
+    } else if (editor?.toggleMark) {
+      editor.toggleMark(key);
+    }
+  } catch { /* non-fatal */ }
+}
+
+function isMarkActive(editor: any, key: string): boolean {
+  try {
+    if (editor?.api?.marks?.isActive) return editor.api.marks.isActive(key);
+    if (editor?.isMarkActive) return editor.isMarkActive(key);
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+function setBlock(editor: any, type: string) {
+  try {
+    if (editor?.tf?.toggle?.block) {
+      editor.tf.toggle.block({ type });
+    } else if (editor?.setBlockType) {
+      editor.setBlockType(type);
+    }
+  } catch { /* non-fatal */ }
+}
+
+function getActiveBlock(editor: any): string {
+  try {
+    if (editor?.api?.block?.getType) return editor.api.block.getType() ?? 'p';
+    return 'p';
+  } catch {
+    return 'p';
+  }
+}
+
+function setAlignment(editor: any, align: string) {
+  try {
+    if (editor?.tf?.align?.set) {
+      editor.tf.align.set({ value: align });
+    } else if (editor?.setAlignment) {
+      editor.setAlignment(align);
+    }
+  } catch { /* non-fatal */ }
+}
+
+function getActiveAlignment(editor: any): string {
+  try {
+    if (editor?.api?.block?.getAlign) return editor.api.block.getAlign() ?? 'left';
+    return 'left';
+  } catch {
+    return 'left';
+  }
+}
+
+// ─── Turn Into Block Dropdown ──────────────────────────────────────────────────
+
+const BLOCK_OPTIONS = [
+  { id: 'p', label: 'Paragraph', icon: Type },
+  { id: 'h1', label: 'Heading 1', icon: Heading1 },
+  { id: 'h2', label: 'Heading 2', icon: Heading2 },
+  { id: 'h3', label: 'Heading 3', icon: Heading3 },
+  { id: 'blockquote', label: 'Quote', icon: Quote },
+];
+
+function TurnIntoDropdown({ editor, activeBlock }: { editor: any; activeBlock: string }) {
+  const [open, setOpen] = React.useState(false);
+  const dropdownRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    if (open) {
+      document.addEventListener('mousedown', handleOutsideClick);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+    };
+  }, [open]);
+
+  const currentOption = BLOCK_OPTIONS.find((o) => o.id === activeBlock) || BLOCK_OPTIONS[0];
+  const CurrentIcon = currentOption.icon;
+
+  return (
+    <div ref={dropdownRef} className="relative">
+      <ToolbarButton
+        isDropdown
+        onClick={() => setOpen(!open)}
+        tooltip="Turn into..."
+        className="px-2 w-auto font-normal gap-1.5"
+      >
+        <CurrentIcon className="w-3.5 h-3.5 text-zinc-600 dark:text-zinc-300" />
+        <span className="text-xs font-medium">{currentOption.label}</span>
+        <ChevronDown className="w-3 h-3 text-zinc-400 ml-0.5" />
+      </ToolbarButton>
+
+      {open && (
+        <div className="absolute top-full left-0 mt-1 w-44 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xl py-1 z-50 animate-in fade-in zoom-in-95 duration-100">
+          <div className="px-2.5 py-1 text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">
+            Turn into
+          </div>
+          {BLOCK_OPTIONS.map((opt) => {
+            const Icon = opt.icon;
+            const isSelected = activeBlock === opt.id;
+            return (
+              <button
+                key={opt.id}
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  setBlock(editor, opt.id);
+                  setOpen(false);
+                }}
+                className={cn(
+                  'flex items-center gap-2.5 w-full px-2.5 py-1.5 text-xs text-left transition-colors',
+                  isSelected
+                    ? 'bg-primary/10 text-primary font-medium'
+                    : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                )}
+              >
+                <Icon className="w-3.5 h-3.5" />
+                <span>{opt.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── FixedToolbarButtons Component ───────────────────────────────────────────
+
+export interface FixedToolbarButtonsProps {
+  editor: any;
+  onOpenAi?: () => void;
+}
+
+export function FixedToolbarButtons({ editor, onOpenAi }: FixedToolbarButtonsProps) {
+  const [, forceUpdate] = React.useReducer((x) => x + 1, 0);
+
+  React.useEffect(() => {
+    if (!editor?.on) return;
+    let unsub: (() => void) | undefined;
+    try {
+      unsub = editor.on('change', forceUpdate);
+    } catch { /* non-fatal */ }
+    return () => {
+      unsub?.();
+    };
+  }, [editor]);
+
+  const isBold = isMarkActive(editor, 'bold');
+  const isItalic = isMarkActive(editor, 'italic');
+  const isUnderline = isMarkActive(editor, 'underline');
+  const isStrikethrough = isMarkActive(editor, 'strikethrough');
+  const isCode = isMarkActive(editor, 'code');
+  const isHighlight = isMarkActive(editor, 'highlight');
+
+  const activeBlock = getActiveBlock(editor);
+  const activeAlign = getActiveAlignment(editor);
+
+  const handleUndo = () => {
+    try { editor?.undo?.(); } catch { /* non-fatal */ }
+  };
+
+  const handleRedo = () => {
+    try { editor?.redo?.(); } catch { /* non-fatal */ }
+  };
+
+  const handleInsertDate = () => {
+    try {
+      const today = new Date().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      });
+      if (editor?.tf?.insert?.nodes) {
+        editor.tf.insert.nodes([{ type: 'p', children: [{ text: `Date: ${today}` }] }]);
+      }
+    } catch { /* non-fatal */ }
+  };
+
+  const handleInsertLink = () => {
+    try {
+      const url = window.prompt('Enter link URL:');
+      if (!url) return;
+      if (editor?.tf?.insert?.nodes) {
+        editor.tf.insert.nodes([{ type: 'a', url, children: [{ text: url }] }]);
+      }
+    } catch { /* non-fatal */ }
+  };
+
+  const handleInsertTable = () => {
+    try {
+      if (editor?.tf?.insert?.nodes) {
+        editor.tf.insert.nodes([
+          {
+            type: 'table',
+            children: [
+              {
+                type: 'tr',
+                children: [
+                  { type: 'td', children: [{ type: 'p', children: [{ text: 'Header 1' }] }] },
+                  { type: 'td', children: [{ type: 'p', children: [{ text: 'Header 2' }] }] },
+                ],
+              },
+              {
+                type: 'tr',
+                children: [
+                  { type: 'td', children: [{ type: 'p', children: [{ text: '' }] }] },
+                  { type: 'td', children: [{ type: 'p', children: [{ text: '' }] }] },
+                ],
+              },
+            ],
+          },
+        ]);
+      }
+    } catch { /* non-fatal */ }
+  };
+
+  return (
+    <div className="flex w-full items-center justify-between gap-1 flex-wrap">
+      <div className="flex items-center gap-0.5 flex-wrap">
+        {/* History Group */}
+        <ToolbarGroup>
+          <ToolbarButton onClick={handleUndo} tooltip="Undo (Ctrl+Z)">
+            <Undo className="w-3.5 h-3.5" />
+          </ToolbarButton>
+          <ToolbarButton onClick={handleRedo} tooltip="Redo (Ctrl+Y)">
+            <Redo className="w-3.5 h-3.5" />
+          </ToolbarButton>
+        </ToolbarGroup>
+
+        {/* AI Assistant Group */}
+        <ToolbarGroup>
+          <ToolbarButton
+            onClick={() => onOpenAi?.()}
+            tooltip="AI Writing Assistant (Cmd+J)"
+            variant="accent"
+            className="px-2 gap-1.5 font-medium text-primary border border-primary/20 hover:border-primary/40 bg-primary/5 hover:bg-primary/10 shadow-2xs"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-primary animate-pulse" />
+            <span className="text-[11px] font-semibold tracking-wide">Ask AI</span>
+          </ToolbarButton>
+        </ToolbarGroup>
+
+        {/* Turn Into Block Dropdown */}
+        <ToolbarGroup>
+          <TurnIntoDropdown editor={editor} activeBlock={activeBlock} />
+        </ToolbarGroup>
+
+        {/* Text Marks Group */}
+        <ToolbarGroup>
+          <ToolbarButton
+            active={isBold}
+            onClick={() => toggleMark(editor, 'bold')}
+            tooltip="Bold (Ctrl+B)"
+          >
+            <Bold className="w-3.5 h-3.5" />
+          </ToolbarButton>
+          <ToolbarButton
+            active={isItalic}
+            onClick={() => toggleMark(editor, 'italic')}
+            tooltip="Italic (Ctrl+I)"
+          >
+            <Italic className="w-3.5 h-3.5" />
+          </ToolbarButton>
+          <ToolbarButton
+            active={isUnderline}
+            onClick={() => toggleMark(editor, 'underline')}
+            tooltip="Underline (Ctrl+U)"
+          >
+            <Underline className="w-3.5 h-3.5" />
+          </ToolbarButton>
+          <ToolbarButton
+            active={isStrikethrough}
+            onClick={() => toggleMark(editor, 'strikethrough')}
+            tooltip="Strikethrough"
+          >
+            <Strikethrough className="w-3.5 h-3.5" />
+          </ToolbarButton>
+          <ToolbarButton
+            active={isCode}
+            onClick={() => toggleMark(editor, 'code')}
+            tooltip="Inline Code"
+          >
+            <Code className="w-3.5 h-3.5" />
+          </ToolbarButton>
+          <ToolbarButton
+            active={isHighlight}
+            onClick={() => toggleMark(editor, 'highlight')}
+            tooltip="Highlight"
+          >
+            <Highlighter className="w-3.5 h-3.5 text-amber-500" />
+          </ToolbarButton>
+        </ToolbarGroup>
+
+        {/* Alignment Group */}
+        <ToolbarGroup>
+          <ToolbarButton
+            active={activeAlign === 'left'}
+            onClick={() => setAlignment(editor, 'left')}
+            tooltip="Align Left"
+          >
+            <AlignLeft className="w-3.5 h-3.5" />
+          </ToolbarButton>
+          <ToolbarButton
+            active={activeAlign === 'center'}
+            onClick={() => setAlignment(editor, 'center')}
+            tooltip="Align Center"
+          >
+            <AlignCenter className="w-3.5 h-3.5" />
+          </ToolbarButton>
+          <ToolbarButton
+            active={activeAlign === 'right'}
+            onClick={() => setAlignment(editor, 'right')}
+            tooltip="Align Right"
+          >
+            <AlignRight className="w-3.5 h-3.5" />
+          </ToolbarButton>
+          <ToolbarButton
+            active={activeAlign === 'justify'}
+            onClick={() => setAlignment(editor, 'justify')}
+            tooltip="Justify"
+          >
+            <AlignJustify className="w-3.5 h-3.5" />
+          </ToolbarButton>
+        </ToolbarGroup>
+
+        {/* Lists Group */}
+        <ToolbarGroup>
+          <ToolbarButton
+            active={activeBlock === 'ul'}
+            onClick={() => setBlock(editor, 'ul')}
+            tooltip="Bulleted List"
+          >
+            <List className="w-3.5 h-3.5" />
+          </ToolbarButton>
+          <ToolbarButton
+            active={activeBlock === 'ol'}
+            onClick={() => setBlock(editor, 'ol')}
+            tooltip="Numbered List"
+          >
+            <ListOrdered className="w-3.5 h-3.5" />
+          </ToolbarButton>
+        </ToolbarGroup>
+
+        {/* Insert Elements */}
+        <ToolbarGroup>
+          <ToolbarButton onClick={handleInsertLink} tooltip="Insert Link">
+            <LinkIcon className="w-3.5 h-3.5" />
+          </ToolbarButton>
+          <ToolbarButton onClick={handleInsertTable} tooltip="Insert Table">
+            <TableIcon className="w-3.5 h-3.5" />
+          </ToolbarButton>
+          <ToolbarButton onClick={handleInsertDate} tooltip="Insert Date">
+            <Calendar className="w-3.5 h-3.5" />
+          </ToolbarButton>
+          <ToolbarButton onClick={() => setBlock(editor, 'hr')} tooltip="Divider Line">
+            <Minus className="w-3.5 h-3.5" />
+          </ToolbarButton>
+        </ToolbarGroup>
+      </div>
+    </div>
+  );
+}
+```
+
+---
+
+### 3.5. `src/components/plate-ui/floating-toolbar.tsx`
+
+```tsx
+/**
+ * floating-toolbar.tsx
+ * Plate UI contextual floating toolbar that appears above selected text.
+ * Matches @plate/editor-ai floating formatting bar.
+ */
+import * as React from 'react';
+import {
+  Sparkles,
+  Bold,
+  Italic,
+  Underline,
+  Strikethrough,
+  Highlighter,
+} from 'lucide-react';
+import { cn } from '@/src/lib/utils';
+import { ToolbarButton } from './toolbar';
+
+export interface FloatingToolbarProps {
+  editor: any;
+  onOpenAi?: () => void;
+}
+
+export function FloatingToolbar({ editor, onOpenAi }: FloatingToolbarProps) {
+  const [position, setPosition] = React.useState<{ top: number; left: number } | null>(null);
+  const [visible, setVisible] = React.useState(false);
+  const toolbarRef = React.useRef<HTMLDivElement>(null);
+
+  const updatePosition = React.useCallback(() => {
+    if (!editor) return;
+
+    const domSelection = window.getSelection();
+    if (!domSelection || domSelection.isCollapsed || domSelection.rangeCount === 0) {
+      setVisible(false);
+      return;
+    }
+
+    const range = domSelection.getRangeAt(0);
+    const rect = range.getBoundingClientRect();
+
+    const editorEl = document.querySelector('[data-editor-content]');
+    if (!editorEl || !editorEl.contains(range.commonAncestorContainer)) {
+      setVisible(false);
+      return;
+    }
+
+    if (rect.width === 0 || rect.height === 0) {
+      setVisible(false);
+      return;
+    }
+
+    const top = rect.top + window.scrollY - 44;
+    const left = rect.left + window.scrollX + rect.width / 2;
+
+    setPosition({ top: Math.max(10, top), left });
+    setVisible(true);
+  }, [editor]);
+
+  React.useEffect(() => {
+    document.addEventListener('selectionchange', updatePosition);
+    window.addEventListener('resize', updatePosition);
+    window.addEventListener('scroll', updatePosition, true);
+
+    return () => {
+      document.removeEventListener('selectionchange', updatePosition);
+      window.removeEventListener('resize', updatePosition);
+      window.removeEventListener('scroll', updatePosition, true);
+    };
+  }, [updatePosition]);
+
+  if (!visible || !position) return null;
+
+  const toggleMark = (key: string) => {
+    try {
+      if (editor?.tf?.toggle?.mark) {
+        editor.tf.toggle.mark({ key });
+      } else if (editor?.toggleMark) {
+        editor.toggleMark(key);
+      }
+    } catch { /* non-fatal */ }
+  };
+
+  const isMarkActive = (key: string) => {
+    try {
+      if (editor?.api?.marks?.isActive) return editor.api.marks.isActive(key);
+      if (editor?.isMarkActive) return editor.isMarkActive(key);
+      return false;
+    } catch {
+      return false;
+    }
+  };
+
+  return (
+    <div
+      ref={toolbarRef}
+      role="toolbar"
+      data-floating-toolbar
+      style={{
+        top: `${position.top}px`,
+        left: `${position.left}px`,
+        transform: 'translateX(-50%)',
+      }}
+      className={cn(
+        'absolute z-50 flex items-center gap-0.5 rounded-lg border border-zinc-200 dark:border-zinc-800',
+        'bg-white/95 dark:bg-zinc-900/95 p-1 shadow-lg backdrop-blur-sm',
+        'animate-in fade-in-50 zoom-in-95 duration-100 print:hidden'
+      )}
+    >
+      <ToolbarButton
+        onClick={() => onOpenAi?.()}
+        tooltip="Ask AI"
+        variant="accent"
+        className="px-2 gap-1 text-primary hover:bg-primary/15 font-semibold text-xs"
+      >
+        <Sparkles className="w-3.5 h-3.5 text-primary" />
+        <span>Ask AI</span>
+      </ToolbarButton>
+
+      <div className="mx-1 h-3.5 w-px bg-zinc-200 dark:bg-zinc-800" />
+
+      <ToolbarButton
+        active={isMarkActive('bold')}
+        onClick={() => toggleMark('bold')}
+        tooltip="Bold"
+      >
+        <Bold className="w-3.5 h-3.5" />
+      </ToolbarButton>
+      <ToolbarButton
+        active={isMarkActive('italic')}
+        onClick={() => toggleMark('italic')}
+        tooltip="Italic"
+      >
+        <Italic className="w-3.5 h-3.5" />
+      </ToolbarButton>
+      <ToolbarButton
+        active={isMarkActive('underline')}
+        onClick={() => toggleMark('underline')}
+        tooltip="Underline"
+      >
+        <Underline className="w-3.5 h-3.5" />
+      </ToolbarButton>
+      <ToolbarButton
+        active={isMarkActive('strikethrough')}
+        onClick={() => toggleMark('strikethrough')}
+        tooltip="Strikethrough"
+      >
+        <Strikethrough className="w-3.5 h-3.5" />
+      </ToolbarButton>
+      <ToolbarButton
+        active={isMarkActive('highlight')}
+        onClick={() => toggleMark('highlight')}
+        tooltip="Highlight"
+      >
+        <Highlighter className="w-3.5 h-3.5 text-amber-500" />
+      </ToolbarButton>
+    </div>
+  );
+}
+```
+
+---
+
+### 3.6. `src/components/plate-ui/ai-menu.tsx`
+
+```tsx
+/**
+ * ai-menu.tsx
+ * AI Writing Assistant Dialog component matching @plate/editor-ai.
+ * Provides instant institutional writing actions: Improve, Fix Grammar, Make Formal, Summarize, Continue.
+ */
+import * as React from 'react';
+import {
+  Sparkles,
+  CheckCheck,
+  Briefcase,
+  FileText,
+  PenTool,
+  Loader2,
+  X,
+  CornerDownLeft,
+  Copy,
+  Check,
+  RefreshCw,
+} from 'lucide-react';
+import { toast } from 'sonner';
+
+export interface AiMenuDialogProps {
+  open: boolean;
+  onClose: () => void;
+  editor: any;
+}
+
+type AiAction = 'improve' | 'fix_grammar' | 'make_formal' | 'summarize' | 'continue_writing' | 'custom';
+
+interface QuickActionItem {
+  id: AiAction;
+  label: string;
+  description: string;
+  icon: React.ComponentType<{ className?: string }>;
+}
+
+const QUICK_ACTIONS: QuickActionItem[] = [
+  {
+    id: 'improve',
+    label: 'Improve writing',
+    description: 'Enhance clarity, vocabulary, and flow',
+    icon: Sparkles,
+  },
+  {
+    id: 'fix_grammar',
+    label: 'Fix grammar & spelling',
+    description: 'Correct typos and punctuation',
+    icon: CheckCheck,
+  },
+  {
+    id: 'make_formal',
+    label: 'Make more formal',
+    description: 'Institutional practicum tone',
+    icon: Briefcase,
+  },
+  {
+    id: 'summarize',
+    label: 'Summarize text',
+    description: 'Concise executive summary',
+    icon: FileText,
+  },
+  {
+    id: 'continue_writing',
+    label: 'Continue writing',
+    description: 'Generate next logical paragraphs',
+    icon: PenTool,
+  },
+];
+
+export function AiMenuDialog({ open, onClose, editor }: AiMenuDialogProps) {
+  const [customPrompt, setCustomPrompt] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const [result, setResult] = React.useState<string | null>(null);
+  const [selectedText, setSelectedText] = React.useState('');
+  const [copied, setCopied] = React.useState(false);
+  const inputRef = React.useRef<HTMLInputElement>(null);
+
+  React.useEffect(() => {
+    if (open) {
+      setResult(null);
+      setCustomPrompt('');
+      setCopied(false);
+
+      const domSelection = window.getSelection();
+      const text = domSelection?.toString().trim() || '';
+      setSelectedText(text);
+
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 50);
+    }
+  }, [open]);
+
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && open) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  const handleExecuteAction = async (action: AiAction, userCustomPrompt?: string) => {
+    setLoading(true);
+    setResult(null);
+
+    let fullContext = '';
+    try {
+      if (editor?.children) {
+        fullContext = JSON.stringify(editor.children);
+      }
+    } catch { /* non-fatal */ }
+
+    try {
+      const response = await fetch('/api/ai/editor-assist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action,
+          text: selectedText,
+          customPrompt: userCustomPrompt || customPrompt,
+          documentContext: fullContext,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'AI generation failed');
+      }
+
+      setResult(data.result);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'AI request failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleApplyResult = () => {
+    if (!result || !editor) return;
+
+    try {
+      const paragraphs = result.split(/\n\n+/).filter(Boolean);
+
+      if (paragraphs.length === 1 && !result.includes('\n')) {
+        if (editor?.tf?.insert?.text) {
+          editor.tf.insert.text(result);
+        } else if (editor?.insertText) {
+          editor.insertText(result);
+        }
+      } else {
+        const nodes = paragraphs.map((p) => ({
+          type: 'p',
+          children: [{ text: p.replace(/\n/g, ' ').trim() }],
+        }));
+
+        if (editor?.tf?.insert?.nodes) {
+          editor.tf.insert.nodes(nodes);
+        }
+      }
+
+      toast.success('AI content applied to document.');
+      onClose();
+    } catch {
+      toast.error('Could not apply text to document.');
+    }
+  };
+
+  const handleCopy = async () => {
+    if (!result) return;
+    await navigator.clipboard.writeText(result);
+    setCopied(true);
+    toast.success('Copied to clipboard');
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-in fade-in duration-150">
+      <div
+        className="w-full max-w-xl rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150"
+        role="dialog"
+        aria-modal="true"
+      >
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-zinc-100 dark:border-zinc-800/80 bg-zinc-50/50 dark:bg-zinc-900/50">
+          <div className="flex items-center gap-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+            <Sparkles className="w-4 h-4 text-primary" />
+            <span>AI Writing Assistant</span>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1 rounded-md text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="p-5 space-y-4">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (customPrompt.trim()) {
+                void handleExecuteAction('custom', customPrompt.trim());
+              }
+            }}
+            className="relative"
+          >
+            <input
+              ref={inputRef}
+              type="text"
+              value={customPrompt}
+              onChange={(e) => setCustomPrompt(e.target.value)}
+              placeholder={
+                selectedText
+                  ? `Ask AI about selected text (${selectedText.slice(0, 30)}…)`
+                  : 'Ask AI to generate, rewrite, or continue…'
+              }
+              className="w-full pl-3.5 pr-10 py-2.5 text-sm rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+            />
+            <button
+              type="submit"
+              disabled={!customPrompt.trim() || loading}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg bg-primary text-primary-fg disabled:opacity-40 hover:bg-primary-hover transition-all"
+            >
+              <CornerDownLeft className="w-3.5 h-3.5" />
+            </button>
+          </form>
+
+          {selectedText && (
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-800/70 text-xs text-zinc-600 dark:text-zinc-400">
+              <span className="font-semibold text-zinc-700 dark:text-zinc-300 shrink-0">Selected:</span>
+              <span className="truncate italic">"{selectedText}"</span>
+            </div>
+          )}
+
+          {loading && (
+            <div className="flex flex-col items-center justify-center py-8 gap-3 text-zinc-500">
+              <Loader2 className="w-6 h-6 animate-spin text-primary" />
+              <span className="text-xs font-medium">Generating enhancement with AI…</span>
+            </div>
+          )}
+
+          {!loading && result && (
+            <div className="space-y-3">
+              <div className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+                AI Suggestion
+              </div>
+              <div className="p-4 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/80 text-sm text-zinc-800 dark:text-zinc-200 font-serif leading-relaxed max-h-60 overflow-y-auto whitespace-pre-wrap">
+                {result}
+              </div>
+
+              <div className="flex items-center justify-between gap-2 pt-1 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleCopy}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                  >
+                    {copied ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
+                    <span>{copied ? 'Copied' : 'Copy'}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleExecuteAction('improve')}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    <span>Regenerate</span>
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-2 ml-auto">
+                  <button
+                    type="button"
+                    onClick={() => setResult(null)}
+                    className="px-3 py-1.5 text-xs font-medium text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200"
+                  >
+                    Discard
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleApplyResult}
+                    className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold rounded-lg bg-primary text-primary-fg hover:bg-primary-hover shadow-xs transition-all"
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                    <span>{selectedText ? 'Replace Selection' : 'Insert into Document'}</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {!loading && !result && (
+            <div className="space-y-2">
+              <div className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
+                Quick Actions
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {QUICK_ACTIONS.map((action) => {
+                  const Icon = action.icon;
+                  return (
+                    <button
+                      key={action.id}
+                      type="button"
+                      onClick={() => void handleExecuteAction(action.id)}
+                      className="flex items-start gap-3 p-3 text-left rounded-xl border border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900/60 hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 transition-all group"
+                    >
+                      <div className="p-1.5 rounded-lg bg-primary/10 text-primary group-hover:bg-primary/20 transition-colors">
+                        <Icon className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-xs font-semibold text-zinc-900 dark:text-zinc-100">
+                          {action.label}
+                        </div>
+                        <div className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">
+                          {action.description}
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+```
+
+---
+
+### 3.7. `backend/routes/aiEditor.ts`
+
+```typescript
+import { Router, type Request, type Response } from 'express';
+import { z } from 'zod';
+import { assistEditorText } from '../services/aiService';
+
+export const aiEditorRouter = Router();
+
+const assistSchema = z.object({
+  action: z.enum(['improve', 'fix_grammar', 'make_formal', 'summarize', 'continue_writing', 'custom']),
+  text: z.string().max(20000).optional().default(''),
+  customPrompt: z.string().max(1000).optional().default(''),
+  documentContext: z.string().max(25000).optional().default(''),
+});
+
+aiEditorRouter.post('/editor-assist', async (req: Request, res: Response): Promise<void> => {
+  const parseResult = assistSchema.safeParse(req.body);
+  if (!parseResult.success) {
+    res.status(400).json({
+      success: false,
+      error: 'Invalid request data',
+      details: parseResult.error.issues,
+    });
+    return;
+  }
+
+  const { action, text, customPrompt, documentContext } = parseResult.data;
+
+  if (!text && !customPrompt && !documentContext) {
+    res.status(400).json({
+      success: false,
+      error: 'No text or prompt provided for AI assistance.',
+    });
+    return;
+  }
+
+  try {
+    const result = await assistEditorText({
+      action,
+      text,
+      customPrompt,
+      documentContext,
+    });
+
+    res.json({
+      success: true,
+      result,
+    });
+  } catch (error) {
+    console.error('[AI Editor Route Error]', error);
+    res.status(503).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'AI assistant failed to generate content.',
+    });
+  }
+});
+```
+
+---
+
+### 3.8. `src/components/editor/plate-editor.tsx`
+
+```tsx
+/**
+ * plate-editor.tsx
+ * Core Plate.js v53 editor component matching the official @plate/editor-ai template.
+ *
+ * Implements:
+ * - FixedToolbar with FixedToolbarButtons (Undo, Redo, Ask AI, Turn Into, Marks, Align, Lists, Table, Links)
+ * - EditorContainer (scrollable paper canvas)
+ * - Editor variant="demo" (authentic centered document page sheet with drop shadow and margins)
+ * - FloatingToolbar (contextual floating action bar on text selection)
+ * - AiMenuDialog (AI writing assistance dialog for quick actions and custom prompts)
+ * - Keyboard shortcut (Cmd+J / Ctrl+J) for AI prompt
+ */
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { cn } from '@/src/lib/utils';
+import { editorPlugins } from './editor-kit';
+import { EditorContainer, Editor } from '@/src/components/plate-ui/editor';
+import { FixedToolbar } from '@/src/components/plate-ui/fixed-toolbar';
+import { FixedToolbarButtons } from '@/src/components/plate-ui/fixed-toolbar-buttons';
+import { FloatingToolbar } from '@/src/components/plate-ui/floating-toolbar';
+import { AiMenuDialog } from '@/src/components/plate-ui/ai-menu';
+import '@/src/styles/print-document.css';
+
+// ─── Plate v53 dynamic import bridge ──────────────────────────────────────────
+
+let PlateModule: typeof import('platejs/react') | null = null;
+
+async function getPlateModule() {
+  if (!PlateModule) {
+    PlateModule = await import('platejs/react');
+  }
+  return PlateModule;
+}
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+export interface PlateEditorProps {
+  /** Initial Plate JSON content */
+  initialContent?: object[];
+  /** Called whenever the editor content changes (debounced by caller) */
+  onChange?: (content: object[], wordCount: number) => void;
+  /** Whether the editor is in read-only (locked submission) mode */
+  readOnly?: boolean;
+  /** Optional additional className for the outer container */
+  className?: string;
+  /** Placeholder text when the document is empty */
+  placeholder?: string;
+}
+
+// ─── Default empty content ────────────────────────────────────────────────────
+
+const DEFAULT_CONTENT: object[] = [
+  { type: 'p', children: [{ text: '' }] },
+];
+
+// ─── Word count helper ────────────────────────────────────────────────────────
+
+function countWordsInContent(nodes: object[]): number {
+  let count = 0;
+  function walk(items: object[]): void {
+    for (const n of items) {
+      const node = n as Record<string, unknown>;
+      if (typeof node.text === 'string') {
+        count += node.text.trim().split(/\s+/).filter(Boolean).length;
+      }
+      if (Array.isArray(node.children)) walk(node.children as object[]);
+    }
+  }
+  walk(nodes);
+  return count;
+}
+
+export interface PlateEditorRef {
+  getContent: () => object[];
+  getWordCount: () => number;
+  getEditorInstance?: () => any;
+}
+
+// ─── PlateEditor component ────────────────────────────────────────────────────
+
+/**
+ * Full Plate.js editor matching @plate/editor-ai specification.
+ * Lazy-loads `platejs/react` for safety. Exposes `editorRef` handle for parents.
+ */
+export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
+  function PlateEditor(
+    {
+      initialContent = DEFAULT_CONTENT,
+      onChange,
+      readOnly = false,
+      className,
+      placeholder = 'Type your document content or press Cmd+J for AI…',
+    },
+    ref
+  ) {
+    const [plateReady, setPlateReady] = useState(false);
+    const [PlateComp, setPlateComp] = useState<React.ComponentType<any> | null>(null);
+    const [createEditorFn, setCreateEditorFn] = useState<((opts: any) => any) | null>(null);
+    const [showAiDialog, setShowAiDialog] = useState(false);
+
+    const editorRef = useRef<HTMLDivElement | null>(null);
+    const contentRef = useRef<object[]>(initialContent);
+    const editorInstanceRef = useRef<any>(null);
+
+    // ── Load Plate runtime ──────────────────────────────────────────────────
+    useEffect(() => {
+      let cancelled = false;
+      void (async () => {
+        try {
+          const mod = await getPlateModule();
+          if (cancelled) return;
+          const { Plate, createPlateEditor } = mod as any;
+          setPlateComp(() => Plate);
+          setCreateEditorFn(() => createPlateEditor);
+          setPlateReady(true);
+        } catch {
+          setPlateReady(false);
+        }
+      })();
+      return () => {
+        cancelled = true;
+      };
+    }, []);
+
+    // ── Create editor instance ──────────────────────────────────────────────
+    const editor = useMemo(() => {
+      if (!createEditorFn) return null;
+      try {
+        const instance = createEditorFn({
+          plugins: editorPlugins,
+          value: initialContent,
+        });
+        editorInstanceRef.current = instance;
+        return instance;
+      } catch {
+        return null;
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [createEditorFn]);
+
+    // ── Cmd+J / Ctrl+J hotkey for AI prompt ─────────────────────────────────
+    useEffect(() => {
+      if (readOnly) return;
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'j') {
+          e.preventDefault();
+          setShowAiDialog(true);
+        }
+      };
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [readOnly]);
+
+    // Store editor reference on forwarded ref
+    useEffect(() => {
+      if (!ref) return;
+      const handle = {
+        getContent: () => contentRef.current,
+        getWordCount: () => countWordsInContent(contentRef.current),
+        getEditorInstance: () => editorInstanceRef.current,
+      };
+      if (typeof ref === 'function') {
+        ref(handle);
+      } else {
+        (ref as React.MutableRefObject<typeof handle>).current = handle;
+      }
+    }, [ref]);
+
+    const handleChange = useCallback(
+      ({ value }: { value: object[] }) => {
+        contentRef.current = value;
+        onChange?.(value, countWordsInContent(value));
+      },
+      [onChange]
+    );
+
+    // ── Fallback while loading ──────────────────────────────────────────────
+    if (!plateReady || !PlateComp || !editor) {
+      return (
+        <div
+          className={cn(
+            'plate-editor-loading min-h-[600px] p-8 bg-zinc-50 dark:bg-zinc-950/80 border border-zinc-200 dark:border-zinc-800 rounded-xl flex items-center justify-center',
+            className
+          )}
+          aria-label="Loading editor"
+        >
+          <div className="flex flex-col items-center gap-3 text-zinc-400">
+            <div className="w-6 h-6 border-2 border-zinc-300 border-t-zinc-700 dark:border-zinc-700 dark:border-t-zinc-300 rounded-full animate-spin" />
+            <span className="text-sm font-medium">Loading document editor…</span>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <PlateComp editor={editor} onChange={handleChange} readOnly={readOnly}>
+        <div
+          className={cn(
+            'plate-editor-wrapper relative flex flex-col rounded-xl overflow-hidden shadow-xs',
+            className
+          )}
+        >
+          {/* Fixed top toolbar matching @plate/editor-ai */}
+          {!readOnly && (
+            <FixedToolbar>
+              <FixedToolbarButtons
+                editor={editor}
+                onOpenAi={() => setShowAiDialog(true)}
+              />
+            </FixedToolbar>
+          )}
+
+          {/* Scrollable canvas containing the paper document sheet */}
+          <EditorContainer variant="demo">
+            <Editor
+              ref={editorRef}
+              variant="demo"
+              placeholder={placeholder}
+              readOnly={readOnly}
+              spellCheck
+              autoFocus={!readOnly}
+            />
+          </EditorContainer>
+
+          {/* Floating formatting toolbar on text selection */}
+          {!readOnly && (
+            <FloatingToolbar
+              editor={editor}
+              onOpenAi={() => setShowAiDialog(true)}
+            />
+          )}
+
+          {/* AI Writing Assistant Modal / Dialog */}
+          {!readOnly && (
+            <AiMenuDialog
+              open={showAiDialog}
+              onClose={() => setShowAiDialog(false)}
+              editor={editor}
+            />
+          )}
+        </div>
+      </PlateComp>
+    );
+  }
+);
+
+PlateEditor.displayName = 'PlateEditor';
+
+export default PlateEditor;
+```
+
+---
+
+## 4. Verification Suite Results
+
+```bash
+# 1. Type Check (Strict Compiler)
+npm run lint
+# Output:
+> tsc --noEmit
+# Exit code: 0
+
+# 2. Document Editor Tests
+npm run test:editor
+# Output:
+✔ migration 05 tables and functions exist
+✔ student can create a draft via RPC
+✔ student2 cannot read student1 draft via SELECT
+✔ AAL1 session cannot read drafts
+✔ anonymous user cannot read drafts
+✔ adviser cannot read student draft via SELECT
+✔ direct INSERT on editor_drafts is denied
+✔ direct UPDATE on editor_drafts is denied
+✔ direct DELETE on editor_drafts is denied
+✔ save_editor_draft succeeds with correct expected_revision
+✔ save_editor_draft returns conflict=true on revision mismatch
+✔ student2 cannot save student1 draft
+✔ create_editor_version creates an immutable snapshot
+✔ versions are read-only via RLS (no direct UPDATE)
+✔ student2 cannot read student1 versions
+✔ soft_delete_editor_draft hides draft from SELECT
+✔ restore_editor_draft un-deletes a soft-deleted draft
+✔ version pruning keeps at most 20 versions
+✔ practicum_phase column exists and accepts valid values
+✔ practicum_phase rejects invalid values
+✔ admin_set_practicum_phase denied for non-admins
+▶ sanitizeDocumentFilename (10 tests pass)
+▶ countWords (5 tests pass)
+▶ IDB queue coalescing (1 test passes)
+▶ Cloud save debounce (2 tests pass)
+▶ Version creation thresholds (2 tests pass)
+▶ Account-switch cache isolation (1 test passes)
+▶ Conflict resolution types (2 tests pass)
+# 44 tests passed, 0 failed
+
+# 3. Security & Authentication Tests
+npm run test:auth
+# 48 tests passed, 0 failed
+
+# 4. Production Build
+npm run build
+# Output:
+vite v6.4.2 building for production...
+✓ 4756 modules transformed.
+✓ built in 1m 16s
+# Exit code: 0
+```
+
+---
+
+## 5. Retirement of 10 Legacy Student Document Modules (Plan Execution)
+
+As planned in `docs/Plan.md`, all student document authoring, viewing, and submissions have been consolidated into **Student Document Repository (`/student/documents`)** and **Student Document Editor (`/student/editor`)**. The 10 retired student page modules and their obsolete navigation entry points were safely decoupled and deleted:
+
+### 5.1. Retired Page Components Deleted
+1. `src/pages/student/StudentApplicationLetter.tsx`
+2. `src/pages/student/LetterOfConsent.tsx`
+3. `src/pages/student/ProposalLetterToTheIndustry.tsx`
+4. `src/pages/student/MemorandumOfAgreement.tsx`
+5. `src/pages/student/STIOJTEndorsementLetter.tsx`
+6. `src/pages/student/WeeklyJournal.tsx`
+7. `src/pages/student/DTR.tsx`
+8. `src/pages/student/OJTTrainingPlan.tsx`
+9. `src/pages/student/IntegrationPaper.tsx`
+10. `src/pages/student/PerformanceAppraisal.tsx`
+
+### 5.2. Safety Redirects in `src/App.tsx`
+Direct requests to legacy student routes are gracefully caught and redirected to `/student/documents`:
+- `/student/application-letter` -> `<Navigate to="/student/documents" replace />`
+- `/student/consent` -> `<Navigate to="/student/documents" replace />`
+- `/student/moa` -> `<Navigate to="/student/documents" replace />`
+- `/student/endorsement` -> `<Navigate to="/student/documents" replace />`
+- `/student/proposal` -> `<Navigate to="/student/documents" replace />`
+- `/student/dtr` -> `<Navigate to="/student/documents" replace />`
+- `/student/journal` -> `<Navigate to="/student/documents" replace />`
+- `/student/training-plan` -> `<Navigate to="/student/documents" replace />`
+- `/student/evaluation` -> `<Navigate to="/student/documents" replace />`
+- `/student/completion` -> `<Navigate to="/student/documents" replace />`
+
+### 5.3. Navigation & Entry Point Consolidation
+- **`components/app-sidebar.tsx` & `src/components/layout/Sidebar.tsx`**: Removed retired phase navigation groups (`Before OJT`, `In OJT`, `Final Phase`). Student sidebar now features a clean **Overview** menu with Dashboard (`/student`), Document Repository (`/student/documents`), and Document Editor (`/student/editor`).
+- **`src/components/ui/CommandPalette.tsx`**: Removed obsolete quick-jump actions and added direct navigation to Document Repository and Document Editor.
+- **`src/pages/student/StudentDashboard.tsx`**: Re-routed requirement lists, task cards, and quick actions to open `/student/documents` or `/student/editor`.
+- **`src/pages/student/StudentGenerativeUI.tsx`**: Updated AI reflection action links to point to `/student/editor`.
+- **`src/config/editorTemplates.ts`**: Updated DTR template to redirect to `/student/documents`.
+
+### 5.4. Preserved Supervisor & Shared Workflows
+- Supervisor DTR approval (`/supervisor/dtr` -> `DTRApproval.tsx`) and weekly journal review (`/supervisor/journal` -> `WeeklyJournalReview.tsx`) remain 100% active and untouched.
+- Shared spreadsheet export utilities (`src/lib/excelGenerator.ts`), database schemas (`student_documents`), and Supabase storage buckets remain fully operational.
+
+### 5.5. Verification Results
+- **TypeScript Typecheck (`npm run lint` / `tsc --noEmit`)**: 0 errors.
+- **Editor Test Suite (`npm run test:editor`)**: 44 passed, 0 failed.
+- **Authentication & Security Suite (`npm run test:auth`)**: 48 passed, 0 failed.
+- **Production Build (`npm run build` / `vite build`)**: Succeeded in 1m 44s with zero bundle errors.
+- **Git Diff Whitespace Check (`git diff --check`)**: Clean exit code 0.
+

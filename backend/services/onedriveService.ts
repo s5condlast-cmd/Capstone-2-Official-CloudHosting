@@ -61,7 +61,7 @@ export function getAuthorizationUrl(redirectUri: string): string {
     throw new Error('MICROSOFT_CLIENT_ID is not configured in .env');
   }
 
-  const tenant = 'common';
+  const tenant = process.env.MICROSOFT_TENANT_ID || 'common';
   const scopes = encodeURIComponent('offline_access Files.ReadWrite User.Read');
   const encodedRedirect = encodeURIComponent(redirectUri);
 
@@ -74,7 +74,7 @@ export function getAuthorizationUrl(redirectUri: string): string {
 export async function exchangeCodeForTokens(code: string, redirectUri: string): Promise<TokenData> {
   const clientId = process.env.MICROSOFT_CLIENT_ID!;
   const clientSecret = process.env.MICROSOFT_CLIENT_SECRET!;
-  const tenant = 'common';
+  const tenant = process.env.MICROSOFT_TENANT_ID || 'common';
 
   const params = new URLSearchParams({
     client_id: clientId,
@@ -127,7 +127,7 @@ export async function exchangeCodeForTokens(code: string, redirectUri: string): 
 async function refreshAccessToken(refreshToken: string): Promise<string> {
   const clientId = process.env.MICROSOFT_CLIENT_ID!;
   const clientSecret = process.env.MICROSOFT_CLIENT_SECRET!;
-  const tenant = 'common';
+  const tenant = process.env.MICROSOFT_TENANT_ID || 'common';
 
   const params = new URLSearchParams({
     client_id: clientId,

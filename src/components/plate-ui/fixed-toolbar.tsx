@@ -1,0 +1,24 @@
+/**
+ * fixed-toolbar.tsx
+ * Plate UI FixedToolbar component matching @plate/editor-ai specification.
+ * Stays sticky at the top of the editor canvas with backdrop blur and responsive horizontal scroll.
+ */
+import * as React from 'react';
+import { cn } from '@/src/lib/utils';
+import { Toolbar } from './toolbar';
+
+export function FixedToolbar({ className, ...props }: React.ComponentProps<typeof Toolbar>) {
+  return (
+    <Toolbar
+      {...props}
+      className={cn(
+        'sticky top-0 left-0 z-30 w-full justify-between overflow-x-auto rounded-t-xl',
+        'border border-zinc-200 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/95 p-1.5',
+        'backdrop-blur-sm shadow-xs select-none print:hidden',
+        '[&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]',
+        className
+      )}
+    />
+  );
+}
+

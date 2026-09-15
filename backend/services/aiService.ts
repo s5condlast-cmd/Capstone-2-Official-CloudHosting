@@ -38,7 +38,7 @@ export async function analyzeDocumentText(
 Extracted Document Content:
 ${truncatedText}`;
 
-  const groqKey = process.env.VITE_GROQ_API_KEY;
+  const groqKey = process.env.GROQ_API_KEY || process.env.VITE_GROQ_API_KEY;
   const geminiKey = process.env.GEMINI_API_KEY;
   let findings: AiFindings | null = null;
 
@@ -127,4 +127,105 @@ ${truncatedText}`;
   }
 
   return findings;
+}
+
+export interface AssistEditorOptions {
+  action: 'improve' | 'fix_grammar' | 'make_formal' | 'summarize' | 'continue_writing' | 'custom';
+  text?: string;
+  customPrompt?: string;
+  documentContext?: string;
+}
+
+export async function assistEditorText({
+  action,
+  text = '',
+  customPrompt = '',
+  documentContext = '',
+}: AssistEditorOptions): Promise<string> {
+  const actionPrompts: Record<string, string> = {
+    improve: 'Improve this text for clarity, professional vocabulary, and coherent academic flow while preserving its core intent:',
+    fix_grammar: 'Correct any spelling mistakes, punctuation errors, and grammatical inaccuracies in this text without changing its tone or meaning:',
+    make_formal: 'Rewrite this text to be formal, polite, and suited for institutional correspondence and On-the-Job Training practicum submissions:',
+    summarize: 'Provide a concise, well-structured summary of the following document content:',
+    continue_writing: 'Continue writing the next logical paragraph or sections based on the preceding text, maintaining the same formal tone and structure:',
+    custom: customPrompt || 'Assist with editing or writing this document:',
+  };
+
+  const instruction = actionPrompts[action] || actionPrompts.custom;
+  const prompt = `${instruction}
+
+Target Text:
+"""
+${text || documentContext}
+"""
+
+${documentContext && text ? `Document Context:\n"""\n${documentContext.slice(0, 4000)}\n"""` : ''}
+
+Respond ONLY with the enhanced or generated document text. Do not include markdown code block backticks (like \`\`\`), conversational commentary, or prefixes like "Here is your text:". Return plain written content directly.`;
+
+  const groqKey = process.env.GROQ_API_KEY || process.env.VITE_GROQ_API_KEY;
+  const geminiKey = process.env.GEMINI_API_KEY;
+
+  // 1. Try Groq
+  if (groqKey && groqKey !== 'your_groq_api_key_here') {
+    try {
+      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${groqKey}`,
+        },
+        body: JSON.stringify({
+          model: 'llama-3.3-70b-versatile',
+          messages: [
+            {
+              role: 'system',
+              content: 'You are an expert institutional writing assistant for college students completing internship documents. Return only the revised or generated document text without explanations or markdown code blocks.',
+            },
+            { role: 'user', content: prompt },
+          ],
+          temperature: 0.3,
+          max_tokens: 1500,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const output = data.choices?.[0]?.message?.content?.trim();
+        if (output) return output;
+      }
+    } catch (e) {
+      console.warn('[AI Editor] Groq call failed, falling back to Gemini:', e);
+    }
+  }
+
+  // 2. Try Gemini
+  if (geminiKey && geminiKey !== 'MY_GEMINI_API_KEY') {
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: {
+              temperature: 0.3,
+              maxOutputTokens: 1500,
+            },
+          }),
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        const output = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+        if (output) return output;
+      }
+    } catch (e) {
+      console.warn('[AI Editor] Gemini call failed:', e);
+    }
+  }
+
+  throw new Error('AI service unavailable. Please ensure GROQ_API_KEY or GEMINI_API_KEY is configured.');
 }

@@ -54,7 +54,7 @@ const beforeOJTRequirements: RequirementItem[] = [
     value: 'Approved',
     icon: UserIcon,
     status: 'done',
-    link: '/student/application-letter',
+    link: '/student/documents',
     description: 'Placement clearance approved by practicum coordinator.',
   },
   {
@@ -62,7 +62,7 @@ const beforeOJTRequirements: RequirementItem[] = [
     value: 'Action Required',
     icon: UserCheckIcon,
     status: 'pending',
-    link: '/student/consent',
+    link: '/student/documents',
     description: 'Requires signed legal waiver and guardian consent.',
   },
   {
@@ -70,7 +70,7 @@ const beforeOJTRequirements: RequirementItem[] = [
     value: 'Approved',
     icon: UsersIcon,
     status: 'done',
-    link: '/student/moa',
+    link: '/student/documents',
     description: 'Verified partnership agreement with InnoTech Labs Inc.',
   },
   {
@@ -78,7 +78,7 @@ const beforeOJTRequirements: RequirementItem[] = [
     value: 'Pending Approval',
     icon: ClipboardCheckIcon,
     status: 'pending',
-    link: '/student/endorsement',
+    link: '/student/documents',
     description: 'Awaiting faculty signature to finalize deployment.',
   },
 ];
@@ -89,7 +89,7 @@ const inOJTRequirements: RequirementItem[] = [
     value: 'Prelim Phase',
     icon: BookOpenIcon,
     status: 'progress',
-    link: '/student/journal',
+    link: '/student/documents',
     description: 'Log weekly learnings, task reflections, and mentor feedback.',
   },
   {
@@ -97,7 +97,7 @@ const inOJTRequirements: RequirementItem[] = [
     value: 'Active Logging',
     icon: CalendarIcon,
     status: 'progress',
-    link: '/student/dtr',
+    link: '/student/documents',
     description: '122 of 460 total practicum hours submitted and tracked.',
   },
   {
@@ -105,7 +105,7 @@ const inOJTRequirements: RequirementItem[] = [
     value: 'In Progress',
     icon: ClipboardListIcon,
     status: 'pending',
-    link: '/student/training-plan',
+    link: '/student/documents',
     description: 'Target learning objectives and corporate competencies.',
   },
 ];
@@ -116,7 +116,7 @@ const finalRequirements: RequirementItem[] = [
     value: 'Locked',
     icon: CheckCircleIcon,
     status: 'locked',
-    link: '/student/evaluation',
+    link: '/student/documents',
     description: 'Formal intern evaluation by corporate supervisor.',
   },
   {
@@ -124,7 +124,7 @@ const finalRequirements: RequirementItem[] = [
     value: 'Locked',
     icon: AwardIcon,
     status: 'locked',
-    link: '/student/completion',
+    link: '/student/documents',
     description: 'Comprehensive practicum synthesis and exit defense report.',
   },
   {
@@ -132,7 +132,7 @@ const finalRequirements: RequirementItem[] = [
     value: 'Locked',
     icon: GraduationCap,
     status: 'locked',
-    link: '/student/completion',
+    link: '/student/documents',
     description: 'Final academic and institutional clearance approval.',
   },
 ];
@@ -145,10 +145,10 @@ interface TodoItem {
 }
 
 const INITIAL_TODOS: TodoItem[] = [
-  { id: '1', text: 'Upload Endorsement Letter (Signed by coordinator)', done: false, link: '/student/endorsement' },
-  { id: '2', text: 'Log DTR hours for today (8 hrs remaining)', done: false, link: '/student/dtr' },
-  { id: '3', text: 'Revise section 2 on Weekly Journal #4', done: false, link: '/student/journal' },
-  { id: '4', text: 'Submit Parent Consent Form (With Fee)', done: true, link: '/student/consent' },
+  { id: '1', text: 'Upload Endorsement Letter (Signed by coordinator)', done: false, link: '/student/documents' },
+  { id: '2', text: 'Log DTR hours for today (8 hrs remaining)', done: false, link: '/student/documents' },
+  { id: '3', text: 'Revise section 2 on Weekly Journal #4', done: false, link: '/student/documents' },
+  { id: '4', text: 'Submit Parent Consent Form (With Fee)', done: true, link: '/student/documents' },
 ];
 
 interface CompletedTaskItem {
@@ -165,28 +165,28 @@ const COMPLETED_TASKS: CompletedTaskItem[] = [
     title: 'Student Application Letter',
     tag: 'Before OJT',
     desc: 'Approved by Dr. Sarah Johnson · Placement clearance cleared.',
-    link: '/student/application-letter',
+    link: '/student/documents',
   },
   {
     id: 'c2',
     title: 'MOA Template Document',
     tag: 'Before OJT',
     desc: 'Verified agreement with InnoTech Labs Inc. (Pasig City).',
-    link: '/student/moa',
+    link: '/student/documents',
   },
   {
     id: 'c3',
     title: 'Parent Consent Form (With Fee)',
     tag: 'Consent',
     desc: 'Uploaded and signed by parent/legal guardian.',
-    link: '/student/consent',
+    link: '/student/documents',
   },
   {
     id: 'c4',
     title: 'Company Internship Placement',
     tag: 'Deployment',
     desc: 'Assigned under Engr. Paolo Reyes (Frontend Dev Intern).',
-    link: '/student/dtr',
+    link: '/student/documents',
   },
 ];
 
@@ -407,13 +407,13 @@ export const StudentDashboard: React.FC = () => {
               </div>
 
               <div className="flex items-center gap-2 self-start sm:self-auto">
-                <Link to="/student/dtr">
+                <Link to="/student/documents">
                   <Button variant="primary" size="sm" className="font-bold text-xs h-8 px-3 rounded-lg cursor-pointer">
                     <ClockIcon size={13} className="mr-1" />
                     Log Today's DTR
                   </Button>
                 </Link>
-                <Link to="/student/journal">
+                <Link to="/student/editor">
                   <Button variant="outline" size="sm" className="font-bold text-xs h-8 px-2.5 rounded-lg cursor-pointer">
                     <BookOpenIcon size={13} className="mr-1" />
                     Journal
@@ -758,7 +758,7 @@ export const StudentDashboard: React.FC = () => {
               <span className="text-[11px] text-muted-foreground">
                 Target: <span className="text-foreground font-semibold">Friday, 5:00 PM</span>
               </span>
-              <Link to="/student/endorsement">
+              <Link to="/student/documents">
                 <Button variant="primary" size="sm" icon={<ArrowRightIcon size={13} />} className="font-bold text-xs h-7.5 px-3 rounded-lg cursor-pointer">
                   Go to Submission
                 </Button>

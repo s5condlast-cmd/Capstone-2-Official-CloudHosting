@@ -167,10 +167,12 @@ Ensure the following variables are configured in `.env`:
 ```env
 # Supabase PostgreSQL & Auth
 VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
+VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_your-key
+# Server only; never expose this key in frontend code.
+SUPABASE_SECRET_KEY=sb_secret_your-key
 
 # AI Grammar & Compliance Auditing
-VITE_GROQ_API_KEY=your-groq-api-key
+GROQ_API_KEY=your-groq-api-key
 GEMINI_API_KEY=your-google-gemini-api-key
 
 # Cloudinary Storage
@@ -179,9 +181,9 @@ CLOUDINARY_API_KEY=your-cloudinary-key
 CLOUDINARY_API_SECRET=your-cloudinary-secret
 
 # Microsoft Graph / OneDrive Archival
-MICROSOFT_GRAPH_CLIENT_ID=your-client-id
-MICROSOFT_GRAPH_CLIENT_SECRET=your-client-secret
-MICROSOFT_GRAPH_TENANT_ID=your-tenant-id
+MICROSOFT_CLIENT_ID=your-client-id
+MICROSOFT_CLIENT_SECRET=your-client-secret
+MICROSOFT_TENANT_ID=your-tenant-id
 ```
 
 ### 3. Run Development Server

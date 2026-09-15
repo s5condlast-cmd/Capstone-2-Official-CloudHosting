@@ -1,0 +1,62 @@
+/* Print styles for Plate.js document editor */
+@media print {
+  /* Hide all application chrome */
+  [data-editor-toolbar],
+  [data-editor-telemetry],
+  [data-sidebar],
+  [data-site-header],
+  nav,
+  header,
+  .editor-toolbar,
+  .editor-telemetry-bar {
+    display: none !important;
+  }
+
+  /* Ensure full-width document printing */
+  body {
+    margin: 0;
+    padding: 0;
+    background: white;
+  }
+
+  .plate-editor-content {
+    width: 8.5in;
+    min-height: 11in;
+    padding: 1in;
+    margin: 0 auto;
+    box-sizing: border-box;
+    background: white;
+    color: black;
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 12pt;
+    line-height: 1.5;
+  }
+
+  /* Prevent page breaks inside signature blocks and headers */
+  .signature-block,
+  .document-header,
+  h1, h2, h3, h4 {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Keep paragraphs with their following content */
+  p {
+    orphans: 3;
+    widows: 3;
+  }
+
+  /* Fill-in field underlines remain visible in print */
+  .fill-in-field {
+    border-bottom: 1px solid black;
+    min-width: 100px;
+    display: inline-block;
+  }
+
+  /* Page setup */
+  @page {
+    size: letter;
+    margin: 1in;
+  }
+}
+
