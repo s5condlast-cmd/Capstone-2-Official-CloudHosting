@@ -43,6 +43,9 @@ import {
 } from '@/src/components/plate-ui/fixed-toolbar-buttons';
 import { FloatingToolbar } from '@/src/components/plate-ui/floating-toolbar';
 import { CommentsDrawer } from './CommentsDrawer';
+import { DocumentRuler } from './DocumentRuler';
+import { DocumentHeaderZone } from './DocumentHeaderZone';
+import { DocumentStatusBar } from './DocumentStatusBar';
 import {
   type DocumentHeaderFooterOptions,
   type HeaderFooterItem,
@@ -95,6 +98,8 @@ export interface PlateEditorProps {
   headerFooter?: DocumentHeaderFooterOptions;
   /** Header & Footer change callback */
   onHeaderFooterChange?: (headerFooter: DocumentHeaderFooterOptions) => void;
+  /** Optional cloud sync status for bottom telemetry bar */
+  syncStatus?: 'saved' | 'saving' | 'offline' | 'conflict' | 'error';
 }
 
 // ─── Default empty content ────────────────────────────────────────────────────
@@ -152,6 +157,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
       currentUserName = 'Student',
       headerFooter: externalHeaderFooter,
       onHeaderFooterChange,
+      syncStatus = 'saved',
     },
     ref
   ) {
@@ -167,6 +173,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
     const [showZoomIndicator, setShowZoomIndicator] = useState(false);
     const [showCommentsDrawer, setShowCommentsDrawer] = useState(false);
     const [drawerQuote, setDrawerQuote] = useState('');
+    const [currentWordCount, setCurrentWordCount] = useState(() => countWordsInContent(initialContent));
 
     // Google Docs style Header & Footer editing state
     const [activeHeaderFooter, setActiveHeaderFooter] = useState<'header' | 'footer' | null>(null);
@@ -183,14 +190,6 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
       textAlign: externalHeaderFooter?.footer?.textAlign || 'center',
       scope: externalHeaderFooter?.footer?.scope || 'every_page',
     }));
-
-    const [selectedHeaderImage, setSelectedHeaderImage] = useState(false);
-    const [isDraggingHeaderImage, setIsDraggingHeaderImage] = useState(false);
-    const [isResizingHeaderImage, setIsResizingHeaderImage] = useState(false);
-    const [isCroppingHeaderImage, setIsCroppingHeaderImage] = useState(false);
-    const [headerCropZoom, setHeaderCropZoom] = useState<number>(headerState.image?.cropZoom || 100);
-    const headerTrackRef = useRef<HTMLDivElement | null>(null);
-    const isResizingHeaderRef = useRef(false);
 
     const [selectedFooterImage, setSelectedFooterImage] = useState(false);
     const [isDraggingFooterImage, setIsDraggingFooterImage] = useState(false);
@@ -211,32 +210,18 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
     }, [headerState, footerState, onHeaderFooterChange]);
 
     useEffect(() => {
-      if (headerState.image?.cropZoom) {
-        setHeaderCropZoom(headerState.image.cropZoom);
-      }
-    }, [headerState.image?.cropZoom]);
-
-    useEffect(() => {
       if (footerState.image?.cropZoom) {
         setFooterCropZoom(footerState.image.cropZoom);
       }
     }, [footerState.image?.cropZoom]);
 
-    // Click outside to deselect header and footer images or exit cropping
+    // Click outside to deselect footer image or exit cropping
     useEffect(() => {
-      if (!selectedHeaderImage && !selectedFooterImage && !isCroppingHeaderImage && !isCroppingFooterImage) return;
+      if (!selectedFooterImage && !isCroppingFooterImage) return;
       const handleMouseDown = (e: MouseEvent) => {
-        if (isResizingHeaderRef.current || isResizingFooterRef.current) return;
+        if (isResizingFooterRef.current) return;
         const target = e.target as HTMLElement | null;
         if (!target) return;
-        if (
-          !target.closest('[data-header-image]') &&
-          !target.closest('[data-header-toolbar]') &&
-          !target.closest('[data-header-crop]')
-        ) {
-          setSelectedHeaderImage(false);
-          setIsCroppingHeaderImage(false);
-        }
         if (
           !target.closest('[data-footer-image]') &&
           !target.closest('[data-footer-toolbar]') &&
@@ -248,7 +233,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
       };
       document.addEventListener('mousedown', handleMouseDown);
       return () => document.removeEventListener('mousedown', handleMouseDown);
-    }, [selectedHeaderImage, selectedFooterImage, isCroppingHeaderImage, isCroppingFooterImage]);
+    }, [selectedFooterImage, isCroppingFooterImage]);
 
     const activeMode: EditorMode = readOnly ? 'viewing' : (mode ?? internalMode);
     const isEffectivelyReadOnly = readOnly || activeMode === 'viewing';
@@ -470,7 +455,9 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
     const handleChange = useCallback(
       ({ value }: { value: object[] }) => {
         contentRef.current = value;
-        onChange?.(value, countWordsInContent(value));
+        const count = countWordsInContent(value);
+        setCurrentWordCount(count);
+        onChange?.(value, count);
       },
       [onChange]
     );
@@ -528,57 +515,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
       []
     );
 
-    // ── Interactive Drag-to-Resize handlers for Header & Footer logos ───────
-    const handleHeaderResizeStart = useCallback(
-      (e: React.MouseEvent | React.TouchEvent, direction: 'e' | 'w' | 'se' | 'sw' | 'ne' | 'nw') => {
-        e.preventDefault();
-        e.stopPropagation();
-        isResizingHeaderRef.current = true;
-        setIsResizingHeaderImage(true);
-        const startX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-        const startWidth = headerState.image?.width || 180;
-
-        const onMove = (clientX: number) => {
-          if (!isResizingHeaderRef.current) return;
-          const deltaX = clientX - startX;
-          let newW = startWidth;
-          if (direction === 'e' || direction === 'se' || direction === 'ne') {
-            newW = Math.max(50, Math.min(650, startWidth + deltaX));
-          } else {
-            newW = Math.max(50, Math.min(650, startWidth - deltaX));
-          }
-          setHeaderState((prev) => ({
-            ...prev,
-            image: prev.image ? { ...prev.image, width: Math.round(newW) } : null,
-          }));
-        };
-
-        const onMouseMove = (moveEvent: MouseEvent) => {
-          onMove(moveEvent.clientX);
-        };
-
-        const onTouchMove = (touchEvent: TouchEvent) => {
-          if (touchEvent.touches[0]) {
-            onMove(touchEvent.touches[0].clientX);
-          }
-        };
-
-        const onEnd = () => {
-          isResizingHeaderRef.current = false;
-          setIsResizingHeaderImage(false);
-          window.removeEventListener('mousemove', onMouseMove);
-          window.removeEventListener('mouseup', onEnd);
-          window.removeEventListener('touchmove', onTouchMove);
-          window.removeEventListener('touchend', onEnd);
-        };
-
-        window.addEventListener('mousemove', onMouseMove);
-        window.addEventListener('mouseup', onEnd);
-        window.addEventListener('touchmove', onTouchMove, { passive: true });
-        window.addEventListener('touchend', onEnd);
-      },
-      [headerState.image?.width]
-    );
+    // ── Interactive Drag-to-Resize handler for Footer logo ─────────────────
 
     const handleFooterResizeStart = useCallback(
       (e: React.MouseEvent | React.TouchEvent, direction: 'e' | 'w' | 'se' | 'sw' | 'ne' | 'nw') => {
@@ -631,67 +568,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
       [footerState.image?.width]
     );
 
-    // ── Draggable positioning handlers for Header & Footer logos ──────────────
-    const handleHeaderDragStart = useCallback(
-      (e: React.MouseEvent | React.TouchEvent) => {
-        if (isResizingHeaderRef.current || isCroppingHeaderImage) return;
-        e.preventDefault();
-        e.stopPropagation();
-        setSelectedHeaderImage(true);
-        setIsDraggingHeaderImage(true);
-
-        const updatePosition = (clientX: number) => {
-          const track = headerTrackRef.current;
-          if (!track) return;
-          const rect = track.getBoundingClientRect();
-          const imgWidth = headerState.image?.width || 180;
-          const availableTrack = Math.max(1, rect.width - imgWidth);
-          const mouseX = clientX - rect.left - imgWidth / 2;
-          const rawPercent = (mouseX / availableTrack) * 100;
-          const clamped = Math.max(0, Math.min(100, Math.round(rawPercent)));
-          const newAlign: 'left' | 'center' | 'right' =
-            clamped <= 33 ? 'left' : clamped >= 67 ? 'right' : 'center';
-
-          setHeaderState((prev) => ({
-            ...prev,
-            image: prev.image
-              ? {
-                  ...prev.image,
-                  offsetPercent: clamped,
-                  align: newAlign,
-                }
-              : null,
-          }));
-        };
-
-        const initialClientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-        updatePosition(initialClientX);
-
-        const onMouseMove = (moveEvent: MouseEvent) => {
-          updatePosition(moveEvent.clientX);
-        };
-
-        const onTouchMove = (touchEvent: TouchEvent) => {
-          if (touchEvent.touches[0]) {
-            updatePosition(touchEvent.touches[0].clientX);
-          }
-        };
-
-        const onEnd = () => {
-          setIsDraggingHeaderImage(false);
-          window.removeEventListener('mousemove', onMouseMove);
-          window.removeEventListener('mouseup', onEnd);
-          window.removeEventListener('touchmove', onTouchMove);
-          window.removeEventListener('touchend', onEnd);
-        };
-
-        window.addEventListener('mousemove', onMouseMove);
-        window.addEventListener('mouseup', onEnd);
-        window.addEventListener('touchmove', onTouchMove, { passive: true });
-        window.addEventListener('touchend', onEnd);
-      },
-      [headerState.image?.width, isCroppingHeaderImage]
-    );
+    // ── Draggable positioning handler for Footer logo ──────────────────────
 
     const handleFooterDragStart = useCallback(
       (e: React.MouseEvent | React.TouchEvent) => {
@@ -872,12 +749,23 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                   transition: 'transform 0.1s ease-out',
                   width: zoomLevel > 100 ? `${zoomLevel}%` : '100%',
                   display: 'flex',
-                  justifyContent: 'center',
+                  flexDirection: 'column',
+                  alignItems: 'center',
                 }}
               >
+                {/* ─── Google Docs Horizontal Ruler ──────────────────────────── */}
+                <DocumentRuler
+                  width={816}
+                  leftMargin={96}
+                  rightMargin={96}
+                  zoom={zoomLevel}
+                  className="mb-0"
+                />
+
+                {/* ─── Authentic 8.5" × 11" US Letter Paper Sheet ─────────────── */}
                 <div
                   className={cn(
-                    'plate-paper-sheet w-full max-w-[850px] min-h-[850px] bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 shadow-sm rounded-xl px-8 sm:px-12 py-6 sm:py-8 flex flex-col relative transition-all',
+                    'plate-paper-sheet w-[816px] max-w-[816px] min-h-[1056px] bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 shadow-[0_1px_3px_rgba(0,0,0,0.08),0_4px_16px_rgba(0,0,0,0.05)] dark:shadow-[0_4px_24px_rgba(0,0,0,0.5)] rounded-xs px-[96px] pb-[96px] flex flex-col relative transition-all',
                     activeHeaderFooter && 'ring-1 ring-blue-500/40 shadow-md'
                   )}
                 >
@@ -897,482 +785,29 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                     onChange={handleFooterImageUpload}
                   />
 
-                  {/* ─── Embedded Header Zone (Inside Paper Sheet) ───────────────── */}
-                  {(!isEffectivelyReadOnly || headerState.image?.url || headerState.text?.trim()) && (
-                    <div
-                      onDoubleClick={() => {
-                        if (!isEffectivelyReadOnly) {
-                          setActiveHeaderFooter((prev) => (prev === 'header' ? null : 'header'));
-                        }
-                      }}
-                      className={cn(
-                        'w-full transition-all select-none print:mb-2 print:border-none',
-                        activeHeaderFooter === 'header'
-                          ? 'mb-2 pb-2'
-                          : 'pt-1 pb-1.5 border-b border-transparent hover:border-dashed hover:border-zinc-300 dark:hover:border-zinc-700 cursor-pointer group/header'
-                      )}
-                    >
-                      {activeHeaderFooter === 'header' ? (
-                        <div className="flex flex-col gap-2.5 w-full">
-                          {/* Header Control Ribbon */}
-                          <div
-                            data-header-toolbar="true"
-                            className="header-footer-ribbon flex items-center justify-between px-3 py-1.5 rounded-lg bg-blue-50/80 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-900/60 shadow-xs"
-                          >
-                            <div className="flex items-center gap-3">
-                              <span className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
-                                Header
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => headerInputRef.current?.click()}
-                                className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold text-primary bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 rounded-md border border-zinc-200 dark:border-zinc-700 shadow-xs transition-colors cursor-pointer"
-                              >
-                                <ImageIcon className="w-3.5 h-3.5 text-primary" />
-                                <span>{headerState.image?.url ? 'Replace Logo' : '+ Add Logo / Image'}</span>
-                              </button>
-                            </div>
-
-                            <div className="flex items-center gap-2">
-                              {/* Scope Dropview: This page only vs Every page */}
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <button
-                                    type="button"
-                                    className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium text-zinc-700 dark:text-zinc-200 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700 shadow-xs cursor-pointer"
-                                  >
-                                    <span>{headerState.scope === 'every_page' ? 'Every page' : 'This page only'}</span>
-                                    <ChevronDown className="w-3.5 h-3.5 text-zinc-500" />
-                                  </button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-56 p-1 shadow-lg border border-zinc-200 dark:border-zinc-800">
-                                  <DropdownMenuItem
-                                    onClick={() => setHeaderState((prev) => ({ ...prev, scope: 'every_page' }))}
-                                    className="flex items-center justify-between text-xs px-2.5 py-1.5 cursor-pointer rounded-md"
-                                  >
-                                    <span>Every page</span>
-                                    {headerState.scope === 'every_page' && <Check className="w-3.5 h-3.5 text-primary" />}
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={() => setHeaderState((prev) => ({ ...prev, scope: 'first_page_only' }))}
-                                    className="flex items-center justify-between text-xs px-2.5 py-1.5 cursor-pointer rounded-md"
-                                  >
-                                    <span>This page only (Different first page)</span>
-                                    {headerState.scope === 'first_page_only' && <Check className="w-3.5 h-3.5 text-primary" />}
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-
-                              <button
-                                type="button"
-                                onClick={() => setActiveHeaderFooter(null)}
-                                className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-zinc-700 dark:text-zinc-200 hover:text-zinc-950 dark:hover:text-white bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 border border-zinc-200 dark:border-zinc-700 rounded transition-colors cursor-pointer shadow-xs"
-                              >
-                                <X className="w-3.5 h-3.5" />
-                                <span>Done</span>
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* Moveable & Draggable Logo Toolbar & Track (if image exists) */}
-                          {headerState.image?.url && (
-                            <div className="flex flex-col gap-1.5 p-2 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xs">
-                              {/* Moveable Image Action Bar */}
-                              <div
-                                data-header-toolbar="true"
-                                className="flex items-center justify-between gap-2 pb-1.5 border-b border-zinc-100 dark:border-zinc-800 text-xs"
-                              >
-                                <div className="flex items-center gap-1">
-                                  <span className="text-[11px] text-zinc-500 mr-1 font-medium">Position:</span>
-                                  <button
-                                    type="button"
-                                    title="Align Left (0%)"
-                                    onClick={() =>
-                                      setHeaderState((prev) => ({
-                                        ...prev,
-                                        image: prev.image ? { ...prev.image, align: 'left', offsetPercent: 0 } : null,
-                                      }))
-                                    }
-                                    className={cn(
-                                      'p-1 rounded cursor-pointer transition-colors',
-                                      (headerState.image.offsetPercent !== undefined ? headerState.image.offsetPercent <= 33 : headerState.image.align === 'left')
-                                        ? 'bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-400 font-bold'
-                                        : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-                                    )}
-                                  >
-                                    <AlignLeft className="w-3.5 h-3.5" />
-                                  </button>
-                                  <button
-                                    type="button"
-                                    title="Align Center (50%)"
-                                    onClick={() =>
-                                      setHeaderState((prev) => ({
-                                        ...prev,
-                                        image: prev.image ? { ...prev.image, align: 'center', offsetPercent: 50 } : null,
-                                      }))
-                                    }
-                                    className={cn(
-                                      'p-1 rounded cursor-pointer transition-colors',
-                                      (headerState.image.offsetPercent !== undefined ? (headerState.image.offsetPercent > 33 && headerState.image.offsetPercent < 67) : (headerState.image.align === 'center' || !headerState.image.align))
-                                        ? 'bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-400 font-bold'
-                                        : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-                                    )}
-                                  >
-                                    <AlignCenter className="w-3.5 h-3.5" />
-                                  </button>
-                                  <button
-                                    type="button"
-                                    title="Align Right (100%)"
-                                    onClick={() =>
-                                      setHeaderState((prev) => ({
-                                        ...prev,
-                                        image: prev.image ? { ...prev.image, align: 'right', offsetPercent: 100 } : null,
-                                      }))
-                                    }
-                                    className={cn(
-                                      'p-1 rounded cursor-pointer transition-colors',
-                                      (headerState.image.offsetPercent !== undefined ? headerState.image.offsetPercent >= 67 : headerState.image.align === 'right')
-                                        ? 'bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-400 font-bold'
-                                        : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-                                    )}
-                                  >
-                                    <AlignRight className="w-3.5 h-3.5" />
-                                  </button>
-                                </div>
-
-                                {/* Crop & Remove Action Buttons */}
-                                <div className="flex items-center gap-2">
-                                  <button
-                                    type="button"
-                                    title="Crop and zoom logo"
-                                    onClick={() => {
-                                      setSelectedHeaderImage(true);
-                                      setIsCroppingHeaderImage((prev) => !prev);
-                                    }}
-                                    className={cn(
-                                      'inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium transition-colors cursor-pointer',
-                                      isCroppingHeaderImage
-                                        ? 'bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 font-semibold'
-                                        : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-700'
-                                    )}
-                                  >
-                                    <Crop className="w-3.5 h-3.5" />
-                                    <span>{isCroppingHeaderImage ? 'Cropping…' : 'Crop'}</span>
-                                  </button>
-
-                                  <button
-                                    type="button"
-                                    title="Remove Logo"
-                                    onClick={() => {
-                                      setHeaderState((prev) => ({ ...prev, image: null }));
-                                      setSelectedHeaderImage(false);
-                                      setIsCroppingHeaderImage(false);
-                                    }}
-                                    className="inline-flex items-center gap-1 px-2 py-1 rounded text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 text-[11px] font-medium transition-colors cursor-pointer"
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                    <span>Remove</span>
-                                  </button>
-                                </div>
-                              </div>
-
-                              {/* Interactive Draggable, Resizable & Croppable Logo Track */}
-                              <div
-                                ref={headerTrackRef}
-                                className="relative w-full min-h-[100px] py-2 px-1 border border-dashed border-blue-200/80 dark:border-blue-900/40 rounded-lg bg-blue-50/20 dark:bg-blue-950/20 select-none overflow-hidden"
-                              >
-                                <div
-                                  data-header-image="true"
-                                  onMouseDown={handleHeaderDragStart}
-                                  onTouchStart={handleHeaderDragStart}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setSelectedHeaderImage(true);
-                                  }}
-                                  onDoubleClick={(e) => {
-                                    e.stopPropagation();
-                                    setSelectedHeaderImage(true);
-                                    setIsCroppingHeaderImage(true);
-                                  }}
-                                  style={{
-                                    position: 'relative',
-                                    marginLeft: `${headerState.image.offsetPercent ?? (headerState.image.align === 'left' ? 0 : headerState.image.align === 'right' ? 100 : 50)}%`,
-                                    transform: `translateX(-${headerState.image.offsetPercent ?? (headerState.image.align === 'left' ? 0 : headerState.image.align === 'right' ? 100 : 50)}%)`,
-                                    width: `${headerState.image.width || 180}px`,
-                                  }}
-                                  className={cn(
-                                    'relative select-none rounded-md transition-shadow',
-                                    !isCroppingHeaderImage && 'cursor-grab',
-                                    isDraggingHeaderImage && 'cursor-grabbing scale-[1.02] shadow-lg',
-                                    isResizingHeaderImage && 'shadow-lg',
-                                    (selectedHeaderImage || isCroppingHeaderImage) && 'ring-2 ring-blue-500 ring-offset-2 ring-offset-white dark:ring-offset-zinc-900 shadow-md'
-                                  )}
-                                >
-                                  {/* Floating drag / resize badge */}
-                                  {isResizingHeaderImage && (
-                                    <div className="absolute -top-7 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-blue-600 text-white text-[10px] font-semibold shadow-md whitespace-nowrap pointer-events-none z-40">
-                                      Size: {headerState.image.width || 180}px
-                                    </div>
-                                  )}
-                                  {isDraggingHeaderImage && !isResizingHeaderImage && (
-                                    <div className="absolute -top-7 left-1/2 -translate-x-1/2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-600 text-white text-[10px] font-semibold shadow-md whitespace-nowrap pointer-events-none z-40">
-                                      <Move className="w-2.5 h-2.5" />
-                                      <span>Position ({headerState.image.offsetPercent ?? (headerState.image.align === 'left' ? 0 : headerState.image.align === 'right' ? 100 : 50)}%)</span>
-                                    </div>
-                                  )}
-                                  {selectedHeaderImage && !isDraggingHeaderImage && !isResizingHeaderImage && !isCroppingHeaderImage && (
-                                    <div className="absolute -top-7 left-1/2 -translate-x-1/2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-zinc-800/90 text-zinc-100 text-[10px] font-medium shadow-md whitespace-nowrap pointer-events-none z-40 backdrop-blur-xs">
-                                      <Move className="w-2.5 h-2.5" />
-                                      <span>Drag to move · Pull handles to resize · Double-click to crop</span>
-                                    </div>
-                                  )}
-
-                                  {/* Interactive Crop Framing Controls */}
-                                  {isCroppingHeaderImage && (
-                                    <div
-                                      data-header-crop="true"
-                                      onClick={(e) => e.stopPropagation()}
-                                      onMouseDown={(e) => e.stopPropagation()}
-                                      className="absolute -bottom-11 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-3 py-1.5 bg-zinc-900/95 text-white rounded-lg shadow-xl text-xs backdrop-blur-xs whitespace-nowrap"
-                                    >
-                                      <span className="font-semibold text-zinc-300">Crop Zoom:</span>
-                                      <button
-                                        type="button"
-                                        title="Zoom out"
-                                        onClick={() => {
-                                          setHeaderCropZoom((z) => {
-                                            const next = Math.max(100, z - 10);
-                                            setHeaderState((prev) => ({
-                                              ...prev,
-                                              image: prev.image ? { ...prev.image, cropZoom: next } : null,
-                                            }));
-                                            return next;
-                                          });
-                                        }}
-                                        className="px-2 py-0.5 bg-zinc-800 hover:bg-zinc-700 rounded font-bold cursor-pointer transition-colors"
-                                      >
-                                        -
-                                      </button>
-                                      <span className="w-10 text-center font-mono font-semibold">{headerCropZoom}%</span>
-                                      <button
-                                        type="button"
-                                        title="Zoom in"
-                                        onClick={() => {
-                                          setHeaderCropZoom((z) => {
-                                            const next = Math.min(300, z + 10);
-                                            setHeaderState((prev) => ({
-                                              ...prev,
-                                              image: prev.image ? { ...prev.image, cropZoom: next } : null,
-                                            }));
-                                            return next;
-                                          });
-                                        }}
-                                        className="px-2 py-0.5 bg-zinc-800 hover:bg-zinc-700 rounded font-bold cursor-pointer transition-colors"
-                                      >
-                                        +
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          setIsCroppingHeaderImage(false);
-                                          setHeaderState((prev) => ({
-                                            ...prev,
-                                            image: prev.image ? { ...prev.image, cropZoom: headerCropZoom } : null,
-                                          }));
-                                        }}
-                                        className="ml-1 px-2.5 py-1 bg-primary text-primary-foreground font-semibold rounded hover:opacity-90 cursor-pointer text-xs transition-opacity"
-                                      >
-                                        Done
-                                      </button>
-                                    </div>
-                                  )}
-
-                                  {/* Cropped Image Frame */}
-                                  <div className="overflow-hidden rounded border border-zinc-200 dark:border-zinc-700 p-1 bg-white shadow-2xs">
-                                    <img
-                                      src={headerState.image.url}
-                                      alt="Header Logo"
-                                      draggable={false}
-                                      style={{
-                                        transform: (headerState.image.cropZoom || headerCropZoom) !== 100
-                                          ? `scale(${(headerState.image.cropZoom || headerCropZoom) / 100})`
-                                          : undefined,
-                                        transformOrigin: 'center center',
-                                        transition: 'transform 0.1s ease-out',
-                                      }}
-                                      className="w-full max-h-28 object-contain pointer-events-none select-none"
-                                    />
-                                  </div>
-
-                                  {/* Interactive Resize Handles (when selected and not cropping) */}
-                                  {selectedHeaderImage && !isCroppingHeaderImage && (
-                                    <>
-                                      {/* 4 Corners */}
-                                      <div
-                                        onMouseDown={(e) => handleHeaderResizeStart(e, 'nw')}
-                                        onTouchStart={(e) => handleHeaderResizeStart(e, 'nw')}
-                                        className="absolute -top-1.5 -left-1.5 w-3 h-3 bg-blue-600 border-2 border-white rounded-2xs shadow-xs cursor-nwse-resize z-30 hover:scale-125 transition-transform"
-                                      />
-                                      <div
-                                        onMouseDown={(e) => handleHeaderResizeStart(e, 'ne')}
-                                        onTouchStart={(e) => handleHeaderResizeStart(e, 'ne')}
-                                        className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-blue-600 border-2 border-white rounded-2xs shadow-xs cursor-nesw-resize z-30 hover:scale-125 transition-transform"
-                                      />
-                                      <div
-                                        onMouseDown={(e) => handleHeaderResizeStart(e, 'sw')}
-                                        onTouchStart={(e) => handleHeaderResizeStart(e, 'sw')}
-                                        className="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-blue-600 border-2 border-white rounded-2xs shadow-xs cursor-nesw-resize z-30 hover:scale-125 transition-transform"
-                                      />
-                                      <div
-                                        onMouseDown={(e) => handleHeaderResizeStart(e, 'se')}
-                                        onTouchStart={(e) => handleHeaderResizeStart(e, 'se')}
-                                        className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-blue-600 border-2 border-white rounded-2xs shadow-xs cursor-nwse-resize z-30 hover:scale-125 transition-transform"
-                                      />
-
-                                      {/* 2 Edges */}
-                                      <div
-                                        onMouseDown={(e) => handleHeaderResizeStart(e, 'w')}
-                                        onTouchStart={(e) => handleHeaderResizeStart(e, 'w')}
-                                        className="absolute top-1/2 -left-1.5 -translate-y-1/2 w-3 h-3 bg-blue-600 border-2 border-white rounded-2xs shadow-xs cursor-ew-resize z-30 hover:scale-125 transition-transform"
-                                      />
-                                      <div
-                                        onMouseDown={(e) => handleHeaderResizeStart(e, 'e')}
-                                        onTouchStart={(e) => handleHeaderResizeStart(e, 'e')}
-                                        className="absolute top-1/2 -right-1.5 -translate-y-1/2 w-3 h-3 bg-blue-600 border-2 border-white rounded-2xs shadow-xs cursor-ew-resize z-30 hover:scale-125 transition-transform"
-                                      />
-                                    </>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Header Text Input Line & Alignment */}
-                          <div className="flex items-center gap-2 p-1.5 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xs">
-                            <input
-                              type="text"
-                              value={headerState.text || ''}
-                              onChange={(e) => setHeaderState((prev) => ({ ...prev, text: e.target.value }))}
-                              placeholder="Type institutional header text (e.g. STI College Marikina • Practicum Department)..."
-                              className="flex-1 bg-transparent px-2 py-1 text-xs text-zinc-800 dark:text-zinc-200 outline-hidden font-medium placeholder:text-zinc-400"
-                              style={{ textAlign: headerState.textAlign || 'center' }}
-                            />
-                            <div className="flex items-center gap-1 border-l border-zinc-200 dark:border-zinc-700 pl-2 shrink-0">
-                              <button
-                                type="button"
-                                title="Align Left"
-                                onClick={() => setHeaderState((prev) => ({ ...prev, textAlign: 'left' }))}
-                                className={cn(
-                                  'p-1 rounded cursor-pointer transition-colors',
-                                  headerState.textAlign === 'left'
-                                    ? 'bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-400 font-bold'
-                                    : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-                                )}
-                              >
-                                <AlignLeft className="w-3.5 h-3.5" />
-                              </button>
-                              <button
-                                type="button"
-                                title="Align Center"
-                                onClick={() => setHeaderState((prev) => ({ ...prev, textAlign: 'center' }))}
-                                className={cn(
-                                  'p-1 rounded cursor-pointer transition-colors',
-                                  headerState.textAlign === 'center' || !headerState.textAlign
-                                    ? 'bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-400 font-bold'
-                                    : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-                                )}
-                              >
-                                <AlignCenter className="w-3.5 h-3.5" />
-                              </button>
-                              <button
-                                type="button"
-                                title="Align Right"
-                                onClick={() => setHeaderState((prev) => ({ ...prev, textAlign: 'right' }))}
-                                className={cn(
-                                  'p-1 rounded cursor-pointer transition-colors',
-                                  headerState.textAlign === 'right'
-                                    ? 'bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-400 font-bold'
-                                    : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-                                )}
-                              >
-                                <AlignRight className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      ) : (
-                        /* Idle State (Faint Google Docs Style Header Preview) */
-                        <div className="w-full flex flex-col gap-1.5 document-header-preview">
-                          {headerState.image?.url && (
-                            <div className="w-full py-1 overflow-hidden select-none">
-                              <div
-                                style={{
-                                  position: 'relative',
-                                  marginLeft: `${headerState.image.offsetPercent ?? (headerState.image.align === 'left' ? 0 : headerState.image.align === 'right' ? 100 : 50)}%`,
-                                  transform: `translateX(-${headerState.image.offsetPercent ?? (headerState.image.align === 'left' ? 0 : headerState.image.align === 'right' ? 100 : 50)}%)`,
-                                  width: `${headerState.image.width || 180}px`,
-                                }}
-                              >
-                                <div className="overflow-hidden rounded p-0.5">
-                                  <img
-                                    src={headerState.image.url}
-                                    alt="Header Logo"
-                                    draggable={false}
-                                    style={{
-                                      transform: headerState.image.cropZoom && headerState.image.cropZoom !== 100
-                                        ? `scale(${headerState.image.cropZoom / 100})`
-                                        : undefined,
-                                      transformOrigin: 'center center',
-                                    }}
-                                    className="w-full max-h-24 object-contain opacity-85 group-hover/header:opacity-100 transition-opacity"
-                                  />
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                          {headerState.text?.trim() && (
-                            <div
-                              className={cn(
-                                'text-xs text-zinc-500 font-semibold tracking-wide',
-                                headerState.textAlign === 'left' && 'text-left',
-                                (!headerState.textAlign || headerState.textAlign === 'center') && 'text-center',
-                                headerState.textAlign === 'right' && 'text-right'
-                              )}
-                            >
-                              {headerState.text}
-                            </div>
-                          )}
-                          {!isEffectivelyReadOnly && (
-                            <div className="header-footer-prompt flex items-center justify-between text-[11px] text-zinc-400 opacity-0 group-hover/header:opacity-100 transition-opacity pt-1 border-t border-dashed border-zinc-300 dark:border-zinc-700">
-                              <span>Double-click to edit Header</span>
-                              <span>{headerState.scope === 'every_page' ? 'Every page' : 'This page only'}</span>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Header boundary line when editing header */}
-                  {activeHeaderFooter === 'header' && (
-                    <div className="flex items-center gap-2 my-2 select-none">
-                      <div className="h-px bg-blue-300 dark:bg-blue-700/60 flex-1 border-b border-dashed" />
-                      <span className="text-[10px] uppercase font-bold tracking-wider text-blue-500/80">Header Boundary</span>
-                      <div className="h-px bg-blue-300 dark:bg-blue-700/60 flex-1 border-b border-dashed" />
-                    </div>
-                  )}
+                  {/* ─── Google Docs Permanent 1-inch Header Zone ────────────── */}
+                  <DocumentHeaderZone
+                    headerState={headerState}
+                    setHeaderState={setHeaderState}
+                    isActive={activeHeaderFooter === 'header'}
+                    onToggleActive={(active) => setActiveHeaderFooter(active ? 'header' : null)}
+                    isReadOnly={isEffectivelyReadOnly}
+                    headerInputRef={headerInputRef}
+                  />
 
                   {/* ─── Slate Document Body (Seamlessly Inside Paper Sheet) ──────── */}
-                  <Editor
-                    ref={editorRef}
-                    variant="none"
-                    placeholder={placeholder}
-                    readOnly={isEffectivelyReadOnly}
-                    spellCheck
-                    autoFocus={!isEffectivelyReadOnly}
-                    onKeyDown={handleKeyDown}
-                    className="flex-1 w-full min-h-[550px] p-0 border-0 shadow-none rounded-none focus-visible:outline-none"
-                  />
+                  <div className={cn('flex-1 flex flex-col', activeHeaderFooter === 'header' && 'opacity-40 pointer-events-none transition-opacity')}>
+                    <Editor
+                      ref={editorRef}
+                      variant="none"
+                      placeholder={placeholder}
+                      readOnly={isEffectivelyReadOnly}
+                      spellCheck
+                      autoFocus={!isEffectivelyReadOnly}
+                      onKeyDown={handleKeyDown}
+                      className="flex-1 w-full min-h-[650px] p-0 border-0 shadow-none rounded-none focus-visible:outline-none"
+                    />
+                  </div>
 
                   {/* Footer boundary line when editing footer */}
                   {activeHeaderFooter === 'footer' && (
@@ -1875,6 +1310,17 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                 </div>
               </div>
             </EditorContainer>
+
+            {/* ─── Google Docs Bottom Telemetry Status Bar ───────────────────── */}
+            <DocumentStatusBar
+              pageCount={Math.max(1, Math.ceil(currentWordCount / 350))}
+              currentPage={1}
+              wordCount={currentWordCount}
+              zoomLevel={zoomLevel}
+              onZoomChange={setZoomLevel}
+              syncStatus={syncStatus}
+              isReadOnly={isEffectivelyReadOnly}
+            />
 
             {/* Floating subtle zoom indicator */}
             {showZoomIndicator && (

@@ -2668,6 +2668,51 @@ Per user request ("remove this sizing to it and if user press the image they sen
 - **TypeScript Compiler (`npm run lint` / `tsc --noEmit`)**: 0 errors.
 - **Editor Test Suite (`npm run test:editor`)**: 57/57 tests passing across all 8 suites (including new unit test for header/footer serialization with `cropZoom`).
 
+---
+
+## Section 38: Google Docs & Word-Style Document Canvas Transformation (Phase 7)
+
+### 1. Architectural Motivation & User Feedback
+- Analysis of user screenshot `media_1789552942209.png` identified that newly initialized document drafts appeared as generic dark rounded cards (`rounded-xl`) with placeholder text hugging the top edge, lacking physical margins, horizontal rulers, and page aspect ratio.
+- Implemented a complete visual and anatomical transformation to match genuine **Google Docs & Microsoft Word 365** document standards while fully preserving the practicum portal's theme tokens, institutional templates, dual-layer IndexedDB + Supabase autosave, and DOCX/PDF export pipelines.
+
+### 2. Authentic 8.5" × 11" US Letter Paper Sheet
+- **Paper Sizing & Ratio**: Refactored `.plate-paper-sheet` to standard US Letter dimensions: `w-[816px] max-w-[816px] min-h-[1056px]` (8.5" × 11" at 96 DPI).
+- **Paper Elevation & Shadow**: Replaced generic modal rounding (`rounded-xl`) with crisp paper-cut corners (`rounded-xs` / 2px radius) and realistic physical paper drop shadow (`shadow-[0_1px_3px_rgba(0,0,0,0.08),0_4px_16px_rgba(0,0,0,0.05)]` in light mode, `shadow-[0_4px_24px_rgba(0,0,0,0.5)]` in dark mode).
+- **Physical Margins**: Standardized document margins to 1 inch (96px) on all sides: `px-[96px] pb-[96px]`, with the top 96px dedicated to the permanent Header zone.
+- **Desk Environment**: Enhanced `EditorContainer` workspace background with subtle desk contrast (`bg-zinc-100/85 dark:bg-zinc-950/95`).
+
+### 3. Horizontal Document Ruler (`src/components/editor/DocumentRuler.tsx`)
+- Pinned directly above the document sheet, locked to the exact 816px page width.
+- Displays 1-inch (96px) shaded margin gutters on left and right (`bg-zinc-300/85 dark:bg-zinc-800/95`) and a 6.5-inch (624px) bright central printable text zone.
+- Features numbered inch marks (`1` through `7`) with 1/8", 1/4", and 1/2" tick lines.
+- Includes visual First-line indent bar (`▬`) and Left indent triangle (`▼`) at 1 inch, and Right indent triangle (`▼`) at 7.5 inches.
+- Zoom-aware: scales and shifts in lockstep with page zoom level.
+
+### 4. Permanent 1-Inch Header Zone (`src/components/editor/DocumentHeaderZone.tsx`)
+- **Idle State**: Always preserves the 1-inch physical top margin so body text never hugs the top border. On hover, reveals a faint dashed guide line with `Header · Double-click to edit` prompt.
+- **Active State**: Displays Google Docs' signature divider line across the page:
+  `Header ────────────────────────────────────── [Options ▼] [Done]`
+- **Google Docs Options Dropdown**:
+  - Scope: "Every page" vs "This page only (Different first page)".
+  - Logo: "Add Logo / Image" or "Replace Logo".
+  - Alignment: Left, Center, Right institutional header line.
+  - Remove Header.
+- **Interactive Tools**: Encapsulates draggable logo positioning, 6 corner/edge resize handles, double-click crop zoom pill (`-`, `+`, `Done`), and institutional text editing.
+- **Body Dimming**: Automatically dims body text (`opacity-40 pointer-events-none`) when the header is active, matching Google Docs.
+
+### 5. Bottom Telemetry Status Bar (`src/components/editor/DocumentStatusBar.tsx`)
+- Docked at the bottom of the editor canvas:
+  - Left: `Page 1 of X` (estimated standard pages).
+  - Center: Live word count (`{wordCount} words`) and character count tooltip.
+  - Right: Zoom controller (`- 100% +`), read-only pill, and cloud sync status badge (`✓ Saved to cloud` / `Saving…` / `Offline`).
+- Wired in real-time to Supabase OCC storage events and keyboard typing.
+
+### 6. Verification
+- **TypeScript Compiler (`npm run lint`)**: 0 errors (`tsc --noEmit && tsc --noEmit -p tsconfig.server.json`).
+- **Editor Test Suite (`npm run test:editor`)**: 57/57 tests passing across all 8 suites with 0 regressions.
+- **Print Stylesheet**: Verified `@media print` suppresses ruler and status bar chrome.
+
 
 
 

@@ -637,6 +637,7 @@ export function StudentDocumentEditor() {
         onDeleteComment={handleDeleteComment}
         currentUserRole={(user?.role as any) || 'student'}
         currentUserName={user?.name || (user as any)?.full_name || 'User'}
+        syncStatus={syncStatus}
       />
 
       {/* History drawer */}

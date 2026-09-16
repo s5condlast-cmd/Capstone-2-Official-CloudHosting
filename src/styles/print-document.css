@@ -3,6 +3,8 @@
   /* Hide all application chrome */
   [data-editor-toolbar],
   [data-editor-telemetry],
+  [data-document-ruler],
+  [data-document-statusbar],
   [data-sidebar],
   [data-site-header],
   nav,
