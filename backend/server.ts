@@ -6,6 +6,7 @@ import analyzeRouter from './routes/analyze';
 // import cloudinaryRouter from './routes/cloudinary';
 import onedriveRouter from './routes/onedrive';
 import authRouter from './routes/auth';
+import templatesRouter from './routes/templates';
 
 // Load environment variables from CWD .env
 dotenv.config();
@@ -13,7 +14,8 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-app.use(cors());
+app.use(cors({ origin: process.env.APP_URL || 'http://localhost:3000' }));
+app.disable('x-powered-by');
 
 // Restore req.url from req.originalUrl if Vercel edge rewrite modified the path
 app.use((req, _res, next) => {
@@ -59,10 +61,12 @@ app.use((req, res, next) => {
 app.use('/api', analyzeRouter);
 app.use('/api', onedriveRouter);
 app.use('/api', authRouter);
+app.use('/api', templatesRouter);
 
 app.use('/', analyzeRouter);
 app.use('/', onedriveRouter);
 app.use('/', authRouter);
+app.use('/', templatesRouter);
 
 // 404 JSON fallback for unmatched API endpoints
 app.use((req, res) => {
@@ -71,11 +75,11 @@ app.use((req, res) => {
 
 // Global JSON error handler (guarantees valid application/json responses in serverless)
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-  console.error('[Express Server Error]:', err);
+  console.error('[Express Server Error]', err?.code || err?.name || 'UnknownError');
   if (!res.headersSent) {
     res.setHeader('Content-Type', 'application/json');
     res.status(err.status || 500).json({
-      error: err.message || 'Internal server error',
+      error: err.expose || (err.status && err.status < 500) ? err.message : 'The server could not complete this request. Please retry.',
     });
   }
 });
@@ -88,4 +92,3 @@ if (!process.env.VERCEL && isDirectRun) {
 }
 
 export default app;
-

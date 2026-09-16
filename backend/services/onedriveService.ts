@@ -61,7 +61,7 @@ export function getAuthorizationUrl(redirectUri: string): string {
     throw new Error('MICROSOFT_CLIENT_ID is not configured in .env');
   }
 
-  const tenant = 'common';
+  const tenant = process.env.MICROSOFT_TENANT_ID || 'common';
   const scopes = encodeURIComponent('offline_access Files.ReadWrite User.Read');
   const encodedRedirect = encodeURIComponent(redirectUri);
 
@@ -74,7 +74,7 @@ export function getAuthorizationUrl(redirectUri: string): string {
 export async function exchangeCodeForTokens(code: string, redirectUri: string): Promise<TokenData> {
   const clientId = process.env.MICROSOFT_CLIENT_ID!;
   const clientSecret = process.env.MICROSOFT_CLIENT_SECRET!;
-  const tenant = 'common';
+  const tenant = process.env.MICROSOFT_TENANT_ID || 'common';
 
   const params = new URLSearchParams({
     client_id: clientId,
@@ -127,7 +127,7 @@ export async function exchangeCodeForTokens(code: string, redirectUri: string): 
 async function refreshAccessToken(refreshToken: string): Promise<string> {
   const clientId = process.env.MICROSOFT_CLIENT_ID!;
   const clientSecret = process.env.MICROSOFT_CLIENT_SECRET!;
-  const tenant = 'common';
+  const tenant = process.env.MICROSOFT_TENANT_ID || 'common';
 
   const params = new URLSearchParams({
     client_id: clientId,
@@ -260,6 +260,16 @@ export async function uploadToOneDrive(
   const endpoint = `/me/drive/root:/${encodedPath}:/content`;
   const response = await client.api(endpoint).put(fileBuffer);
 
+  // Also upload a direct copy to the root archive folder for instant discovery
+  if (cleanSubPath) {
+    try {
+      const rootPath = `${rootFolder}/${fileName}`;
+      await client.api(`/me/drive/root:/${encodeURI(rootPath)}:/content`).put(fileBuffer);
+    } catch (rootErr) {
+      console.warn('[OneDrive] Direct root copy notice:', rootErr);
+    }
+  }
+
   return {
     id: response.id,
     name: response.name,
@@ -268,6 +278,36 @@ export async function uploadToOneDrive(
     path: fullPath,
     createdDateTime: response.createdDateTime,
   };
+}
+
+/**
+ * Syncs all files from a nested subfolder directly to the root archive folder.
+ */
+export async function syncFolderFilesToRoot(subFolder: string): Promise<string[]> {
+  const client = await getAuthenticatedGraphClient();
+  const rootFolder = process.env.ONEDRIVE_ROOT_FOLDER || 'STI_Practicum_Archive';
+  const fullPath = `${rootFolder}/${subFolder.replace(/^[\/\\]+|[\/\\]+$/g, '')}`;
+  const items = await client.api(`/me/drive/root:/${encodeURI(fullPath)}:/children`).get();
+  const synced: string[] = [];
+
+  for (const item of items.value || []) {
+    if (item.file) {
+      try {
+        const stream = await client.api(`/me/drive/items/${item.id}/content`).get();
+        const chunks: Buffer[] = [];
+        for await (const chunk of stream) {
+          chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+        }
+        const fileBuffer = Buffer.concat(chunks);
+        await client.api(`/me/drive/root:/${encodeURI(rootFolder)}/${encodeURI(item.name)}:/content`).put(fileBuffer);
+        synced.push(item.name);
+      } catch (err) {
+        console.warn(`[OneDrive] Could not copy ${item.name} to root:`, err);
+      }
+    }
+  }
+
+  return synced;
 }
 
 /**

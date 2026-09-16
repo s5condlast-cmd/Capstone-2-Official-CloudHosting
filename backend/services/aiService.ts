@@ -38,7 +38,7 @@ export async function analyzeDocumentText(
 Extracted Document Content:
 ${truncatedText}`;
 
-  const groqKey = process.env.VITE_GROQ_API_KEY;
+  const groqKey = process.env.GROQ_API_KEY || process.env.VITE_GROQ_API_KEY;
   const geminiKey = process.env.GEMINI_API_KEY;
   let findings: AiFindings | null = null;
 

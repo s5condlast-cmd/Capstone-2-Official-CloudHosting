@@ -447,13 +447,14 @@ export const DTRApproval: React.FC = () => {
         selectedDtr.studentName,
         selectedDtr.course,
         selectedDtr.weekNumber,
-        xlsxBlob
+        xlsxBlob,
+        selectedDtr.studentId
       );
 
       toast.success(`DTR Approved & Submitted to Adviser! Signed .xlsx spreadsheet published to Supabase for ${selectedDtr.studentName}.`);
     } catch (err) {
       console.warn('Submission notice:', err);
-      toast.success(`DTR for ${selectedDtr.studentName} (Week ${selectedDtr.weekNumber}) approved successfully!`);
+      toast.error('DTR was not published. Check the student assignment and retry.');
     }
   };
 
@@ -542,7 +543,8 @@ export const DTRApproval: React.FC = () => {
         selectedDtr.studentName,
         selectedDtr.course,
         selectedDtr.weekNumber,
-        xlsxBlob
+        xlsxBlob,
+        selectedDtr.studentId
       );
 
       const signedCount = selectedDtr.logs.filter(l => l.signatureUrl).length;

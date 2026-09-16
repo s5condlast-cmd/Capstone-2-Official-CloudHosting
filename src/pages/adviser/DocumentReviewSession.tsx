@@ -13,6 +13,7 @@ export const DocumentReviewSession: React.FC = () => {
 
   const [doc, setDoc] = React.useState<StudentDocument | null>(null);
   const [pdfUrl, setPdfUrl] = React.useState<string>("");
+  const [originalDocxUrl, setOriginalDocxUrl] = React.useState<string | undefined>(undefined);
   const [queueStatus, setQueueStatus] = useState<'Pending' | 'Assigned' | 'In Review' | 'Completed'>('In Review');
   const [isLoading, setIsLoading] = React.useState(true);
 
@@ -23,7 +24,10 @@ export const DocumentReviewSession: React.FC = () => {
         const fetchedDoc = await submissionStorage.getDocumentById(id);
         setDoc(fetchedDoc);
         if (fetchedDoc) {
-          setPdfUrl(submissionStorage.getFileUrl(fetchedDoc.file_path));
+          const resolved = await submissionStorage.resolvePdfUrl(fetchedDoc);
+          setPdfUrl(resolved);
+          const originalDocx = await submissionStorage.resolveOriginalDocxUrl(fetchedDoc);
+          setOriginalDocxUrl(originalDocx);
         }
       } catch (err) {
         console.error("Failed to load document", err);
@@ -98,14 +102,19 @@ export const DocumentReviewSession: React.FC = () => {
       <UnifiedReviewSession 
         student={student}
         pdfUrl={pdfUrl}
+        originalDocxUrl={originalDocxUrl}
         queueStatus={queueStatus}
         versions={versions}
         docId={doc?.id}
         initialAiStatus={doc?.ai_status}
         initialAiFindings={doc?.ai_findings}
+        onedriveUrl={doc?.onedrive_url}
         onBack={() => navigate(-1)}
-        onApprove={async () => {
-          if (doc) await submissionStorage.updateDocumentStatus(doc.id, 'Approved');
+        onApprove={async (remarks) => {
+          if (doc) {
+            await submissionStorage.updateDocumentStatus(doc.id, 'Approved', remarks);
+            if (remarks) await submissionStorage.postComment(doc.id, 'Adviser', remarks);
+          }
           setQueueStatus('Completed');
           setTimeout(() => navigate('/adviser/review'), 1500);
         }}
@@ -114,13 +123,19 @@ export const DocumentReviewSession: React.FC = () => {
           setQueueStatus('Completed');
           setTimeout(() => navigate('/adviser/review'), 1500);
         }}
-        onRequestRevision={async () => {
-          if (doc) await submissionStorage.updateDocumentStatus(doc.id, 'Revision Required');
+        onRequestRevision={async (remarks) => {
+          if (doc) {
+            await submissionStorage.updateDocumentStatus(doc.id, 'Revision Required', remarks);
+            if (remarks) await submissionStorage.postComment(doc.id, 'Adviser', remarks);
+          }
           setQueueStatus('Completed');
           setTimeout(() => navigate('/adviser/review'), 1500);
         }}
-        onReject={async () => {
-          if (doc) await submissionStorage.updateDocumentStatus(doc.id, 'Revision Required');
+        onReject={async (remarks) => {
+          if (doc) {
+            await submissionStorage.updateDocumentStatus(doc.id, 'Revision Required', remarks);
+            if (remarks) await submissionStorage.postComment(doc.id, 'Adviser', remarks);
+          }
           setQueueStatus('Completed');
           setTimeout(() => navigate('/adviser/review'), 1500);
         }}

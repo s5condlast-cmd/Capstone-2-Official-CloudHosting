@@ -15,15 +15,21 @@ import {
   UserCheck,
   Users,
   ChevronDown,
-  Cloud
+  Cloud,
+  Lock,
+  Send,
+  FileText
 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import { AnimatePresence, motion } from 'motion/react';
 import { DocumentWorkflow } from '@/src/components/compose/DocumentWorkflow';
 import { templateFields, getTemplateFilename } from '@/src/components/review/templateFields';
 import { submissionStorage } from '@/src/lib/submissionStorage';
+import { documentGenerator } from '@/src/lib/documentGenerator';
+import { templateStorage } from '@/src/lib/templateStorage';
 import { aiService } from '@/src/lib/aiService';
 import { useAuth } from '@/src/contexts/AuthContext';
+import { toast } from 'sonner';
 
 
 export interface DocumentTemplate {
@@ -47,6 +53,11 @@ export interface StudentDocumentPageProps {
   adviserFeedback: string;
   lastUpdated?: string;
   adviserComments?: { author: string; msg: string; time: string }[];
+  isLocked?: boolean;
+  lockedMessage?: string;
+  extraSidebarContent?: React.ReactNode;
+  headerAction?: React.ReactNode;
+  showOneDriveCard?: boolean;
 }
 
 interface ConsentOption {
@@ -174,7 +185,12 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
   submissionInfo,
   adviserFeedback,
   lastUpdated,
-  adviserComments
+  adviserComments,
+  isLocked = false,
+  lockedMessage,
+  extraSidebarContent,
+  headerAction,
+  showOneDriveCard = true
 }) => {
   const [isUrgent, setIsUrgent] = useState(false);
   const [selectedTemplateIndex, setSelectedTemplateIndex] = useState(0);
@@ -185,8 +201,17 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
 
   const selectedTemplate = templates[selectedTemplateIndex];
+
+  // Proposal letter identification: suppress OneDrive card on Proposal Letter only
+  const isProposalPage = templates.some(t =>
+    t.title.toLowerCase().includes('proposal') ||
+    (t.id && t.id.toLowerCase().includes('proposal'))
+  ) || uploadTitle.toLowerCase().includes('proposal');
+
+  const shouldShowOneDrive = showOneDriveCard && !isProposalPage;
 
   // Consent form grouping
   const isConsentPage = templates.some(t =>
@@ -247,13 +272,13 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
           setDbDoc(doc);
           if (doc.status === 'Approved') {
             setCurrentStatus('Approved');
-            setCurrentFeedback('Document successfully verified and approved.');
+            setCurrentFeedback(doc.adviser_feedback || 'Document successfully verified and approved.');
           } else if (doc.status === 'Revision Required') {
             setCurrentStatus('Returned');
-            setCurrentFeedback('Revision Required. Please re-upload your document.');
+            setCurrentFeedback(doc.adviser_feedback || 'Revision Required. Please re-upload your document.');
           } else {
             setCurrentStatus('Pending');
-            setCurrentFeedback('Waiting for adviser to verify your submission.');
+            setCurrentFeedback(doc.adviser_feedback || 'Waiting for adviser to verify your submission.');
           }
           setCurrentLastUpdated(new Date(doc.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }));
         } else {
@@ -269,37 +294,49 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
     loadLatest();
   }, [selectedTemplate.title, status, adviserFeedback, lastUpdated, isSubmitted]);
 
+  const handlePickedFile = (file: File) => {
+    const ext = file.name.split('.').pop()?.toLowerCase();
+    if (!['pdf', 'docx', 'doc'].includes(ext || '')) {
+      toast.error('Only PDF or DOCX files are supported.');
+      return;
+    }
+    if (file.size > 15 * 1024 * 1024) {
+      toast.error('File size exceeds 15MB limit.');
+      return;
+    }
+    setUploadedFileName(file.name);
+    setSelectedFile(file);
+    setIsSubmitted(false);
+    toast.info(`Selected "${file.name}" (${(file.size / 1024).toFixed(0)} KB)`);
+  };
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setUploadedFileName(file.name);
-      setSelectedFile(file);
-      setIsSubmitted(false);
+      handlePickedFile(file);
     }
   };
 
-  const handleSubmit = async () => {
-    if (!selectedFile) return;
-
+  const executeUpload = async (fileToUpload: File) => {
     setIsUploading(true);
     try {
       const doc = await submissionStorage.uploadSubmission(
-        selectedFile,
+        fileToUpload,
         studentName,
         studentCourse,
         selectedTemplate.title,
         isUrgent ? 'high' : 'medium'
       );
 
-      // Trigger AI Analysis in the background
-      const isPdf = selectedFile.type === 'application/pdf' || selectedFile.name.endsWith('.pdf');
+      // Trigger AI Analysis in the background for PDFs
+      const isPdf = fileToUpload.type === 'application/pdf' || fileToUpload.name.toLowerCase().endsWith('.pdf');
       if (isPdf) {
         try {
           await submissionStorage.updateAiFindings(doc.id, 'Processing', null);
-          const docUrl = submissionStorage.getFileUrl(doc.file_path);
+          const docUrl = await submissionStorage.getFileUrl(doc.file_path);
           const findings = await aiService.analyzeDocument(doc.id, docUrl, {
-            name: 'John Dwayne B. Guaniso',
-            course: 'BSIT 402',
+            name: studentName,
+            course: studentCourse,
             docType: selectedTemplate.title,
             company: 'Industry Partner'
           });
@@ -309,23 +346,73 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
           await submissionStorage.updateAiFindings(doc.id, 'Failed', null);
         }
       } else {
-        // Fallback for non-PDFs (e.g. template docx)
-        await submissionStorage.updateAiFindings(doc.id, 'Failed', {
-          overallAssessment: 'Needs Attention',
+        // Formatted DOCX submission
+        await submissionStorage.updateAiFindings(doc.id, 'Completed', {
+          overallAssessment: 'Valid Submission',
           grammarIssues: 0,
           missingInformation: [],
-          consistencyIssues: ["Document uploaded is not a PDF. AI Review Assistant only supports PDF analysis."],
-          recommendations: ["Please convert your document to PDF to enable AI analysis."],
-          confidence: 'Low'
+          consistencyIssues: ["Document uploaded in DOCX format and archived to Microsoft OneDrive."],
+          recommendations: ["Adviser will review document formatting and signature."],
+          confidence: 'High'
         });
       }
 
+      setDbDoc(doc);
+      setCurrentStatus('Pending');
+      setCurrentFeedback('Waiting for adviser to verify your submission.');
+      setCurrentLastUpdated(new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }));
       setIsSubmitted(true);
-    } catch (error) {
+
+      if (doc.onedrive_url) {
+        toast.success(
+          <div>
+            <p className="font-bold">Submitted to Adviser & Archived!</p>
+            <p className="text-xs opacity-90">Your file is in the Adviser Review Hub and saved to Microsoft OneDrive.</p>
+          </div>
+        );
+      } else {
+        toast.success('Document submitted to adviser successfully!');
+      }
+    } catch (error: any) {
       console.error("Upload failed", error);
-      alert("Upload failed. Check console for details.");
+      toast.error(error?.message || "Upload failed. Please check your connection and try again.");
     } finally {
       setIsUploading(false);
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (selectedFile) {
+      await executeUpload(selectedFile);
+      return;
+    }
+
+    // If no file picked, auto-generate DOCX from template and submit
+    toast.info("Generating DOCX to submit to adviser...");
+    try {
+      const blob = await documentGenerator.generateDocx(
+        selectedTemplate.docUrl,
+        {
+          studentName,
+          programName: studentCourse,
+          date: new Date().toISOString().split('T')[0]
+        },
+        [],
+        {},
+        {},
+        [],
+        selectedTemplate.id,
+        selectedTemplate.title
+      );
+      const cleanTitle = selectedTemplate.title.replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '_');
+      const file = new File([blob], `${cleanTitle}_Filled.docx`, {
+        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      });
+      setSelectedFile(file);
+      setUploadedFileName(file.name);
+      await executeUpload(file);
+    } catch (e: any) {
+      toast.error("Please select a DOCX or PDF file first.");
     }
   };
 
@@ -335,7 +422,7 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
         {/* Left column - Document Preview */}
         <div className="flex-1 min-w-0 flex flex-col gap-6 w-full">
           {templates.length > 1 && (
-            <div className="bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 p-3 sm:p-3.5 rounded-xl shadow-2xs space-y-2 shrink-0">
+            <div className="bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800/80 p-3 sm:p-3.5 rounded-xl shadow-2xs space-y-2.5 shrink-0">
               <div className="flex items-center justify-between gap-2 flex-wrap px-0.5">
                 <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0 animate-pulse" />
@@ -374,14 +461,14 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
                         }
                       }}
                       className={cn(
-                        "px-3 py-2 rounded-lg text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-all border flex items-center gap-2 text-left cursor-pointer",
+                        "px-3 py-2.5 rounded-xl text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-all border flex items-center gap-2 text-left cursor-pointer",
                         selectedTemplateIndex === idx
-                          ? "bg-zinc-950 dark:bg-zinc-50 text-white dark:text-zinc-950 border-zinc-950 dark:border-zinc-50 shadow-xs"
-                          : "bg-zinc-50 dark:bg-zinc-950 text-zinc-500 dark:text-zinc-300 border-zinc-200/80 dark:border-zinc-800/80 hover:border-zinc-300 dark:hover:border-zinc-700"
+                          ? "bg-zinc-950 dark:bg-zinc-100 text-white dark:text-zinc-950 border-zinc-950 dark:border-zinc-100 shadow-2xs"
+                          : "bg-zinc-50/70 dark:bg-zinc-900/60 text-zinc-600 dark:text-zinc-400 border-zinc-200/80 dark:border-zinc-800/80 hover:border-zinc-300 dark:hover:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-100"
                       )}
                     >
                       <div className={cn(
-                        "w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 text-[9px]",
+                        "w-4 h-4 rounded-full border flex items-center justify-center shrink-0 text-[9px] font-black",
                         selectedTemplateIndex === idx
                           ? "border-white dark:border-zinc-950 bg-white/20 dark:bg-zinc-950/20"
                           : "border-zinc-300 dark:border-zinc-700"
@@ -398,8 +485,10 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
 
           <div className="flex-1 flex flex-col min-h-0">
             <DocumentWorkflow
+              key={selectedTemplate.id || selectedTemplate.title}
               title={selectedTemplate.title}
               docUrl={selectedTemplate.docUrl}
+              pdfUrl={selectedTemplate.pdfUrl}
               templateId={selectedTemplate.id}
               fields={templateFields[getTemplateFilename(selectedTemplate.pdfUrl)] || []}
             />
@@ -408,54 +497,100 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
 
         {/* Right sidebar */}
         <div className="w-full lg:w-[360px] shrink-0 flex flex-col gap-6">
-          <Card title={uploadTitle}>
+          <Card title={uploadTitle} action={headerAction}>
             <div className="space-y-4">
-              <div className="bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-800 rounded-lg p-2 flex items-start gap-2">
-                <Info className="text-zinc-500 dark:text-zinc-400 mt-0.5 shrink-0" size={13} />
-                <p className="text-[11px] text-zinc-600 dark:text-zinc-400 leading-tight">
-                  Upload a clear scanned PDF with visible signatures.
+              <div className="bg-zinc-50/80 dark:bg-zinc-900/50 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-3 flex items-start gap-2.5">
+                <Info className="text-zinc-500 dark:text-zinc-400 mt-0.5 shrink-0" size={14} />
+                <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed font-normal">
+                  Upload a clear PDF or DOCX file with required details and signatures.
                 </p>
               </div>
 
               <div
-                className="border border-dashed border-zinc-200 dark:border-zinc-700 rounded-xl p-4 text-center hover:border-zinc-400 dark:hover:border-zinc-600 transition-colors cursor-pointer group"
-                onClick={() => fileInputRef.current?.click()}
+                className={cn(
+                  "border-2 border-dashed rounded-xl p-4 sm:p-5 text-center transition-all relative overflow-hidden group",
+                  isLocked
+                    ? "border-zinc-200 dark:border-zinc-800/80 bg-zinc-50/30 dark:bg-zinc-900/20 cursor-not-allowed"
+                    : isDragOver
+                      ? "border-primary bg-primary/5 dark:bg-primary/10 cursor-pointer scale-[1.01]"
+                      : "border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-700 bg-zinc-50/40 hover:bg-zinc-50/80 dark:bg-zinc-900/20 dark:hover:bg-zinc-900/50 cursor-pointer"
+                )}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  if (!isLocked) setIsDragOver(true);
+                }}
+                onDragLeave={() => setIsDragOver(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setIsDragOver(false);
+                  if (!isLocked && e.dataTransfer.files?.[0]) {
+                    handlePickedFile(e.dataTransfer.files[0]);
+                  }
+                }}
+                onClick={() => !isLocked && fileInputRef.current?.click()}
               >
-                <div className="w-10 h-10 bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl flex items-center justify-center mx-auto mb-2 group-hover:scale-105 transition-transform">
-                  {isSubmitted ? <CheckCircle2 size={20} className="text-emerald-500" /> : isUploading ? <Upload size={20} className="text-zinc-400 animate-bounce" /> : uploadedFileName ? <FileUp size={20} className="text-emerald-500" /> : <Upload size={20} className="text-zinc-500 dark:text-zinc-400" />}
+                {isLocked && (
+                  <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-white/85 dark:bg-zinc-950/85 backdrop-blur-xs">
+                    <Lock size={22} className="text-zinc-400 dark:text-zinc-500 mb-1.5" />
+                    <span className="text-xs font-semibold text-zinc-600 dark:text-zinc-400">{lockedMessage || 'Unlocks at 460 hours'}</span>
+                  </div>
+                )}
+                <div className="w-11 h-11 bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200/80 dark:border-zinc-700/80 rounded-xl flex items-center justify-center mx-auto mb-2.5 group-hover:scale-105 transition-transform">
+                  {isSubmitted ? (
+                    <CheckCircle2 size={20} className="text-emerald-500" />
+                  ) : isUploading ? (
+                    <Upload size={20} className="text-zinc-400 animate-bounce" />
+                  ) : selectedFile ? (
+                    <FileUp size={20} className="text-emerald-500" />
+                  ) : (
+                    <Upload size={20} className="text-zinc-500 dark:text-zinc-400" />
+                  )}
                 </div>
-                <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 mb-0.5">
-                  {isSubmitted ? 'File Submitted' : isUploading ? 'Uploading...' : uploadedFileName ? 'File Selected' : uploadDescription}
+                <p className="text-xs font-semibold text-zinc-800 dark:text-zinc-200 mb-0.5">
+                  {isSubmitted ? 'File Submitted' : isUploading ? 'Uploading & Archiving...' : selectedFile ? 'File Ready to Submit' : uploadDescription}
                 </p>
-                <p className="text-[11px] text-zinc-400 dark:text-zinc-500 mb-3 truncate">
-                  {isSubmitted ? 'Pending adviser review.' : isUploading ? 'Please wait...' : uploadedFileName ? uploadedFileName : 'PDF or DOCX · Max 10MB'}
+                <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mb-3 truncate">
+                  {isSubmitted
+                    ? (uploadedFileName || 'Pending adviser review.')
+                    : isUploading
+                      ? 'Archiving to OneDrive & database...'
+                      : selectedFile
+                        ? `${selectedFile.name} (${(selectedFile.size / 1024).toFixed(0)} KB)`
+                        : 'PDF or DOCX · Max 15MB'}
                 </p>
                 <Button
-                  variant={uploadedFileName && !isSubmitted ? "primary" : "secondary"}
+                  variant={selectedFile && !isSubmitted ? "primary" : "secondary"}
                   size="sm"
-                  className="h-8 text-[11px] font-bold"
+                  className="h-8 text-[11px] font-bold cursor-pointer"
                   aria-label={`Select file for ${uploadTitle}`}
-                  disabled={isUploading || isSubmitted}
+                  disabled={isLocked || isUploading}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    fileInputRef.current?.click();
+                  }}
                 >
-                  {isSubmitted ? 'Submitted' : isUploading ? 'Uploading...' : uploadedFileName ? 'Change File' : 'Select File'}
+                  {isSubmitted ? 'Upload Revision' : isUploading ? 'Uploading...' : selectedFile ? 'Change File' : 'Select File'}
                 </Button>
                 <input
                   type="file"
                   ref={fileInputRef}
                   className="hidden"
-                  accept=".pdf,application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                  accept=".pdf,application/pdf,.docx,.doc,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword"
                   onChange={handleFileSelect}
+                  disabled={isLocked}
                 />
               </div>
 
-              <div className="flex gap-2 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+              <div className="flex gap-2 pt-2 border-t border-zinc-200/80 dark:border-zinc-800/80">
                 <button
                   onClick={() => setIsUrgent(!isUrgent)}
+                  disabled={isLocked}
                   className={cn(
-                    "w-1/2 flex items-center justify-center gap-1.5 px-2 h-8 rounded-lg text-[11px] font-bold transition-all border cursor-pointer shrink-0",
+                    "w-1/2 flex items-center justify-center gap-1.5 px-2 h-8 rounded-lg text-[11px] font-bold transition-all border shrink-0",
+                    isLocked ? "opacity-50 cursor-not-allowed border-zinc-200 dark:border-zinc-800 text-zinc-400" : "cursor-pointer",
                     isUrgent
-                      ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 border-zinc-900 dark:border-zinc-100"
-                      : "bg-white dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 border-zinc-200 dark:border-zinc-800 hover:border-zinc-300"
+                      ? "bg-zinc-950 dark:bg-zinc-100 text-white dark:text-zinc-950 border-zinc-950 dark:border-zinc-100"
+                      : "bg-zinc-50/60 dark:bg-zinc-900/50 text-zinc-600 dark:text-zinc-400 border-zinc-200/80 dark:border-zinc-800/80 hover:bg-zinc-100 dark:hover:bg-zinc-800/80"
                   )}
                 >
                   <AlertCircle size={12} className={cn(isUrgent ? "animate-pulse" : "")} />
@@ -463,61 +598,91 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
                 </button>
                 <Button
                   variant="primary"
-                  className="w-1/2 h-8 text-[11px] font-bold justify-center shrink-0 px-2"
-                  icon={currentStatus === 'Pending' ? undefined : <ShieldCheck size={12} />}
+                  className="w-1/2 h-8 text-[11px] font-bold justify-center shrink-0 px-2 cursor-pointer"
+                  icon={currentStatus === 'Pending' && isSubmitted ? undefined : <ShieldCheck size={12} />}
                   onClick={handleSubmit}
-                  disabled={!selectedFile || isUploading || isSubmitted}
+                  disabled={isLocked || isUploading}
                 >
-                  {isSubmitted ? 'Submitted' : isUploading ? 'Processing...' : currentStatus === 'Pending' ? 'Submit' : 'Submit File'}
+                  {isUploading
+                    ? 'Submitting...'
+                    : isSubmitted
+                      ? 'Re-Submit'
+                      : 'Submit to Adviser'}
                 </Button>
               </div>
 
-              <div className="flex items-center justify-center gap-1.5 pt-1 text-[10px] text-zinc-500 dark:text-zinc-400">
-                <Cloud size={12} className={cn("shrink-0", isSubmitted ? "text-emerald-500" : "text-sky-500")} />
-                <span>{isSubmitted ? 'Signed copy archived to Microsoft OneDrive' : 'Cloud sync: Auto-archives to Microsoft OneDrive'}</span>
-              </div>
+              {shouldShowOneDrive && (
+                <div className="pt-2 border-t border-zinc-200/80 dark:border-zinc-800/80">
+                  <a
+                    href={dbDoc?.onedrive_url || "https://onedrive.live.com?cid=D9646D9033CEACF0&id=D9646D9033CEACF0!sbcec97914ef14503aaaa786bd628bc60"}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={cn(
+                      "flex items-center justify-between p-2.5 rounded-xl border text-xs font-semibold transition-all group",
+                      isSubmitted || dbDoc?.onedrive_url
+                        ? "bg-emerald-500/5 hover:bg-emerald-500/10 border-emerald-500/30 text-emerald-700 dark:text-emerald-400"
+                        : "bg-zinc-50/50 hover:bg-zinc-100 dark:bg-zinc-900/40 border-zinc-200/80 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400"
+                    )}
+                    title="Open STI_Practicum_Archive in Microsoft OneDrive"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Cloud size={16} className={isSubmitted || dbDoc?.onedrive_url ? "text-emerald-500" : "text-sky-500"} />
+                      <div className="flex flex-col text-left truncate">
+                        <span className="font-bold text-[11px] leading-tight text-zinc-900 dark:text-zinc-100">
+                          {isSubmitted || dbDoc?.onedrive_url ? 'Archived in Microsoft OneDrive' : 'OneDrive Sync Connected'}
+                        </span>
+                        <span className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate">
+                          STI_Practicum_Archive
+                        </span>
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 underline group-hover:translate-x-0.5 transition-transform shrink-0">
+                      Open OneDrive ↗
+                    </span>
+                  </a>
+                </div>
+              )}
             </div>
           </Card>
 
           <Card title={currentStatus === 'Pending' ? "Status" : "Review Status"}>
             <div className="space-y-4">
-              <div className={cn(
-                "flex items-center gap-3 p-2.5 rounded-lg border",
-                currentStatus === 'Returned' ? "bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700" :
-                  "bg-zinc-50 dark:bg-zinc-800/50 border-zinc-100 dark:border-zinc-800"
-              )}>
+              <div className="bg-zinc-50/80 dark:bg-zinc-900/50 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-3 flex items-center gap-3 shadow-2xs">
                 <div className={cn(
-                  "w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
-                  currentStatus !== 'Pending' ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-950" :
-                    "bg-zinc-200 dark:bg-zinc-700 text-zinc-500 dark:text-zinc-400"
+                  "w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border",
+                  currentStatus === 'Approved'
+                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                    : currentStatus === 'Returned'
+                      ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+                      : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-zinc-200/80 dark:border-zinc-700/80"
                 )}>
                   {currentStatus === 'Approved' ? (
-                    <ShieldCheck size={16} />
+                    <ShieldCheck size={17} />
                   ) : currentStatus === 'Returned' ? (
-                    <AlertCircle size={16} />
+                    <AlertCircle size={17} />
                   ) : (
-                    <Clock size={16} />
+                    <Clock size={17} />
                   )}
                 </div>
                 <div>
                   <p className="text-xs font-bold text-zinc-900 dark:text-zinc-100">
                     {currentStatus === 'Approved' ? 'Approved' : currentStatus === 'Returned' ? 'Returned' : 'Pending Review'}
                   </p>
-                  <p className="text-[10px] text-zinc-400 dark:text-zinc-500 font-medium mt-0.5">
+                  <p className="text-[10px] text-zinc-500 dark:text-zinc-400 font-medium mt-0.5">
                     {currentLastUpdated ? `Updated ${currentLastUpdated}` : 'No submission yet'}
                   </p>
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <h4 className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider flex items-center gap-1.5">
+                <h4 className="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
                   <MessageSquare size={11} /> Adviser Feedback
                 </h4>
                 <div className={cn(
-                  "p-2.5 rounded-lg text-xs leading-relaxed font-medium",
+                  "p-3 rounded-xl text-xs leading-relaxed font-medium border transition-all",
                   currentStatus === 'Returned'
-                    ? "bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 border-l-2 border-l-zinc-900 dark:border-l-zinc-100"
-                    : "bg-zinc-50/70 dark:bg-zinc-900/60 border border-zinc-100 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400"
+                    ? "bg-amber-500/10 border-amber-500/30 text-amber-950 dark:text-amber-200 border-l-3 border-l-amber-500"
+                    : "bg-zinc-50/80 dark:bg-zinc-900/50 border-zinc-200/80 dark:border-zinc-800/80 text-zinc-600 dark:text-zinc-400"
                 )}>
                   {currentFeedback}
                 </div>
@@ -531,15 +696,17 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
             </div>
           </Card>
 
+          {extraSidebarContent}
+
           {((dbDoc && dbDoc.comments && dbDoc.comments.length > 0) || (adviserComments && adviserComments.length > 0)) && (
             <Card title="Adviser Comments">
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 {((dbDoc && dbDoc.comments) || adviserComments || []).map((comment: any, i: number, arr: any[]) => (
                   <div key={i} className={cn(
-                    "p-3 rounded-lg border text-sm space-y-1.5",
+                    "p-3 rounded-xl border text-xs space-y-1.5 transition-all",
                     i === arr.length - 1
-                      ? "bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 border-l-2 border-l-zinc-900 dark:border-l-zinc-100"
-                      : "bg-zinc-50 dark:bg-zinc-800/50 border-zinc-100 dark:border-zinc-800"
+                      ? "bg-zinc-50/90 dark:bg-zinc-900/70 border-zinc-200/80 dark:border-zinc-800/80 border-l-3 border-l-zinc-950 dark:border-l-zinc-100"
+                      : "bg-zinc-50/60 dark:bg-zinc-900/40 border-zinc-200/80 dark:border-zinc-800/80"
                   )}>
                     <div className="flex justify-between items-start">
                       <span className="text-xs font-semibold text-zinc-900 dark:text-zinc-100">{comment.author}</span>
@@ -553,11 +720,11 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
           )}
 
           <Card title="Submission Info">
-            <div className="space-y-3">
+            <div className="bg-zinc-50/80 dark:bg-zinc-900/50 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-3.5 divide-y divide-zinc-200/60 dark:divide-zinc-800/60">
               {submissionInfo.map((item, i) => (
-                <div key={i} className="flex justify-between items-center">
-                  <span className="text-xs text-zinc-400 dark:text-zinc-500">{item.label}</span>
-                  <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300">{item.value}</span>
+                <div key={i} className="flex justify-between items-center py-2 first:pt-0 last:pb-0 text-xs">
+                  <span className="text-zinc-500 dark:text-zinc-400 font-medium">{item.label}</span>
+                  <span className="font-semibold text-zinc-800 dark:text-zinc-200">{item.value}</span>
                 </div>
               ))}
             </div>

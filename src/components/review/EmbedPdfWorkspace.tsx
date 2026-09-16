@@ -1,23 +1,33 @@
 import React from 'react';
-import { FileText, Download, CheckCircle2, Clock, Calendar, Check, FileSpreadsheet } from 'lucide-react';
+import { FileText, Download, CheckCircle2, FileSpreadsheet, ExternalLink, Loader2 } from 'lucide-react';
 import { PDFViewer } from '@embedpdf/react-pdf-viewer';
 import { ErrorBoundary } from '@/src/components/ui/ErrorBoundary';
 import { Badge } from '@/src/components/ui/Badge';
-import { Button } from '@/src/components/ui/Button';
+import { cn } from '@/src/lib/utils';
 
 export interface EmbedPdfWorkspaceProps {
   pdfUrl: string;
   studentName: string;
   docTitle: string;
   readOnly?: boolean;
+  onedriveUrl?: string;
+  originalDocxUrl?: string;
 }
 
 export const EmbedPdfWorkspace: React.FC<EmbedPdfWorkspaceProps> = ({
   pdfUrl,
   studentName,
   docTitle,
+  onedriveUrl,
+  originalDocxUrl,
 }) => {
   const isDtrDocument = docTitle.toLowerCase().includes('dtr') || (pdfUrl && pdfUrl.includes('.xlsx'));
+  const isDocxSubmission = Boolean(
+    originalDocxUrl ||
+    (pdfUrl && (pdfUrl.toLowerCase().includes('.docx') || pdfUrl.toLowerCase().includes('.doc'))) ||
+    docTitle.toLowerCase().includes('.docx') ||
+    docTitle.toLowerCase().includes('.doc')
+  );
 
   // Default DTR weekly logs matrix preview for Adviser & Admin inspection
   const dtrLogsPreview = [
@@ -120,36 +130,100 @@ export const EmbedPdfWorkspace: React.FC<EmbedPdfWorkspaceProps> = ({
 
   return (
     <div className="flex flex-col h-full w-full min-h-0 bg-zinc-900 dark:bg-zinc-950 overflow-hidden relative">
+      {/* Format Notice Bar for Word Document Submissions */}
+      {isDocxSubmission && (
+        <div className="flex items-center justify-between px-4 py-2 bg-zinc-950/90 border-b border-zinc-800/80 shrink-0 text-xs z-10">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0" />
+            <span className="font-semibold text-zinc-200 truncate max-w-[280px]">
+              {docTitle || 'Word Document (.docx)'}
+            </span>
+            <Badge variant="neutral" className="text-[9px] px-2 py-0.5">DOCX</Badge>
+            <span className="text-[10px] text-zinc-400 hidden sm:inline">Rendered via EmbedPDF</span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {originalDocxUrl && (
+              <a
+                href={originalDocxUrl}
+                download
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 border border-blue-500/20 text-[11px] font-bold transition-colors"
+                title="Download original DOCX file"
+              >
+                <Download size={12} />
+                <span>Original DOCX</span>
+              </a>
+            )}
+            {onedriveUrl && (
+              <a
+                href={onedriveUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/20 text-[11px] font-bold transition-colors"
+                title="Open in Microsoft OneDrive"
+              >
+                <ExternalLink size={12} />
+                <span>OneDrive ↗</span>
+              </a>
+            )}
+            {pdfUrl && (
+              <a
+                href={pdfUrl}
+                download
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-800 text-zinc-200 hover:bg-zinc-700 text-[11px] font-bold transition-colors"
+                title="Download rendered PDF"
+              >
+                <Download size={12} />
+                <span>PDF</span>
+              </a>
+            )}
+          </div>
+        </div>
+      )}
+
       {pdfUrl ? (
         <ErrorBoundary fallback={
           <div className="flex-1 flex flex-col items-center justify-center text-zinc-400 bg-[#F3F4F6] dark:bg-zinc-900 h-full w-full p-6 text-center space-y-4">
             <FileText size={48} className="text-zinc-300 dark:text-zinc-700" />
             <div>
               <p className="font-bold text-zinc-800 dark:text-zinc-200">Unable to preview PDF document</p>
-              <p className="text-xs text-zinc-500 mt-1 max-w-[250px]">The browser was unable to initialize the PDF viewer canvas. You can download the document to view it locally.</p>
+              <p className="text-xs text-zinc-500 mt-1 max-w-[280px]">The browser encountered an issue initializing the document canvas. You can download the file to inspect it.</p>
             </div>
-            <a 
-              href={pdfUrl} 
-              download 
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 text-xs font-bold uppercase tracking-wider"
-            >
-              Download PDF File
-            </a>
+            <div className="flex items-center gap-2">
+              <a 
+                href={pdfUrl} 
+                download 
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 text-xs font-bold uppercase tracking-wider"
+              >
+                Download PDF File
+              </a>
+              {originalDocxUrl && (
+                <a 
+                  href={originalDocxUrl} 
+                  download 
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white text-xs font-bold uppercase tracking-wider"
+                >
+                  Download DOCX
+                </a>
+              )}
+            </div>
           </div>
         }>
-          <PDFViewer 
-            className="w-full h-full"
-            style={{ width: '100%', height: '100%' }}
-            config={{ 
-              src: pdfUrl,
-            }} 
-          />
+          <div className="flex-1 w-full h-full min-h-0 relative overflow-hidden">
+            <PDFViewer 
+              key={pdfUrl}
+              className="w-full h-full"
+              style={{ width: '100%', height: '100%' }}
+              config={{ 
+                src: pdfUrl,
+              }} 
+            />
+          </div>
         </ErrorBoundary>
       ) : (
-        <div className="flex-1 flex flex-col items-center justify-center text-zinc-400 bg-[#F3F4F6] dark:bg-zinc-900 h-full w-full">
-          <FileText size={48} className="mb-4 text-zinc-300 dark:text-zinc-700" />
-          <p className="font-semibold text-zinc-500">No Document Uploaded</p>
-          <p className="text-sm mt-1">Please upload a document to view.</p>
+        <div className="flex-1 flex flex-col items-center justify-center text-zinc-400 bg-zinc-950 h-full w-full gap-3">
+          <Loader2 className="animate-spin text-primary" size={28} />
+          <p className="font-semibold text-zinc-300 text-xs">Preparing EmbedPDF Preview...</p>
         </div>
       )}
     </div>

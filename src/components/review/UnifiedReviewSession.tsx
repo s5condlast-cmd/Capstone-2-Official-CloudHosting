@@ -50,6 +50,7 @@ export interface StudentInfo {
 export interface UnifiedReviewSessionProps {
   student: StudentInfo;
   pdfUrl: string;
+  originalDocxUrl?: string;
   queueStatus: 'Pending' | 'Assigned' | 'In Review' | 'Completed';
   versions: DocumentVersion[];
   auditLogs?: ReviewAuditLog[];
@@ -62,11 +63,13 @@ export interface UnifiedReviewSessionProps {
   initialAiStatus?: 'Pending' | 'Processing' | 'Completed' | 'Failed';
   initialAiFindings?: any;
   onSendToAdmin?: () => void;
+  onedriveUrl?: string;
 }
 
 export const UnifiedReviewSession: React.FC<UnifiedReviewSessionProps> = ({
   student,
   pdfUrl,
+  originalDocxUrl,
   queueStatus,
   versions,
   auditLogs,
@@ -78,7 +81,8 @@ export const UnifiedReviewSession: React.FC<UnifiedReviewSessionProps> = ({
   docId,
   initialAiStatus = 'Pending',
   initialAiFindings = null,
-  onSendToAdmin
+  onSendToAdmin,
+  onedriveUrl
 }) => {
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [completionAction, setCompletionAction] = useState<'approve' | 'revise' | 'reject' | 'sendToAdmin' | null>(null);
@@ -246,13 +250,34 @@ export const UnifiedReviewSession: React.FC<UnifiedReviewSessionProps> = ({
                 </p>
               </div>
               <div className="flex items-center gap-2">
+                {onedriveUrl && (
+                  <a
+                    href={onedriveUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/20 text-xs font-bold transition-colors"
+                    title="Open document directly in Microsoft OneDrive"
+                  >
+                    <span>OneDrive ↗</span>
+                  </a>
+                )}
+                {originalDocxUrl && (
+                  <a
+                    href={originalDocxUrl}
+                    download
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 border border-blue-500/20 text-xs font-bold transition-colors"
+                    title="Download original Microsoft Word document"
+                  >
+                    <Download size={13} /> Download DOCX
+                  </a>
+                )}
                 {pdfUrl && (
                   <a
                     href={pdfUrl}
                     download
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 text-xs font-bold transition-colors"
                   >
-                    <Download size={13} /> Download File
+                    <Download size={13} /> Download PDF
                   </a>
                 )}
               </div>
@@ -266,6 +291,8 @@ export const UnifiedReviewSession: React.FC<UnifiedReviewSessionProps> = ({
                   studentName={student.name}
                   docTitle={student.docType}
                   readOnly={readOnly}
+                  onedriveUrl={onedriveUrl}
+                  originalDocxUrl={originalDocxUrl}
                 />
               </div>
             </div>

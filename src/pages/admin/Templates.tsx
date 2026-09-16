@@ -64,7 +64,46 @@ export const Templates: React.FC = () => {
     try {
       if (uploadTargetType === 'pdf_backup' && replacingId) {
         await templateStorage.saveTemplateFile(`${replacingId}_pdf_backup`, file);
-        toast.success(`PDF backup for "${file.name}" uploaded successfully!`);
+        await templateStorage.saveTemplateFile(replacingId, file);
+
+        const allItems = [
+          ...templates,
+          ...hardcodedTemplates.flatMap(s => s.items)
+        ];
+        const existing = allItems.find(i => i.id === replacingId);
+        const templateName = existing?.name || file.name.replace(/\.(docx|pdf|xlsx)$/i, '');
+        const group = existing?.group || uploadTargetGroup || 'Uploaded Templates';
+        const version = existing?.version ? `v${(parseFloat(existing.version.replace('v', '')) + 0.1).toFixed(1)}` : 'v1.1';
+
+        const updatedMetadata: TemplateMetadata = {
+          id: replacingId,
+          name: templateName,
+          type: 'PDF',
+          version,
+          updated: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+          size: (file.size / 1024).toFixed(0) + ' KB',
+          group,
+          filename: file.name,
+          isCustom: true
+        };
+
+        const existingIndex = templates.findIndex(t => t.id === replacingId);
+        let newTemplatesList: TemplateMetadata[];
+        if (existingIndex >= 0) {
+          newTemplatesList = [...templates];
+          newTemplatesList[existingIndex] = updatedMetadata;
+        } else {
+          newTemplatesList = [...templates, updatedMetadata];
+        }
+
+        setTemplates(newTemplatesList);
+        await templateStorage.saveMetadata(newTemplatesList);
+        setDeletedIds(prev => {
+          const next = new Set(prev);
+          next.delete(replacingId);
+          return next;
+        });
+        toast.success(`PDF for "${templateName}" uploaded and published to students!`);
         return;
       }
 
@@ -83,10 +122,37 @@ export const Templates: React.FC = () => {
 
       if (!existing) {
         const cleanUploadName = templateName.toLowerCase().replace(/[^a-z0-9]/g, '');
-        existing = allItems.find(i => {
-          const cleanItemName = i.name.toLowerCase().replace(/[^a-z0-9]/g, '');
-          return cleanItemName.includes(cleanUploadName) || cleanUploadName.includes(cleanItemName);
-        });
+
+        // Smart matching for common uploaded filenames
+        const aliasMap: Record<string, string> = {
+          'weeklyjournal': 'h5',
+          'journal': 'h5',
+          'weeklyjournaltemplate': 'h5',
+          'journaltemplate': 'h5',
+          'ojtjournal': 'h5',
+          'applicationletter': 'h11',
+          'parentconsent': 'h2_1',
+          'studentconsent': 'h2_3',
+          'moa': 'h3',
+          'endorsement': 'h4',
+          'proposal': 'h12',
+          'dtr': 'h6',
+          'trainingplan': 'h7',
+          'integrationpaper': 'h8',
+          'performanceappraisal': 'h10'
+        };
+
+        const aliasMatchId = Object.entries(aliasMap).find(([alias]) => cleanUploadName.includes(alias))?.[1];
+        if (aliasMatchId) {
+          existing = allItems.find(i => i.id === aliasMatchId);
+        }
+
+        if (!existing) {
+          existing = allItems.find(i => {
+            const cleanItemName = i.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+            return cleanItemName.includes(cleanUploadName) || cleanUploadName.includes(cleanItemName);
+          });
+        }
       }
 
       if (existing) {
@@ -108,7 +174,10 @@ export const Templates: React.FC = () => {
         isCustom: true
       };
 
-      // Save file and metadata to IndexedDB
+      // Save file and metadata to IndexedDB & Backend API
+      if (fileExtension === 'PDF' && id) {
+        await templateStorage.saveTemplateFile(`${id}_pdf_backup`, file);
+      }
       await templateStorage.saveTemplateFile(id, file);
 
       let newMetadata;
@@ -121,11 +190,23 @@ export const Templates: React.FC = () => {
           newMetadata = [...templates, newTemplate];
         }
       } else {
-        newMetadata = [...templates, newTemplate];
+        const existingIndex = templates.findIndex(t => t.id === id);
+        if (existingIndex >= 0) {
+          newMetadata = [...templates];
+          newMetadata[existingIndex] = newTemplate;
+        } else {
+          newMetadata = [...templates, newTemplate];
+        }
       }
 
       await templateStorage.saveMetadata(newMetadata);
       setTemplates(newMetadata);
+      setDeletedIds(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        if (replacingId) next.delete(replacingId);
+        return next;
+      });
       toast.success(`Template "${newTemplate.name}" uploaded successfully!`);
 
       // Clear input
@@ -144,7 +225,9 @@ export const Templates: React.FC = () => {
   const confirmDelete = async (id: string) => {
     try {
       await templateStorage.deleteTemplate(id);
-      setTemplates(templates.filter(t => t.id !== id));
+      const updated = templates.filter(t => t.id !== id && t.id !== `${id}_pdf_backup`);
+      setTemplates(updated);
+      await templateStorage.saveMetadata(updated);
       setDeletedIds(prev => new Set(prev).add(id));
       toast.success('Template deleted successfully.');
     } catch (err) {
@@ -228,7 +311,7 @@ export const Templates: React.FC = () => {
     {
       group: 'In OJT Templates',
       items: [
-        { name: 'Journal Template', type: 'DOCX', version: 'v1.0', updated: 'May 11, 2026', size: '280 KB', id: 'h5', group: 'In OJT Templates', filename: 'FT-CRD-167-00 Weekly Journal Template.docx' },
+        { name: 'Journal Template', type: 'DOCX', version: 'v1.0', updated: 'Pending Upload', size: '—', id: 'h5', group: 'In OJT Templates', filename: 'FT-CRD-167-00 Weekly Journal Template.docx' },
         { name: 'DTR Form', type: 'XLSX', version: 'v1.2', updated: 'Feb 10, 2026', size: '450 KB', id: 'h6', group: 'In OJT Templates', filename: 'DTR Form.xlsx' },
         { name: 'Training Plan Form', type: 'DOCX', version: 'v2.0', updated: 'Jan 5, 2026', size: '920 KB', id: 'h7', group: 'In OJT Templates', filename: 'FT-CRD-176-00 OJT Training Plan_BSIT-BSCS-BSIS-ACT-ITP.docx' },
       ]

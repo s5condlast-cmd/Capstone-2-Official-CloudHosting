@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { Save, Calendar, FileText, Bell, Shield, Check, Database, Download, RefreshCw, AlertTriangle } from 'lucide-react';
 import { Card } from '@/src/components/ui/Card';
+import { apiJson } from '@/src/lib/api';
 
 export const Settings: React.FC = () => {
   const tabs = [
@@ -16,6 +17,21 @@ export const Settings: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabId>('general');
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [connecting, setConnecting] = useState(false);
+  const [connectionError, setConnectionError] = useState('');
+  const connectOneDrive = async () => {
+    setConnecting(true);
+    setConnectionError('');
+    try {
+      const { url } = await apiJson<{ url: string }>('/api/onedrive/auth/login');
+      const target = new URL(url);
+      if (target.protocol !== 'https:' || target.hostname !== 'login.microsoftonline.com') throw new Error('Invalid Microsoft authorization URL.');
+      window.location.assign(target.href);
+    } catch (error) {
+      setConnectionError(error instanceof Error ? error.message : 'Unable to start the connection.');
+      setConnecting(false);
+    }
+  };
 
   const handleSave = () => {
     setIsSaving(true);
@@ -29,6 +45,15 @@ export const Settings: React.FC = () => {
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
+      <Card title="OneDrive connection">
+        <div className="p-6 space-y-3">
+          <p className="text-sm text-zinc-500">Connect the organization’s Microsoft account for administrative OneDrive access.</p>
+          <button onClick={connectOneDrive} disabled={connecting} className="px-4 py-2 rounded-lg bg-blue-700 text-white disabled:opacity-50">
+            {connecting ? 'Connecting…' : 'Connect OneDrive'}
+          </button>
+          {connectionError && <p role="alert" className="text-sm text-red-600">{connectionError}</p>}
+        </div>
+      </Card>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-zinc-900 dark:text-white tracking-tight">System Configuration</h1>

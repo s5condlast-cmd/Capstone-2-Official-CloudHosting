@@ -97,14 +97,14 @@ export const StudentGenerativeUI: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-3 shrink-0">
-            <Link to="/student/journal">
+            <Link to="/student/documents">
               <Button variant="primary" size="sm" icon={<BookOpen size={14} />}>
-                Go to Journal
+                Document Repository
               </Button>
             </Link>
-            <Link to="/student/dtr">
+            <Link to="/student/editor">
               <Button variant="outline" size="sm" icon={<Calendar size={14} />} className="text-white border-zinc-700 hover:bg-zinc-800">
-                Log DTR
+                Document Editor
               </Button>
             </Link>
           </div>
@@ -221,9 +221,9 @@ export const StudentGenerativeUI: React.FC = () => {
                       <span className="text-[11px] text-zinc-400 font-medium">
                         Tone: <strong className="capitalize text-zinc-600 dark:text-zinc-300">{journalTone}</strong>
                       </span>
-                      <Link to="/student/journal">
+                      <Link to="/student/editor">
                         <Button variant="primary" size="sm" icon={<ArrowRight size={12} />}>
-                          Apply to Weekly Journal
+                          Apply to Document Editor
                         </Button>
                       </Link>
                     </div>

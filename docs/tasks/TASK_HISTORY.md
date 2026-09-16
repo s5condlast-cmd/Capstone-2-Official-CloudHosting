@@ -6,6 +6,24 @@ A historical record of completed tasks, refactors, bug fixes, and architectural 
 
 ---
 
+## September 15, 2026
+
+### Authentication recovery and post-sign-in race fix
+
+- [x] Confirmed the live bootstrap administrator has a matching active admin profile, confirmed email, no ban, and verified TOTP.
+- [x] Performed an explicitly requested fail-closed password reset, revoked existing sessions, and required permanent password replacement. No credential was stored in documentation.
+- [x] Confirmed Supabase accepted the temporary credential and isolated the remaining application failure to competing profile refreshes after `SIGNED_IN`.
+- [x] Updated `AuthContext` to prevent the duplicate event refresh from cancelling the awaited login result.
+- [x] Identified the anonymous `reportAllChanges/startTime` console exception as a Chrome DevTools `web-vitals` issue rather than application code.
+- [x] Strengthened administrator MFA reset to revoke sessions, remove every factor, verify zero factors remain, audit the outcome, and require fresh QR enrollment.
+- [x] Added secure administrator self-reset from an already verified `aal2` session. It removes the factor, revokes and ends the current session, and requires a new QR code; password-only sessions remain denied.
+- [x] Fixed interrupted TOTP enrollment by removing stale unverified factors before creating a replacement QR, preventing duplicate friendly-name errors.
+- [x] Standardized login navigation labels: `Next` advances, `Back` returns to the previous setup step, `Cancel` exits sign-in, and `Verify` completes authenticator validation.
+- [x] Completed the explicitly authorized bootstrap MFA recovery: removed one verified TOTP factor, confirmed zero remain, and revoked existing sessions. The obsolete phone entry must be deleted manually.
+- [x] Passed the TypeScript check and all 48 authentication tests. Deployment and final browser acceptance remain pending.
+
+---
+
 ## 📅 September 4, 2026
 
 ### 🎓 Capstone Panelist Defense Manual & Master Technical System Runbook

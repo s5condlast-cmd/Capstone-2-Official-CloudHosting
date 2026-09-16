@@ -12,7 +12,8 @@ import {
   ZoomIn,
   ZoomOut,
   FileSpreadsheet,
-  CheckCircle2
+  CheckCircle2,
+  Send
 } from 'lucide-react';
 import { FormField } from '@/src/components/review/templateFields';
 import { documentGenerator } from '@/src/lib/documentGenerator';
@@ -27,6 +28,7 @@ import { EmptyState } from '@/src/components/ui/EmptyState';
 interface DocumentWorkflowProps {
   title: string;
   docUrl: string;
+  pdfUrl?: string;
   templateId?: string;
   fields: FormField[];
   previewComponent?: React.ComponentType<{
@@ -35,6 +37,7 @@ interface DocumentWorkflowProps {
     activeField?: string
   }>;
   onSubmit?: () => void;
+  onDirectSubmit?: (file: File) => Promise<void>;
 }
 
 interface AutoWidthInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -50,15 +53,19 @@ const AutoWidthInput: React.FC<AutoWidthInputProps> = ({
   className,
   ...props
 }) => {
-  const [inputWidth, setInputWidth] = useState<number | undefined>(undefined);
-  const measureRef = useRef<HTMLSpanElement>(null);
   const hasValue = Boolean(value && value.trim() !== '');
-  const activeText = hasValue ? value : placeholder;
+  const activeText = hasValue ? value : (placeholder || '');
+  const measureRef = useRef<HTMLSpanElement>(null);
+  const [inputWidth, setInputWidth] = useState<number | undefined>(() => 
+    Math.max(48, Math.min(640, Math.ceil(activeText.length * 8.5) + 20))
+  );
 
   useLayoutEffect(() => {
     if (measureRef.current) {
       const textWidth = measureRef.current.getBoundingClientRect().width;
-      setInputWidth(Math.ceil(textWidth) + 18);
+      if (textWidth > 0) {
+        setInputWidth(Math.max(48, Math.ceil(textWidth) + 18));
+      }
     }
   }, [activeText, className]);
 
@@ -85,7 +92,7 @@ const AutoWidthInput: React.FC<AutoWidthInputProps> = ({
         size={1}
         placeholder={hasValue ? '' : placeholder}
         className={cn(
-          "w-full min-w-0 font-sans text-[11pt] px-2 py-0.5 font-normal text-black bg-zinc-100/80 border border-zinc-300 hover:border-zinc-400 focus:bg-white focus:border-black focus:ring-1 focus:ring-black rounded-md outline-none placeholder:text-zinc-500 transition-all shadow-2xs",
+          "w-full min-w-0 font-sans text-[11pt] px-2 py-0.5 font-normal text-black bg-zinc-100/80 border border-zinc-300 hover:border-zinc-400 focus:bg-white focus:border-black focus:ring-1 focus:ring-black rounded-md outline-none placeholder:text-zinc-500 transition-colors shadow-2xs",
           className
         )}
       />
@@ -96,26 +103,31 @@ const AutoWidthInput: React.FC<AutoWidthInputProps> = ({
 export const DocumentWorkflow: React.FC<DocumentWorkflowProps> = ({
   title,
   docUrl,
+  pdfUrl,
   templateId,
   fields,
   previewComponent: Preview,
-  onSubmit
+  onSubmit,
+  onDirectSubmit
 }) => {
   const isApplicationLetter = title.toLowerCase().includes('application letter');
   const [docBuffer, setDocBuffer] = useState<ArrayBuffer | null>(null);
   const [pdfBuffer, setPdfBuffer] = useState<ArrayBuffer | null>(null);
-  const [viewMode, setViewMode] = useState<'preview' | 'form'>('preview');
+  const [isLoadingDoc, setIsLoadingDoc] = useState<boolean>(true);
+  const [viewMode, setViewMode] = useState<'preview' | 'form'>(isApplicationLetter ? 'form' : 'preview');
   const [zoomScale, setZoomScale] = useState<number>(1);
   const [isGeneratingDocx, setIsGeneratingDocx] = useState(false);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [isSubmittingFormat, setIsSubmittingFormat] = useState<'docx' | 'pdf' | null>(null);
   const [generationError, setGenerationError] = useState<string | null>(null);
 
-  const initialFormData = {
+  const initialFormData: Record<string, string> = {
     date: new Date().toISOString().split('T')[0],
     contactPerson: '',
     contactTitle: '',
     companyName: '',
     companyAddress: '',
+    salutationName: '',
     campusName: 'Marikina',
     hoursRequired: '486',
     programName: 'Bachelor of Science in Information Technology',
@@ -123,12 +135,13 @@ export const DocumentWorkflow: React.FC<DocumentWorkflowProps> = ({
     studentName: 'John Dwayne B. Guaniso',
   };
 
-  const autoFillProfileData = {
+  const autoFillProfileData: Record<string, string> = {
     date: new Date().toISOString().split('T')[0],
     contactPerson: 'Mr. Alex Santos',
     contactTitle: 'Human Resources Director',
     companyName: 'InnoTech Solutions Inc.',
     companyAddress: '123 Innovation Way, Ortigas Center, Pasig City',
+    salutationName: 'Santos',
     campusName: 'Marikina',
     hoursRequired: '486',
     programName: 'Bachelor of Science in Information Technology',
@@ -172,15 +185,22 @@ export const DocumentWorkflow: React.FC<DocumentWorkflowProps> = ({
   };
 
   useEffect(() => {
+    let isCurrent = true;
     const fetchDoc = async () => {
-      let targetId = templateId || TITLE_TO_TEMPLATE_ID[title.toLowerCase().trim()] || '';
+      setIsLoadingDoc(true);
+      const cleanTitle = title.toLowerCase().trim();
+      let targetId = templateId || TITLE_TO_TEMPLATE_ID[cleanTitle] || '';
 
       if (!targetId) {
-        try {
-          const metadata = await templateStorage.getMetadata();
-          const match = metadata?.find(t => t.name.toLowerCase().trim() === title.toLowerCase().trim());
-          if (match) targetId = match.id;
-        } catch (e) { }
+        if (cleanTitle.startsWith('weekly journal')) {
+          targetId = 'h5';
+        } else {
+          try {
+            const metadata = await templateStorage.getMetadata();
+            const match = metadata?.find(t => t.name.toLowerCase().trim() === cleanTitle);
+            if (match) targetId = match.id;
+          } catch (e) { }
+        }
       }
 
       let buffer: ArrayBuffer | undefined;
@@ -190,7 +210,25 @@ export const DocumentWorkflow: React.FC<DocumentWorkflowProps> = ({
         pdfBuf = await templateStorage.getTemplatePdfBackup(targetId);
       }
 
-      // Fallback to fetching public docUrl if no custom upload exists in storage
+      // 1. Fallback to fetching public pdfUrl if no custom upload exists in storage
+      const resolvedPdfUrl = pdfUrl || (docUrl && docUrl.toLowerCase().endsWith('.docx') ? docUrl.replace(/\.docx$/i, '.pdf') : '');
+      if (!pdfBuf && resolvedPdfUrl) {
+        try {
+          const fetchPdf = resolvedPdfUrl.includes('?') ? `${resolvedPdfUrl}&t=${Date.now()}` : `${resolvedPdfUrl}?t=${Date.now()}`;
+          const res = await fetch(fetchPdf);
+          if (res.ok) {
+            const buf = await res.arrayBuffer();
+            const view = new Uint8Array(buf);
+            if (view.length > 4 && view[0] === 0x25 && view[1] === 0x50 && view[2] === 0x44 && view[3] === 0x46) {
+              pdfBuf = buf;
+            }
+          }
+        } catch (e) {
+          console.warn("Failed to fetch public pdfUrl", e);
+        }
+      }
+
+      // 2. Fallback to fetching public docUrl if no custom upload exists in storage
       if (!buffer && docUrl) {
         try {
           const fetchUrl = docUrl.includes('?') ? `${docUrl}&t=${Date.now()}` : `${docUrl}?t=${Date.now()}`;
@@ -219,8 +257,11 @@ export const DocumentWorkflow: React.FC<DocumentWorkflowProps> = ({
         }
       }
 
-      setDocBuffer(buffer || null);
-      setPdfBuffer(pdfBuf || null);
+      if (isCurrent) {
+        setDocBuffer(buffer || null);
+        setPdfBuffer(pdfBuf || null);
+        setIsLoadingDoc(false);
+      }
     };
 
     fetchDoc();
@@ -229,9 +270,10 @@ export const DocumentWorkflow: React.FC<DocumentWorkflowProps> = ({
     window.addEventListener('template_updated', handleUpdate);
 
     return () => {
+      isCurrent = false;
       window.removeEventListener('template_updated', handleUpdate);
     };
-  }, [docUrl, templateId, title]);
+  }, [docUrl, pdfUrl, templateId, title]);
 
   const pdfBlobUrl = React.useMemo(() => {
     if (!pdfBuffer) return null;
@@ -354,6 +396,96 @@ export const DocumentWorkflow: React.FC<DocumentWorkflowProps> = ({
     }, 100);
   };
 
+  const handleDirectSubmit = async (format: 'docx' | 'pdf') => {
+    if (!onDirectSubmit) {
+      toast.error("Submission handler not attached.");
+      return;
+    }
+    setGenerationError(null);
+    setIsSubmittingFormat(format);
+    try {
+      if (format === 'docx') {
+        const container = previewRef.current || document;
+        const placeholders = container.querySelectorAll('.editable-placeholder');
+        const blankEdits: string[] = [];
+        const dateEdits: string[] = [];
+        const angleData: Record<string, string> = { ...formData };
+
+        placeholders.forEach((el) => {
+          const span = el as HTMLElement;
+          const blankIndex = span.getAttribute('data-blank-index');
+          const dateIndex = span.getAttribute('data-date-index');
+          const original = span.getAttribute('data-original');
+
+          if (blankIndex !== null) {
+            const idx = parseInt(blankIndex, 10);
+            blankEdits[idx] = formData.studentName || formData.signature || '';
+          } else if (dateIndex !== null) {
+            const idx = parseInt(dateIndex, 10);
+            dateEdits[idx] = formData.date || new Date().toISOString().split('T')[0];
+          } else if (original) {
+            const strippedKey = original.replace(/^<|>$/g, '');
+            if (formData[strippedKey]) {
+              angleData[strippedKey] = formData[strippedKey];
+            } else if (strippedKey.toLowerCase() === 'signature') {
+              angleData[strippedKey] = '';
+            }
+          }
+        });
+
+        const blob = await documentGenerator.generateDocx(
+          docUrl,
+          formData,
+          blankEdits,
+          angleData,
+          formData,
+          dateEdits.length > 0 ? dateEdits : [formData.date],
+          templateId,
+          title
+        );
+
+        const cleanTitle = title.replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '_');
+        const file = new File(
+          [blob],
+          `${cleanTitle}_Filled.docx`,
+          { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' }
+        );
+        await onDirectSubmit(file);
+      } else {
+        // PDF Format
+        let pdfBlob: Blob | null = null;
+        if (pdfBuffer) {
+          pdfBlob = new Blob([pdfBuffer], { type: 'application/pdf' });
+        } else if (templateId) {
+          try {
+            const backup = await templateStorage.getTemplatePdfBackup(templateId);
+            if (backup) {
+              pdfBlob = new Blob([backup], { type: 'application/pdf' });
+            }
+          } catch (e) {}
+        }
+
+        if (!pdfBlob) {
+          // Generate high quality PDF using jsPDF in documentGenerator
+          pdfBlob = await documentGenerator.generatePdf(title, formData);
+        }
+
+        const cleanTitle = title.replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '_');
+        const file = new File(
+          [pdfBlob],
+          `${cleanTitle}_Filled.pdf`,
+          { type: 'application/pdf' }
+        );
+        await onDirectSubmit(file);
+      }
+    } catch (err: any) {
+      console.error('Direct submission error:', err);
+      setGenerationError(err?.message || `Failed to submit ${format.toUpperCase()} to adviser.`);
+    } finally {
+      setIsSubmittingFormat(null);
+    }
+  };
+
   return (
     <div className="bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800/80 rounded-2xl p-4 sm:p-6 shadow-xs flex flex-col flex-1 h-full min-h-0 gap-5">
       {/* Header Info */}
@@ -376,14 +508,14 @@ export const DocumentWorkflow: React.FC<DocumentWorkflowProps> = ({
         {/* Left: View Mode Switcher (Only available for Student Application Letter) */}
         <div className="flex items-center z-10">
           {isApplicationLetter ? (
-            <div className="bg-white dark:bg-zinc-950 p-1 rounded-lg border border-zinc-200/80 dark:border-zinc-800 flex items-center gap-1 text-xs shadow-2xs">
+            <div className="bg-zinc-100/80 dark:bg-zinc-900/80 p-0.5 rounded-lg border border-zinc-200/80 dark:border-zinc-800 flex items-center gap-0.5 text-xs shadow-2xs">
               <button
                 onClick={() => setViewMode('preview')}
                 className={cn(
                   "px-3 py-1.5 rounded-md font-semibold transition-all flex items-center gap-1.5 cursor-pointer text-xs whitespace-nowrap",
                   viewMode === 'preview'
-                    ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-950 shadow-2xs"
-                    : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200"
+                    ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 border border-zinc-200/90 dark:border-zinc-700 shadow-2xs font-bold"
+                    : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200 hover:bg-white/50 dark:hover:bg-zinc-800/50"
                 )}
               >
                 <Eye size={13} />
@@ -394,8 +526,8 @@ export const DocumentWorkflow: React.FC<DocumentWorkflowProps> = ({
                 className={cn(
                   "px-3 py-1.5 rounded-md font-semibold transition-all flex items-center gap-1.5 cursor-pointer text-xs whitespace-nowrap",
                   viewMode === 'form'
-                    ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-950 shadow-2xs"
-                    : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200"
+                    ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 border border-zinc-200/90 dark:border-zinc-700 shadow-2xs font-bold"
+                    : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200 hover:bg-white/50 dark:hover:bg-zinc-800/50"
                 )}
               >
                 <Pencil size={13} />
@@ -463,35 +595,46 @@ export const DocumentWorkflow: React.FC<DocumentWorkflowProps> = ({
 
       {/* Main Container: Document Paper Canvas */}
       <div className="flex-1 overflow-y-auto bg-zinc-100 dark:bg-zinc-900/50 p-4 sm:p-6 rounded-xl border border-zinc-200/80 dark:border-zinc-800 custom-scrollbar flex items-center justify-center min-h-[500px]">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={viewMode}
-            initial={{ opacity: 0, y: 4, scale: 0.995 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -4, scale: 0.995 }}
-            transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
-            className="w-full flex justify-center items-center my-auto"
-          >
-            {viewMode === 'preview' ? (
-              pdfBlobUrl ? (
-                <div
-                  style={zoomScale !== 1 ? { transform: `scale(${zoomScale})`, transformOrigin: 'center center' } : undefined}
-                  className="w-full max-w-[680px] h-[760px] transition-transform duration-150 my-auto"
-                >
-                  <iframe
-                    src={`${pdfBlobUrl}#toolbar=0&navpanes=0`}
-                    className="w-full h-full rounded-sm border border-zinc-200 shadow-md bg-white"
-                    title={`${title} PDF Preview`}
-                  />
+        <motion.div
+          key={viewMode}
+          initial={{ opacity: 0.95 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.12, ease: 'easeOut' }}
+          className="w-full flex justify-center items-center my-auto"
+        >
+          {viewMode === 'preview' ? (
+            isLoadingDoc ? (
+              <div
+                style={zoomScale !== 1 ? { transform: `scale(${zoomScale})`, transformOrigin: 'center center' } : undefined}
+                className="w-full max-w-[680px] h-[760px] bg-white dark:bg-zinc-950 rounded-xl border border-zinc-200/80 dark:border-zinc-800 shadow-md flex flex-col items-center justify-center gap-3 transition-transform duration-150 my-auto"
+              >
+                <div className="w-12 h-12 rounded-2xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800 flex items-center justify-center animate-pulse">
+                  <FileText size={22} className="text-zinc-400 dark:text-zinc-500 animate-pulse" />
                 </div>
-              ) : (
-                <EmptyState
-                  icon={<Eye size={24} />}
-                  title="No PDF Template Uploaded"
-                  description={`No PDF file has been uploaded yet for ${title}. Upload a PDF in the Admin Portal to preview it here.`}
+                <div className="flex flex-col items-center gap-1">
+                  <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Loading document layout...</p>
+                  <p className="text-[11px] text-zinc-400 dark:text-zinc-500">Preparing preview workspace</p>
+                </div>
+              </div>
+            ) : pdfBlobUrl ? (
+              <div
+                style={zoomScale !== 1 ? { transform: `scale(${zoomScale})`, transformOrigin: 'center center' } : undefined}
+                className="w-full max-w-[680px] h-[760px] transition-transform duration-150 my-auto"
+              >
+                <iframe
+                  src={`${pdfBlobUrl}#toolbar=0&navpanes=0`}
+                  className="w-full h-full rounded-sm border border-zinc-200 shadow-md bg-white"
+                  title={`${title} PDF Preview`}
                 />
-              )
-            ) : !isApplicationLetter ? (
+              </div>
+            ) : (
+              <EmptyState
+                icon={<Eye size={24} />}
+                title="No PDF Template Uploaded"
+                description={`No PDF file has been uploaded yet for ${title}. Upload a PDF in the Admin Portal to preview it here.`}
+              />
+            )
+          ) : !isApplicationLetter ? (
               /* Non-Application Letter Interactive Form Card */
               <div
                 style={zoomScale !== 1 ? { transform: `scale(${zoomScale})`, transformOrigin: 'center center' } : undefined}
@@ -755,7 +898,6 @@ export const DocumentWorkflow: React.FC<DocumentWorkflowProps> = ({
               </div>
             )}
           </motion.div>
-        </AnimatePresence>
       </div>
 
       {/* Bottom Section: Actions */}
@@ -766,25 +908,40 @@ export const DocumentWorkflow: React.FC<DocumentWorkflowProps> = ({
           )}
         </div>
 
-        <div className="flex items-center gap-3 w-full sm:w-auto">
+        <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto justify-end">
           <Button
             variant="outline"
-            icon={<Printer size={16} />}
+            size="sm"
+            icon={<Printer size={15} />}
             onClick={handleDownloadPdf}
-            disabled={isGeneratingDocx || isGeneratingPdf}
-            className="flex-1 sm:flex-none"
+            disabled={isGeneratingDocx || isGeneratingPdf || isSubmittingFormat !== null}
+            className="flex-1 sm:flex-none text-xs font-semibold"
           >
             Print / Save PDF
           </Button>
           <Button
-            variant="primary"
-            icon={<FileText size={16} />}
+            variant="outline"
+            size="sm"
+            icon={<FileText size={15} />}
             onClick={handleDownloadDocx}
-            disabled={isGeneratingDocx || isGeneratingPdf}
-            className="flex-1 sm:flex-none"
+            disabled={isGeneratingDocx || isGeneratingPdf || isSubmittingFormat !== null}
+            className="flex-1 sm:flex-none text-xs font-semibold"
           >
-            {isGeneratingDocx ? 'Generating DOCX...' : 'Download Customized DOCX'}
+            {isGeneratingDocx ? 'Generating DOCX...' : 'Download DOCX'}
           </Button>
+
+          {onDirectSubmit && (
+            <Button
+              variant="primary"
+              size="sm"
+              icon={<Send size={14} />}
+              onClick={() => handleDirectSubmit(viewMode === 'preview' && (pdfBuffer || pdfBlobUrl) ? 'pdf' : 'docx')}
+              disabled={isGeneratingDocx || isGeneratingPdf || isSubmittingFormat !== null}
+              className="flex-1 sm:flex-none text-xs font-bold cursor-pointer"
+            >
+              {isSubmittingFormat ? 'Submitting to Adviser...' : 'Submit to Adviser'}
+            </Button>
+          )}
         </div>
       </div>
     </div>
