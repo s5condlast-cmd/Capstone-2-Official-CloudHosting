@@ -241,6 +241,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
 
     const handleKeyDown = useCallback(
       (e: React.KeyboardEvent) => {
+        // ── ENTER: Exit empty lists/toggles to normal paragraph 'p' ───────
         if (e.key === 'Enter' && !e.shiftKey) {
           const ed = editor;
           if (ed?.selection && ed.api) {
@@ -252,15 +253,22 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
 
                 // 1. If inside an empty list item or empty toggle/todo, exit to normal paragraph 'p'
                 if (text.trim() === '') {
-                  if (block.type === 'li' || ed.api.above({ match: (n: any) => n.type === 'ul' || n.type === 'ol' })) {
+                  if (
+                    block.type === 'li' ||
+                    block.type === 'lic' ||
+                    ed.api.above({ match: (n: any) => n.type === 'ul' || n.type === 'ol' })
+                  ) {
                     e.preventDefault();
                     ed.tf.unwrapNodes({ match: (n: any) => n.type === 'ul' || n.type === 'ol', split: true });
-                    ed.tf.setNodes({ type: 'p' }, { match: (n: any) => n.type === 'li' });
+                    ed.tf.setNodes({ type: 'p' }, { match: (n: any) => n.type === 'li' || n.type === 'lic' });
                     return;
                   }
                   if (block.type === 'toggle' || block.type === 'todo') {
                     e.preventDefault();
                     ed.tf.setNodes({ type: 'p' }, { at: path });
+                    if ((block as any).checked !== undefined) {
+                      ed.tf.unsetNodes(['checked'], { at: path });
+                    }
                     return;
                   }
                 } else if (block.type === 'toggle') {
@@ -268,6 +276,70 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                   e.preventDefault();
                   ed.tf.insertNodes({ type: 'p', children: [{ text: '' }] });
                   return;
+                }
+              }
+            } catch {
+              // non-fatal fallback
+            }
+          }
+        }
+
+        // ── BACKSPACE: First Backspace un-lists to paragraph 'p' on same line; second merges up ──
+        if (e.key === 'Backspace' && !e.shiftKey) {
+          const ed = editor;
+          if (ed?.selection && ed.api) {
+            try {
+              const { anchor, focus } = ed.selection;
+              const isCollapsed =
+                anchor.path.join(',') === focus.path.join(',') &&
+                anchor.offset === focus.offset;
+
+              if (isCollapsed) {
+                const entry = ed.api.block();
+                if (entry) {
+                  const [block, path] = entry;
+                  const text = ed.api.string(path) || '';
+                  const isAtStart =
+                    anchor.offset === 0 ||
+                    text.trim() === '' ||
+                    (typeof ed.api.isStart === 'function' && ed.api.isStart(anchor, path));
+
+                  if (isAtStart) {
+                    // 1. If at start of a list item, unwrap it to a normal paragraph on this line
+                    if (
+                      block.type === 'li' ||
+                      block.type === 'lic' ||
+                      ed.api.above({ match: (n: any) => n.type === 'ul' || n.type === 'ol' })
+                    ) {
+                      e.preventDefault();
+                      ed.tf.unwrapNodes({
+                        match: (n: any) => n.type === 'ul' || n.type === 'ol',
+                        split: true,
+                      });
+                      ed.tf.setNodes(
+                        { type: 'p' },
+                        { match: (n: any) => n.type === 'li' || n.type === 'lic' }
+                      );
+                      return;
+                    }
+
+                    // 2. If at start of a toggle or todo checklist, convert to normal paragraph
+                    if (block.type === 'toggle' || block.type === 'todo') {
+                      e.preventDefault();
+                      ed.tf.setNodes({ type: 'p' }, { at: path });
+                      if ((block as any).checked !== undefined) {
+                        ed.tf.unsetNodes(['checked'], { at: path });
+                      }
+                      return;
+                    }
+
+                    // 3. If at start of a blockquote, convert to normal paragraph
+                    if (block.type === 'blockquote') {
+                      e.preventDefault();
+                      ed.tf.setNodes({ type: 'p' }, { at: path });
+                      return;
+                    }
+                  }
                 }
               }
             } catch {

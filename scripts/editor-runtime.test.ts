@@ -120,6 +120,59 @@ describe('Plate editor runtime wiring', () => {
     assert.ok(blob.size > 1_500);
   });
 
+  it('unwraps list items on empty line to paragraph on same line (Frame 1 to Frame 2 flow)', () => {
+    const editor = createEditor([
+      {
+        type: 'ol',
+        children: [
+          { type: 'li', children: [{ text: 'asfdaf' }] },
+          { type: 'li', children: [{ text: '' }] },
+        ],
+      },
+    ]);
+
+    // Select the empty 2nd item (path [0, 1, 0], offset 0)
+    editor.tf.select({
+      anchor: { path: [0, 1, 0], offset: 0 },
+      focus: { path: [0, 1, 0], offset: 0 },
+    });
+
+    // 1st Backspace: unwrap list so it becomes a standard paragraph 'p' on this EXACT line!
+    editor.tf.unwrapNodes({ match: (n: any) => n.type === 'ul' || n.type === 'ol', split: true });
+    editor.tf.setNodes({ type: 'p' }, { match: (n: any) => n.type === 'li' || n.type === 'lic' });
+
+    // Verify it is now a p following the ol (same line, Frame 1)
+    assert.equal(editor.children.length, 2);
+    assert.equal((editor.children[0] as any).type, 'ol');
+    assert.equal((editor.children[1] as any).type, 'p');
+    assert.equal((editor.children[1] as any).children[0].text, '');
+
+    // 2nd Backspace: normal deleteBackward merges p back into asfdaf (Frame 2)
+    editor.tf.deleteBackward();
+    assert.equal(editor.children.length, 1);
+    assert.equal((editor.children[0] as any).type, 'ol');
+    assert.equal((editor.children[0] as any).children.length, 1);
+    assert.equal((editor.children[0] as any).children[0].children[0].text, 'asfdaf');
+  });
+
+  it('unwraps todo and toggle blocks to paragraph on empty line', () => {
+    const editor = createEditor([
+      { type: 'p', children: [{ text: 'Heading' }] },
+      { type: 'todo', checked: false, children: [{ text: '' }] },
+    ]);
+
+    editor.tf.select({
+      anchor: { path: [1, 0], offset: 0 },
+      focus: { path: [1, 0], offset: 0 },
+    });
+
+    editor.tf.setNodes({ type: 'p' }, { at: [1] });
+    editor.tf.unsetNodes(['checked'], { at: [1] });
+
+    assert.equal((editor.children[1] as any).type, 'p');
+    assert.equal((editor.children[1] as any).checked, undefined);
+  });
+
   it('reorders blocks using Plate transform moveNodes with correct displacement', () => {
     const editor = createEditor([
       { type: 'h1', children: [{ text: 'Title' }] },

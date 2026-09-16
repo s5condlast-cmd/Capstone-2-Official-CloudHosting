@@ -2421,6 +2421,26 @@ Per user alignment during `/grill-me` regarding editor ergonomics, typography, a
 - **TypeScript Compiler (`npm run lint` / `tsc --noEmit`)**: 0 errors.
 - **Editor Test Suite (`npm run test:editor`)**: 50/50 tests passing across all 8 suites (including new image and font docx serialization test).
 
+---
+
+## 32. Two-Stage Backspace List Unwrapping & Block Retention on New Document Lines
+
+Per user alignment during `/grill-me` with before/after frame references (`media_1789525006923.png` Frame 1, `media_1789525015530.png` Frame 2):
+
+### 1. Two-Stage Backspace Keydown Interception (`src/components/editor/plate-editor.tsx`)
+- **Stage 1 (Un-list on Same Line - Frame 1)**:
+  - When user presses `Backspace` at the beginning of a list item (`li` in `ol`/`ul`) or when the line is empty (e.g. newly created line `"3."`), the handler calls `e.preventDefault()`, unwraps the parent list container (`unwrapNodes`), and converts the block to a plain `<p>` (`setNodes`).
+  - The line and cursor stay firmly in place on the newly created line (Frame 1), stripping only the number/bullet/toggle decoration so the user can continue typing plain text without the list formatting.
+- **Stage 2 (Merge Up on Second Backspace - Frame 2)**:
+  - Once the block is a standard paragraph `<p>`, pressing `Backspace` a second time is not intercepted, allowing Slate's native `deleteBackward()` to naturally merge the empty paragraph into the previous line (Frame 2: end of `"2. asfdaf"`).
+- **Universal Block Coverage**:
+  - Applied the same smooth two-stage unwrapping to Numbered Lists (`ol`), Bulleted Lists (`ul`), To-do checklists (`todo`, with `checked` attribute unsetting), Collapsible toggle lists (`toggle`), and Blockquotes (`blockquote`).
+
+### 2. Verification
+- **TypeScript Compiler (`npm run lint` / `tsc --noEmit`)**: 0 errors.
+- **Editor Test Suite (`npm run test:editor`)**: 52/52 tests passing across all 8 suites (including dedicated tests for Frame 1 same-line unwrap, Frame 2 merge-up, and todo/toggle unwrap).
+
+
 
 
 
