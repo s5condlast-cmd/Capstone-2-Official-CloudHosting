@@ -82,10 +82,9 @@ function blockStyle(element: any): React.CSSProperties {
 function ParagraphElement({ element, style, className, ...props }: any) {
   return (
     <PlateElement
-      as="p"
       element={element}
       style={{ ...blockStyle(element), ...style }}
-      className={cn('relative m-0 px-0 py-1 min-h-[1.5em]', className)}
+      className={cn('relative m-0 px-0 py-0.5 leading-normal', className)}
       {...props}
     />
   );
@@ -94,20 +93,20 @@ function ParagraphElement({ element, style, className, ...props }: any) {
 function HeadingElement({ element, style, className, ...props }: any) {
   const level = Number(String(element?.type || 'h1').slice(1));
   const headingClass = {
-    1: 'mt-[1.6em] pb-1 font-heading text-3xl sm:text-4xl font-bold tracking-tight',
-    2: 'mt-[1.4em] pb-1 font-heading text-2xl font-semibold tracking-tight',
-    3: 'mt-[1em] pb-1 font-heading text-xl font-semibold tracking-tight',
-    4: 'mt-[0.75em] font-heading text-lg font-semibold tracking-tight',
-    5: 'mt-[0.75em] text-base font-semibold tracking-tight',
-    6: 'mt-[0.75em] text-sm font-semibold tracking-tight',
-  }[level] || 'mt-[1em] pb-1 font-heading text-xl font-semibold tracking-tight';
+    1: 'mt-6 mb-2 font-heading text-3xl sm:text-4xl font-bold tracking-tight',
+    2: 'mt-5 mb-1.5 font-heading text-2xl font-semibold tracking-tight',
+    3: 'mt-4 mb-1 font-heading text-xl font-semibold tracking-tight',
+    4: 'mt-3 mb-1 font-heading text-lg font-semibold tracking-tight',
+    5: 'mt-2.5 mb-0.5 text-base font-semibold tracking-tight',
+    6: 'mt-2 mb-0.5 text-sm font-semibold tracking-tight',
+  }[level] || 'mt-4 mb-1 font-heading text-xl font-semibold tracking-tight';
 
   return (
     <PlateElement
       as={`h${Math.min(6, Math.max(1, level))}` as any}
       element={element}
       style={{ ...blockStyle(element), ...style }}
-      className={cn('relative mb-1', headingClass, className)}
+      className={cn('relative', headingClass, className)}
       {...props}
     />
   );

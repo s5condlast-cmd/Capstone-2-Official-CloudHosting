@@ -2142,3 +2142,39 @@ Per user request referencing official Plate.js component specifications (`https:
 4. **Zero Regressions & Full Test Verification**:
    - All 48 test suites passing (`npm run test:editor`).
    - TypeScript compiler passes with 0 errors (`npm run lint`).
+
+---
+
+## 25. Plate.js Paragraph Spacing & Canvas Sheet Padding Normalization (`media_1789517968222.png`)
+
+Per user request reporting excessive line spacing between text entries (`fasdfasf` and `safdasf`):
+
+1. **Root Cause Analysis of Excessive Line Spacing**:
+   - **DOM Newline Doubling (`whitespace-pre-wrap`)**: In Slate/Plate contenteditable, pressing Enter appends both a DOM newline node and a new paragraph block. Under `whitespace-pre-wrap`, CSS preserves the literal newline character inside the block AND executes Slate's block wrap, causing a double line height void.
+   - **HTML `<p>` User-Agent Block Margin**: Rendering `ParagraphElement` with `as="p"` triggered default browser user-agent margins (`margin-block: 1em`, ~16px top and bottom). Official Plate `paragraph-node.tsx` intentionally omits `as="p"` to render `PlateElement` as a `div` with controlled padding.
+   - **Artificial Line Constraint (`min-h-[1.5em]`)**: An explicit `min-h-[1.5em]` forced every empty or single-character line to occupy 24px+ minimum vertical space.
+   - **Line-Height Expansion (`leading-relaxed`)**: `leading-relaxed` (1.625) widened line distance unnecessarily for standard document typography.
+   - **Oversized Sheet Margins**: The sheet canvas container used `py-10 md:py-14` (56px) and `px-16` (64px), exaggerating empty space around short text entries.
+
+2. **Official Plate Registry Spacing Implementation**:
+   - **CSS Whitespace Normalization (`src/components/plate-ui/editor.tsx`)**:
+     - Switched from `whitespace-pre-wrap` to official Plate `whitespace-break-spaces break-words`.
+     - Changed line height from `leading-relaxed` to `leading-normal` (1.5) for natural document rhythm.
+   - **Paragraph Node Calibration (`src/components/editor/editor-kit.tsx`)**:
+     - Removed `as="p"` from `ParagraphElement` so it renders standard `PlateElement` (`div`).
+     - Removed `min-h-[1.5em]`.
+     - Set tight, uniform padding: `cn('relative m-0 px-0 py-0.5 leading-normal', className)`.
+   - **Heading Margins Calibration**:
+     - Replaced loose `[em]` margins with balanced rem/pixel scales:
+       - `h1`: `mt-6 mb-2`
+       - `h2`: `mt-5 mb-1.5`
+       - `h3`: `mt-4 mb-1`
+       - `h4`: `mt-3 mb-1`
+       - `h5`: `mt-2.5 mb-0.5`
+       - `h6`: `mt-2 mb-0.5`
+   - **Sheet Padding Calibration**:
+     - Normalized `default` and `demo` variants to `px-8 sm:px-12 py-6 sm:py-8 max-w-[850px] min-h-[700px]`, producing balanced document borders without cavernous voids.
+
+3. **Zero Regressions & Full Verification**:
+   - `npm run lint` (`tsc --noEmit`): 0 errors.
+   - `npm run test:editor`: 48/48 tests passing across all 8 test suites.
