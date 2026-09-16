@@ -39,6 +39,7 @@ export interface HeaderFooterItem {
     align?: 'left' | 'center' | 'right';
     width?: number;
     offsetPercent?: number;
+    cropZoom?: number;
   } | null;
   text?: string;
   textAlign?: 'left' | 'center' | 'right';

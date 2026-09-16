@@ -24,6 +24,7 @@ import {
   Minus,
   Hash,
   Move,
+  Crop,
 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import {
@@ -185,11 +186,19 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
 
     const [selectedHeaderImage, setSelectedHeaderImage] = useState(false);
     const [isDraggingHeaderImage, setIsDraggingHeaderImage] = useState(false);
+    const [isResizingHeaderImage, setIsResizingHeaderImage] = useState(false);
+    const [isCroppingHeaderImage, setIsCroppingHeaderImage] = useState(false);
+    const [headerCropZoom, setHeaderCropZoom] = useState<number>(headerState.image?.cropZoom || 100);
     const headerTrackRef = useRef<HTMLDivElement | null>(null);
+    const isResizingHeaderRef = useRef(false);
 
     const [selectedFooterImage, setSelectedFooterImage] = useState(false);
     const [isDraggingFooterImage, setIsDraggingFooterImage] = useState(false);
+    const [isResizingFooterImage, setIsResizingFooterImage] = useState(false);
+    const [isCroppingFooterImage, setIsCroppingFooterImage] = useState(false);
+    const [footerCropZoom, setFooterCropZoom] = useState<number>(footerState.image?.cropZoom || 100);
     const footerTrackRef = useRef<HTMLDivElement | null>(null);
+    const isResizingFooterRef = useRef(false);
 
     const headerFooterRef = useRef<DocumentHeaderFooterOptions>({
       header: headerState,
@@ -201,22 +210,45 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
       onHeaderFooterChange?.({ header: headerState, footer: footerState });
     }, [headerState, footerState, onHeaderFooterChange]);
 
-    // Click outside to deselect header and footer images
     useEffect(() => {
-      if (!selectedHeaderImage && !selectedFooterImage) return;
+      if (headerState.image?.cropZoom) {
+        setHeaderCropZoom(headerState.image.cropZoom);
+      }
+    }, [headerState.image?.cropZoom]);
+
+    useEffect(() => {
+      if (footerState.image?.cropZoom) {
+        setFooterCropZoom(footerState.image.cropZoom);
+      }
+    }, [footerState.image?.cropZoom]);
+
+    // Click outside to deselect header and footer images or exit cropping
+    useEffect(() => {
+      if (!selectedHeaderImage && !selectedFooterImage && !isCroppingHeaderImage && !isCroppingFooterImage) return;
       const handleMouseDown = (e: MouseEvent) => {
+        if (isResizingHeaderRef.current || isResizingFooterRef.current) return;
         const target = e.target as HTMLElement | null;
         if (!target) return;
-        if (!target.closest('[data-header-image]') && !target.closest('[data-header-toolbar]')) {
+        if (
+          !target.closest('[data-header-image]') &&
+          !target.closest('[data-header-toolbar]') &&
+          !target.closest('[data-header-crop]')
+        ) {
           setSelectedHeaderImage(false);
+          setIsCroppingHeaderImage(false);
         }
-        if (!target.closest('[data-footer-image]') && !target.closest('[data-footer-toolbar]')) {
+        if (
+          !target.closest('[data-footer-image]') &&
+          !target.closest('[data-footer-toolbar]') &&
+          !target.closest('[data-footer-crop]')
+        ) {
           setSelectedFooterImage(false);
+          setIsCroppingFooterImage(false);
         }
       };
       document.addEventListener('mousedown', handleMouseDown);
       return () => document.removeEventListener('mousedown', handleMouseDown);
-    }, [selectedHeaderImage, selectedFooterImage]);
+    }, [selectedHeaderImage, selectedFooterImage, isCroppingHeaderImage, isCroppingFooterImage]);
 
     const activeMode: EditorMode = readOnly ? 'viewing' : (mode ?? internalMode);
     const isEffectivelyReadOnly = readOnly || activeMode === 'viewing';
@@ -496,9 +528,113 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
       []
     );
 
+    // ── Interactive Drag-to-Resize handlers for Header & Footer logos ───────
+    const handleHeaderResizeStart = useCallback(
+      (e: React.MouseEvent | React.TouchEvent, direction: 'e' | 'w' | 'se' | 'sw' | 'ne' | 'nw') => {
+        e.preventDefault();
+        e.stopPropagation();
+        isResizingHeaderRef.current = true;
+        setIsResizingHeaderImage(true);
+        const startX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+        const startWidth = headerState.image?.width || 180;
+
+        const onMove = (clientX: number) => {
+          if (!isResizingHeaderRef.current) return;
+          const deltaX = clientX - startX;
+          let newW = startWidth;
+          if (direction === 'e' || direction === 'se' || direction === 'ne') {
+            newW = Math.max(50, Math.min(650, startWidth + deltaX));
+          } else {
+            newW = Math.max(50, Math.min(650, startWidth - deltaX));
+          }
+          setHeaderState((prev) => ({
+            ...prev,
+            image: prev.image ? { ...prev.image, width: Math.round(newW) } : null,
+          }));
+        };
+
+        const onMouseMove = (moveEvent: MouseEvent) => {
+          onMove(moveEvent.clientX);
+        };
+
+        const onTouchMove = (touchEvent: TouchEvent) => {
+          if (touchEvent.touches[0]) {
+            onMove(touchEvent.touches[0].clientX);
+          }
+        };
+
+        const onEnd = () => {
+          isResizingHeaderRef.current = false;
+          setIsResizingHeaderImage(false);
+          window.removeEventListener('mousemove', onMouseMove);
+          window.removeEventListener('mouseup', onEnd);
+          window.removeEventListener('touchmove', onTouchMove);
+          window.removeEventListener('touchend', onEnd);
+        };
+
+        window.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('mouseup', onEnd);
+        window.addEventListener('touchmove', onTouchMove, { passive: true });
+        window.addEventListener('touchend', onEnd);
+      },
+      [headerState.image?.width]
+    );
+
+    const handleFooterResizeStart = useCallback(
+      (e: React.MouseEvent | React.TouchEvent, direction: 'e' | 'w' | 'se' | 'sw' | 'ne' | 'nw') => {
+        e.preventDefault();
+        e.stopPropagation();
+        isResizingFooterRef.current = true;
+        setIsResizingFooterImage(true);
+        const startX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+        const startWidth = footerState.image?.width || 140;
+
+        const onMove = (clientX: number) => {
+          if (!isResizingFooterRef.current) return;
+          const deltaX = clientX - startX;
+          let newW = startWidth;
+          if (direction === 'e' || direction === 'se' || direction === 'ne') {
+            newW = Math.max(50, Math.min(650, startWidth + deltaX));
+          } else {
+            newW = Math.max(50, Math.min(650, startWidth - deltaX));
+          }
+          setFooterState((prev) => ({
+            ...prev,
+            image: prev.image ? { ...prev.image, width: Math.round(newW) } : null,
+          }));
+        };
+
+        const onMouseMove = (moveEvent: MouseEvent) => {
+          onMove(moveEvent.clientX);
+        };
+
+        const onTouchMove = (touchEvent: TouchEvent) => {
+          if (touchEvent.touches[0]) {
+            onMove(touchEvent.touches[0].clientX);
+          }
+        };
+
+        const onEnd = () => {
+          isResizingFooterRef.current = false;
+          setIsResizingFooterImage(false);
+          window.removeEventListener('mousemove', onMouseMove);
+          window.removeEventListener('mouseup', onEnd);
+          window.removeEventListener('touchmove', onTouchMove);
+          window.removeEventListener('touchend', onEnd);
+        };
+
+        window.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('mouseup', onEnd);
+        window.addEventListener('touchmove', onTouchMove, { passive: true });
+        window.addEventListener('touchend', onEnd);
+      },
+      [footerState.image?.width]
+    );
+
     // ── Draggable positioning handlers for Header & Footer logos ──────────────
     const handleHeaderDragStart = useCallback(
       (e: React.MouseEvent | React.TouchEvent) => {
+        if (isResizingHeaderRef.current || isCroppingHeaderImage) return;
         e.preventDefault();
         e.stopPropagation();
         setSelectedHeaderImage(true);
@@ -554,11 +690,12 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
         window.addEventListener('touchmove', onTouchMove, { passive: true });
         window.addEventListener('touchend', onEnd);
       },
-      [headerState.image?.width]
+      [headerState.image?.width, isCroppingHeaderImage]
     );
 
     const handleFooterDragStart = useCallback(
       (e: React.MouseEvent | React.TouchEvent) => {
+        if (isResizingFooterRef.current || isCroppingFooterImage) return;
         e.preventDefault();
         e.stopPropagation();
         setSelectedFooterImage(true);
@@ -614,7 +751,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
         window.addEventListener('touchmove', onTouchMove, { passive: true });
         window.addEventListener('touchend', onEnd);
       },
-      [footerState.image?.width]
+      [footerState.image?.width, isCroppingFooterImage]
     );
 
     // ── Fallback while loading ──────────────────────────────────────────────
@@ -903,60 +1040,46 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                                   </button>
                                 </div>
 
-                                {/* Width / Size Stepper */}
-                                <div className="flex items-center gap-1.5">
-                                  <span className="text-[11px] text-zinc-500 font-medium">Size:</span>
+                                {/* Crop & Remove Action Buttons */}
+                                <div className="flex items-center gap-2">
                                   <button
                                     type="button"
-                                    title="Decrease size"
-                                    onClick={() =>
-                                      setHeaderState((prev) => ({
-                                        ...prev,
-                                        image: prev.image
-                                          ? { ...prev.image, width: Math.max(80, (prev.image.width || 180) - 20) }
-                                          : null,
-                                      }))
-                                    }
-                                    className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 cursor-pointer"
+                                    title="Crop and zoom logo"
+                                    onClick={() => {
+                                      setSelectedHeaderImage(true);
+                                      setIsCroppingHeaderImage((prev) => !prev);
+                                    }}
+                                    className={cn(
+                                      'inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium transition-colors cursor-pointer',
+                                      isCroppingHeaderImage
+                                        ? 'bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 font-semibold'
+                                        : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-700'
+                                    )}
                                   >
-                                    <Minus className="w-3 h-3" />
+                                    <Crop className="w-3.5 h-3.5" />
+                                    <span>{isCroppingHeaderImage ? 'Cropping…' : 'Crop'}</span>
                                   </button>
-                                  <span className="text-[11px] font-mono text-zinc-700 dark:text-zinc-300 w-12 text-center">
-                                    {headerState.image.width || 180}px
-                                  </span>
+
                                   <button
                                     type="button"
-                                    title="Increase size"
-                                    onClick={() =>
-                                      setHeaderState((prev) => ({
-                                        ...prev,
-                                        image: prev.image
-                                          ? { ...prev.image, width: Math.min(320, (prev.image.width || 180) + 20) }
-                                          : null,
-                                      }))
-                                    }
-                                    className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 cursor-pointer"
+                                    title="Remove Logo"
+                                    onClick={() => {
+                                      setHeaderState((prev) => ({ ...prev, image: null }));
+                                      setSelectedHeaderImage(false);
+                                      setIsCroppingHeaderImage(false);
+                                    }}
+                                    className="inline-flex items-center gap-1 px-2 py-1 rounded text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 text-[11px] font-medium transition-colors cursor-pointer"
                                   >
-                                    <Plus className="w-3 h-3" />
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                    <span>Remove</span>
                                   </button>
                                 </div>
-
-                                {/* Delete Logo */}
-                                <button
-                                  type="button"
-                                  title="Remove Logo"
-                                  onClick={() => setHeaderState((prev) => ({ ...prev, image: null }))}
-                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 text-[11px] font-medium transition-colors cursor-pointer"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                  <span>Remove</span>
-                                </button>
                               </div>
 
-                              {/* Interactive Draggable Logo Track */}
+                              {/* Interactive Draggable, Resizable & Croppable Logo Track */}
                               <div
                                 ref={headerTrackRef}
-                                className="relative w-full min-h-[96px] py-2 px-1 border border-dashed border-blue-200/80 dark:border-blue-900/40 rounded-lg bg-blue-50/20 dark:bg-blue-950/20 select-none overflow-hidden"
+                                className="relative w-full min-h-[100px] py-2 px-1 border border-dashed border-blue-200/80 dark:border-blue-900/40 rounded-lg bg-blue-50/20 dark:bg-blue-950/20 select-none overflow-hidden"
                               >
                                 <div
                                   data-header-image="true"
@@ -966,6 +1089,11 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                                     e.stopPropagation();
                                     setSelectedHeaderImage(true);
                                   }}
+                                  onDoubleClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedHeaderImage(true);
+                                    setIsCroppingHeaderImage(true);
+                                  }}
                                   style={{
                                     position: 'relative',
                                     marginLeft: `${headerState.image.offsetPercent ?? (headerState.image.align === 'left' ? 0 : headerState.image.align === 'right' ? 100 : 50)}%`,
@@ -973,33 +1101,145 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                                     width: `${headerState.image.width || 180}px`,
                                   }}
                                   className={cn(
-                                    'cursor-grab select-none transition-shadow rounded-md',
+                                    'relative select-none rounded-md transition-shadow',
+                                    !isCroppingHeaderImage && 'cursor-grab',
                                     isDraggingHeaderImage && 'cursor-grabbing scale-[1.02] shadow-lg',
-                                    selectedHeaderImage && 'ring-2 ring-blue-500 ring-offset-2 ring-offset-white dark:ring-offset-zinc-900 shadow-md'
+                                    isResizingHeaderImage && 'shadow-lg',
+                                    (selectedHeaderImage || isCroppingHeaderImage) && 'ring-2 ring-blue-500 ring-offset-2 ring-offset-white dark:ring-offset-zinc-900 shadow-md'
                                   )}
                                 >
-                                  {/* Floating drag badge when selected or dragging */}
-                                  {(selectedHeaderImage || isDraggingHeaderImage) && (
-                                    <div className="absolute -top-7 left-1/2 -translate-x-1/2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-600 text-white text-[10px] font-semibold shadow-md whitespace-nowrap pointer-events-none z-10">
+                                  {/* Floating drag / resize badge */}
+                                  {isResizingHeaderImage && (
+                                    <div className="absolute -top-7 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-blue-600 text-white text-[10px] font-semibold shadow-md whitespace-nowrap pointer-events-none z-40">
+                                      Size: {headerState.image.width || 180}px
+                                    </div>
+                                  )}
+                                  {isDraggingHeaderImage && !isResizingHeaderImage && (
+                                    <div className="absolute -top-7 left-1/2 -translate-x-1/2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-600 text-white text-[10px] font-semibold shadow-md whitespace-nowrap pointer-events-none z-40">
                                       <Move className="w-2.5 h-2.5" />
-                                      <span>Drag to position ({headerState.image.offsetPercent ?? (headerState.image.align === 'left' ? 0 : headerState.image.align === 'right' ? 100 : 50)}%)</span>
+                                      <span>Position ({headerState.image.offsetPercent ?? (headerState.image.align === 'left' ? 0 : headerState.image.align === 'right' ? 100 : 50)}%)</span>
+                                    </div>
+                                  )}
+                                  {selectedHeaderImage && !isDraggingHeaderImage && !isResizingHeaderImage && !isCroppingHeaderImage && (
+                                    <div className="absolute -top-7 left-1/2 -translate-x-1/2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-zinc-800/90 text-zinc-100 text-[10px] font-medium shadow-md whitespace-nowrap pointer-events-none z-40 backdrop-blur-xs">
+                                      <Move className="w-2.5 h-2.5" />
+                                      <span>Drag to move · Pull handles to resize · Double-click to crop</span>
                                     </div>
                                   )}
 
-                                  <img
-                                    src={headerState.image.url}
-                                    alt="Header Logo"
-                                    draggable={false}
-                                    className="w-full max-h-24 object-contain rounded border border-zinc-200 dark:border-zinc-700 p-1 bg-white shadow-2xs pointer-events-none"
-                                  />
+                                  {/* Interactive Crop Framing Controls */}
+                                  {isCroppingHeaderImage && (
+                                    <div
+                                      data-header-crop="true"
+                                      onClick={(e) => e.stopPropagation()}
+                                      onMouseDown={(e) => e.stopPropagation()}
+                                      className="absolute -bottom-11 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-3 py-1.5 bg-zinc-900/95 text-white rounded-lg shadow-xl text-xs backdrop-blur-xs whitespace-nowrap"
+                                    >
+                                      <span className="font-semibold text-zinc-300">Crop Zoom:</span>
+                                      <button
+                                        type="button"
+                                        title="Zoom out"
+                                        onClick={() => {
+                                          setHeaderCropZoom((z) => {
+                                            const next = Math.max(100, z - 10);
+                                            setHeaderState((prev) => ({
+                                              ...prev,
+                                              image: prev.image ? { ...prev.image, cropZoom: next } : null,
+                                            }));
+                                            return next;
+                                          });
+                                        }}
+                                        className="px-2 py-0.5 bg-zinc-800 hover:bg-zinc-700 rounded font-bold cursor-pointer transition-colors"
+                                      >
+                                        -
+                                      </button>
+                                      <span className="w-10 text-center font-mono font-semibold">{headerCropZoom}%</span>
+                                      <button
+                                        type="button"
+                                        title="Zoom in"
+                                        onClick={() => {
+                                          setHeaderCropZoom((z) => {
+                                            const next = Math.min(300, z + 10);
+                                            setHeaderState((prev) => ({
+                                              ...prev,
+                                              image: prev.image ? { ...prev.image, cropZoom: next } : null,
+                                            }));
+                                            return next;
+                                          });
+                                        }}
+                                        className="px-2 py-0.5 bg-zinc-800 hover:bg-zinc-700 rounded font-bold cursor-pointer transition-colors"
+                                      >
+                                        +
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setIsCroppingHeaderImage(false);
+                                          setHeaderState((prev) => ({
+                                            ...prev,
+                                            image: prev.image ? { ...prev.image, cropZoom: headerCropZoom } : null,
+                                          }));
+                                        }}
+                                        className="ml-1 px-2.5 py-1 bg-primary text-primary-foreground font-semibold rounded hover:opacity-90 cursor-pointer text-xs transition-opacity"
+                                      >
+                                        Done
+                                      </button>
+                                    </div>
+                                  )}
 
-                                  {/* Selection corner handles */}
-                                  {selectedHeaderImage && (
+                                  {/* Cropped Image Frame */}
+                                  <div className="overflow-hidden rounded border border-zinc-200 dark:border-zinc-700 p-1 bg-white shadow-2xs">
+                                    <img
+                                      src={headerState.image.url}
+                                      alt="Header Logo"
+                                      draggable={false}
+                                      style={{
+                                        transform: (headerState.image.cropZoom || headerCropZoom) !== 100
+                                          ? `scale(${(headerState.image.cropZoom || headerCropZoom) / 100})`
+                                          : undefined,
+                                        transformOrigin: 'center center',
+                                        transition: 'transform 0.1s ease-out',
+                                      }}
+                                      className="w-full max-h-28 object-contain pointer-events-none select-none"
+                                    />
+                                  </div>
+
+                                  {/* Interactive Resize Handles (when selected and not cropping) */}
+                                  {selectedHeaderImage && !isCroppingHeaderImage && (
                                     <>
-                                      <div className="absolute -top-1 -left-1 w-2.5 h-2.5 bg-blue-600 border border-white rounded-full shadow-xs" />
-                                      <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-blue-600 border border-white rounded-full shadow-xs" />
-                                      <div className="absolute -bottom-1 -left-1 w-2.5 h-2.5 bg-blue-600 border border-white rounded-full shadow-xs" />
-                                      <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 bg-blue-600 border border-white rounded-full shadow-xs" />
+                                      {/* 4 Corners */}
+                                      <div
+                                        onMouseDown={(e) => handleHeaderResizeStart(e, 'nw')}
+                                        onTouchStart={(e) => handleHeaderResizeStart(e, 'nw')}
+                                        className="absolute -top-1.5 -left-1.5 w-3 h-3 bg-blue-600 border-2 border-white rounded-2xs shadow-xs cursor-nwse-resize z-30 hover:scale-125 transition-transform"
+                                      />
+                                      <div
+                                        onMouseDown={(e) => handleHeaderResizeStart(e, 'ne')}
+                                        onTouchStart={(e) => handleHeaderResizeStart(e, 'ne')}
+                                        className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-blue-600 border-2 border-white rounded-2xs shadow-xs cursor-nesw-resize z-30 hover:scale-125 transition-transform"
+                                      />
+                                      <div
+                                        onMouseDown={(e) => handleHeaderResizeStart(e, 'sw')}
+                                        onTouchStart={(e) => handleHeaderResizeStart(e, 'sw')}
+                                        className="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-blue-600 border-2 border-white rounded-2xs shadow-xs cursor-nesw-resize z-30 hover:scale-125 transition-transform"
+                                      />
+                                      <div
+                                        onMouseDown={(e) => handleHeaderResizeStart(e, 'se')}
+                                        onTouchStart={(e) => handleHeaderResizeStart(e, 'se')}
+                                        className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-blue-600 border-2 border-white rounded-2xs shadow-xs cursor-nwse-resize z-30 hover:scale-125 transition-transform"
+                                      />
+
+                                      {/* 2 Edges */}
+                                      <div
+                                        onMouseDown={(e) => handleHeaderResizeStart(e, 'w')}
+                                        onTouchStart={(e) => handleHeaderResizeStart(e, 'w')}
+                                        className="absolute top-1/2 -left-1.5 -translate-y-1/2 w-3 h-3 bg-blue-600 border-2 border-white rounded-2xs shadow-xs cursor-ew-resize z-30 hover:scale-125 transition-transform"
+                                      />
+                                      <div
+                                        onMouseDown={(e) => handleHeaderResizeStart(e, 'e')}
+                                        onTouchStart={(e) => handleHeaderResizeStart(e, 'e')}
+                                        className="absolute top-1/2 -right-1.5 -translate-y-1/2 w-3 h-3 bg-blue-600 border-2 border-white rounded-2xs shadow-xs cursor-ew-resize z-30 hover:scale-125 transition-transform"
+                                      />
                                     </>
                                   )}
                                 </div>
@@ -1073,12 +1313,20 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                                   width: `${headerState.image.width || 180}px`,
                                 }}
                               >
-                                <img
-                                  src={headerState.image.url}
-                                  alt="Header Logo"
-                                  draggable={false}
-                                  className="w-full max-h-24 object-contain opacity-85 group-hover/header:opacity-100 transition-opacity"
-                                />
+                                <div className="overflow-hidden rounded p-0.5">
+                                  <img
+                                    src={headerState.image.url}
+                                    alt="Header Logo"
+                                    draggable={false}
+                                    style={{
+                                      transform: headerState.image.cropZoom && headerState.image.cropZoom !== 100
+                                        ? `scale(${headerState.image.cropZoom / 100})`
+                                        : undefined,
+                                      transformOrigin: 'center center',
+                                    }}
+                                    className="w-full max-h-24 object-contain opacity-85 group-hover/header:opacity-100 transition-opacity"
+                                  />
+                                </div>
                               </div>
                             </div>
                           )}
@@ -1293,60 +1541,46 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                                   </button>
                                 </div>
 
-                                {/* Width / Size Stepper */}
-                                <div className="flex items-center gap-1.5">
-                                  <span className="text-[11px] text-zinc-500 font-medium">Size:</span>
+                                {/* Crop & Remove Action Buttons */}
+                                <div className="flex items-center gap-2">
                                   <button
                                     type="button"
-                                    title="Decrease size"
-                                    onClick={() =>
-                                      setFooterState((prev) => ({
-                                        ...prev,
-                                        image: prev.image
-                                          ? { ...prev.image, width: Math.max(80, (prev.image.width || 140) - 20) }
-                                          : null,
-                                      }))
-                                    }
-                                    className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 cursor-pointer"
+                                    title="Crop and zoom logo"
+                                    onClick={() => {
+                                      setSelectedFooterImage(true);
+                                      setIsCroppingFooterImage((prev) => !prev);
+                                    }}
+                                    className={cn(
+                                      'inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium transition-colors cursor-pointer',
+                                      isCroppingFooterImage
+                                        ? 'bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 font-semibold'
+                                        : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-700'
+                                    )}
                                   >
-                                    <Minus className="w-3 h-3" />
+                                    <Crop className="w-3.5 h-3.5" />
+                                    <span>{isCroppingFooterImage ? 'Cropping…' : 'Crop'}</span>
                                   </button>
-                                  <span className="text-[11px] font-mono text-zinc-700 dark:text-zinc-300 w-12 text-center">
-                                    {footerState.image.width || 140}px
-                                  </span>
+
                                   <button
                                     type="button"
-                                    title="Increase size"
-                                    onClick={() =>
-                                      setFooterState((prev) => ({
-                                        ...prev,
-                                        image: prev.image
-                                          ? { ...prev.image, width: Math.min(320, (prev.image.width || 140) + 20) }
-                                          : null,
-                                      }))
-                                    }
-                                    className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 cursor-pointer"
+                                    title="Remove Logo"
+                                    onClick={() => {
+                                      setFooterState((prev) => ({ ...prev, image: null }));
+                                      setSelectedFooterImage(false);
+                                      setIsCroppingFooterImage(false);
+                                    }}
+                                    className="inline-flex items-center gap-1 px-2 py-1 rounded text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 text-[11px] font-medium transition-colors cursor-pointer"
                                   >
-                                    <Plus className="w-3 h-3" />
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                    <span>Remove</span>
                                   </button>
                                 </div>
-
-                                {/* Delete Logo */}
-                                <button
-                                  type="button"
-                                  title="Remove Logo"
-                                  onClick={() => setFooterState((prev) => ({ ...prev, image: null }))}
-                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 text-[11px] font-medium transition-colors cursor-pointer"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                  <span>Remove</span>
-                                </button>
                               </div>
 
-                              {/* Interactive Draggable Footer Logo Track */}
+                              {/* Interactive Draggable, Resizable & Croppable Footer Logo Track */}
                               <div
                                 ref={footerTrackRef}
-                                className="relative w-full min-h-[85px] py-2 px-1 border border-dashed border-blue-200/80 dark:border-blue-900/40 rounded-lg bg-blue-50/20 dark:bg-blue-950/20 select-none overflow-hidden"
+                                className="relative w-full min-h-[90px] py-2 px-1 border border-dashed border-blue-200/80 dark:border-blue-900/40 rounded-lg bg-blue-50/20 dark:bg-blue-950/20 select-none overflow-hidden"
                               >
                                 <div
                                   data-footer-image="true"
@@ -1356,6 +1590,11 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                                     e.stopPropagation();
                                     setSelectedFooterImage(true);
                                   }}
+                                  onDoubleClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedFooterImage(true);
+                                    setIsCroppingFooterImage(true);
+                                  }}
                                   style={{
                                     position: 'relative',
                                     marginLeft: `${footerState.image.offsetPercent ?? (footerState.image.align === 'left' ? 0 : footerState.image.align === 'right' ? 100 : 50)}%`,
@@ -1363,31 +1602,145 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                                     width: `${footerState.image.width || 140}px`,
                                   }}
                                   className={cn(
-                                    'cursor-grab select-none transition-shadow rounded-md',
+                                    'relative select-none rounded-md transition-shadow',
+                                    !isCroppingFooterImage && 'cursor-grab',
                                     isDraggingFooterImage && 'cursor-grabbing scale-[1.02] shadow-lg',
-                                    selectedFooterImage && 'ring-2 ring-blue-500 ring-offset-2 ring-offset-white dark:ring-offset-zinc-900 shadow-md'
+                                    isResizingFooterImage && 'shadow-lg',
+                                    (selectedFooterImage || isCroppingFooterImage) && 'ring-2 ring-blue-500 ring-offset-2 ring-offset-white dark:ring-offset-zinc-900 shadow-md'
                                   )}
                                 >
-                                  {(selectedFooterImage || isDraggingFooterImage) && (
-                                    <div className="absolute -top-7 left-1/2 -translate-x-1/2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-600 text-white text-[10px] font-semibold shadow-md whitespace-nowrap pointer-events-none z-10">
+                                  {/* Floating drag / resize badge */}
+                                  {isResizingFooterImage && (
+                                    <div className="absolute -top-7 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-blue-600 text-white text-[10px] font-semibold shadow-md whitespace-nowrap pointer-events-none z-40">
+                                      Size: {footerState.image.width || 140}px
+                                    </div>
+                                  )}
+                                  {isDraggingFooterImage && !isResizingFooterImage && (
+                                    <div className="absolute -top-7 left-1/2 -translate-x-1/2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-600 text-white text-[10px] font-semibold shadow-md whitespace-nowrap pointer-events-none z-40">
                                       <Move className="w-2.5 h-2.5" />
                                       <span>Drag to position ({footerState.image.offsetPercent ?? (footerState.image.align === 'left' ? 0 : footerState.image.align === 'right' ? 100 : 50)}%)</span>
                                     </div>
                                   )}
+                                  {selectedFooterImage && !isDraggingFooterImage && !isResizingFooterImage && !isCroppingFooterImage && (
+                                    <div className="absolute -top-7 left-1/2 -translate-x-1/2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-zinc-800/90 text-zinc-100 text-[10px] font-medium shadow-md whitespace-nowrap pointer-events-none z-40 backdrop-blur-xs">
+                                      <Move className="w-2.5 h-2.5" />
+                                      <span>Drag to move · Pull handles to resize · Double-click to crop</span>
+                                    </div>
+                                  )}
 
-                                  <img
-                                    src={footerState.image.url}
-                                    alt="Footer Logo"
-                                    draggable={false}
-                                    className="w-full max-h-20 object-contain rounded border border-zinc-200 dark:border-zinc-700 p-1 bg-white shadow-2xs pointer-events-none"
-                                  />
+                                  {/* Interactive Crop Framing Controls */}
+                                  {isCroppingFooterImage && (
+                                    <div
+                                      data-footer-crop="true"
+                                      onClick={(e) => e.stopPropagation()}
+                                      onMouseDown={(e) => e.stopPropagation()}
+                                      className="absolute -bottom-11 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-3 py-1.5 bg-zinc-900/95 text-white rounded-lg shadow-xl text-xs backdrop-blur-xs whitespace-nowrap"
+                                    >
+                                      <span className="font-semibold text-zinc-300">Crop Zoom:</span>
+                                      <button
+                                        type="button"
+                                        title="Zoom out"
+                                        onClick={() => {
+                                          setFooterCropZoom((z) => {
+                                            const next = Math.max(100, z - 10);
+                                            setFooterState((prev) => ({
+                                              ...prev,
+                                              image: prev.image ? { ...prev.image, cropZoom: next } : null,
+                                            }));
+                                            return next;
+                                          });
+                                        }}
+                                        className="px-2 py-0.5 bg-zinc-800 hover:bg-zinc-700 rounded font-bold cursor-pointer transition-colors"
+                                      >
+                                        -
+                                      </button>
+                                      <span className="w-10 text-center font-mono font-semibold">{footerCropZoom}%</span>
+                                      <button
+                                        type="button"
+                                        title="Zoom in"
+                                        onClick={() => {
+                                          setFooterCropZoom((z) => {
+                                            const next = Math.min(300, z + 10);
+                                            setFooterState((prev) => ({
+                                              ...prev,
+                                              image: prev.image ? { ...prev.image, cropZoom: next } : null,
+                                            }));
+                                            return next;
+                                          });
+                                        }}
+                                        className="px-2 py-0.5 bg-zinc-800 hover:bg-zinc-700 rounded font-bold cursor-pointer transition-colors"
+                                      >
+                                        +
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setIsCroppingFooterImage(false);
+                                          setFooterState((prev) => ({
+                                            ...prev,
+                                            image: prev.image ? { ...prev.image, cropZoom: footerCropZoom } : null,
+                                          }));
+                                        }}
+                                        className="ml-1 px-2.5 py-1 bg-primary text-primary-foreground font-semibold rounded hover:opacity-90 cursor-pointer text-xs transition-opacity"
+                                      >
+                                        Done
+                                      </button>
+                                    </div>
+                                  )}
 
-                                  {selectedFooterImage && (
+                                  {/* Cropped Image Frame */}
+                                  <div className="overflow-hidden rounded border border-zinc-200 dark:border-zinc-700 p-1 bg-white shadow-2xs">
+                                    <img
+                                      src={footerState.image.url}
+                                      alt="Footer Logo"
+                                      draggable={false}
+                                      style={{
+                                        transform: (footerState.image.cropZoom || footerCropZoom) !== 100
+                                          ? `scale(${(footerState.image.cropZoom || footerCropZoom) / 100})`
+                                          : undefined,
+                                        transformOrigin: 'center center',
+                                        transition: 'transform 0.1s ease-out',
+                                      }}
+                                      className="w-full max-h-24 object-contain pointer-events-none select-none"
+                                    />
+                                  </div>
+
+                                  {/* Interactive Resize Handles (when selected and not cropping) */}
+                                  {selectedFooterImage && !isCroppingFooterImage && (
                                     <>
-                                      <div className="absolute -top-1 -left-1 w-2.5 h-2.5 bg-blue-600 border border-white rounded-full shadow-xs" />
-                                      <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-blue-600 border border-white rounded-full shadow-xs" />
-                                      <div className="absolute -bottom-1 -left-1 w-2.5 h-2.5 bg-blue-600 border border-white rounded-full shadow-xs" />
-                                      <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 bg-blue-600 border border-white rounded-full shadow-xs" />
+                                      {/* 4 Corners */}
+                                      <div
+                                        onMouseDown={(e) => handleFooterResizeStart(e, 'nw')}
+                                        onTouchStart={(e) => handleFooterResizeStart(e, 'nw')}
+                                        className="absolute -top-1.5 -left-1.5 w-3 h-3 bg-blue-600 border-2 border-white rounded-2xs shadow-xs cursor-nwse-resize z-30 hover:scale-125 transition-transform"
+                                      />
+                                      <div
+                                        onMouseDown={(e) => handleFooterResizeStart(e, 'ne')}
+                                        onTouchStart={(e) => handleFooterResizeStart(e, 'ne')}
+                                        className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-blue-600 border-2 border-white rounded-2xs shadow-xs cursor-nesw-resize z-30 hover:scale-125 transition-transform"
+                                      />
+                                      <div
+                                        onMouseDown={(e) => handleFooterResizeStart(e, 'sw')}
+                                        onTouchStart={(e) => handleFooterResizeStart(e, 'sw')}
+                                        className="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-blue-600 border-2 border-white rounded-2xs shadow-xs cursor-nesw-resize z-30 hover:scale-125 transition-transform"
+                                      />
+                                      <div
+                                        onMouseDown={(e) => handleFooterResizeStart(e, 'se')}
+                                        onTouchStart={(e) => handleFooterResizeStart(e, 'se')}
+                                        className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-blue-600 border-2 border-white rounded-2xs shadow-xs cursor-nwse-resize z-30 hover:scale-125 transition-transform"
+                                      />
+
+                                      {/* 2 Edges */}
+                                      <div
+                                        onMouseDown={(e) => handleFooterResizeStart(e, 'w')}
+                                        onTouchStart={(e) => handleFooterResizeStart(e, 'w')}
+                                        className="absolute top-1/2 -left-1.5 -translate-y-1/2 w-3 h-3 bg-blue-600 border-2 border-white rounded-2xs shadow-xs cursor-ew-resize z-30 hover:scale-125 transition-transform"
+                                      />
+                                      <div
+                                        onMouseDown={(e) => handleFooterResizeStart(e, 'e')}
+                                        onTouchStart={(e) => handleFooterResizeStart(e, 'e')}
+                                        className="absolute top-1/2 -right-1.5 -translate-y-1/2 w-3 h-3 bg-blue-600 border-2 border-white rounded-2xs shadow-xs cursor-ew-resize z-30 hover:scale-125 transition-transform"
+                                      />
                                     </>
                                   )}
                                 </div>
@@ -1475,12 +1828,20 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                                   width: `${footerState.image.width || 140}px`,
                                 }}
                               >
-                                <img
-                                  src={footerState.image.url}
-                                  alt="Footer Logo"
-                                  draggable={false}
-                                  className="w-full max-h-20 object-contain opacity-85 group-hover/footer:opacity-100 transition-opacity"
-                                />
+                                <div className="overflow-hidden rounded p-0.5">
+                                  <img
+                                    src={footerState.image.url}
+                                    alt="Footer Logo"
+                                    draggable={false}
+                                    style={{
+                                      transform: footerState.image.cropZoom && footerState.image.cropZoom !== 100
+                                        ? `scale(${footerState.image.cropZoom / 100})`
+                                        : undefined,
+                                      transformOrigin: 'center center',
+                                    }}
+                                    className="w-full max-h-20 object-contain opacity-85 group-hover/footer:opacity-100 transition-opacity"
+                                  />
+                                </div>
                               </div>
                             </div>
                           )}

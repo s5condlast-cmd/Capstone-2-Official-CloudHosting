@@ -2630,6 +2630,45 @@ Per user request under `/goal` mode ("instead of it outside the plate editor mak
 - **TypeScript Compiler (`npm run lint` / `tsc --noEmit`)**: 0 errors.
 - **Editor Test Suite (`npm run test:editor`)**: 56/56 tests passing across all 8 suites (including unit test for `serializeToDocx` deriving alignment from `offsetPercent`).
 
+---
+
+## 37. Header & Footer Logo: Size Stepper Removal, Interactive Drag-to-Resize Handles, and Crop Framing Suite
+
+Per user request ("remove this sizing to it and if user press the image they send they can cropt it like making it big and small depende on the users wants to it for the header") and reference screenshot `media_1789552048947.png`:
+
+### 1. Removal of Size Stepper (`media_1789552048947.png`)
+- Completely removed the `Size: — 180px +` stepper control from both the Header and Footer action bars in `src/components/editor/plate-editor.tsx`.
+- Replaced it with a dedicated, theme-aware **Crop** action button (`Crop` icon) and `Remove` button (`Trash2`).
+
+### 2. Interactive Drag-to-Resize Handles ("Making it Big and Small")
+- When the user clicks or touches the header or footer logo, it enters the selected state with 4 corner handles (`nw`, `ne`, `sw`, `se`) and 2 edge handles (`w`, `e`).
+- Implemented `handleHeaderResizeStart` and `handleFooterResizeStart` supporting fluid drag-to-resize with both mouse and touch events:
+  - Dragging rightward handles (`e`, `se`, `ne`) expands width: `startWidth + deltaX`.
+  - Dragging leftward handles (`w`, `sw`, `nw`) contracts width: `startWidth - deltaX`.
+  - Enforced responsive bounds: 50px minimum up to 650px maximum.
+  - While dragging a resize handle, displays a live floating tooltip badge: `Size: {width}px`.
+  - Resize handles stop drag-to-position event propagation, preventing unwanted shifts while adjusting dimensions.
+
+### 3. Integrated Crop Framing Mode
+- **Entering Crop Mode**:
+  - Double-clicking the image directly enters Crop mode (`isCroppingHeaderImage = true` / `isCroppingFooterImage = true`).
+  - Alternatively, clicking the **Crop** button in the action bar toggles Crop mode.
+- **Crop Framing Controls**:
+  - Displays a floating high-contrast crop framing toolbar anchored directly to the image:
+    - `-` button: Decrements crop zoom down to 100%.
+    - Live percentage display (e.g., `120%`).
+    - `+` button: Increments crop zoom up to 300%.
+    - `Done` button: Confirms and commits the crop zoom framing.
+  - Image is enclosed within an `overflow-hidden` rounded bounding frame and scaled with `transform: scale(${zoom / 100})`.
+- **Idle Preview & Export Persistence**:
+  - The crop zoom is preserved in `headerState.image.cropZoom` and `footerState.image.cropZoom`.
+  - Both idle print-layout preview and native DOCX/PDF export respect the updated width and crop zoom framing.
+
+### 4. Verification
+- **TypeScript Compiler (`npm run lint` / `tsc --noEmit`)**: 0 errors.
+- **Editor Test Suite (`npm run test:editor`)**: 57/57 tests passing across all 8 suites (including new unit test for header/footer serialization with `cropZoom`).
+
+
 
 
 

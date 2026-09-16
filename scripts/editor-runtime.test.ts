@@ -291,6 +291,31 @@ describe('Plate editor runtime wiring', () => {
     );
     assert.ok(blob.size > 1_500);
   });
+
+  it('serializes native Word Header and Footer with cropZoom attributes without errors', async () => {
+    const tinyPng = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+    const blob = await serializeToDocx(
+      [{ type: 'p', children: [{ text: 'Body content' }] }] as any,
+      'Crop Test',
+      {
+        header: {
+          image: {
+            url: tinyPng,
+            width: 220,
+            cropZoom: 150,
+          },
+        },
+        footer: {
+          image: {
+            url: tinyPng,
+            width: 160,
+            cropZoom: 120,
+          },
+        },
+      }
+    );
+    assert.ok(blob.size > 1_500);
+  });
 });
 
 
