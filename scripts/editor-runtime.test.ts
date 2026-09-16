@@ -231,6 +231,41 @@ describe('Plate editor runtime wiring', () => {
       'img node must use ImageElement component with resize handles and toolbar'
     );
   });
+
+  it('serializes native Word Header and Footer with moveable logo, text, and page numbers', async () => {
+    const tinyPng = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+    const blob = await serializeToDocx(
+      [{ type: 'p', children: [{ text: 'Body content of document' }] }] as any,
+      'Header Footer Test',
+      {
+        header: {
+          image: {
+            url: tinyPng,
+            name: 'header-logo.png',
+            align: 'center',
+            width: 160,
+          },
+          text: 'STI COLLEGE MARIKINA • PRACTICUM OFFICE',
+          textAlign: 'center',
+          scope: 'every_page',
+        },
+        footer: {
+          image: {
+            url: tinyPng,
+            name: 'footer-seal.png',
+            align: 'right',
+            width: 120,
+          },
+          text: 'Confidential • For Academic Use Only',
+          pageNumber: true,
+          textAlign: 'center',
+          scope: 'every_page',
+        },
+      }
+    );
+
+    assert.ok(blob.size > 2_000, 'Serialized DOCX with Header and Footer should be larger than 2KB');
+  });
 });
 
 

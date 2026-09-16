@@ -9,7 +9,21 @@
  * - FloatingToolbar (contextual floating action bar on text selection)
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Sparkles, Eye, Image as ImageIcon, ChevronDown, Check, X } from 'lucide-react';
+import {
+  Sparkles,
+  Eye,
+  Image as ImageIcon,
+  ChevronDown,
+  Check,
+  X,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  Trash2,
+  Plus,
+  Minus,
+  Hash,
+} from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import {
   DropdownMenu,
@@ -27,6 +41,10 @@ import {
 } from '@/src/components/plate-ui/fixed-toolbar-buttons';
 import { FloatingToolbar } from '@/src/components/plate-ui/floating-toolbar';
 import { CommentsDrawer } from './CommentsDrawer';
+import {
+  type DocumentHeaderFooterOptions,
+  type HeaderFooterItem,
+} from './serializers/docxSerializer';
 import '@/src/styles/print-document.css';
 
 // ─── Plate v53 dynamic import bridge ──────────────────────────────────────────
@@ -71,6 +89,10 @@ export interface PlateEditorProps {
   currentUserRole?: 'student' | 'adviser' | 'supervisor' | 'admin';
   /** Logged-in user name for comment author */
   currentUserName?: string;
+  /** Optional document header and footer configuration */
+  headerFooter?: DocumentHeaderFooterOptions;
+  /** Header & Footer change callback */
+  onHeaderFooterChange?: (headerFooter: DocumentHeaderFooterOptions) => void;
 }
 
 // ─── Default empty content ────────────────────────────────────────────────────
@@ -100,6 +122,7 @@ export interface PlateEditorRef {
   getContent: () => object[];
   getWordCount: () => number;
   getEditorInstance?: () => any;
+  getHeaderFooter: () => DocumentHeaderFooterOptions;
 }
 
 // ─── PlateEditor component ────────────────────────────────────────────────────
@@ -125,6 +148,8 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
       onDeleteComment,
       currentUserRole = 'student',
       currentUserName = 'Student',
+      headerFooter: externalHeaderFooter,
+      onHeaderFooterChange,
     },
     ref
   ) {
@@ -143,8 +168,29 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
 
     // Google Docs style Header & Footer editing state
     const [activeHeaderFooter, setActiveHeaderFooter] = useState<'header' | 'footer' | null>(null);
-    const [headerScope, setHeaderScope] = useState<'every_page' | 'first_page_only'>('every_page');
-    const [footerScope, setFooterScope] = useState<'every_page' | 'first_page_only'>('every_page');
+    const [headerState, setHeaderState] = useState<HeaderFooterItem>(() => ({
+      image: externalHeaderFooter?.header?.image || null,
+      text: externalHeaderFooter?.header?.text || '',
+      textAlign: externalHeaderFooter?.header?.textAlign || 'center',
+      scope: externalHeaderFooter?.header?.scope || 'every_page',
+    }));
+    const [footerState, setFooterState] = useState<HeaderFooterItem>(() => ({
+      image: externalHeaderFooter?.footer?.image || null,
+      text: externalHeaderFooter?.footer?.text || '',
+      pageNumber: externalHeaderFooter?.footer?.pageNumber ?? false,
+      textAlign: externalHeaderFooter?.footer?.textAlign || 'center',
+      scope: externalHeaderFooter?.footer?.scope || 'every_page',
+    }));
+
+    const headerFooterRef = useRef<DocumentHeaderFooterOptions>({
+      header: headerState,
+      footer: footerState,
+    });
+
+    useEffect(() => {
+      headerFooterRef.current = { header: headerState, footer: footerState };
+      onHeaderFooterChange?.({ header: headerState, footer: footerState });
+    }, [headerState, footerState, onHeaderFooterChange]);
 
     const activeMode: EditorMode = readOnly ? 'viewing' : (mode ?? internalMode);
     const isEffectivelyReadOnly = readOnly || activeMode === 'viewing';
@@ -242,6 +288,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
         getContent: () => contentRef.current,
         getWordCount: () => countWordsInContent(contentRef.current),
         getEditorInstance: () => editorInstanceRef.current,
+        getHeaderFooter: () => headerFooterRef.current,
       };
       if (typeof ref === 'function') {
         ref(handle);
@@ -371,6 +418,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
     );
 
     const headerInputRef = useRef<HTMLInputElement>(null);
+    const footerInputRef = useRef<HTMLInputElement>(null);
 
     const handleHeaderImageUpload = useCallback(
       (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -380,28 +428,44 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
         const reader = new FileReader();
         reader.onload = () => {
           const dataUrl = reader.result as string;
-          try {
-            editor?.tf?.insertNodes?.(
-              [
-                {
-                  type: 'img',
-                  url: dataUrl,
-                  name: file.name,
-                  align: 'center',
-                  children: [{ text: '' }],
-                },
-              ],
-              { at: [0] }
-            );
-            editor?.tf?.focus?.();
-          } catch {
-            // non-fatal
-          }
+          setHeaderState((prev) => ({
+            ...prev,
+            image: {
+              url: dataUrl,
+              name: file.name,
+              align: prev.image?.align || 'center',
+              width: prev.image?.width || 180,
+            },
+          }));
         };
         reader.readAsDataURL(file);
         e.target.value = '';
       },
-      [editor]
+      []
+    );
+
+    const handleFooterImageUpload = useCallback(
+      (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = () => {
+          const dataUrl = reader.result as string;
+          setFooterState((prev) => ({
+            ...prev,
+            image: {
+              url: dataUrl,
+              name: file.name,
+              align: prev.image?.align || 'center',
+              width: prev.image?.width || 140,
+            },
+          }));
+        };
+        reader.readAsDataURL(file);
+        e.target.value = '';
+      },
+      []
     );
 
     // ── Fallback while loading ──────────────────────────────────────────────
@@ -526,7 +590,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                 }}
               >
                 <div className="w-full max-w-[850px] flex flex-col items-center">
-                  {/* Hidden Header File Input */}
+                  {/* Hidden Header & Footer File Inputs */}
                   <input
                     ref={headerInputRef}
                     type="file"
@@ -534,78 +598,317 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                     className="hidden"
                     onChange={handleHeaderImageUpload}
                   />
+                  <input
+                    ref={footerInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleFooterImageUpload}
+                  />
 
-                  {/* Google Docs Style Header Zone */}
-                  {!isEffectivelyReadOnly && (
+                  {/* ─── Google Docs Style Header Zone ───────────────────────────── */}
+                  {(!isEffectivelyReadOnly || headerState.image?.url || headerState.text?.trim()) && (
                     <div
-                      onDoubleClick={() => setActiveHeaderFooter((prev) => (prev === 'header' ? null : 'header'))}
+                      onDoubleClick={() => {
+                        if (!isEffectivelyReadOnly) {
+                          setActiveHeaderFooter((prev) => (prev === 'header' ? null : 'header'));
+                        }
+                      }}
                       className={cn(
-                        'w-full transition-all select-none',
+                        'w-full transition-all select-none print:mb-2 print:border-none',
                         activeHeaderFooter === 'header'
-                          ? 'mb-4 border-b-2 border-blue-500 pb-2.5'
+                          ? 'mb-4 border-b-2 border-blue-500 pb-3 bg-blue-50/20 dark:bg-blue-950/20 p-2.5 rounded-t-lg'
                           : 'pt-2 pb-1.5 border-b border-transparent hover:border-dashed hover:border-zinc-300 dark:hover:border-zinc-700 cursor-pointer group/header'
                       )}
                     >
                       {activeHeaderFooter === 'header' ? (
-                        <div className="flex items-center justify-between px-3 py-1.5 rounded-lg bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/60 shadow-xs">
-                          <div className="flex items-center gap-3">
-                            <span className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
-                              Header
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => headerInputRef.current?.click()}
-                              className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold text-primary bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 rounded-md border border-zinc-200 dark:border-zinc-700 shadow-xs transition-colors cursor-pointer"
-                            >
-                              <ImageIcon className="w-3.5 h-3.5 text-primary" />
-                              <span>+ Add Image / Logo</span>
-                            </button>
+                        <div className="flex flex-col gap-2.5 w-full">
+                          {/* Header Control Ribbon */}
+                          <div
+                            data-header-toolbar="true"
+                            className="header-footer-ribbon flex items-center justify-between px-3 py-1.5 rounded-lg bg-blue-50/80 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-900/60 shadow-xs"
+                          >
+                            <div className="flex items-center gap-3">
+                              <span className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
+                                Header
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => headerInputRef.current?.click()}
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold text-primary bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 rounded-md border border-zinc-200 dark:border-zinc-700 shadow-xs transition-colors cursor-pointer"
+                              >
+                                <ImageIcon className="w-3.5 h-3.5 text-primary" />
+                                <span>{headerState.image?.url ? 'Replace Logo' : '+ Add Logo / Image'}</span>
+                              </button>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              {/* Scope Dropview: This page only vs Every page */}
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <button
+                                    type="button"
+                                    className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium text-zinc-700 dark:text-zinc-200 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700 shadow-xs cursor-pointer"
+                                  >
+                                    <span>{headerState.scope === 'every_page' ? 'Every page' : 'This page only'}</span>
+                                    <ChevronDown className="w-3.5 h-3.5 text-zinc-500" />
+                                  </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-56 p-1 shadow-lg border border-zinc-200 dark:border-zinc-800">
+                                  <DropdownMenuItem
+                                    onClick={() => setHeaderState((prev) => ({ ...prev, scope: 'every_page' }))}
+                                    className="flex items-center justify-between text-xs px-2.5 py-1.5 cursor-pointer rounded-md"
+                                  >
+                                    <span>Every page</span>
+                                    {headerState.scope === 'every_page' && <Check className="w-3.5 h-3.5 text-primary" />}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => setHeaderState((prev) => ({ ...prev, scope: 'first_page_only' }))}
+                                    className="flex items-center justify-between text-xs px-2.5 py-1.5 cursor-pointer rounded-md"
+                                  >
+                                    <span>This page only (Different first page)</span>
+                                    {headerState.scope === 'first_page_only' && <Check className="w-3.5 h-3.5 text-primary" />}
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+
+                              <button
+                                type="button"
+                                onClick={() => setActiveHeaderFooter(null)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-zinc-700 dark:text-zinc-200 hover:text-zinc-950 dark:hover:text-white bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 border border-zinc-200 dark:border-zinc-700 rounded transition-colors cursor-pointer shadow-xs"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                                <span>Done</span>
+                              </button>
+                            </div>
                           </div>
 
-                          <div className="flex items-center gap-2">
-                            {/* Options Dropview: This page only vs Every page */}
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
+                          {/* Moveable Logo Toolbar & Preview (if image exists) */}
+                          {headerState.image?.url && (
+                            <div className="flex flex-col gap-1.5 p-2 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xs">
+                              {/* Moveable Image Action Bar */}
+                              <div
+                                data-header-toolbar="true"
+                                className="flex items-center justify-between gap-2 pb-1.5 border-b border-zinc-100 dark:border-zinc-800 text-xs"
+                              >
+                                <div className="flex items-center gap-1">
+                                  <span className="text-[11px] text-zinc-500 mr-1 font-medium">Position:</span>
+                                  <button
+                                    type="button"
+                                    title="Align Left"
+                                    onClick={() =>
+                                      setHeaderState((prev) => ({
+                                        ...prev,
+                                        image: prev.image ? { ...prev.image, align: 'left' } : null,
+                                      }))
+                                    }
+                                    className={cn(
+                                      'p-1 rounded cursor-pointer transition-colors',
+                                      headerState.image.align === 'left'
+                                        ? 'bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-400 font-bold'
+                                        : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                                    )}
+                                  >
+                                    <AlignLeft className="w-3.5 h-3.5" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    title="Align Center"
+                                    onClick={() =>
+                                      setHeaderState((prev) => ({
+                                        ...prev,
+                                        image: prev.image ? { ...prev.image, align: 'center' } : null,
+                                      }))
+                                    }
+                                    className={cn(
+                                      'p-1 rounded cursor-pointer transition-colors',
+                                      headerState.image.align === 'center' || !headerState.image.align
+                                        ? 'bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-400 font-bold'
+                                        : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                                    )}
+                                  >
+                                    <AlignCenter className="w-3.5 h-3.5" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    title="Align Right"
+                                    onClick={() =>
+                                      setHeaderState((prev) => ({
+                                        ...prev,
+                                        image: prev.image ? { ...prev.image, align: 'right' } : null,
+                                      }))
+                                    }
+                                    className={cn(
+                                      'p-1 rounded cursor-pointer transition-colors',
+                                      headerState.image.align === 'right'
+                                        ? 'bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-400 font-bold'
+                                        : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                                    )}
+                                  >
+                                    <AlignRight className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+
+                                {/* Width / Size Stepper */}
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-[11px] text-zinc-500 font-medium">Size:</span>
+                                  <button
+                                    type="button"
+                                    title="Decrease size"
+                                    onClick={() =>
+                                      setHeaderState((prev) => ({
+                                        ...prev,
+                                        image: prev.image
+                                          ? { ...prev.image, width: Math.max(80, (prev.image.width || 180) - 20) }
+                                          : null,
+                                      }))
+                                    }
+                                    className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 cursor-pointer"
+                                  >
+                                    <Minus className="w-3 h-3" />
+                                  </button>
+                                  <span className="text-[11px] font-mono text-zinc-700 dark:text-zinc-300 w-12 text-center">
+                                    {headerState.image.width || 180}px
+                                  </span>
+                                  <button
+                                    type="button"
+                                    title="Increase size"
+                                    onClick={() =>
+                                      setHeaderState((prev) => ({
+                                        ...prev,
+                                        image: prev.image
+                                          ? { ...prev.image, width: Math.min(320, (prev.image.width || 180) + 20) }
+                                          : null,
+                                      }))
+                                    }
+                                    className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 cursor-pointer"
+                                  >
+                                    <Plus className="w-3 h-3" />
+                                  </button>
+                                </div>
+
+                                {/* Delete Logo */}
                                 <button
                                   type="button"
-                                  className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium text-zinc-700 dark:text-zinc-200 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700 shadow-xs cursor-pointer"
+                                  title="Remove Logo"
+                                  onClick={() => setHeaderState((prev) => ({ ...prev, image: null }))}
+                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 text-[11px] font-medium transition-colors cursor-pointer"
                                 >
-                                  <span>{headerScope === 'every_page' ? 'Every page' : 'This page only'}</span>
-                                  <ChevronDown className="w-3.5 h-3.5 text-zinc-500" />
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                  <span>Remove</span>
                                 </button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="w-56 p-1 shadow-lg border border-zinc-200 dark:border-zinc-800">
-                                <DropdownMenuItem
-                                  onClick={() => setHeaderScope('every_page')}
-                                  className="flex items-center justify-between text-xs px-2.5 py-1.5 cursor-pointer rounded-md"
-                                >
-                                  <span>Every page</span>
-                                  {headerScope === 'every_page' && <Check className="w-3.5 h-3.5 text-primary" />}
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() => setHeaderScope('first_page_only')}
-                                  className="flex items-center justify-between text-xs px-2.5 py-1.5 cursor-pointer rounded-md"
-                                >
-                                  <span>This page only (Different first page)</span>
-                                  {headerScope === 'first_page_only' && <Check className="w-3.5 h-3.5 text-primary" />}
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
+                              </div>
 
-                            <button
-                              type="button"
-                              onClick={() => setActiveHeaderFooter(null)}
-                              className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold text-zinc-600 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-200/60 dark:hover:bg-zinc-800 rounded transition-colors cursor-pointer"
-                            >
-                              <X className="w-3.5 h-3.5" />
-                              <span>Close</span>
-                            </button>
+                              {/* Rendered Logo at Selected Alignment */}
+                              <div
+                                className={cn(
+                                  'flex w-full py-1',
+                                  headerState.image.align === 'left' && 'justify-start',
+                                  (!headerState.image.align || headerState.image.align === 'center') && 'justify-center',
+                                  headerState.image.align === 'right' && 'justify-end'
+                                )}
+                              >
+                                <img
+                                  src={headerState.image.url}
+                                  alt="Header Logo"
+                                  style={{ width: `${headerState.image.width || 180}px` }}
+                                  className="max-h-24 object-contain rounded border border-zinc-200 dark:border-zinc-700 p-1 bg-white shadow-2xs"
+                                />
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Header Text Input Line & Alignment */}
+                          <div className="flex items-center gap-2 p-1.5 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xs">
+                            <input
+                              type="text"
+                              value={headerState.text || ''}
+                              onChange={(e) => setHeaderState((prev) => ({ ...prev, text: e.target.value }))}
+                              placeholder="Type institutional header text (e.g. STI College Marikina • Practicum Department)..."
+                              className="flex-1 bg-transparent px-2 py-1 text-xs text-zinc-800 dark:text-zinc-200 outline-hidden font-medium placeholder:text-zinc-400"
+                              style={{ textAlign: headerState.textAlign || 'center' }}
+                            />
+                            <div className="flex items-center gap-1 border-l border-zinc-200 dark:border-zinc-700 pl-2 shrink-0">
+                              <button
+                                type="button"
+                                title="Align Left"
+                                onClick={() => setHeaderState((prev) => ({ ...prev, textAlign: 'left' }))}
+                                className={cn(
+                                  'p-1 rounded cursor-pointer transition-colors',
+                                  headerState.textAlign === 'left'
+                                    ? 'bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-400 font-bold'
+                                    : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                                )}
+                              >
+                                <AlignLeft className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                title="Align Center"
+                                onClick={() => setHeaderState((prev) => ({ ...prev, textAlign: 'center' }))}
+                                className={cn(
+                                  'p-1 rounded cursor-pointer transition-colors',
+                                  headerState.textAlign === 'center' || !headerState.textAlign
+                                    ? 'bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-400 font-bold'
+                                    : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                                )}
+                              >
+                                <AlignCenter className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                title="Align Right"
+                                onClick={() => setHeaderState((prev) => ({ ...prev, textAlign: 'right' }))}
+                                className={cn(
+                                  'p-1 rounded cursor-pointer transition-colors',
+                                  headerState.textAlign === 'right'
+                                    ? 'bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-400 font-bold'
+                                    : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                                )}
+                              >
+                                <AlignRight className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           </div>
                         </div>
                       ) : (
-                        <div className="flex items-center justify-between text-[11px] text-zinc-400 opacity-0 group-hover/header:opacity-100 transition-opacity">
-                          <span>Double-click to edit Header</span>
-                          <span>{headerScope === 'every_page' ? 'Every page' : 'This page only'}</span>
+                        /* Idle State (Faint Google Docs Style Header Preview) */
+                        <div className="w-full flex flex-col gap-1.5 document-header-preview">
+                          {headerState.image?.url && (
+                            <div
+                              className={cn(
+                                'flex w-full',
+                                headerState.image.align === 'left' && 'justify-start',
+                                (!headerState.image.align || headerState.image.align === 'center') && 'justify-center',
+                                headerState.image.align === 'right' && 'justify-end'
+                              )}
+                            >
+                              <img
+                                src={headerState.image.url}
+                                alt="Header Logo"
+                                style={{ width: `${headerState.image.width || 180}px` }}
+                                className="max-h-24 object-contain opacity-85 group-hover/header:opacity-100 transition-opacity"
+                              />
+                            </div>
+                          )}
+                          {headerState.text?.trim() && (
+                            <div
+                              className={cn(
+                                'text-xs text-zinc-500 font-semibold tracking-wide',
+                                headerState.textAlign === 'left' && 'text-left',
+                                (!headerState.textAlign || headerState.textAlign === 'center') && 'text-center',
+                                headerState.textAlign === 'right' && 'text-right'
+                              )}
+                            >
+                              {headerState.text}
+                            </div>
+                          )}
+                          {!isEffectivelyReadOnly && (
+                            <div className="header-footer-prompt flex items-center justify-between text-[11px] text-zinc-400 opacity-0 group-hover/header:opacity-100 transition-opacity pt-1 border-t border-dashed border-zinc-300 dark:border-zinc-700">
+                              <span>Double-click to edit Header</span>
+                              <span>{headerState.scope === 'every_page' ? 'Every page' : 'This page only'}</span>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
@@ -621,82 +924,343 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                     onKeyDown={handleKeyDown}
                   />
 
-                  {/* Google Docs Style Footer Zone */}
-                  {!isEffectivelyReadOnly && (
+                  {/* ─── Google Docs Style Footer Zone ───────────────────────────── */}
+                  {(!isEffectivelyReadOnly || footerState.image?.url || footerState.text?.trim() || footerState.pageNumber) && (
                     <div
-                      onDoubleClick={() => setActiveHeaderFooter((prev) => (prev === 'footer' ? null : 'footer'))}
+                      onDoubleClick={() => {
+                        if (!isEffectivelyReadOnly) {
+                          setActiveHeaderFooter((prev) => (prev === 'footer' ? null : 'footer'));
+                        }
+                      }}
                       className={cn(
-                        'w-full transition-all select-none',
+                        'w-full transition-all select-none print:mt-2 print:border-none',
                         activeHeaderFooter === 'footer'
-                          ? 'mt-4 border-t-2 border-blue-500 pt-2.5'
+                          ? 'mt-4 border-t-2 border-blue-500 pt-3 bg-blue-50/20 dark:bg-blue-950/20 p-2.5 rounded-b-lg'
                           : 'mt-2 pt-1.5 pb-2 border-t border-transparent hover:border-dashed hover:border-zinc-300 dark:hover:border-zinc-700 cursor-pointer group/footer'
                       )}
                     >
                       {activeHeaderFooter === 'footer' ? (
-                        <div className="flex items-center justify-between px-3 py-1.5 rounded-lg bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/60 shadow-xs">
-                          <div className="flex items-center gap-3">
-                            <span className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
-                              Footer
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const len = (editor?.children as any[])?.length || 0;
-                                editor?.tf?.insertNodes?.(
-                                  [{ type: 'p', align: 'center', children: [{ text: 'Page 1 of 1' }] }],
-                                  { at: [len] }
-                                );
-                              }}
-                              className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold text-primary bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 rounded-md border border-zinc-200 dark:border-zinc-700 shadow-xs transition-colors cursor-pointer"
-                            >
-                              <span>+ Insert Page Number</span>
-                            </button>
+                        <div className="flex flex-col gap-2.5 w-full">
+                          {/* Footer Control Ribbon */}
+                          <div
+                            data-footer-toolbar="true"
+                            className="header-footer-ribbon flex items-center justify-between px-3 py-1.5 rounded-lg bg-blue-50/80 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-900/60 shadow-xs"
+                          >
+                            <div className="flex items-center gap-3">
+                              <span className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
+                                Footer
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => footerInputRef.current?.click()}
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold text-primary bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 rounded-md border border-zinc-200 dark:border-zinc-700 shadow-xs transition-colors cursor-pointer"
+                              >
+                                <ImageIcon className="w-3.5 h-3.5 text-primary" />
+                                <span>{footerState.image?.url ? 'Replace Logo' : '+ Add Logo / Image'}</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setFooterState((prev) => ({ ...prev, pageNumber: !prev.pageNumber }))
+                                }
+                                className={cn(
+                                  'inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md border shadow-xs transition-colors cursor-pointer',
+                                  footerState.pageNumber
+                                    ? 'bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-700'
+                                    : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700'
+                                )}
+                              >
+                                <Hash className="w-3.5 h-3.5" />
+                                <span>{footerState.pageNumber ? '✓ Page Number Active' : '+ Insert Page Number'}</span>
+                              </button>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              {/* Scope Dropview: This page only vs Every page */}
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <button
+                                    type="button"
+                                    className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium text-zinc-700 dark:text-zinc-200 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700 shadow-xs cursor-pointer"
+                                  >
+                                    <span>{footerState.scope === 'every_page' ? 'Every page' : 'This page only'}</span>
+                                    <ChevronDown className="w-3.5 h-3.5 text-zinc-500" />
+                                  </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-56 p-1 shadow-lg border border-zinc-200 dark:border-zinc-800">
+                                  <DropdownMenuItem
+                                    onClick={() => setFooterState((prev) => ({ ...prev, scope: 'every_page' }))}
+                                    className="flex items-center justify-between text-xs px-2.5 py-1.5 cursor-pointer rounded-md"
+                                  >
+                                    <span>Every page</span>
+                                    {footerState.scope === 'every_page' && <Check className="w-3.5 h-3.5 text-primary" />}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => setFooterState((prev) => ({ ...prev, scope: 'first_page_only' }))}
+                                    className="flex items-center justify-between text-xs px-2.5 py-1.5 cursor-pointer rounded-md"
+                                  >
+                                    <span>This page only (Different first page)</span>
+                                    {footerState.scope === 'first_page_only' && <Check className="w-3.5 h-3.5 text-primary" />}
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+
+                              <button
+                                type="button"
+                                onClick={() => setActiveHeaderFooter(null)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-zinc-700 dark:text-zinc-200 hover:text-zinc-950 dark:hover:text-white bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 border border-zinc-200 dark:border-zinc-700 rounded transition-colors cursor-pointer shadow-xs"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                                <span>Done</span>
+                              </button>
+                            </div>
                           </div>
 
-                          <div className="flex items-center gap-2">
-                            {/* Options Dropview: This page only vs Every page */}
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
+                          {/* Moveable Logo Toolbar & Preview (if image exists) */}
+                          {footerState.image?.url && (
+                            <div className="flex flex-col gap-1.5 p-2 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xs">
+                              {/* Moveable Image Action Bar */}
+                              <div
+                                data-footer-toolbar="true"
+                                className="flex items-center justify-between gap-2 pb-1.5 border-b border-zinc-100 dark:border-zinc-800 text-xs"
+                              >
+                                <div className="flex items-center gap-1">
+                                  <span className="text-[11px] text-zinc-500 mr-1 font-medium">Position:</span>
+                                  <button
+                                    type="button"
+                                    title="Align Left"
+                                    onClick={() =>
+                                      setFooterState((prev) => ({
+                                        ...prev,
+                                        image: prev.image ? { ...prev.image, align: 'left' } : null,
+                                      }))
+                                    }
+                                    className={cn(
+                                      'p-1 rounded cursor-pointer transition-colors',
+                                      footerState.image.align === 'left'
+                                        ? 'bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-400 font-bold'
+                                        : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                                    )}
+                                  >
+                                    <AlignLeft className="w-3.5 h-3.5" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    title="Align Center"
+                                    onClick={() =>
+                                      setFooterState((prev) => ({
+                                        ...prev,
+                                        image: prev.image ? { ...prev.image, align: 'center' } : null,
+                                      }))
+                                    }
+                                    className={cn(
+                                      'p-1 rounded cursor-pointer transition-colors',
+                                      footerState.image.align === 'center' || !footerState.image.align
+                                        ? 'bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-400 font-bold'
+                                        : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                                    )}
+                                  >
+                                    <AlignCenter className="w-3.5 h-3.5" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    title="Align Right"
+                                    onClick={() =>
+                                      setFooterState((prev) => ({
+                                        ...prev,
+                                        image: prev.image ? { ...prev.image, align: 'right' } : null,
+                                      }))
+                                    }
+                                    className={cn(
+                                      'p-1 rounded cursor-pointer transition-colors',
+                                      footerState.image.align === 'right'
+                                        ? 'bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-400 font-bold'
+                                        : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                                    )}
+                                  >
+                                    <AlignRight className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+
+                                {/* Width / Size Stepper */}
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-[11px] text-zinc-500 font-medium">Size:</span>
+                                  <button
+                                    type="button"
+                                    title="Decrease size"
+                                    onClick={() =>
+                                      setFooterState((prev) => ({
+                                        ...prev,
+                                        image: prev.image
+                                          ? { ...prev.image, width: Math.max(80, (prev.image.width || 140) - 20) }
+                                          : null,
+                                      }))
+                                    }
+                                    className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 cursor-pointer"
+                                  >
+                                    <Minus className="w-3 h-3" />
+                                  </button>
+                                  <span className="text-[11px] font-mono text-zinc-700 dark:text-zinc-300 w-12 text-center">
+                                    {footerState.image.width || 140}px
+                                  </span>
+                                  <button
+                                    type="button"
+                                    title="Increase size"
+                                    onClick={() =>
+                                      setFooterState((prev) => ({
+                                        ...prev,
+                                        image: prev.image
+                                          ? { ...prev.image, width: Math.min(320, (prev.image.width || 140) + 20) }
+                                          : null,
+                                      }))
+                                    }
+                                    className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 cursor-pointer"
+                                  >
+                                    <Plus className="w-3 h-3" />
+                                  </button>
+                                </div>
+
+                                {/* Delete Logo */}
                                 <button
                                   type="button"
-                                  className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium text-zinc-700 dark:text-zinc-200 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700 shadow-xs cursor-pointer"
+                                  title="Remove Logo"
+                                  onClick={() => setFooterState((prev) => ({ ...prev, image: null }))}
+                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 text-[11px] font-medium transition-colors cursor-pointer"
                                 >
-                                  <span>{footerScope === 'every_page' ? 'Every page' : 'This page only'}</span>
-                                  <ChevronDown className="w-3.5 h-3.5 text-zinc-500" />
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                  <span>Remove</span>
                                 </button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="w-56 p-1 shadow-lg border border-zinc-200 dark:border-zinc-800">
-                                <DropdownMenuItem
-                                  onClick={() => setFooterScope('every_page')}
-                                  className="flex items-center justify-between text-xs px-2.5 py-1.5 cursor-pointer rounded-md"
-                                >
-                                  <span>Every page</span>
-                                  {footerScope === 'every_page' && <Check className="w-3.5 h-3.5 text-primary" />}
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() => setFooterScope('first_page_only')}
-                                  className="flex items-center justify-between text-xs px-2.5 py-1.5 cursor-pointer rounded-md"
-                                >
-                                  <span>This page only (Different first page)</span>
-                                  {footerScope === 'first_page_only' && <Check className="w-3.5 h-3.5 text-primary" />}
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
+                              </div>
 
-                            <button
-                              type="button"
-                              onClick={() => setActiveHeaderFooter(null)}
-                              className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold text-zinc-600 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-200/60 dark:hover:bg-zinc-800 rounded transition-colors cursor-pointer"
-                            >
-                              <X className="w-3.5 h-3.5" />
-                              <span>Close</span>
-                            </button>
+                              {/* Rendered Logo at Selected Alignment */}
+                              <div
+                                className={cn(
+                                  'flex w-full py-1',
+                                  footerState.image.align === 'left' && 'justify-start',
+                                  (!footerState.image.align || footerState.image.align === 'center') && 'justify-center',
+                                  footerState.image.align === 'right' && 'justify-end'
+                                )}
+                              >
+                                <img
+                                  src={footerState.image.url}
+                                  alt="Footer Logo"
+                                  style={{ width: `${footerState.image.width || 140}px` }}
+                                  className="max-h-20 object-contain rounded border border-zinc-200 dark:border-zinc-700 p-1 bg-white shadow-2xs"
+                                />
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Footer Text Input Line & Alignment */}
+                          <div className="flex items-center gap-2 p-1.5 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xs">
+                            <input
+                              type="text"
+                              value={footerState.text || ''}
+                              onChange={(e) => setFooterState((prev) => ({ ...prev, text: e.target.value }))}
+                              placeholder="Type footer text (e.g. Confidential • STI College Marikina)..."
+                              className="flex-1 bg-transparent px-2 py-1 text-xs text-zinc-800 dark:text-zinc-200 outline-hidden font-medium placeholder:text-zinc-400"
+                              style={{ textAlign: footerState.textAlign || 'center' }}
+                            />
+                            <div className="flex items-center gap-1 border-l border-zinc-200 dark:border-zinc-700 pl-2 shrink-0">
+                              <button
+                                type="button"
+                                title="Align Left"
+                                onClick={() => setFooterState((prev) => ({ ...prev, textAlign: 'left' }))}
+                                className={cn(
+                                  'p-1 rounded cursor-pointer transition-colors',
+                                  footerState.textAlign === 'left'
+                                    ? 'bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-400 font-bold'
+                                    : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                                )}
+                              >
+                                <AlignLeft className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                title="Align Center"
+                                onClick={() => setFooterState((prev) => ({ ...prev, textAlign: 'center' }))}
+                                className={cn(
+                                  'p-1 rounded cursor-pointer transition-colors',
+                                  footerState.textAlign === 'center' || !footerState.textAlign
+                                    ? 'bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-400 font-bold'
+                                    : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                                )}
+                              >
+                                <AlignCenter className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                title="Align Right"
+                                onClick={() => setFooterState((prev) => ({ ...prev, textAlign: 'right' }))}
+                                className={cn(
+                                  'p-1 rounded cursor-pointer transition-colors',
+                                  footerState.textAlign === 'right'
+                                    ? 'bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-400 font-bold'
+                                    : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                                )}
+                              >
+                                <AlignRight className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           </div>
+
+                          {/* Footer Page Number Preview (if active) */}
+                          {footerState.pageNumber && (
+                            <div
+                              className={cn(
+                                'text-xs text-zinc-400 font-mono py-0.5 px-2 bg-zinc-50 dark:bg-zinc-800/60 rounded border border-zinc-200/60 dark:border-zinc-700/60',
+                                footerState.textAlign === 'left' && 'text-left',
+                                (!footerState.textAlign || footerState.textAlign === 'center') && 'text-center',
+                                footerState.textAlign === 'right' && 'text-right'
+                              )}
+                            >
+                              Page 1 of 1
+                            </div>
+                          )}
                         </div>
                       ) : (
-                        <div className="flex items-center justify-between text-[11px] text-zinc-400 opacity-0 group-hover/footer:opacity-100 transition-opacity">
-                          <span>Double-click to edit Footer</span>
-                          <span>{footerScope === 'every_page' ? 'Every page' : 'This page only'}</span>
+                        /* Idle State (Faint Google Docs Style Footer Preview) */
+                        <div className="w-full flex flex-col gap-1.5 document-footer-preview">
+                          {footerState.image?.url && (
+                            <div
+                              className={cn(
+                                'flex w-full',
+                                footerState.image.align === 'left' && 'justify-start',
+                                (!footerState.image.align || footerState.image.align === 'center') && 'justify-center',
+                                footerState.image.align === 'right' && 'justify-end'
+                              )}
+                            >
+                              <img
+                                src={footerState.image.url}
+                                alt="Footer Logo"
+                                style={{ width: `${footerState.image.width || 140}px` }}
+                                className="max-h-20 object-contain opacity-85 group-hover/footer:opacity-100 transition-opacity"
+                              />
+                            </div>
+                          )}
+                          {(footerState.text?.trim() || footerState.pageNumber) && (
+                            <div
+                              className={cn(
+                                'flex items-center gap-2 text-xs text-zinc-500 font-medium',
+                                footerState.textAlign === 'left' && 'justify-start text-left',
+                                (!footerState.textAlign || footerState.textAlign === 'center') && 'justify-center text-center',
+                                footerState.textAlign === 'right' && 'justify-end text-right'
+                              )}
+                            >
+                              {footerState.text?.trim() && <span>{footerState.text}</span>}
+                              {footerState.pageNumber && (
+                                <span className="font-mono text-zinc-400">
+                                  {footerState.text?.trim() ? ' • ' : ''}Page 1 of 1
+                                </span>
+                              )}
+                            </div>
+                          )}
+                          {!isEffectivelyReadOnly && (
+                            <div className="header-footer-prompt flex items-center justify-between text-[11px] text-zinc-400 opacity-0 group-hover/footer:opacity-100 transition-opacity pt-1 border-t border-dashed border-zinc-300 dark:border-zinc-700">
+                              <span>Double-click to edit Footer</span>
+                              <span>{footerState.scope === 'every_page' ? 'Every page' : 'This page only'}</span>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>

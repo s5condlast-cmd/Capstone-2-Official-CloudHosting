@@ -360,8 +360,9 @@ export function StudentDocumentEditor() {
   // ── Export ───────────────────────────────────────────────────────────────
   const handleExportDocx = useCallback(async () => {
     const content = editorRef.current?.getContent() ?? draft?.content ?? [];
+    const headerFooter = editorRef.current?.getHeaderFooter?.();
     try {
-      await downloadDocx(content as any[], title);
+      await downloadDocx(content as any[], title, headerFooter);
     } catch {
       toast.error('Export failed. Please try again.');
     }

@@ -2529,6 +2529,66 @@ Per user alignment during `/grill-me` regarding uploaded image interaction:
 - **TypeScript Compiler (`npm run lint` / `tsc --noEmit`)**: 0 errors.
 - **Editor Test Suite (`npm run test:editor`)**: 54/54 tests passing across all 8 suites (including new unit test verifying `editor.plugins.img.node.component === ImageElement`).
 
+---
+
+## 35. Native DOCX/PDF Header & Footer with Moveable Logo Toolbar, Page Numbers, and Google Docs Print Layout
+
+Per user alignment during `/grill-me` regarding native header and footer export and moveable logo positioning:
+
+### 1. Root Cause Analysis & Architectural Decoupling
+- **Root Cause**: Previously, header logo upload was inserting an `img` block directly into the document body at index 0 via `editor.tf.insertNodes({ at: [0] })`. When exported to DOCX, the logo appeared inside the document body as a regular image instead of the official Word document header (`docx.Header`).
+- **Resolution**:
+  - Decoupled document body nodes from header/footer state.
+  - Header and footer state (`headerState`, `footerState`) are preserved independently via `DocumentHeaderFooterOptions`, storing:
+    - `image`: `{ url, name, align: 'left' | 'center' | 'right', width: number }`
+    - `text`: string for institution or department title
+    - `textAlign`: `'left' | 'center' | 'right'`
+    - `pageNumber`: boolean toggle for page numbers
+    - `scope`: `'every_page' | 'first_page_only'`
+
+### 2. Native Word DOCX Header & Footer Serialization (`src/components/editor/serializers/docxSerializer.ts`)
+- Imported `Header`, `Footer`, and `PageNumber` from `docx`.
+- Built native `docx.Header` attached to `sections[0].headers.default`:
+  - Renders logo as an `ImageRun` aligned via `Paragraph({ alignment: toAlignmentType(align) })`.
+  - Renders institutional text as a `TextRun`.
+- Built native `docx.Footer` attached to `sections[0].footers.default`:
+  - Renders footer logo as an `ImageRun`.
+  - Renders footer text and native Word `PageNumber.CURRENT` and `PageNumber.TOTAL_PAGES` fields (`Page X of Y`).
+- Updated `serializeToDocx` and `downloadDocx` to accept `headerFooter?: DocumentHeaderFooterOptions`.
+
+### 3. Export Integration in Student Document Editor (`src/pages/student/StudentDocumentEditor.tsx`)
+- Extended `PlateEditorRef` to export `getHeaderFooter: () => DocumentHeaderFooterOptions`.
+- Updated `handleExportDocx` in `StudentDocumentEditor.tsx` to retrieve header/footer data from `editorRef.current?.getHeaderFooter?.()` and pass it to `downloadDocx(content, title, headerFooter)`.
+
+### 4. Interactive Header & Footer with Moveable Logo Toolbar (`src/components/editor/plate-editor.tsx`)
+- Added hidden file inputs for both `headerInputRef` and `footerInputRef`.
+- **Active Header Ribbon (`activeHeaderFooter === 'header'`)**:
+  - Blue editing ribbon with "Header" badge, "+ Add Logo / Image" (or "Replace Logo"), and Scope dropdown ("Every page" vs "This page only").
+  - **Moveable Image Toolbar**:
+    - Alignment buttons (`AlignLeft`, `AlignCenter`, `AlignRight`) to position the logo horizontally.
+    - Width stepper (`-` / `+`) allowing fine-tuning of logo size in 20px increments (80px to 320px).
+    - Remove button (`Trash2`) to safely delete the header logo.
+  - Institutional text input with independent text alignment controls.
+- **Active Footer Ribbon (`activeHeaderFooter === 'footer'`)**:
+  - Blue editing ribbon with "Footer" badge, "+ Add Logo / Image", "+ Insert Page Number" toggle button, and Scope dropdown.
+  - Moveable image toolbar with position, width stepper, and remove controls.
+  - Footer text input with alignment buttons and dynamic page number indicator.
+- **Google Docs Style Idle Preview**:
+  - When idle, faint Google Docs/Word-style print-layout preview renders the logo, text, and page numbers at the paper margins (`opacity-85`).
+  - Hovering reveals a dashed boundary with a subtle "Double-click to edit Header / Footer" prompt.
+  - Double-clicking immediately opens the editing ribbon.
+  - Also displays header/footer cleanly in read-only and viewer modes without editing chrome.
+
+### 5. Print Stylesheet Overrides (`src/styles/print-document.css`)
+- Added `@media print` rules hiding interactive ribbons, prompts, and toolbars:
+  - `[data-header-toolbar]`, `[data-footer-toolbar]`, `.header-footer-ribbon`, `.header-footer-prompt` set to `display: none !important`.
+  - Header and footer images forced to `opacity: 1 !important`, with borders and shadows removed for clean, crisp document printing and PDF export.
+
+### 6. Automated Verification
+- **TypeScript Compiler (`npm run lint` / `tsc --noEmit`)**: 0 errors.
+- **Editor Test Suite (`npm run test:editor`)**: 55/55 tests passing across all 8 suites, including:
+  - Unit test verifying `serializeToDocx` successfully generates native Word `Header` and `Footer` containing images, text, and `PageNumber.CURRENT` / `PageNumber.TOTAL_PAGES`.
+
 
 
 

@@ -24,8 +24,31 @@ import {
   WidthType,
   LevelFormat,
   UnderlineType,
+  Header,
+  Footer,
+  PageNumber,
 } from 'docx';
 import { titleToFilename } from '@/src/lib/sanitizeDocumentFilename';
+
+// ─── Header & Footer Types ────────────────────────────────────────────────────
+
+export interface HeaderFooterItem {
+  image?: {
+    url: string;
+    name?: string;
+    align?: 'left' | 'center' | 'right';
+    width?: number;
+  } | null;
+  text?: string;
+  textAlign?: 'left' | 'center' | 'right';
+  pageNumber?: boolean;
+  scope?: 'every_page' | 'first_page_only';
+}
+
+export interface DocumentHeaderFooterOptions {
+  header?: HeaderFooterItem | null;
+  footer?: HeaderFooterItem | null;
+}
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -400,11 +423,107 @@ function nodesToDocxChildren(nodes: PlateNode[]): (Paragraph | Table)[] {
 
 /**
  * Serialize Plate.js JSON content to a DOCX Blob.
- * @param content  Plate JSON node array
- * @param title    Document title (used in document properties)
+ * @param content       Plate JSON node array
+ * @param title         Document title (used in document properties)
+ * @param headerFooter  Optional header and footer options (logos, text, page numbers)
  */
-export async function serializeToDocx(content: PlateNode[], title: string): Promise<Blob> {
+export async function serializeToDocx(
+  content: PlateNode[],
+  title: string,
+  headerFooter?: DocumentHeaderFooterOptions
+): Promise<Blob> {
   const children = nodesToDocxChildren(content);
+
+  // ── Build Native Word Header ───────────────────────────────────────────────
+  const headerChildren: Paragraph[] = [];
+  if (headerFooter?.header?.image?.url) {
+    const parsed = parseBase64Image(headerFooter.header.image.url);
+    if (parsed) {
+      const dims = getImageDimensions(parsed.data, parsed.type);
+      const width = headerFooter.header.image.width || 180;
+      const height = Math.round(width * (dims.height / dims.width));
+      headerChildren.push(
+        new Paragraph({
+          alignment: toAlignmentType(headerFooter.header.image.align),
+          children: [
+            new ImageRun({
+              data: parsed.data,
+              transformation: { width, height },
+              type: parsed.type,
+            }),
+          ],
+          spacing: { after: 80 },
+        })
+      );
+    }
+  }
+  if (headerFooter?.header?.text?.trim()) {
+    headerChildren.push(
+      new Paragraph({
+        alignment: toAlignmentType(headerFooter.header.textAlign || 'center'),
+        children: [
+          new TextRun({
+            text: headerFooter.header.text.trim(),
+            size: 18, // 9pt
+            color: '666666',
+          }),
+        ],
+        spacing: { after: 120 },
+      })
+    );
+  }
+
+  // ── Build Native Word Footer ───────────────────────────────────────────────
+  const footerChildren: Paragraph[] = [];
+  if (headerFooter?.footer?.image?.url) {
+    const parsed = parseBase64Image(headerFooter.footer.image.url);
+    if (parsed) {
+      const dims = getImageDimensions(parsed.data, parsed.type);
+      const width = headerFooter.footer.image.width || 140;
+      const height = Math.round(width * (dims.height / dims.width));
+      footerChildren.push(
+        new Paragraph({
+          alignment: toAlignmentType(headerFooter.footer.image.align),
+          children: [
+            new ImageRun({
+              data: parsed.data,
+              transformation: { width, height },
+              type: parsed.type,
+            }),
+          ],
+          spacing: { before: 80 },
+        })
+      );
+    }
+  }
+
+  const footerRuns: (TextRun | typeof PageNumber[keyof typeof PageNumber])[] = [];
+  if (headerFooter?.footer?.text?.trim()) {
+    footerRuns.push(
+      new TextRun({
+        text: headerFooter.footer.text.trim() + (headerFooter.footer.pageNumber ? '   ' : ''),
+        size: 18,
+        color: '666666',
+      })
+    );
+  }
+  if (headerFooter?.footer?.pageNumber) {
+    footerRuns.push(
+      new TextRun({ text: 'Page ', size: 18, color: '666666' }),
+      PageNumber.CURRENT,
+      new TextRun({ text: ' of ', size: 18, color: '666666' }),
+      PageNumber.TOTAL_PAGES
+    );
+  }
+  if (footerRuns.length > 0) {
+    footerChildren.push(
+      new Paragraph({
+        alignment: toAlignmentType(headerFooter?.footer?.textAlign || 'center'),
+        children: footerRuns as any,
+        spacing: { before: 80 },
+      })
+    );
+  }
 
   const doc = new Document({
     title,
@@ -444,9 +563,13 @@ export async function serializeToDocx(content: PlateNode[], title: string): Prom
               bottom: 1440,
               left:   1440,
               right:  1440,
+              header: 720,  // 0.5 inch
+              footer: 720,  // 0.5 inch
             },
           },
         },
+        headers: headerChildren.length > 0 ? { default: new Header({ children: headerChildren }) } : undefined,
+        footers: footerChildren.length > 0 ? { default: new Footer({ children: footerChildren }) } : undefined,
         children,
       },
     ],
@@ -458,11 +581,16 @@ export async function serializeToDocx(content: PlateNode[], title: string): Prom
 
 /**
  * Trigger a browser download of the serialized DOCX file.
- * @param content  Plate JSON node array
- * @param title    Document title (used for the filename)
+ * @param content       Plate JSON node array
+ * @param title         Document title (used for the filename)
+ * @param headerFooter  Optional header and footer options (logos, text, page numbers)
  */
-export async function downloadDocx(content: PlateNode[], title: string): Promise<void> {
-  const blob = await serializeToDocx(content, title);
+export async function downloadDocx(
+  content: PlateNode[],
+  title: string,
+  headerFooter?: DocumentHeaderFooterOptions
+): Promise<void> {
+  const blob = await serializeToDocx(content, title, headerFooter);
   const filename = titleToFilename(title, 'docx');
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');

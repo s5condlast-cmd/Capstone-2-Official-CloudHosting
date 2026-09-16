@@ -50,8 +50,20 @@
   [data-slate-editor] button,
   [data-plate-floating-toolbar],
   .group\/image button,
-  [data-dnd-handle] {
+  [data-dnd-handle],
+  [data-header-toolbar],
+  [data-footer-toolbar],
+  .header-footer-ribbon,
+  .header-footer-prompt {
     display: none !important;
+  }
+
+  /* Keep header and footer previews clean and crisp in print */
+  .document-header-preview img,
+  .document-footer-preview img {
+    opacity: 1 !important;
+    border: none !important;
+    box-shadow: none !important;
   }
 
   /* Keep paragraphs with their following content */
