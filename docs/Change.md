@@ -1,5 +1,7 @@
 # Change Log: Official `@plate/editor-ai` Template Adoption & Student Document Editor Suite
 
+> **Audit note (2026-09-16):** This file records a historical Antigravity change claim and is not a reliable description of the current working tree. The AI menu, AI editor route, and `/api/ai/editor-assist` endpoint described below are absent (the AI editor was later removed). See [`PLATE_EDITOR_COMPONENT_AUDIT.md`](PLATE_EDITOR_COMPONENT_AUDIT.md) and the verification tasks in [`tasks/TASKS.md`](tasks/TASKS.md).
+
 This document records the full architecture, code changes, and files implemented to adopt Plate's official shadcn `@plate/editor-ai` template (`npx shadcn@latest add @plate/editor-ai`) for the Student Document Editor (`/student/editor`).
 
 ---
@@ -2089,4 +2091,23 @@ Per user request with reference screenshot `media_1789514707093.png`:
    - In `src/pages/student/StudentDocumentEditor.tsx`, updated top navigation button from `ArrowLeft` (`←`) and `"Repository"` to `ChevronLeft` (`<`) and `"Back"`.
    - Updated Lucide icon imports: replaced `ArrowLeft` with `ChevronLeft`.
    - Enhanced styling with `gap-1`, `font-medium`, and `transition-colors` matching design standards.
+
+---
+
+## 23. Document Editor Text Input & Canvas Refinement (`media_1789516779276.png`)
+
+Per user request with reference screenshot `media_1789516779276.png`:
+
+1. **Clean Sans-Serif Modern Document Canvas**:
+   - In `src/components/plate-ui/editor.tsx`, updated `editorVariants` to use `font-sans text-[15px] sm:text-base leading-relaxed` with `caret-zinc-900 dark:caret-zinc-100`.
+   - Removed hardcoded inline `Times New Roman` serif styling from `PlateContent` on screen, letting the web editor cleanly match the Geist/Inter aesthetic shown in `media_1789516779276.png`. Formal document serif printing remains preserved in `@media print` (`print-document.css`) and DOCX serialization (`docxSerializer.ts`).
+2. **Authentic Sheet Dimensions & Framing**:
+   - Updated `Editor` card to `max-w-[900px] min-h-[750px] bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 shadow-sm rounded-xl px-8 sm:px-12 md:px-16 py-10 md:py-14`, matching the generous 64px left/top gutters measured in the reference screenshot.
+   - Updated `EditorContainer` canvas background to `dark:bg-zinc-950` (`#09090b`), providing clean visual separation around the `#18181b` document sheet.
+3. **Sub-Pixel Caret & Placeholder Alignment**:
+   - Added `relative` positioning to `ParagraphElement`, `HeadingElement`, and `BlockquoteElement` in `src/components/editor/editor-kit.tsx`. This anchors Slate's `[data-slate-placeholder]` decoration (`position: absolute; top: 0`) directly to the active paragraph block line, keeping the caret `|` and placeholder text flush at `x=0`.
+4. **Enhanced Placeholder Renderer & Contrast**:
+   - Implemented a custom `renderPlaceholder` in `Editor` (`src/components/plate-ui/editor.tsx`) that renders placeholder text with `opacity: 1` and theme-aware styling (`text-zinc-400 dark:text-zinc-500`).
+   - Added global CSS overrides in `src/index.css` for `[data-slate-placeholder]` (`opacity: 1 !important; color: rgb(113 113 122) !important; .dark [data-slate-placeholder] { color: rgb(161 161 170 / 0.7) !important; }`), preventing Slate inline styles from fading the placeholder to 33% opacity.
+   - Standardized the placeholder string across `StudentDocumentEditor.tsx` and `plate-editor.tsx` to `"Start writing your document..."` matching the exact screenshot.
 

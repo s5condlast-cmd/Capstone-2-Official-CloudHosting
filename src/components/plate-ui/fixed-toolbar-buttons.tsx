@@ -9,6 +9,7 @@
  */
 import * as React from 'react';
 import { createPortal } from 'react-dom';
+import { useEditorVersion, useSelectionVersion } from 'platejs/react';
 import {
   Plus,
   Heading1,
@@ -80,6 +81,19 @@ import {
 import { cn } from '@/src/lib/utils';
 import { SidebarContext } from '@/components/ui/sidebar';
 import {
+  addMark,
+  getActiveBlock,
+  getActiveBlockType,
+  getMarkValue,
+  isListActive,
+  isMarkActive,
+  removeMark,
+  setBlockProperty,
+  setBlockType,
+  toggleList,
+  toggleMark,
+} from '@/src/components/editor/editor-commands';
+import {
   ToolbarGroup,
   ToolbarButton,
   ToolbarSeparator,
@@ -89,95 +103,6 @@ import {
 } from './toolbar';
 
 // ─── Slate / Plate Transform Helpers ──────────────────────────────────────────
-
-function toggleMark(editor: any, key: string) {
-  try {
-    if (editor?.tf?.toggleMark) {
-      editor.tf.toggleMark(key);
-    } else if (editor?.toggleMark) {
-      editor.toggleMark(key);
-    }
-  } catch { /* non-fatal */ }
-}
-
-function addMark(editor: any, key: string, value: any) {
-  try {
-    if (editor?.tf?.addMarks) {
-      editor.tf.addMarks({ [key]: value });
-    }
-  } catch { /* non-fatal */ }
-}
-
-function removeMark(editor: any, key: string) {
-  try {
-    if (editor?.tf?.removeMarks) {
-      editor.tf.removeMarks(key);
-    }
-  } catch { /* non-fatal */ }
-}
-
-function isMarkActive(editor: any, key: string): boolean {
-  try {
-    if (editor?.api?.marks) {
-      const marks = editor.api.marks();
-      return !!marks?.[key];
-    }
-    return false;
-  } catch {
-    return false;
-  }
-}
-
-function getMarkValue(editor: any, key: string): any {
-  try {
-    if (editor?.api?.marks) {
-      const marks = editor.api.marks();
-      return marks?.[key];
-    }
-    return undefined;
-  } catch {
-    return undefined;
-  }
-}
-
-function getActiveBlock(editor: any): any {
-  try {
-    if (editor?.api?.block) {
-      const [node] = editor.api.block() || [];
-      return node;
-    }
-    return null;
-  } catch {
-    return null;
-  }
-}
-
-function getActiveBlockType(editor: any): string {
-  const block = getActiveBlock(editor);
-  return block?.type || 'p';
-}
-
-function setBlockType(editor: any, type: string) {
-  try {
-    if (editor?.tf?.setNodes) {
-      editor.tf.setNodes(
-        { type },
-        { match: (n: any) => (editor.api?.isBlock ? editor.api.isBlock(n) : true) }
-      );
-    }
-  } catch { /* non-fatal */ }
-}
-
-function setBlockProperty(editor: any, prop: string, value: any) {
-  try {
-    if (editor?.tf?.setNodes) {
-      editor.tf.setNodes(
-        { [prop]: value },
-        { match: (n: any) => (editor.api?.isBlock ? editor.api.isBlock(n) : true) }
-      );
-    }
-  } catch { /* non-fatal */ }
-}
 
 // ─── Universal Portal Popover (Never Clipped by Toolbar Overflow) ──────────────
 
@@ -534,7 +459,11 @@ function TurnIntoToolbarButton({ editor }: { editor: any }) {
   const [open, setOpen] = React.useState(false);
   const anchorRef = React.useRef<HTMLDivElement>(null);
 
-  const activeType = getActiveBlockType(editor);
+  const activeType = isListActive(editor, 'ol')
+    ? 'ol'
+    : isListActive(editor, 'ul')
+      ? 'ul'
+      : getActiveBlockType(editor);
   const currentOption = TURN_INTO_OPTIONS.find((o) => o.id === activeType) || TURN_INTO_OPTIONS[0];
 
   return (
@@ -891,18 +820,10 @@ function NumberedListToolbarButton({ editor }: { editor: any }) {
   const [open, setOpen] = React.useState(false);
   const containerRef = React.useRef<HTMLDivElement>(null);
 
-  const activeType = getActiveBlockType(editor);
-  const isNumbered = activeType === 'ol';
+  const isNumbered = isListActive(editor, 'ol');
 
-  const toggleList = (styleType = 'decimal') => {
-    if (isNumbered) {
-      setBlockType(editor, 'p');
-    } else {
-      editor?.tf?.setNodes?.(
-        { type: 'ol', listStyleType: styleType },
-        { match: (n: any) => (editor.api?.isBlock ? editor.api.isBlock(n) : true) }
-      );
-    }
+  const handleToggleList = (styleType = 'decimal') => {
+    toggleList(editor, 'ol', styleType);
     editor?.tf?.focus?.();
   };
 
@@ -911,7 +832,7 @@ function NumberedListToolbarButton({ editor }: { editor: any }) {
       <ToolbarSplitButton pressed={isNumbered}>
         <ToolbarSplitButtonPrimary
           title="Numbered List"
-          onClick={() => toggleList('decimal')}
+          onClick={() => handleToggleList('decimal')}
         >
           <ListOrdered className="w-4 h-4" />
         </ToolbarSplitButtonPrimary>
@@ -938,7 +859,7 @@ function NumberedListToolbarButton({ editor }: { editor: any }) {
             type="button"
             onMouseDown={(e) => {
               e.preventDefault();
-              toggleList(st.id);
+              handleToggleList(st.id);
               setOpen(false);
             }}
             className="flex items-center w-full px-3 py-2 text-xs font-medium rounded-lg text-left text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
@@ -961,18 +882,10 @@ function BulletedListToolbarButton({ editor }: { editor: any }) {
   const [open, setOpen] = React.useState(false);
   const containerRef = React.useRef<HTMLDivElement>(null);
 
-  const activeType = getActiveBlockType(editor);
-  const isBulleted = activeType === 'ul';
+  const isBulleted = isListActive(editor, 'ul');
 
-  const toggleList = (styleType = 'disc') => {
-    if (isBulleted) {
-      setBlockType(editor, 'p');
-    } else {
-      editor?.tf?.setNodes?.(
-        { type: 'ul', listStyleType: styleType },
-        { match: (n: any) => (editor.api?.isBlock ? editor.api.isBlock(n) : true) }
-      );
-    }
+  const handleToggleList = (styleType = 'disc') => {
+    toggleList(editor, 'ul', styleType);
     editor?.tf?.focus?.();
   };
 
@@ -981,7 +894,7 @@ function BulletedListToolbarButton({ editor }: { editor: any }) {
       <ToolbarSplitButton pressed={isBulleted}>
         <ToolbarSplitButtonPrimary
           title="Bulleted List"
-          onClick={() => toggleList('disc')}
+          onClick={() => handleToggleList('disc')}
         >
           <List className="w-4 h-4" />
         </ToolbarSplitButtonPrimary>
@@ -1008,7 +921,7 @@ function BulletedListToolbarButton({ editor }: { editor: any }) {
             type="button"
             onMouseDown={(e) => {
               e.preventDefault();
-              toggleList(st.id);
+              handleToggleList(st.id);
               setOpen(false);
             }}
             className="flex items-center w-full px-3 py-2 text-xs font-medium rounded-lg text-left text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
@@ -1110,7 +1023,11 @@ function LinkToolbarButton({ editor }: { editor: any }) {
           );
         }
       } else {
-        // Insert new link node
+        // Replace the selected text (if any) so inserting a link never
+        // duplicates the selection beside the new inline node.
+        if (editor?.selection && editor?.api?.isExpanded?.()) {
+          editor.tf.deleteFragment();
+        }
         editor?.tf?.insertNodes?.([
           {
             type: 'a',
@@ -2948,7 +2865,8 @@ export function FixedToolbarButtons({
   onAddComment,
   onResolveComment,
 }: FixedToolbarButtonsProps) {
-  const [, forceUpdate] = React.useReducer((x) => x + 1, 0);
+  useEditorVersion();
+  useSelectionVersion();
 
   const sidebar = React.useContext(SidebarContext);
   const isSidebarOpen = sidebar ? sidebar.open : false;
@@ -2965,15 +2883,6 @@ export function FixedToolbarButtons({
   }, []);
 
   const showOverflowMenu = isSidebarOpen || isNarrow;
-
-  React.useEffect(() => {
-    if (!editor?.on) return;
-    let unsub: (() => void) | undefined;
-    try {
-      unsub = editor.on('change', forceUpdate);
-    } catch { /* non-fatal */ }
-    return () => unsub?.();
-  }, [editor]);
 
   const isViewing = mode === 'viewing';
 

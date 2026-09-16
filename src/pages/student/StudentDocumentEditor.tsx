@@ -78,6 +78,7 @@ export function StudentDocumentEditor() {
   const [showMultiTabWarning, setShowMultiTabWarning] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [titleEditing, setTitleEditing] = useState(false);
+  const [editorEpoch, setEditorEpoch] = useState(0);
 
   // ── Storage engine ───────────────────────────────────────────────────────
   const storageRef = useRef<DocumentHistoryStorage | null>(null);
@@ -166,7 +167,14 @@ export function StudentDocumentEditor() {
             setShowConflictBanner(true);
           },
           onMultiTabConflict: () => setShowMultiTabWarning(true),
+          onSaved: (saved) => {
+            setDraft((current) => current
+              ? { ...current, revision: saved.revision, updatedAt: saved.updatedAt }
+              : current
+            );
+          },
         });
+        await storage.load(loadedDraft.revision);
         storageRef.current = storage;
 
         // Print on load if requested
@@ -256,9 +264,8 @@ export function StudentDocumentEditor() {
       if (!draft) return;
       setDraft(prev => prev ? { ...prev, content: newContent, revision: newRevision, title: newTitle } : prev);
       setTitle(newTitle);
-      if (storageRef.current) {
-        storageRef.current['cloudRevision' as any] = newRevision;
-      }
+      storageRef.current?.setCloudRevision(newRevision);
+      setEditorEpoch((value) => value + 1);
     },
     [draft]
   );
@@ -288,9 +295,12 @@ export function StudentDocumentEditor() {
     setSubmitting(true);
     try {
       // 1. Flush pending draft revision
-      if (storageRef.current) {
-        await storageRef.current.flushNow();
-      }
+      const savedDraft = storageRef.current
+        ? await storageRef.current.flushNow()
+        : null;
+      const expectedRevision = savedDraft?.revision
+        ?? storageRef.current?.getCloudRevision()
+        ?? draft.revision;
 
       // 2. Generate DOCX artifact
       const content = editorRef.current?.getContent() ?? draft.content;
@@ -304,7 +314,7 @@ export function StudentDocumentEditor() {
       const { error: lockError } = await supabase.rpc('lock_editor_draft_for_submission', {
         p_draft_id: draft.id,
         p_submission_id: submissionDoc.id,
-        p_expected_revision: draft.revision + 1, // after flush
+        p_expected_revision: expectedRevision,
       });
 
       if (lockError) {
@@ -312,7 +322,12 @@ export function StudentDocumentEditor() {
         return;
       }
 
-      setDraft(prev => prev ? { ...prev, status: 'locked', submissionId: submissionDoc.id } : prev);
+      setDraft(prev => prev ? {
+        ...prev,
+        revision: expectedRevision,
+        status: 'locked',
+        submissionId: submissionDoc.id,
+      } : prev);
       toast.success('Document submitted successfully! Your adviser has been notified.');
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Submission failed. Please retry.');
@@ -499,18 +514,25 @@ export function StudentDocumentEditor() {
 
       {/* Plate editor */}
       <PlateEditor
+        key={`${draft?.id ?? 'new'}:${editorEpoch}`}
         ref={editorRef}
         initialContent={draft?.content ?? [{ type: 'p', children: [{ text: '' }] }]}
         onChange={handleEditorChange}
         readOnly={isLocked}
-        placeholder="Start writing your document…"
+        placeholder="Start writing your document..."
       />
 
       {/* History drawer */}
       {showHistory && draft && (
         <DocumentHistoryDrawer
           draftId={draft.id}
-          currentRevision={draft.revision}
+          currentRevision={storageRef.current?.getCloudRevision() ?? draft.revision}
+          onBeforeRestore={async () => {
+            const saved = await storageRef.current?.flushNow();
+            return saved?.revision
+              ?? storageRef.current?.getCloudRevision()
+              ?? draft.revision;
+          }}
           onClose={() => setShowHistory(false)}
           onRestoreComplete={handleRestoreComplete}
         />

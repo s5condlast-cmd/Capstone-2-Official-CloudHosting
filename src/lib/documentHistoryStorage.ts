@@ -103,7 +103,7 @@ export class DocumentHistoryStorage {
   /** Debounce timer for cloud save */
   private cloudSaveTimer: ReturnType<typeof setTimeout> | null = null;
   /** Whether a cloud save is in-flight */
-  private cloudSaving = false;
+  private cloudSavePromise: Promise<DraftState> | null = null;
 
   /** IDB write queue — latest state only */
   private idbPending: DraftState | null = null;
@@ -124,6 +124,8 @@ export class DocumentHistoryStorage {
   private onStatusChange?: (status: SyncStatus) => void;
   /** Conflict detected callback */
   private onConflict?: (local: DraftState, remote: DraftState) => void;
+  /** Cloud save acknowledgement callback */
+  private onSaved?: (saved: DraftState) => void;
 
   constructor(
     userId: string,
@@ -132,6 +134,7 @@ export class DocumentHistoryStorage {
       onStatusChange?: (status: SyncStatus) => void;
       onConflict?: (local: DraftState, remote: DraftState) => void;
       onMultiTabConflict?: () => void;
+      onSaved?: (saved: DraftState) => void;
     } = {}
   ) {
     this.userId = userId;
@@ -139,6 +142,7 @@ export class DocumentHistoryStorage {
     this.onStatusChange = opts.onStatusChange;
     this.onConflict = opts.onConflict;
     this.onMultiTabConflict = opts.onMultiTabConflict;
+    this.onSaved = opts.onSaved;
     this.initBroadcastChannel();
   }
 
@@ -152,6 +156,16 @@ export class DocumentHistoryStorage {
     this.cloudRevision = initialRevision;
     const cached = await readCached(this.userId, this.draftId);
     return cached;
+  }
+
+  /** Current server-acknowledged revision used for OCC operations. */
+  getCloudRevision(): number {
+    return this.cloudRevision;
+  }
+
+  /** Synchronize the OCC revision after a trusted restore response. */
+  setCloudRevision(revision: number): void {
+    this.cloudRevision = revision;
   }
 
   /**
@@ -169,11 +183,15 @@ export class DocumentHistoryStorage {
    * Force an immediate cloud save (e.g., before navigating away).
    * Returns the updated draft revision or throws on conflict.
    */
-  async flushNow(): Promise<DraftState> {
+  async flushNow(): Promise<DraftState | null> {
     if (this.cloudSaveTimer) {
       clearTimeout(this.cloudSaveTimer);
       this.cloudSaveTimer = null;
     }
+
+    if (this.cloudSavePromise) await this.cloudSavePromise;
+    if (!this.pendingState) return null;
+
     return this.doCloudSave();
   }
 
@@ -181,6 +199,7 @@ export class DocumentHistoryStorage {
    * Create a named version snapshot manually.
    */
   async saveVersion(label: string): Promise<void> {
+    await this.flushNow();
     const { error } = await supabase.rpc('create_editor_version', {
       p_draft_id: this.draftId,
       p_label: label,
@@ -317,13 +336,13 @@ export class DocumentHistoryStorage {
   }
 
   private async doCloudSave(): Promise<DraftState> {
+    if (this.cloudSavePromise) return this.cloudSavePromise;
+
     const state = this.pendingState;
     if (!state) throw new Error('No pending state to save.');
-    if (this.cloudSaving) throw new Error('Save already in progress.');
 
-    this.cloudSaving = true;
-    this.onStatusChange?.('saving');
-    try {
+    const save = async (): Promise<DraftState> => {
+      this.onStatusChange?.('saving');
       const { data, error } = await supabase.rpc('save_editor_draft', {
         p_draft_id: this.draftId,
         p_expected_revision: this.cloudRevision,
@@ -344,13 +363,23 @@ export class DocumentHistoryStorage {
 
       const saved = result.draft!;
       this.cloudRevision = saved.revision;
+      if (this.pendingState === state) this.pendingState = null;
       this.onStatusChange?.('saved');
-      await writeCached({ ...state, revision: saved.revision, updatedAt: saved.updatedAt });
+      const acknowledged = { ...state, revision: saved.revision, updatedAt: saved.updatedAt };
+      await writeCached(acknowledged);
+      this.onSaved?.(acknowledged);
       void this.maybeAutoVersion(state);
-      return saved;
-    } finally {
-      this.cloudSaving = false;
-    }
+      return acknowledged;
+    };
+
+    this.cloudSavePromise = save().finally(() => {
+      this.cloudSavePromise = null;
+      if (this.pendingState && this.pendingState !== state && !this.cloudSaveTimer) {
+        this.scheduleCloudSave();
+      }
+    });
+
+    return this.cloudSavePromise;
   }
 
   // ─── BroadcastChannel (multi-tab presence) ────────────────────────────────

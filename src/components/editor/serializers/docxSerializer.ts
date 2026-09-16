@@ -66,6 +66,8 @@ function toHeadingLevel(type: string): typeof HeadingLevel[keyof typeof HeadingL
     case 'h2': return HeadingLevel.HEADING_2;
     case 'h3': return HeadingLevel.HEADING_3;
     case 'h4': return HeadingLevel.HEADING_4;
+    case 'h5': return HeadingLevel.HEADING_5;
+    case 'h6': return HeadingLevel.HEADING_6;
     default: return undefined;
   }
 }
@@ -128,7 +130,16 @@ function collectRuns(children: PlateNode[]): TextRun[] {
       runs.push(...leafToRuns(child));
     } else {
       // Inline elements (link, date, etc.) — flatten their text
-      runs.push(...collectRuns((child as PlateElement).children));
+      const element = child as PlateElement;
+      if (element.type === 'date' && typeof element.date === 'string') {
+        const parsed = new Date(`${element.date}T00:00:00`);
+        const label = Number.isNaN(parsed.getTime())
+          ? element.date
+          : parsed.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        runs.push(new TextRun({ text: label }));
+      } else {
+        runs.push(...collectRuns(element.children));
+      }
     }
   }
   return runs;
@@ -139,12 +150,15 @@ function elementToParagraph(el: PlateElement): Paragraph {
   const heading = toHeadingLevel(el.type);
   const alignment = toAlignmentType(el.align as string | undefined);
   const runs = collectRuns(el.children);
+  const indent = Math.max(0, Number(el.indent) || 0);
+  const lineHeight = Number(el.lineHeight) || 1.5;
 
   return new Paragraph({
     heading,
     alignment,
     children: runs,
-    spacing: { after: 120 }, // ~6pt after each paragraph
+    indent: indent ? { left: indent * 720 } : undefined,
+    spacing: { after: 120, line: Math.round(lineHeight * 240) },
   });
 }
 

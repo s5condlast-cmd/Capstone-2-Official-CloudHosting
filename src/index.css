@@ -472,3 +472,18 @@
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
 }
+
+/* Document Editor text input & placeholder styling */
+[data-slate-placeholder] {
+  opacity: 1 !important;
+  color: rgb(113 113 122) !important;
+  font-family: inherit !important;
+  font-weight: 400 !important;
+  letter-spacing: normal !important;
+  user-select: none !important;
+  pointer-events: none !important;
+}
+
+.dark [data-slate-placeholder] {
+  color: rgb(161 161 170 / 0.7) !important;
+}

@@ -100,7 +100,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
       onChange,
       readOnly = false,
       className,
-      placeholder = 'Type your document content here…',
+      placeholder = 'Start writing your document...',
       mode,
       onModeChange,
       comments,
@@ -251,7 +251,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
     }
 
     return (
-      <PlateComp editor={editor} onChange={handleChange} readOnly={isEffectivelyReadOnly}>
+      <PlateComp editor={editor} onValueChange={handleChange} readOnly={isEffectivelyReadOnly}>
         <div
           className={cn(
             'plate-editor-wrapper relative flex flex-col rounded-xl overflow-hidden shadow-xs transition-all',

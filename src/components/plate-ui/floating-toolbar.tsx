@@ -4,15 +4,16 @@
  * Matches @plate/editor-ai floating formatting bar.
  */
 import * as React from 'react';
+import { useEditorVersion, useSelectionVersion } from 'platejs/react';
 import {
   Bold,
   Italic,
   Underline,
   Strikethrough,
   Highlighter,
-  Link as LinkIcon,
 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
+import { isMarkActive, toggleMark } from '@/src/components/editor/editor-commands';
 import { ToolbarButton } from './toolbar';
 
 export interface FloatingToolbarProps {
@@ -20,6 +21,9 @@ export interface FloatingToolbarProps {
 }
 
 export function FloatingToolbar({ editor }: FloatingToolbarProps) {
+  useEditorVersion();
+  useSelectionVersion();
+
   const [position, setPosition] = React.useState<{ top: number; left: number } | null>(null);
   const [visible, setVisible] = React.useState(false);
   const toolbarRef = React.useRef<HTMLDivElement>(null);
@@ -49,8 +53,8 @@ export function FloatingToolbar({ editor }: FloatingToolbarProps) {
     }
 
     // Position above selection
-    const top = rect.top + window.scrollY - 44;
-    const left = rect.left + window.scrollX + rect.width / 2;
+    const top = rect.top - 44;
+    const left = rect.left + rect.width / 2;
 
     setPosition({ top: Math.max(10, top), left });
     setVisible(true);
@@ -70,26 +74,6 @@ export function FloatingToolbar({ editor }: FloatingToolbarProps) {
 
   if (!visible || !position) return null;
 
-  const toggleMark = (key: string) => {
-    try {
-      if (editor?.tf?.toggle?.mark) {
-        editor.tf.toggle.mark({ key });
-      } else if (editor?.toggleMark) {
-        editor.toggleMark(key);
-      }
-    } catch { /* non-fatal */ }
-  };
-
-  const isMarkActive = (key: string) => {
-    try {
-      if (editor?.api?.marks?.isActive) return editor.api.marks.isActive(key);
-      if (editor?.isMarkActive) return editor.isMarkActive(key);
-      return false;
-    } catch {
-      return false;
-    }
-  };
-
   return (
     <div
       ref={toolbarRef}
@@ -101,43 +85,43 @@ export function FloatingToolbar({ editor }: FloatingToolbarProps) {
         transform: 'translateX(-50%)',
       }}
       className={cn(
-        'absolute z-50 flex items-center gap-0.5 rounded-lg border border-zinc-200 dark:border-zinc-800',
+        'fixed z-50 flex items-center gap-0.5 rounded-lg border border-zinc-200 dark:border-zinc-800',
         'bg-white/95 dark:bg-zinc-900/95 p-1 shadow-lg backdrop-blur-sm',
         'animate-in fade-in-50 zoom-in-95 duration-100 print:hidden'
       )}
     >
 
       <ToolbarButton
-        active={isMarkActive('bold')}
-        onClick={() => toggleMark('bold')}
+        active={isMarkActive(editor, 'bold')}
+        onClick={() => toggleMark(editor, 'bold')}
         tooltip="Bold"
       >
         <Bold className="w-3.5 h-3.5" />
       </ToolbarButton>
       <ToolbarButton
-        active={isMarkActive('italic')}
-        onClick={() => toggleMark('italic')}
+        active={isMarkActive(editor, 'italic')}
+        onClick={() => toggleMark(editor, 'italic')}
         tooltip="Italic"
       >
         <Italic className="w-3.5 h-3.5" />
       </ToolbarButton>
       <ToolbarButton
-        active={isMarkActive('underline')}
-        onClick={() => toggleMark('underline')}
+        active={isMarkActive(editor, 'underline')}
+        onClick={() => toggleMark(editor, 'underline')}
         tooltip="Underline"
       >
         <Underline className="w-3.5 h-3.5" />
       </ToolbarButton>
       <ToolbarButton
-        active={isMarkActive('strikethrough')}
-        onClick={() => toggleMark('strikethrough')}
+        active={isMarkActive(editor, 'strikethrough')}
+        onClick={() => toggleMark(editor, 'strikethrough')}
         tooltip="Strikethrough"
       >
         <Strikethrough className="w-3.5 h-3.5" />
       </ToolbarButton>
       <ToolbarButton
-        active={isMarkActive('highlight')}
-        onClick={() => toggleMark('highlight')}
+        active={isMarkActive(editor, 'highlight')}
+        onClick={() => toggleMark(editor, 'highlight')}
         tooltip="Highlight"
       >
         <Highlighter className="w-3.5 h-3.5 text-amber-500" />
@@ -145,4 +129,3 @@ export function FloatingToolbar({ editor }: FloatingToolbarProps) {
     </div>
   );
 }
-
