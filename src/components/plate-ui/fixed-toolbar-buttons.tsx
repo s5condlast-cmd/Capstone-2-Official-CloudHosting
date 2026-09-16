@@ -153,7 +153,7 @@ export function FixedToolbarButtons({
       </ToolbarGroup>
 
       {/* 7. Right-Aligned Edge Controls: Comment, Mode, Fullscreen */}
-      <div className="ml-auto flex items-center gap-1 shrink-0">
+      <div className="ml-auto flex items-center gap-1 shrink-0 pr-3 sm:pr-4">
         <ToolbarSeparator />
         <CommentToolbarButton
           comments={comments}

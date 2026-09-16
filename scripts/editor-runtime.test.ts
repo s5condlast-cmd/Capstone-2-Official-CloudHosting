@@ -189,5 +189,38 @@ describe('Plate editor runtime wiring', () => {
     assert.equal((editor.children[1] as any).children[0].text, 'Second paragraph');
     assert.equal((editor.children[2] as any).children[0].text, 'First paragraph');
   });
+
+  it('preserves image wrap mode, custom width, and cropZoom attributes on Slate node', () => {
+    const editor = createEditor([
+      {
+        type: 'img',
+        url: 'https://example.com/photo.png',
+        width: 320,
+        wrap: 'wrap',
+        cropZoom: 1.5,
+        align: 'center',
+        children: [{ text: '' }],
+      },
+    ]);
+
+    const imgNode = editor.children[0] as any;
+    assert.equal(imgNode.type, 'img');
+    assert.equal(imgNode.width, 320);
+    assert.equal(imgNode.wrap, 'wrap');
+    assert.equal(imgNode.cropZoom, 1.5);
+    assert.equal(imgNode.align, 'center');
+
+    // Update attributes via Plate transform
+    editor.tf.setNodes(
+      { wrap: 'inline', width: 450, cropZoom: 1.0 },
+      { at: [0] }
+    );
+
+    const updated = editor.children[0] as any;
+    assert.equal(updated.wrap, 'inline');
+    assert.equal(updated.width, 450);
+    assert.equal(updated.cropZoom, 1.0);
+  });
 });
+
 

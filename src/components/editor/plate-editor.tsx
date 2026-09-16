@@ -9,8 +9,14 @@
  * - FloatingToolbar (contextual floating action bar on text selection)
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Sparkles, Eye, Image as ImageIcon } from 'lucide-react';
+import { Sparkles, Eye, Image as ImageIcon, ChevronDown, Check, X } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { editorPlugins } from './editor-kit';
 import { EditorContainer, Editor } from '@/src/components/plate-ui/editor';
 import { FixedToolbar } from '@/src/components/plate-ui/fixed-toolbar';
@@ -134,6 +140,11 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
     const [showZoomIndicator, setShowZoomIndicator] = useState(false);
     const [showCommentsDrawer, setShowCommentsDrawer] = useState(false);
     const [drawerQuote, setDrawerQuote] = useState('');
+
+    // Google Docs style Header & Footer editing state
+    const [activeHeaderFooter, setActiveHeaderFooter] = useState<'header' | 'footer' | null>(null);
+    const [headerScope, setHeaderScope] = useState<'every_page' | 'first_page_only'>('every_page');
+    const [footerScope, setFooterScope] = useState<'every_page' | 'first_page_only'>('every_page');
 
     const activeMode: EditorMode = readOnly ? 'viewing' : (mode ?? internalMode);
     const isEffectivelyReadOnly = readOnly || activeMode === 'viewing';
@@ -515,28 +526,88 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                 }}
               >
                 <div className="w-full max-w-[850px] flex flex-col items-center">
+                  {/* Hidden Header File Input */}
+                  <input
+                    ref={headerInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleHeaderImageUpload}
+                  />
+
+                  {/* Google Docs Style Header Zone */}
                   {!isEffectivelyReadOnly && (
-                    <div className="w-full mb-2 flex items-center justify-between px-3 py-1.5 rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xs print:hidden select-none">
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => headerInputRef.current?.click()}
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold text-primary hover:bg-primary/10 rounded-md border border-primary/20 transition-colors cursor-pointer"
-                        >
-                          <ImageIcon className="w-3.5 h-3.5" />
-                          <span>+ Add Document Header / Logo</span>
-                        </button>
-                        <span className="text-[11px] text-zinc-500 dark:text-zinc-400 hidden sm:inline">
-                          Place school or company logo at top
-                        </span>
-                      </div>
-                      <input
-                        ref={headerInputRef}
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={handleHeaderImageUpload}
-                      />
+                    <div
+                      onDoubleClick={() => setActiveHeaderFooter((prev) => (prev === 'header' ? null : 'header'))}
+                      className={cn(
+                        'w-full transition-all select-none',
+                        activeHeaderFooter === 'header'
+                          ? 'mb-4 border-b-2 border-blue-500 pb-2.5'
+                          : 'pt-2 pb-1.5 border-b border-transparent hover:border-dashed hover:border-zinc-300 dark:hover:border-zinc-700 cursor-pointer group/header'
+                      )}
+                    >
+                      {activeHeaderFooter === 'header' ? (
+                        <div className="flex items-center justify-between px-3 py-1.5 rounded-lg bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/60 shadow-xs">
+                          <div className="flex items-center gap-3">
+                            <span className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
+                              Header
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => headerInputRef.current?.click()}
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold text-primary bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 rounded-md border border-zinc-200 dark:border-zinc-700 shadow-xs transition-colors cursor-pointer"
+                            >
+                              <ImageIcon className="w-3.5 h-3.5 text-primary" />
+                              <span>+ Add Image / Logo</span>
+                            </button>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            {/* Options Dropview: This page only vs Every page */}
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <button
+                                  type="button"
+                                  className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium text-zinc-700 dark:text-zinc-200 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700 shadow-xs cursor-pointer"
+                                >
+                                  <span>{headerScope === 'every_page' ? 'Every page' : 'This page only'}</span>
+                                  <ChevronDown className="w-3.5 h-3.5 text-zinc-500" />
+                                </button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-56 p-1 shadow-lg border border-zinc-200 dark:border-zinc-800">
+                                <DropdownMenuItem
+                                  onClick={() => setHeaderScope('every_page')}
+                                  className="flex items-center justify-between text-xs px-2.5 py-1.5 cursor-pointer rounded-md"
+                                >
+                                  <span>Every page</span>
+                                  {headerScope === 'every_page' && <Check className="w-3.5 h-3.5 text-primary" />}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => setHeaderScope('first_page_only')}
+                                  className="flex items-center justify-between text-xs px-2.5 py-1.5 cursor-pointer rounded-md"
+                                >
+                                  <span>This page only (Different first page)</span>
+                                  {headerScope === 'first_page_only' && <Check className="w-3.5 h-3.5 text-primary" />}
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+
+                            <button
+                              type="button"
+                              onClick={() => setActiveHeaderFooter(null)}
+                              className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold text-zinc-600 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-200/60 dark:hover:bg-zinc-800 rounded transition-colors cursor-pointer"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                              <span>Close</span>
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-between text-[11px] text-zinc-400 opacity-0 group-hover/header:opacity-100 transition-opacity">
+                          <span>Double-click to edit Header</span>
+                          <span>{headerScope === 'every_page' ? 'Every page' : 'This page only'}</span>
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -549,6 +620,87 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                     autoFocus={!isEffectivelyReadOnly}
                     onKeyDown={handleKeyDown}
                   />
+
+                  {/* Google Docs Style Footer Zone */}
+                  {!isEffectivelyReadOnly && (
+                    <div
+                      onDoubleClick={() => setActiveHeaderFooter((prev) => (prev === 'footer' ? null : 'footer'))}
+                      className={cn(
+                        'w-full transition-all select-none',
+                        activeHeaderFooter === 'footer'
+                          ? 'mt-4 border-t-2 border-blue-500 pt-2.5'
+                          : 'mt-2 pt-1.5 pb-2 border-t border-transparent hover:border-dashed hover:border-zinc-300 dark:hover:border-zinc-700 cursor-pointer group/footer'
+                      )}
+                    >
+                      {activeHeaderFooter === 'footer' ? (
+                        <div className="flex items-center justify-between px-3 py-1.5 rounded-lg bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/60 shadow-xs">
+                          <div className="flex items-center gap-3">
+                            <span className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
+                              Footer
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const len = (editor?.children as any[])?.length || 0;
+                                editor?.tf?.insertNodes?.(
+                                  [{ type: 'p', align: 'center', children: [{ text: 'Page 1 of 1' }] }],
+                                  { at: [len] }
+                                );
+                              }}
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold text-primary bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 rounded-md border border-zinc-200 dark:border-zinc-700 shadow-xs transition-colors cursor-pointer"
+                            >
+                              <span>+ Insert Page Number</span>
+                            </button>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            {/* Options Dropview: This page only vs Every page */}
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <button
+                                  type="button"
+                                  className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium text-zinc-700 dark:text-zinc-200 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700 shadow-xs cursor-pointer"
+                                >
+                                  <span>{footerScope === 'every_page' ? 'Every page' : 'This page only'}</span>
+                                  <ChevronDown className="w-3.5 h-3.5 text-zinc-500" />
+                                </button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-56 p-1 shadow-lg border border-zinc-200 dark:border-zinc-800">
+                                <DropdownMenuItem
+                                  onClick={() => setFooterScope('every_page')}
+                                  className="flex items-center justify-between text-xs px-2.5 py-1.5 cursor-pointer rounded-md"
+                                >
+                                  <span>Every page</span>
+                                  {footerScope === 'every_page' && <Check className="w-3.5 h-3.5 text-primary" />}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => setFooterScope('first_page_only')}
+                                  className="flex items-center justify-between text-xs px-2.5 py-1.5 cursor-pointer rounded-md"
+                                >
+                                  <span>This page only (Different first page)</span>
+                                  {footerScope === 'first_page_only' && <Check className="w-3.5 h-3.5 text-primary" />}
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+
+                            <button
+                              type="button"
+                              onClick={() => setActiveHeaderFooter(null)}
+                              className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold text-zinc-600 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-200/60 dark:hover:bg-zinc-800 rounded transition-colors cursor-pointer"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                              <span>Close</span>
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-between text-[11px] text-zinc-400 opacity-0 group-hover/footer:opacity-100 transition-opacity">
+                          <span>Double-click to edit Footer</span>
+                          <span>{footerScope === 'every_page' ? 'Every page' : 'This page only'}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </EditorContainer>

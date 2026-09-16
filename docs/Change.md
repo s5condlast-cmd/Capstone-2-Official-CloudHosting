@@ -2440,6 +2440,66 @@ Per user alignment during `/grill-me` with before/after frame references (`media
 - **TypeScript Compiler (`npm run lint` / `tsc --noEmit`)**: 0 errors.
 - **Editor Test Suite (`npm run test:editor`)**: 52/52 tests passing across all 8 suites (including dedicated tests for Frame 1 same-line unwrap, Frame 2 merge-up, and todo/toggle unwrap).
 
+---
+
+## 33. Google Docs Header & Footer Zones, Image Crop & Wrap Toolbar, Alignment Dropdown Fix, and Fixed Toolbar Overflow Navigation
+
+Per user alignment during `/grill-me` with uploaded screenshots (`media_1789525299979.png`, `media_1789525505933.png`, `media_1789525688875.png`, `media_1789525751105.png`):
+
+### 1. Google Docs–Style Double-Click Header and Footer Zones (`src/components/editor/plate-editor.tsx`)
+- **Activation Behavior**:
+  - Replaced the static always-visible header box with authentic Google Docs–style top and bottom margin zones.
+  - Double-clicking the top margin opens the **Header** editing ribbon.
+  - Double-clicking the bottom margin opens the **Footer** editing ribbon.
+  - Each zone includes a subtle dashed border (`border-dashed border-zinc-300 dark:border-zinc-700`) and a top banner with section label.
+- **Header & Footer Options Dropview**:
+  - Integrated an interactive Options dropdown matching Google Docs:
+    - `Every page` (default)
+    - `This page only (Different first page)`
+  - Header actions: `+ Add Image / Logo` (file upload button with direct insertion at top of document) and a `Close` button.
+  - Footer actions: `+ Insert Page Number` (inserts formatted page numbering block) and a `Close` button.
+  - Clicking `Close` or clicking outside the margin cleanly dismisses the editing ribbon while preserving all document edits.
+
+### 2. Interactive Image Crop, Resize Handles, and Google Docs Pill Toolbar (`src/components/plate-ui/image-element.tsx`, `image-floating-toolbar.tsx`)
+- **8 Square Blue Resize Handles & Top Stem Handle** (`media_1789525299979.png`):
+  - Added 4 corner handles (`top-left`, `top-right`, `bottom-left`, `bottom-right`) and 4 edge center handles (`top-center`, `bottom-center`, `left-center`, `right-center`).
+  - Added top blue stem rotation handle with a blue circular pivot node extending above the image.
+  - Handles feature mouse cursor feedback (`nwse-resize`, `nesw-resize`, `ew-resize`, `ns-resize`) and interactive drag-to-resize clamped between 120px and 800px with live Slate node width persistence.
+- **Floating Pill Wrap Toolbar** (`media_1789525505933.png`):
+  - Positioned directly underneath or above the selected image.
+  - **Text Wrap Dropdown**:
+    - `In line` (standard inline flow)
+    - `Wrap text` (tight text wrapping around left or right floated image)
+    - `Break text` (full width block clearing floats above and below)
+    - `Behind text` (absolute z-index behind text layer)
+    - `In front of text` (absolute z-index overlaying text layer)
+    - Active wrap mode indicated with checkmark icon.
+  - **Quick Alignment Buttons**: Align Left, Align Center, Align Right.
+  - **Interactive Crop Tool**:
+    - Clicking the Crop button enters interactive cropping mode with a zoom slider (100% to 250%) and zoom in/out step buttons.
+    - Preserves crop state and allows single-click "Done" confirmation.
+  - **Delete Trash Icon**: Quick-removal button (`Trash2`) to safely remove the image block from the document.
+
+### 3. Fix Alignment Dropview Squishing (`src/components/plate-ui/align-toolbar-button.tsx`, `media_1789525688875.png`)
+- **Root Cause Isolated**: `DropdownMenuContent` had `min-w-0`, causing the menu to collapse to the icon width. Radix/Base UI's absolute right-positioned `<MenuPrimitive.RadioItemIndicator>` was overlapping directly over the alignment icons and labels in dark mode.
+- **Resolution**:
+  - Expanded `DropdownMenuContent` to `w-44 p-1.5 shadow-lg border border-zinc-200 dark:border-zinc-800`.
+  - Structured items with explicit flex hierarchy: Icon, label (`flex-1 text-zinc-800 dark:text-zinc-200`), and radio checkmark indicator, permanently eliminating layout squishing and icon overlap.
+
+### 4. Fixed Toolbar Horizontal Overflow Navigation (`src/components/plate-ui/fixed-toolbar.tsx`, `fixed-toolbar-buttons.tsx`, `toolbar.tsx`, `media_1789525751105.png`)
+- **Root Cause Isolated**: On viewport widths below ~1280px, the fixed toolbar buttons container clipped right-aligned controls (Mode Switcher, Comment Panel toggle, Fullscreen) against the screen edge without visual scroll affordance.
+- **Resolution**:
+  - Added horizontal scroll boundary detection (`canScrollLeft`, `canScrollRight`).
+  - Added floating left and right chevron scroll buttons (`ChevronLeft`, `ChevronRight`) with smooth click-to-scroll by 260px.
+  - Added mouse wheel translation: vertical mouse wheel scrolling over the toolbar automatically scrolls the toolbar horizontally.
+  - Added comfortable right padding (`pr-8` on toolbar container, `pr-3 sm:pr-4` on right control group) so Mode Switcher and Fullscreen buttons are never clipped.
+  - Updated `Toolbar` in `toolbar.tsx` to forward `ref` properly to its DOM element.
+
+### 5. Verification
+- **TypeScript Compiler (`npm run lint` / `tsc --noEmit`)**: 0 errors.
+- **Editor Test Suite (`npm run test:editor`)**: 53/53 tests passing across all 8 suites (including node wrap, width, and crop attribute test).
+
+
 
 
 

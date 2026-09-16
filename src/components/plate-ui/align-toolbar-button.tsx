@@ -45,7 +45,7 @@ export function AlignToolbarButton(props: any) {
         </ToolbarButton>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent className="min-w-0 p-1" align="start">
+      <DropdownMenuContent className="w-44 p-1.5 shadow-lg border border-zinc-200 dark:border-zinc-800" align="start">
         <DropdownMenuRadioGroup
           value={value}
           onValueChange={(val) => {
@@ -56,11 +56,11 @@ export function AlignToolbarButton(props: any) {
           {items.map(({ icon: Icon, value: itemValue, label }) => (
             <DropdownMenuRadioItem
               key={itemValue}
-              className="flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              className="flex items-center gap-2.5 px-2.5 py-1.5 text-xs font-medium rounded-md cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
               value={itemValue}
             >
-              <Icon className="w-4 h-4 text-zinc-700 dark:text-zinc-200" />
-              <span className="text-xs text-zinc-800 dark:text-zinc-200">{label}</span>
+              <Icon className="w-4 h-4 text-zinc-600 dark:text-zinc-300 shrink-0" />
+              <span className="flex-1 text-zinc-800 dark:text-zinc-200">{label}</span>
             </DropdownMenuRadioItem>
           ))}
         </DropdownMenuRadioGroup>

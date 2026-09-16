@@ -27,10 +27,12 @@ export function Toolbar({
   className,
   variant,
   children,
+  ref,
   ...props
 }: React.ComponentProps<'div'> & VariantProps<typeof toolbarVariants>) {
   return (
     <div
+      ref={ref}
       role="toolbar"
       data-editor-toolbar
       className={cn(toolbarVariants({ variant }), className)}
