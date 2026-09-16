@@ -77,6 +77,8 @@ import {
   ExternalLink,
   Unlink,
   MoreVertical,
+  ArrowDownToLine,
+  FileText,
 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import { SidebarContext } from '@/components/ui/sidebar';
@@ -2565,6 +2567,80 @@ export function FullscreenAndZoomButtons({
   );
 }
 
+// ─── Official Plate Export Toolbar Button ─────────────────────────────────────
+
+export function ExportToolbarButton({ editor }: { editor: any }) {
+  const [open, setOpen] = React.useState(false);
+  const buttonRef = React.useRef<HTMLDivElement>(null);
+
+  const handleExportWord = async () => {
+    setOpen(false);
+    try {
+      const { downloadDocx } = await import('@/src/components/editor/serializers/docxSerializer');
+      const nodes = editor?.children || [];
+      await downloadDocx(nodes, 'document.docx');
+    } catch {
+      // non-fatal
+    }
+  };
+
+  const handleExportPdf = async () => {
+    setOpen(false);
+    try {
+      const { printToPdf } = await import('@/src/components/editor/serializers/docxSerializer');
+      printToPdf();
+    } catch {
+      // non-fatal
+    }
+  };
+
+  return (
+    <div ref={buttonRef} className="relative inline-flex items-center">
+      <ToolbarButton
+        active={open}
+        onClick={() => setOpen((prev) => !prev)}
+        tooltip="Export Document"
+        aria-label="Export"
+      >
+        <ArrowDownToLine className="w-4 h-4 text-zinc-700 dark:text-zinc-200" />
+      </ToolbarButton>
+
+      <PortalPopover
+        anchorRef={buttonRef}
+        open={open}
+        onClose={() => setOpen(false)}
+        className="w-52 p-1.5 text-xs flex flex-col gap-0.5"
+      >
+        <div className="px-2.5 py-1 text-[11px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
+          Export Options
+        </div>
+        <button
+          type="button"
+          onClick={handleExportWord}
+          className="flex items-center gap-2.5 w-full px-2.5 py-2 rounded-lg text-left hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-zinc-800 dark:text-zinc-200 cursor-pointer"
+        >
+          <FileText className="w-4 h-4 text-primary shrink-0" />
+          <div className="flex flex-col">
+            <span className="font-semibold text-xs text-zinc-900 dark:text-zinc-100">Export as Word</span>
+            <span className="text-[10px] text-zinc-400">Microsoft Word (.docx)</span>
+          </div>
+        </button>
+        <button
+          type="button"
+          onClick={handleExportPdf}
+          className="flex items-center gap-2.5 w-full px-2.5 py-2 rounded-lg text-left hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-zinc-800 dark:text-zinc-200 cursor-pointer"
+        >
+          <ArrowDownToLine className="w-4 h-4 text-primary shrink-0" />
+          <div className="flex flex-col">
+            <span className="font-semibold text-xs text-zinc-900 dark:text-zinc-100">Export as PDF</span>
+            <span className="text-[10px] text-zinc-400">Printable Document (.pdf)</span>
+          </div>
+        </button>
+      </PortalPopover>
+    </div>
+  );
+}
+
 // ─── Right-Edge Overflow Menu (Vertical 3-Dots for Comment, Mode, Fullscreen) ───
 
 interface RightOverflowMenuProps {
@@ -2712,6 +2788,34 @@ function RightOverflowMenu({
             <Maximize2 className="w-4 h-4 text-zinc-600 dark:text-zinc-300 shrink-0" />
           )}
           <span>{isFullscreen ? 'Exit full screen' : 'Full screen'}</span>
+        </button>
+
+        <div className="h-px bg-zinc-200 dark:bg-zinc-800 my-1" />
+
+        {/* Export options */}
+        <button
+          type="button"
+          onClick={async () => {
+            setMoreOpen(false);
+            const { downloadDocx } = await import('@/src/components/editor/serializers/docxSerializer');
+            await downloadDocx(editor?.children || [], 'document.docx');
+          }}
+          className="flex items-center gap-2.5 w-full px-2.5 py-1.5 text-xs font-medium rounded-lg text-left text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+        >
+          <FileText className="w-4 h-4 text-primary shrink-0" />
+          <span>Export Word (.docx)</span>
+        </button>
+        <button
+          type="button"
+          onClick={async () => {
+            setMoreOpen(false);
+            const { printToPdf } = await import('@/src/components/editor/serializers/docxSerializer');
+            printToPdf();
+          }}
+          className="flex items-center gap-2.5 w-full px-2.5 py-1.5 text-xs font-medium rounded-lg text-left text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+        >
+          <ArrowDownToLine className="w-4 h-4 text-primary shrink-0" />
+          <span>Export PDF (.pdf)</span>
         </button>
       </PortalPopover>
 
@@ -3092,6 +3196,8 @@ export function FixedToolbarButtons({
           </>
         ) : (
           <>
+            <ToolbarSeparator />
+            <ExportToolbarButton editor={editor} />
             <ToolbarSeparator />
             <CommentToolbarButton
               editor={editor}

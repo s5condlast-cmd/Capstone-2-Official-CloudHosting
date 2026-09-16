@@ -45,11 +45,13 @@ export function EditorContainer({
 export const editorVariants = cva(
   cn(
     'group/editor plate-editor-content',
-    'relative w-full cursor-text select-text overflow-x-hidden whitespace-break-spaces break-words',
-    'focus-visible:outline-none',
+    'relative w-full cursor-text select-text overflow-x-hidden whitespace-pre-wrap break-words',
+    'rounded-md ring-offset-background focus-visible:outline-none',
     'placeholder:text-zinc-400 dark:placeholder:text-zinc-500',
     'caret-zinc-900 dark:caret-zinc-100',
     'font-sans text-[15px] sm:text-base leading-relaxed text-zinc-900 dark:text-zinc-100',
+    '**:data-slate-placeholder:text-zinc-400 dark:**:data-slate-placeholder:text-zinc-500 **:data-slate-placeholder:opacity-100!',
+    '**:data-slate-placeholder:!top-1/2 **:data-slate-placeholder:-translate-y-1/2',
     '[&_strong]:font-bold'
   ),
   {

@@ -2111,3 +2111,34 @@ Per user request with reference screenshot `media_1789516779276.png`:
    - Added global CSS overrides in `src/index.css` for `[data-slate-placeholder]` (`opacity: 1 !important; color: rgb(113 113 122) !important; .dark [data-slate-placeholder] { color: rgb(161 161 170 / 0.7) !important; }`), preventing Slate inline styles from fading the placeholder to 33% opacity.
    - Standardized the placeholder string across `StudentDocumentEditor.tsx` and `plate-editor.tsx` to `"Start writing your document..."` matching the exact screenshot.
 
+---
+
+## 24. Standardized Core Node Renderers & Export Toolbar Button (Official Plate Registry v53)
+
+Per user request referencing official Plate.js component specifications (`https://platejs.org/docs/components/...` / `https://platejs.org/r/...`):
+
+1. **Official Plate Registry Node Alignment (`src/components/editor/editor-kit.tsx`)**:
+   - **Paragraph Element**: Updated to official `cn('relative m-0 px-0 py-1 min-h-[1.5em]', className)` matching `paragraph-node.json`. Eliminates excess block margins and establishes standard natural paragraph rhythm.
+   - **Heading Element**: Adopted official `headingVariants` scale from `heading-node.json` with relative positioning, semantically calibrated `font-heading`, and distinct font sizes:
+     - `h1`: `mt-[1.6em] pb-1 font-heading text-3xl sm:text-4xl font-bold tracking-tight`
+     - `h2`: `mt-[1.4em] pb-1 font-heading text-2xl font-semibold tracking-tight`
+     - `h3`: `mt-[1em] pb-1 font-heading text-xl font-semibold tracking-tight`
+     - `h4`: `mt-[0.75em] font-heading text-lg font-semibold tracking-tight`
+     - `h5`: `mt-[0.75em] text-base font-semibold tracking-tight`
+     - `h6`: `mt-[0.75em] text-sm font-semibold tracking-tight`
+   - **Blockquote Element**: Updated to `cn('relative my-1 border-l-2 border-zinc-300 dark:border-zinc-700 pl-6 italic text-zinc-700 dark:text-zinc-300', className)` matching `blockquote-node.json`.
+   - **Code Leaf**: Updated to `cn('whitespace-pre-wrap rounded-md bg-zinc-100 dark:bg-zinc-800 px-[0.3em] py-[0.2em] font-mono text-sm text-zinc-900 dark:text-zinc-100', className)` matching `code-node.json`.
+   - **Highlight Leaf**: Updated to `cn('rounded bg-amber-200/60 dark:bg-amber-400/30 text-inherit px-0.5', className)` matching `highlight-node.json`.
+   - **Horizontal Rule**: Enclosed `<hr className="h-0.5 rounded-sm border-none bg-zinc-200 dark:bg-zinc-800 bg-clip-content" />` in a non-editable `py-6` wrapper matching `hr-node.json`.
+   - **Lists**: Standardized list margin and line spacing (`my-1 ml-6 space-y-0.5`, `m-0 px-0 py-0.5`) matching `list-node.json`.
+   - **Link Element**: Updated to `cn('font-medium text-primary underline decoration-primary/40 underline-offset-4 hover:decoration-primary', className)`.
+2. **Official Editor Variants Alignment (`src/components/plate-ui/editor.tsx`)**:
+   - Standardized `editorVariants` with `whitespace-pre-wrap break-words`, `rounded-md ring-offset-background focus-visible:outline-none`.
+   - Injected Tailwind v4 placeholder alignment classes `**:data-slate-placeholder:!top-1/2 **:data-slate-placeholder:-translate-y-1/2` and `**:data-slate-placeholder:text-zinc-400 dark:**:data-slate-placeholder:text-zinc-500 **:data-slate-placeholder:opacity-100!`.
+3. **Official Export Toolbar Button (`ExportToolbarButton`)**:
+   - Implemented `ExportToolbarButton` matching `https://platejs.org/docs/components/export-toolbar-button` (`ArrowDownToLine` icon).
+   - Provides 1-click export options for **Export as Word (.docx)** and **Export as PDF (.pdf)** directly from the editor toolbar.
+   - Integrated into both the standard horizontal toolbar and the responsive 3-dots `RightOverflowMenu`.
+4. **Zero Regressions & Full Test Verification**:
+   - All 48 test suites passing (`npm run test:editor`).
+   - TypeScript compiler passes with 0 errors (`npm run lint`).

@@ -79,79 +79,82 @@ function blockStyle(element: any): React.CSSProperties {
   };
 }
 
-function ParagraphElement({ element, style, ...props }: any) {
+function ParagraphElement({ element, style, className, ...props }: any) {
   return (
     <PlateElement
       as="p"
       element={element}
       style={{ ...blockStyle(element), ...style }}
-      className="relative my-1.5 min-h-[1.5em]"
+      className={cn('relative m-0 px-0 py-1 min-h-[1.5em]', className)}
       {...props}
     />
   );
 }
 
-function HeadingElement({ element, style, ...props }: any) {
+function HeadingElement({ element, style, className, ...props }: any) {
   const level = Number(String(element?.type || 'h1').slice(1));
   const headingClass = {
-    1: 'mt-6 mb-3 text-3xl font-bold leading-tight',
-    2: 'mt-5 mb-2.5 text-2xl font-bold leading-tight',
-    3: 'mt-4 mb-2 text-xl font-semibold leading-snug',
-    4: 'mt-3 mb-2 text-lg font-semibold leading-snug',
-    5: 'mt-3 mb-1.5 text-base font-semibold leading-normal',
-    6: 'mt-3 mb-1.5 text-sm font-semibold uppercase tracking-wide',
-  }[level] || 'mt-4 mb-2 text-xl font-semibold';
+    1: 'mt-[1.6em] pb-1 font-heading text-3xl sm:text-4xl font-bold tracking-tight',
+    2: 'mt-[1.4em] pb-1 font-heading text-2xl font-semibold tracking-tight',
+    3: 'mt-[1em] pb-1 font-heading text-xl font-semibold tracking-tight',
+    4: 'mt-[0.75em] font-heading text-lg font-semibold tracking-tight',
+    5: 'mt-[0.75em] text-base font-semibold tracking-tight',
+    6: 'mt-[0.75em] text-sm font-semibold tracking-tight',
+  }[level] || 'mt-[1em] pb-1 font-heading text-xl font-semibold tracking-tight';
 
   return (
     <PlateElement
       as={`h${Math.min(6, Math.max(1, level))}` as any}
       element={element}
       style={{ ...blockStyle(element), ...style }}
-      className={cn('relative', headingClass)}
+      className={cn('relative mb-1', headingClass, className)}
       {...props}
     />
   );
 }
 
-function BlockquoteElement({ element, style, ...props }: any) {
+function BlockquoteElement({ element, style, className, ...props }: any) {
   return (
     <PlateElement
       as="blockquote"
       element={element}
       style={{ ...blockStyle(element), ...style }}
-      className="relative my-3 border-l-4 border-zinc-300 pl-4 italic text-zinc-700 dark:border-zinc-700 dark:text-zinc-300"
+      className={cn(
+        'relative my-1 border-l-2 border-zinc-300 dark:border-zinc-700 pl-6 italic text-zinc-700 dark:text-zinc-300',
+        className
+      )}
       {...props}
     />
   );
 }
 
-function ListElement({ element, style, ...props }: any) {
+function ListElement({ element, style, className, ...props }: any) {
   const ordered = element?.type === ELEMENT_OL;
   return (
     <PlateElement
       as={ordered ? 'ol' : 'ul'}
       element={element}
       style={{ listStyleType: element?.listStyleType || (ordered ? 'decimal' : 'disc'), ...style }}
-      className="my-2 ml-7 space-y-1"
+      className={cn('my-1 ml-6 space-y-0.5', ordered ? 'list-decimal' : 'list-disc', className)}
       {...props}
     />
   );
 }
 
-function ListItemElement({ element, style, ...props }: any) {
+function ListItemElement({ element, style, className, ...props }: any) {
   return (
     <PlateElement
       as="li"
       element={element}
       style={{ ...blockStyle(element), ...style }}
-      className="pl-1"
+      className={cn('m-0 px-0 py-0.5', className)}
       {...props}
     />
   );
 }
 
-function ListItemContentElement(props: any) {
-  return <PlateElement as="span" {...props} />;
+function ListItemContentElement({ className, ...props }: any) {
+  return <PlateElement as="span" className={cn('inline', className)} {...props} />;
 }
 
 function TodoElement({ children, element, style, ...props }: any) {
@@ -235,18 +238,18 @@ function TableCellElement({ element, ...props }: any) {
   );
 }
 
-function HorizontalRuleElement({ children, ...props }: any) {
+function HorizontalRuleElement({ children, className, ...props }: any) {
   return (
-    <PlateElement as="div" className="my-4 py-2" {...props}>
-      <div contentEditable={false}>
-        <hr className="border-0 border-t border-zinc-300 dark:border-zinc-700" />
+    <PlateElement as="div" className={cn('relative my-4', className)} {...props}>
+      <div className="py-6" contentEditable={false}>
+        <hr className="h-0.5 rounded-sm border-none bg-zinc-200 dark:bg-zinc-800 bg-clip-content" />
       </div>
       {children}
     </PlateElement>
   );
 }
 
-function LinkElement({ element, ...props }: any) {
+function LinkElement({ element, className, ...props }: any) {
   const rawUrl = String(element?.url || '');
   const href = /^(https?:|mailto:|tel:)/i.test(rawUrl) ? rawUrl : `https://${rawUrl}`;
   return (
@@ -256,48 +259,71 @@ function LinkElement({ element, ...props }: any) {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="text-primary underline decoration-primary/40 underline-offset-2"
+      className={cn(
+        'font-medium text-primary underline decoration-primary/40 underline-offset-4 hover:decoration-primary',
+        className
+      )}
       {...props}
     />
   );
 }
 
-function DateElement({ children, element, ...props }: any) {
+function DateElement({ children, element, className, ...props }: any) {
   const value = String(element?.date || '');
   const label = value
     ? new Date(`${value}T00:00:00`).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })
     : 'Date';
 
   return (
-    <PlateElement as="span" element={element} className="rounded bg-zinc-100 px-1.5 py-0.5 text-sm dark:bg-zinc-800" {...props}>
+    <PlateElement
+      as="span"
+      element={element}
+      className={cn('rounded bg-zinc-100 px-1.5 py-0.5 text-sm dark:bg-zinc-800', className)}
+      {...props}
+    >
       <span contentEditable={false}>{label}</span>
       {children}
     </PlateElement>
   );
 }
 
-function StrongLeaf(props: any) {
-  return <PlateLeaf as="strong" className="font-bold" {...props} />;
+function StrongLeaf({ className, ...props }: any) {
+  return <PlateLeaf as="strong" className={cn('font-bold', className)} {...props} />;
 }
 
-function ItalicLeaf(props: any) {
-  return <PlateLeaf as="em" className="italic" {...props} />;
+function ItalicLeaf({ className, ...props }: any) {
+  return <PlateLeaf as="em" className={cn('italic', className)} {...props} />;
 }
 
-function UnderlineLeaf(props: any) {
-  return <PlateLeaf as="span" className="underline underline-offset-2" {...props} />;
+function UnderlineLeaf({ className, ...props }: any) {
+  return <PlateLeaf as="span" className={cn('underline underline-offset-2', className)} {...props} />;
 }
 
-function StrikethroughLeaf(props: any) {
-  return <PlateLeaf as="s" className="line-through" {...props} />;
+function StrikethroughLeaf({ className, ...props }: any) {
+  return <PlateLeaf as="s" className={cn('line-through', className)} {...props} />;
 }
 
-function CodeLeaf(props: any) {
-  return <PlateLeaf as="code" className="rounded bg-zinc-100 px-1 py-0.5 font-mono text-[0.9em] dark:bg-zinc-800" {...props} />;
+function CodeLeaf({ className, ...props }: any) {
+  return (
+    <PlateLeaf
+      as="code"
+      className={cn(
+        'whitespace-pre-wrap rounded-md bg-zinc-100 dark:bg-zinc-800 px-[0.3em] py-[0.2em] font-mono text-sm text-zinc-900 dark:text-zinc-100',
+        className
+      )}
+      {...props}
+    />
+  );
 }
 
-function HighlightLeaf(props: any) {
-  return <PlateLeaf as="mark" className="rounded bg-amber-200 px-0.5 text-inherit dark:bg-amber-500/40" {...props} />;
+function HighlightLeaf({ className, ...props }: any) {
+  return (
+    <PlateLeaf
+      as="mark"
+      className={cn('rounded bg-amber-200/60 dark:bg-amber-400/30 text-inherit px-0.5', className)}
+      {...props}
+    />
+  );
 }
 
 // ---------------------------------------------------------------------------
