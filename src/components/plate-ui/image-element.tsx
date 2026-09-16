@@ -28,12 +28,65 @@ export function ImageElement({
   const [width, setWidth] = React.useState<number>(nodeWidth);
   const [zoom, setZoom] = React.useState<number>(cropZoom);
   const isResizingRef = React.useRef(false);
+  const containerRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     if ((element as any)?.width) {
       setWidth(Number((element as any).width));
     }
   }, [(element as any)?.width]);
+
+  // Click outside to dismiss handles and toolbar
+  React.useEffect(() => {
+    if (!showToolbar && !isCropping) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      if (isResizingRef.current) return;
+      if (containerRef.current && containerRef.current.contains(e.target as Node)) {
+        return;
+      }
+      const target = e.target as HTMLElement | null;
+      if (
+        target?.closest?.('[data-image-floating-toolbar]') ||
+        target?.closest?.('[role="menu"]') ||
+        target?.closest?.('[data-radix-popper-content-wrapper]')
+      ) {
+        return;
+      }
+      setShowToolbar(false);
+      setIsCropping(false);
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showToolbar, isCropping]);
+
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowToolbar(true);
+    try {
+      if (path && editor?.tf) {
+        editor.tf.select(path);
+      }
+    } catch {
+      // non-fatal
+    }
+  };
+
+  const handleDoubleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowToolbar(true);
+    setIsCropping(true);
+    try {
+      if (path && editor?.tf) {
+        editor.tf.select(path);
+      }
+    } catch {
+      // non-fatal
+    }
+  };
 
   const handleAlignChange = (newAlign: 'left' | 'center' | 'right') => {
     try {
@@ -134,9 +187,10 @@ export function ImageElement({
         {...props}
       >
         <div
+          ref={containerRef}
           contentEditable={false}
-          onClick={() => setShowToolbar(true)}
-          onDoubleClick={() => setShowToolbar(true)}
+          onClick={handleClick}
+          onDoubleClick={handleDoubleClick}
           style={{ width: `${width}px` }}
           className={cn(
             'relative group/image inline-block select-none cursor-pointer rounded-lg transition-shadow',
@@ -197,7 +251,11 @@ export function ImageElement({
 
           {/* Interactive Crop Framing Controls */}
           {isCropping && (
-            <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 px-3 py-1.5 bg-zinc-900/95 text-white rounded-lg shadow-xl text-xs backdrop-blur-xs">
+            <div
+              onClick={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
+              className="absolute -bottom-12 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 px-3 py-1.5 bg-zinc-900/95 text-white rounded-lg shadow-xl text-xs backdrop-blur-xs"
+            >
               <span className="font-semibold text-zinc-300">Crop Zoom:</span>
               <button
                 type="button"
@@ -217,7 +275,7 @@ export function ImageElement({
               <button
                 type="button"
                 onClick={handleApplyCrop}
-                className="ml-2 px-2.5 py-1 bg-primary text-primary-foreground font-semibold rounded hover:opacity-90"
+                className="ml-2 px-2.5 py-1 bg-primary text-primary-foreground font-semibold rounded hover:opacity-90 cursor-pointer"
               >
                 Done
               </button>
@@ -229,12 +287,13 @@ export function ImageElement({
             <img
               src={(element as any)?.url}
               alt={(element as any)?.name || ''}
+              draggable={false}
               style={{
                 transform: zoom !== 100 ? `scale(${zoom / 100})` : undefined,
                 transformOrigin: 'center center',
                 transition: 'transform 0.1s ease-out',
               }}
-              className="block w-full max-h-[500px] border border-zinc-200 dark:border-zinc-800 shadow-xs object-cover"
+              className="block w-full max-h-[500px] border border-zinc-200 dark:border-zinc-800 shadow-xs object-cover pointer-events-auto"
             />
           </div>
 

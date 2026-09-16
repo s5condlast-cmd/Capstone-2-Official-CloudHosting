@@ -57,6 +57,7 @@ export function ImageFloatingToolbar({
 
   return (
     <div
+      data-image-floating-toolbar
       contentEditable={false}
       className={cn(
         'absolute -top-12 left-1/2 -translate-x-1/2 z-40 flex items-center gap-1 p-1 rounded-lg',

@@ -9,6 +9,7 @@ import {
   toggleMark,
 } from '../src/components/editor/editor-commands';
 import { editorPlugins } from '../src/components/editor/editor-kit';
+import { ImageElement } from '../src/components/plate-ui/image-element';
 import { serializeToDocx } from '../src/components/editor/serializers/docxSerializer';
 function createEditor(value: any[]) {
   return createPlateEditor({ plugins: editorPlugins, value });
@@ -220,6 +221,15 @@ describe('Plate editor runtime wiring', () => {
     assert.equal(updated.wrap, 'inline');
     assert.equal(updated.width, 450);
     assert.equal(updated.cropZoom, 1.0);
+  });
+
+  it('wires ImageElement as the active renderer for img nodes', () => {
+    const editor = createEditor([{ type: 'p', children: [{ text: '' }] }]);
+    assert.equal(
+      editor.plugins.img?.node?.component,
+      ImageElement,
+      'img node must use ImageElement component with resize handles and toolbar'
+    );
   });
 });
 

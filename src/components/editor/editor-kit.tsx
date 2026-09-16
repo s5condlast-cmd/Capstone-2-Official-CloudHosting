@@ -105,6 +105,7 @@ import {
   TableCellHeaderElement,
 } from '@/src/components/plate-ui/table-element';
 import { ToggleElement } from '@/src/components/plate-ui/toggle-element';
+import { ImageElement } from '@/src/components/plate-ui/image-element';
 
 export {
   ParagraphElement,
@@ -128,6 +129,7 @@ export {
   TableCellElement,
   TableCellHeaderElement,
   ToggleElement,
+  ImageElement,
 };
 
 function ListElement({ element, style, className, ...props }: any) {
@@ -332,25 +334,7 @@ export const MediaPlugin = createTSlatePlugin({
         isElement: true,
         isVoid: true,
         type: ELEMENT_IMAGE,
-        component: ({ children, element, ...props }: any) => (
-          <BlockDraggable element={element} handleTopOffset="top-3">
-            <PlateElement as="div" className="my-4" element={element} {...props}>
-              <div contentEditable={false} className="select-none text-center">
-                <img
-                  src={element.url}
-                  alt={element.name || ''}
-                  className="mx-auto block max-h-96 max-w-full rounded-lg border border-zinc-200 dark:border-zinc-800 shadow-xs object-cover"
-                />
-                {element.caption && (
-                  <p className="mt-2 text-center text-xs text-zinc-500 dark:text-zinc-400 font-normal select-text">
-                    {element.caption}
-                  </p>
-                )}
-              </div>
-              {children}
-            </PlateElement>
-          </BlockDraggable>
-        ),
+        component: ImageElement,
       },
     }),
     createTSlatePlugin({

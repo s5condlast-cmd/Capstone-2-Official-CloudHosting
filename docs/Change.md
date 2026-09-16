@@ -2499,6 +2499,37 @@ Per user alignment during `/grill-me` with uploaded screenshots (`media_17895252
 - **TypeScript Compiler (`npm run lint` / `tsc --noEmit`)**: 0 errors.
 - **Editor Test Suite (`npm run test:editor`)**: 53/53 tests passing across all 8 suites (including node wrap, width, and crop attribute test).
 
+---
+
+## 34. Image Clickability, Selection Handles & Toolbar Visibility, and Double-Click Cropping
+
+Per user alignment during `/grill-me` regarding uploaded image interaction:
+
+### 1. Root Cause Isolated & Resolved (`src/components/editor/editor-kit.tsx`)
+- **Root Cause**: `ELEMENT_IMAGE` in `editor-kit.tsx` lines 329–355 was registered with an inline placeholder `<img>` component wrapped only in `BlockDraggable`, completely bypassing `ImageElement`. As a result, uploaded images lacked interactive click listeners, the 8 resize handles, and the floating toolbar.
+- **Resolution**:
+  - Imported and wired `ImageElement` directly into `createTSlatePlugin({ key: ELEMENT_IMAGE, node: { component: ImageElement, isElement: true, isVoid: true, type: ELEMENT_IMAGE } })`.
+  - Re-exported `ImageElement` from `editor-kit.tsx`.
+
+### 2. Single-Click Selection & Double-Click Cropping (`src/components/plate-ui/image-element.tsx`)
+- **Single-Click Selection**:
+  - Clicking once anywhere on the image container invokes `editor.tf.select(path)` to ensure Slate activates the node, and sets `showToolbar(true)`.
+  - Instantly reveals the blue focus ring, 8 square resize handles (4 corners + 4 edge centers), the top stem rotation handle, and the floating wrap toolbar.
+- **Double-Click Cropping**:
+  - As explicitly chosen during `/grill-me`, double-clicking the image directly opens the interactive Crop mode (`isCropping = true`).
+  - Displays the floating crop pill toolbar with `-` and `+` zoom buttons, current zoom percentage, and a `Done` apply button.
+- **Click-Outside Dismissal**:
+  - Added a global `mousedown` listener attached to `document`.
+  - Automatically dismisses the resize handles, floating toolbar, and crop mode when the user clicks elsewhere on the paper canvas or document text, while ignoring clicks inside dropdown menus and the floating toolbar itself.
+- **HTML5 Drag Protection**:
+  - Added `draggable={false}` to `<img ... />` to prevent the browser's native ghost drag from intercepting mouse clicks.
+  - Added `data-image-floating-toolbar` to `src/components/plate-ui/image-floating-toolbar.tsx` for reliable click-outside target recognition.
+
+### 3. Verification
+- **TypeScript Compiler (`npm run lint` / `tsc --noEmit`)**: 0 errors.
+- **Editor Test Suite (`npm run test:editor`)**: 54/54 tests passing across all 8 suites (including new unit test verifying `editor.plugins.img.node.component === ImageElement`).
+
+
 
 
 
