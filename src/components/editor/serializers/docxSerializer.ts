@@ -14,6 +14,7 @@ import {
   Packer,
   Paragraph,
   TextRun,
+  ImageRun,
   HeadingLevel,
   AlignmentType,
   Table,
@@ -72,6 +73,79 @@ function toHeadingLevel(type: string): typeof HeadingLevel[keyof typeof HeadingL
   }
 }
 
+/** Clean CSS font-family string to standard Word font name */
+function cleanFontFamily(raw?: string): string | undefined {
+  if (!raw) return undefined;
+  const lower = raw.toLowerCase();
+  if (lower.includes('times new roman')) return 'Times New Roman';
+  if (lower.includes('arial')) return 'Arial';
+  if (lower.includes('calibri')) return 'Calibri';
+  if (lower.includes('georgia')) return 'Georgia';
+  if (lower.includes('courier')) return 'Courier New';
+  if (lower.includes('inter')) return 'Inter';
+  if (lower.includes('geist')) return 'Geist';
+  const first = raw.split(',')[0].replace(/['"]/g, '').trim();
+  return first || undefined;
+}
+
+/** Parse base64 data URL to Uint8Array and format type */
+function parseBase64Image(dataUrl: string): { data: Uint8Array; type: 'png' | 'jpg' | 'gif' | 'bmp' } | null {
+  const match = dataUrl.match(/^data:image\/(png|jpe?g|gif|bmp);base64,(.+)$/i);
+  if (!match) return null;
+  const mime = match[1].toLowerCase();
+  const type = (mime === 'jpeg' || mime === 'jpg') ? 'jpg' : (mime as 'png' | 'gif' | 'bmp');
+  const base64Str = match[2];
+  try {
+    if (typeof atob === 'function') {
+      const binStr = atob(base64Str);
+      const len = binStr.length;
+      const bytes = new Uint8Array(len);
+      for (let i = 0; i < len; i++) {
+        bytes[i] = binStr.charCodeAt(i);
+      }
+      return { data: bytes, type };
+    } else if (typeof Buffer !== 'undefined') {
+      const buf = Buffer.from(base64Str, 'base64');
+      return { data: new Uint8Array(buf), type };
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+/** Extract natural image dimensions from PNG or JPEG headers, scaling to fit page */
+function getImageDimensions(bytes: Uint8Array, type: string, defaultMaxW = 460): { width: number; height: number } {
+  let w = 0;
+  let h = 0;
+  if (type === 'png' && bytes.length >= 24) {
+    const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+    w = view.getUint32(16, false);
+    h = view.getUint32(20, false);
+  } else if (type === 'jpg' && bytes.length >= 4) {
+    let i = 2;
+    while (i < bytes.length - 8) {
+      if (bytes[i] === 0xFF && (bytes[i + 1] >= 0xC0 && bytes[i + 1] <= 0xC3)) {
+        const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+        h = view.getUint16(i + 5, false);
+        w = view.getUint16(i + 7, false);
+        break;
+      }
+      i++;
+    }
+  }
+
+  if (w > 0 && h > 0) {
+    if (w > defaultMaxW) {
+      const scale = defaultMaxW / w;
+      return { width: Math.round(defaultMaxW), height: Math.round(h * scale) };
+    }
+    return { width: w, height: h };
+  }
+
+  return { width: 320, height: 160 };
+}
+
 /** Convert Plate leaf nodes to docx TextRun(s) */
 function leafToRuns(node: PlateText): TextRun[] {
   const text = node.text ?? '';
@@ -105,6 +179,11 @@ function leafToRuns(node: PlateText): TextRun[] {
     shadingFill = 'FFF2A8';
   }
 
+  // Font family
+  const font = (node.code || node.kbd)
+    ? 'Courier New'
+    : cleanFontFamily(node.fontFamily as string | undefined);
+
   return [
     new TextRun({
       text,
@@ -117,7 +196,7 @@ function leafToRuns(node: PlateText): TextRun[] {
       shading: shadingFill ? { fill: shadingFill } : undefined,
       subScript: !!(node.subscript || node.sub),
       superScript: !!(node.superscript || node.sup),
-      font: (node.code || node.kbd) ? 'Courier New' : undefined,
+      font,
     }),
   ];
 }
@@ -284,6 +363,31 @@ function nodesToDocxChildren(nodes: PlateNode[]): (Paragraph | Table)[] {
           border: { left: { style: BorderStyle.SINGLE, size: 8, color: '808080', space: 8 } },
         })
       );
+      continue;
+    }
+
+    if (el.type === 'img' || el.type === 'image') {
+      const url = typeof el.url === 'string' ? el.url : '';
+      const parsed = parseBase64Image(url);
+      if (parsed) {
+        const dims = getImageDimensions(parsed.data, parsed.type);
+        const imgRun = new ImageRun({
+          data: parsed.data,
+          transformation: {
+            width: Number(el.width) || dims.width,
+            height: Number(el.height) || dims.height,
+          },
+          type: parsed.type,
+        });
+        const alignment = toAlignmentType(el.align as string | undefined);
+        result.push(
+          new Paragraph({
+            alignment,
+            children: [imgRun],
+            spacing: { after: 120, before: 120 },
+          })
+        );
+      }
       continue;
     }
 

@@ -2376,6 +2376,52 @@ Per user alignment during `/grill-me` regarding block dragging and official Plat
 - **TypeScript Compiler (`npm run lint` / `tsc --noEmit`)**: 0 errors.
 - **Editor Test Suite (`npm run test:editor`)**: 49/49 tests passing across all 8 suites (including new block displacement test).
 
+---
+
+## 31. Document Editor Ergonomics: Block Exit on Enter, Single-Click Toolbar Buttons, Font Family Picker, Image Alignment Toolbar, Document Header Zone, Table Operations, and Center Speech-to-Text Status
+
+Per user alignment during `/grill-me` regarding editor ergonomics, typography, and media capabilities:
+
+### 1. Enter Key Block Exit (`src/components/editor/plate-editor.tsx`)
+- **Classic Lists (`ul`/`ol`)**: Pressing `Enter` on an empty bullet or numbered list item (`li`) immediately unwraps the list container and converts the current line into a standard paragraph (`p`), allowing effortless exit without multiple backspaces.
+- **Toggle & To-Do Lists**: Pressing `Enter` on an empty toggle or to-do line converts it directly to a standard paragraph (`p`).
+- **Toggle Content Continuation**: Pressing `Enter` inside a toggle with text inserts a normal paragraph (`p`) below it.
+
+### 2. Single-Click Toolbar Toggle Fix (`src/components/plate-ui/toolbar.tsx`)
+- **Root Cause Isolated & Resolved**: `ToolbarButton`, `ToolbarSplitButtonPrimary`, and `ToolbarSplitButtonSecondary` were triggering `onClick?.(e as any)` inside `onMouseDown`, while the browser's subsequent synthetic click also fired `onClick`, causing formatting buttons to toggle on and immediately off on a single click.
+- **Selection Preservation**: Retained `e.preventDefault()` on `onMouseDown` so Slate's text selection is never blurred when clicking toolbar buttons, and let the native `onClick` execute cleanly once.
+
+### 3. Toggle List Icon Alignment (`src/components/plate-ui/toggle-toolbar-button.tsx`)
+- Replaced `ChevronRight` with standard `ListCollapse` from `lucide-react` to distinguish collapsible toggle lists from chevron arrows.
+
+### 4. Font Family Dropdown (`src/components/plate-ui/font-family-toolbar-button.tsx`)
+- **Typography Selection**: Added a Font Family dropdown featuring Geist Sans (default), Inter, Times New Roman, Arial, Calibri, Georgia, and Courier New.
+- **Plugin Integration**: Registered `FontFamilyPlugin` and `MARK_FONT_FAMILY` in `editor-kit.tsx`.
+- **Top Toolbar Placement**: Positioned `<FontFamilyToolbarButton />` next to `<FontSizeToolbarButton />` on the fixed top toolbar.
+
+### 5. Table Row & Column Operations (`src/components/plate-ui/table-toolbar-button.tsx`)
+- **Focus Blur Immunity**: Added `savedTableInfo` ref and `savedSelection` capture on dropdown open so table operations (Insert Row Above/Below, Delete Row, Insert Column Left/Right, Delete Column, Delete Table) work reliably regardless of toolbar focus state.
+- **Precise Path Calculations**: Implemented rock-solid path arithmetic for row and column insertions and deletions.
+
+### 6. Center Floating Speech-to-Text Status Indicator (`src/components/plate-ui/speech-to-text-toolbar-button.tsx`)
+- **Visual Feedback**: Added a fixed floating pill centered at `bottom-8 left-1/2 -translate-x-1/2` during voice dictation.
+- **Controls**: Displays a pulsing recording dot, "Listening... Speak into your microphone" status, a "Done" button to finalize dictation, and a "Cancel" button (`abort()`) to discard the speech session.
+
+### 7. Document Header Zone & Interactive Image Alignment Toolbar (`src/components/editor/plate-editor.tsx`, `image-element.tsx`, `image-floating-toolbar.tsx`)
+- **Header Upload Button**: Added a dedicated `+ Add Document Header / Logo` action button at the top of the paper sheet, allowing instant upload of institutional logos and header images at position `[0]`.
+- **Interactive Image Element**: Supports block drag, hover, click/double-click selection ring, and a floating alignment toolbar with Align Left, Align Center, Align Right, and Delete actions.
+- **Data URL Persistence**: Converted image uploads in `media-toolbar-button.tsx` to `FileReader.readAsDataURL` so base64 data persists across draft saves and enables DOCX export.
+
+### 8. Accurate DOCX & PDF Image and Font Export (`docxSerializer.ts`, `print-document.css`)
+- **Native Word ImageRun**: Updated `docxSerializer.ts` to convert `img` nodes into native `docx.ImageRun` with header parsing (PNG/JPEG dimension decoding with proportional scaling to page margins) and text alignment wrapping.
+- **Font Family Serialization**: Mapped CSS `fontFamily` mark into clean Word font names (`Times New Roman`, `Arial`, `Calibri`, `Georgia`, `Courier New`, etc.) in `leafToRuns`.
+- **Print Styles**: Enhanced `print-document.css` with `page-break-inside: avoid` for images and suppressed floating editor controls during print.
+
+### 9. Verification
+- **TypeScript Compiler (`npm run lint` / `tsc --noEmit`)**: 0 errors.
+- **Editor Test Suite (`npm run test:editor`)**: 50/50 tests passing across all 8 suites (including new image and font docx serialization test).
+
+
 
 
 

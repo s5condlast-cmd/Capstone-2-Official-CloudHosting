@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { ChevronRight } from 'lucide-react';
+import { ListCollapse } from 'lucide-react';
 import { useEditorRef, useSelectionFragmentProp } from 'platejs/react';
 import { ToolbarButton } from './toolbar';
 
@@ -32,7 +32,7 @@ export function ToggleToolbarButton() {
       tooltip="Toggle list"
       aria-label="Toggle list"
     >
-      <ChevronRight className="w-4 h-4 text-zinc-700 dark:text-zinc-200" />
+      <ListCollapse className="w-4 h-4 text-zinc-700 dark:text-zinc-200" />
     </ToolbarButton>
   );
 }

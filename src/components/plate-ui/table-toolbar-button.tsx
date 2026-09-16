@@ -3,7 +3,6 @@
 import * as React from 'react';
 import {
   Grid3X3,
-  ChevronRight,
   Trash2,
 } from 'lucide-react';
 import { useEditorRef, useEditorSelector } from 'platejs/react';
@@ -26,6 +25,17 @@ export function TableToolbarButton() {
   const [hoverRow, setHoverRow] = React.useState(0);
   const [hoverCol, setHoverCol] = React.useState(0);
 
+  const savedSelection = React.useRef<any>(null);
+  const savedTableInfo = React.useRef<{
+    tablePath: number[];
+    trPath: number[];
+    tdPath: number[];
+    colIdx: number;
+    rowIdx: number;
+    numCols: number;
+    numRows: number;
+  } | null>(null);
+
   const isInsideTable = useEditorSelector((ed) => {
     try {
       return Boolean(
@@ -38,8 +48,40 @@ export function TableToolbarButton() {
     }
   }, []);
 
+  // When dropdown opens, save selection and table path information
+  React.useEffect(() => {
+    if (open && editor) {
+      savedSelection.current = editor.selection;
+      try {
+        const tableEntry = editor.api?.above?.({ match: (n: any) => n.type === 'table' });
+        const trEntry = editor.api?.above?.({ match: (n: any) => n.type === 'tr' });
+        const tdEntry = editor.api?.above?.({ match: (n: any) => n.type === 'td' || n.type === 'th' });
+
+        if (tableEntry && trEntry && tdEntry) {
+          const [tableNode, tablePath] = tableEntry;
+          const [trNode, trPath] = trEntry;
+          const [, tdPath] = tdEntry;
+          savedTableInfo.current = {
+            tablePath,
+            trPath,
+            tdPath,
+            colIdx: tdPath[tdPath.length - 1],
+            rowIdx: trPath[trPath.length - 1],
+            numCols: trNode.children?.length || 2,
+            numRows: tableNode.children?.length || 2,
+          };
+        }
+      } catch {
+        // non-fatal
+      }
+    }
+  }, [open, editor]);
+
   const handleInsertTable = (rows: number, cols: number) => {
     try {
+      if (savedSelection.current && !editor.selection) {
+        editor.tf.select(savedSelection.current);
+      }
       const tableRows = [];
       for (let r = 0; r < rows; r++) {
         const cells = [];
@@ -59,36 +101,61 @@ export function TableToolbarButton() {
         },
       ]);
       editor?.tf?.focus?.();
-    } catch { /* non-fatal */ }
+    } catch {
+      // non-fatal
+    }
 
     setOpen(false);
   };
 
   const handleInsertRow = (below = true) => {
     try {
+      const info = savedTableInfo.current;
       const trEntry = editor?.api?.above?.({ match: (n: any) => n.type === 'tr' });
-      if (!trEntry) return;
-      const [trNode, trPath] = trEntry;
-      const colCount = trNode.children?.length || 2;
+      const tableEntry = editor?.api?.above?.({ match: (n: any) => n.type === 'table' });
+
+      let insertPath: number[];
+      let colCount = 2;
+
+      if (trEntry && tableEntry) {
+        const [trNode, trPath] = trEntry;
+        colCount = trNode.children?.length || 2;
+        const rowIndex = trPath[trPath.length - 1];
+        insertPath = [...trPath.slice(0, -1), rowIndex + (below ? 1 : 0)];
+      } else if (info) {
+        colCount = info.numCols;
+        insertPath = [...info.tablePath, info.rowIdx + (below ? 1 : 0)];
+      } else {
+        return;
+      }
+
       const newCells = Array.from({ length: colCount }, () => ({
         type: 'td',
         children: [{ type: 'p', children: [{ text: '' }] }],
       }));
-      const insertPath = below ? [trPath[0], trPath[1] + 1] : trPath;
+
       editor?.tf?.insertNodes?.([{ type: 'tr', children: newCells }], { at: insertPath });
       editor?.tf?.focus?.();
-    } catch { /* non-fatal */ }
+    } catch {
+      // non-fatal
+    }
     setOpen(false);
   };
 
   const handleDeleteRow = () => {
     try {
       const trEntry = editor?.api?.above?.({ match: (n: any) => n.type === 'tr' });
+      const info = savedTableInfo.current;
+
       if (trEntry) {
         editor?.tf?.removeNodes?.({ at: trEntry[1] });
-        editor?.tf?.focus?.();
+      } else if (info) {
+        editor?.tf?.removeNodes?.({ at: info.trPath });
       }
-    } catch { /* non-fatal */ }
+      editor?.tf?.focus?.();
+    } catch {
+      // non-fatal
+    }
     setOpen(false);
   };
 
@@ -96,21 +163,36 @@ export function TableToolbarButton() {
     try {
       const tdEntry = editor?.api?.above?.({ match: (n: any) => n.type === 'td' || n.type === 'th' });
       const tableEntry = editor?.api?.above?.({ match: (n: any) => n.type === 'table' });
-      if (!tdEntry || !tableEntry) return;
-      const colIdx = tdEntry[1][tdEntry[1].length - 1];
-      const targetIdx = right ? colIdx + 1 : colIdx;
-      const [tableNode, tablePath] = tableEntry;
+      const info = savedTableInfo.current;
 
-      tableNode.children.forEach((row: any, rIdx: number) => {
-        const cellType = rIdx === 0 && row.children[0]?.type === 'th' ? 'th' : 'td';
-        const cellPath = [...tablePath, rIdx, targetIdx];
+      let tablePath: number[];
+      let numRows: number;
+      let targetIdx: number;
+
+      if (tdEntry && tableEntry) {
+        const colIdx = tdEntry[1][tdEntry[1].length - 1];
+        targetIdx = right ? colIdx + 1 : colIdx;
+        tablePath = tableEntry[1];
+        numRows = tableEntry[0].children?.length || 2;
+      } else if (info) {
+        targetIdx = right ? info.colIdx + 1 : info.colIdx;
+        tablePath = info.tablePath;
+        numRows = info.numRows;
+      } else {
+        return;
+      }
+
+      for (let r = 0; r < numRows; r++) {
+        const cellType = r === 0 ? 'th' : 'td';
         editor?.tf?.insertNodes?.(
           [{ type: cellType, children: [{ type: 'p', children: [{ text: '' }] }] }],
-          { at: cellPath }
+          { at: [...tablePath, r, targetIdx] }
         );
-      });
+      }
       editor?.tf?.focus?.();
-    } catch { /* non-fatal */ }
+    } catch {
+      // non-fatal
+    }
     setOpen(false);
   };
 
@@ -118,30 +200,52 @@ export function TableToolbarButton() {
     try {
       const tdEntry = editor?.api?.above?.({ match: (n: any) => n.type === 'td' || n.type === 'th' });
       const tableEntry = editor?.api?.above?.({ match: (n: any) => n.type === 'table' });
-      if (!tdEntry || !tableEntry) return;
-      const colIdx = tdEntry[1][tdEntry[1].length - 1];
-      const [tableNode, tablePath] = tableEntry;
+      const info = savedTableInfo.current;
 
-      tableNode.children.forEach((row: any, rIdx: number) => {
-        if (colIdx < row.children.length) {
-          editor?.tf?.removeNodes?.({ at: [...tablePath, rIdx, colIdx] });
-        }
-      });
+      let tablePath: number[];
+      let colIdx: number;
+      let numRows: number;
+
+      if (tdEntry && tableEntry) {
+        colIdx = tdEntry[1][tdEntry[1].length - 1];
+        tablePath = tableEntry[1];
+        numRows = tableEntry[0].children?.length || 2;
+      } else if (info) {
+        colIdx = info.colIdx;
+        tablePath = info.tablePath;
+        numRows = info.numRows;
+      } else {
+        return;
+      }
+
+      for (let r = 0; r < numRows; r++) {
+        editor?.tf?.removeNodes?.({ at: [...tablePath, r, colIdx] });
+      }
       editor?.tf?.focus?.();
-    } catch { /* non-fatal */ }
+    } catch {
+      // non-fatal
+    }
     setOpen(false);
   };
 
   const handleDeleteTable = () => {
     try {
       const tableEntry = editor?.api?.above?.({ match: (n: any) => n.type === 'table' });
+      const info = savedTableInfo.current;
+
       if (tableEntry) {
         editor?.tf?.removeNodes?.({ at: tableEntry[1] });
-        editor?.tf?.focus?.();
+      } else if (info) {
+        editor?.tf?.removeNodes?.({ at: info.tablePath });
       }
-    } catch { /* non-fatal */ }
+      editor?.tf?.focus?.();
+    } catch {
+      // non-fatal
+    }
     setOpen(false);
   };
+
+  const canEditTable = isInsideTable || Boolean(savedTableInfo.current);
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen} modal={false}>
@@ -157,14 +261,14 @@ export function TableToolbarButton() {
         </ToolbarButton>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent className="w-48 p-1.5" align="start">
+      <DropdownMenuContent className="w-48 p-1.5 shadow-xl border border-zinc-200 dark:border-zinc-800" align="start">
         {/* Insert Table Grid Picker submenu */}
         <DropdownMenuSub>
           <DropdownMenuSubTrigger className="flex items-center gap-2 px-2 py-1.5 text-xs rounded cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800">
             <Grid3X3 className="w-4 h-4 text-zinc-600 dark:text-zinc-300" />
             <span>Table</span>
           </DropdownMenuSubTrigger>
-          <DropdownMenuSubContent className="p-3">
+          <DropdownMenuSubContent className="p-3 shadow-xl border border-zinc-200 dark:border-zinc-800">
             <div className="text-[11px] font-medium text-zinc-500 mb-2 text-center">
               {hoverRow > 0 && hoverCol > 0 ? `${hoverRow} × ${hoverCol}` : 'Create Table'}
             </div>
@@ -205,22 +309,22 @@ export function TableToolbarButton() {
         {/* Row Operations */}
         <DropdownMenuSub>
           <DropdownMenuSubTrigger
-            disabled={!isInsideTable}
+            disabled={!canEditTable}
             className={cn(
               'flex items-center gap-2 px-2 py-1.5 text-xs rounded cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800',
-              !isInsideTable && 'opacity-40 cursor-not-allowed'
+              !canEditTable && 'opacity-40 cursor-not-allowed'
             )}
           >
             <span>Row</span>
           </DropdownMenuSubTrigger>
-          <DropdownMenuSubContent className="w-40 p-1">
-            <DropdownMenuItem onClick={() => handleInsertRow(false)} className="text-xs">
+          <DropdownMenuSubContent className="w-40 p-1 shadow-lg border border-zinc-200 dark:border-zinc-800">
+            <DropdownMenuItem onMouseDown={(e) => e.preventDefault()} onClick={() => handleInsertRow(false)} className="text-xs cursor-pointer">
               Insert row above
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleInsertRow(true)} className="text-xs">
+            <DropdownMenuItem onMouseDown={(e) => e.preventDefault()} onClick={() => handleInsertRow(true)} className="text-xs cursor-pointer">
               Insert row below
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleDeleteRow} className="text-xs text-red-500">
+            <DropdownMenuItem onMouseDown={(e) => e.preventDefault()} onClick={handleDeleteRow} className="text-xs text-red-500 cursor-pointer">
               Delete row
             </DropdownMenuItem>
           </DropdownMenuSubContent>
@@ -229,22 +333,22 @@ export function TableToolbarButton() {
         {/* Column Operations */}
         <DropdownMenuSub>
           <DropdownMenuSubTrigger
-            disabled={!isInsideTable}
+            disabled={!canEditTable}
             className={cn(
               'flex items-center gap-2 px-2 py-1.5 text-xs rounded cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800',
-              !isInsideTable && 'opacity-40 cursor-not-allowed'
+              !canEditTable && 'opacity-40 cursor-not-allowed'
             )}
           >
             <span>Column</span>
           </DropdownMenuSubTrigger>
-          <DropdownMenuSubContent className="w-40 p-1">
-            <DropdownMenuItem onClick={() => handleInsertCol(false)} className="text-xs">
+          <DropdownMenuSubContent className="w-40 p-1 shadow-lg border border-zinc-200 dark:border-zinc-800">
+            <DropdownMenuItem onMouseDown={(e) => e.preventDefault()} onClick={() => handleInsertCol(false)} className="text-xs cursor-pointer">
               Insert column left
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleInsertCol(true)} className="text-xs">
+            <DropdownMenuItem onMouseDown={(e) => e.preventDefault()} onClick={() => handleInsertCol(true)} className="text-xs cursor-pointer">
               Insert column right
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleDeleteCol} className="text-xs text-red-500">
+            <DropdownMenuItem onMouseDown={(e) => e.preventDefault()} onClick={handleDeleteCol} className="text-xs text-red-500 cursor-pointer">
               Delete column
             </DropdownMenuItem>
           </DropdownMenuSubContent>
@@ -254,11 +358,12 @@ export function TableToolbarButton() {
 
         {/* Delete Table */}
         <DropdownMenuItem
-          disabled={!isInsideTable}
+          disabled={!canEditTable}
+          onMouseDown={(e) => e.preventDefault()}
           onClick={handleDeleteTable}
           className={cn(
             'flex items-center gap-2 px-2 py-1.5 text-xs rounded text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 cursor-pointer',
-            !isInsideTable && 'opacity-40 cursor-not-allowed'
+            !canEditTable && 'opacity-40 cursor-not-allowed'
           )}
         >
           <Trash2 className="w-3.5 h-3.5" />
@@ -268,4 +373,3 @@ export function TableToolbarButton() {
     </DropdownMenu>
   );
 }
-

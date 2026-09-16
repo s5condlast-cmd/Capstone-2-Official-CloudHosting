@@ -18,6 +18,7 @@ import { ToolbarGroup, ToolbarSeparator, ToolbarButton } from './toolbar';
 import { UndoToolbarButton, RedoToolbarButton } from './history-toolbar-button';
 import { InsertToolbarButton } from './insert-toolbar-button';
 import { TurnIntoToolbarButton } from './turn-into-toolbar-button';
+import { FontFamilyToolbarButton } from './font-family-toolbar-button';
 import { FontSizeToolbarButton } from './font-size-toolbar-button';
 import { MarkToolbarButton } from './mark-toolbar-button';
 import { FontColorToolbarButton } from './font-color-toolbar-button';
@@ -87,10 +88,11 @@ export function FixedToolbarButtons({
         <RedoToolbarButton />
       </ToolbarGroup>
 
-      {/* 1. Insert (+ v), Turn Into (Heading 1 v), Font Size ([- 16 +]) */}
+      {/* 1. Insert (+ v), Turn Into (Heading 1 v), Font Family, Font Size ([- 16 +]) */}
       <ToolbarGroup className={cn(isViewing && 'opacity-40 pointer-events-none')}>
         <InsertToolbarButton />
         <TurnIntoToolbarButton />
+        <FontFamilyToolbarButton />
         <FontSizeToolbarButton />
       </ToolbarGroup>
 

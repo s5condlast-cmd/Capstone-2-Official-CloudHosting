@@ -159,3 +159,4 @@ export function BlockDraggable({
     </div>
   );
 }
+

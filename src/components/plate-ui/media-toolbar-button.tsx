@@ -70,19 +70,25 @@ export function MediaToolbarButton() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const url = URL.createObjectURL(file);
-    try {
-      editor?.tf?.insertNodes?.([
-        {
-          type: selectedMediaType,
-          url,
-          name: file.name,
-          children: [{ text: '' }],
-        },
-      ]);
-      editor?.tf?.focus?.();
-    } catch { /* non-fatal */ }
-
+    const reader = new FileReader();
+    reader.onload = () => {
+      const url = reader.result as string;
+      try {
+        editor?.tf?.insertNodes?.([
+          {
+            type: selectedMediaType,
+            url,
+            name: file.name,
+            align: 'center',
+            children: [{ text: '' }],
+          },
+        ]);
+        editor?.tf?.focus?.();
+      } catch {
+        // non-fatal
+      }
+    };
+    reader.readAsDataURL(file);
     e.target.value = '';
   };
 

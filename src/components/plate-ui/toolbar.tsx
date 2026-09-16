@@ -143,8 +143,8 @@ export const ToolbarButton = React.forwardRef<HTMLButtonElement, ToolbarButtonPr
         onMouseDown={(e) => {
           // Prevent losing text focus and selection in the Slate editor
           e.preventDefault();
-          onClick?.(e as any);
         }}
+        onClick={onClick}
         className={cn(
           toolbarButtonVariants({
             size,
@@ -206,8 +206,8 @@ export const ToolbarSplitButtonPrimary = React.forwardRef<
       aria-pressed={active}
       onMouseDown={(e) => {
         e.preventDefault();
-        onClick?.(e as any);
       }}
+      onClick={onClick}
       className={cn(
         'inline-flex h-8.5 items-center justify-center px-2 rounded-l-md text-zinc-700 dark:text-zinc-200 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-200/70 dark:hover:bg-zinc-800 transition-colors',
         active && 'bg-zinc-200 dark:bg-zinc-800 text-zinc-950 dark:text-white font-semibold',
@@ -237,8 +237,8 @@ export const ToolbarSplitButtonSecondary = React.forwardRef<
       aria-pressed={active}
       onMouseDown={(e) => {
         e.preventDefault();
-        onClick?.(e as any);
       }}
+      onClick={onClick}
       className={cn(
         'inline-flex h-8.5 w-5 items-center justify-center rounded-r-md text-zinc-600 dark:text-zinc-200 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-200/70 dark:hover:bg-zinc-800 transition-colors',
         active && 'bg-zinc-200 dark:bg-zinc-800 text-zinc-950 dark:text-white',

@@ -97,6 +97,29 @@ describe('Plate editor runtime wiring', () => {
     assert.ok(blob.size > 1_000);
   });
 
+  it('serializes images and font families accurately to docx', async () => {
+    const tinyPng = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+    const blob = await serializeToDocx([
+      {
+        type: 'img',
+        url: tinyPng,
+        align: 'center',
+        name: 'header-logo.png',
+        children: [{ text: '' }],
+      },
+      {
+        type: 'p',
+        align: 'left',
+        children: [
+          { text: 'Times Roman Paragraph', fontFamily: '"Times New Roman", Times, serif' },
+          { text: ' Arial Text', fontFamily: 'Arial, sans-serif' },
+        ],
+      },
+    ] as any, 'Image and Font Test');
+
+    assert.ok(blob.size > 1_500);
+  });
+
   it('reorders blocks using Plate transform moveNodes with correct displacement', () => {
     const editor = createEditor([
       { type: 'h1', children: [{ text: 'Title' }] },

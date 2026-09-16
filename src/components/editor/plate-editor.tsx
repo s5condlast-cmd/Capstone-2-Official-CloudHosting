@@ -9,7 +9,7 @@
  * - FloatingToolbar (contextual floating action bar on text selection)
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Sparkles, Eye } from 'lucide-react';
+import { Sparkles, Eye, Image as ImageIcon } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import { editorPlugins } from './editor-kit';
 import { EditorContainer, Editor } from '@/src/components/plate-ui/editor';
@@ -239,12 +239,86 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
       }
     }, [ref]);
 
+    const handleKeyDown = useCallback(
+      (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          const ed = editor;
+          if (ed?.selection && ed.api) {
+            try {
+              const entry = ed.api.block();
+              if (entry) {
+                const [block, path] = entry;
+                const text = ed.api.string(path) || '';
+
+                // 1. If inside an empty list item or empty toggle/todo, exit to normal paragraph 'p'
+                if (text.trim() === '') {
+                  if (block.type === 'li' || ed.api.above({ match: (n: any) => n.type === 'ul' || n.type === 'ol' })) {
+                    e.preventDefault();
+                    ed.tf.unwrapNodes({ match: (n: any) => n.type === 'ul' || n.type === 'ol', split: true });
+                    ed.tf.setNodes({ type: 'p' }, { match: (n: any) => n.type === 'li' });
+                    return;
+                  }
+                  if (block.type === 'toggle' || block.type === 'todo') {
+                    e.preventDefault();
+                    ed.tf.setNodes({ type: 'p' }, { at: path });
+                    return;
+                  }
+                } else if (block.type === 'toggle') {
+                  // 2. If inside a toggle with text and user presses Enter, create a normal paragraph below it
+                  e.preventDefault();
+                  ed.tf.insertNodes({ type: 'p', children: [{ text: '' }] });
+                  return;
+                }
+              }
+            } catch {
+              // non-fatal fallback
+            }
+          }
+        }
+      },
+      [editor]
+    );
+
     const handleChange = useCallback(
       ({ value }: { value: object[] }) => {
         contentRef.current = value;
         onChange?.(value, countWordsInContent(value));
       },
       [onChange]
+    );
+
+    const headerInputRef = useRef<HTMLInputElement>(null);
+
+    const handleHeaderImageUpload = useCallback(
+      (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = () => {
+          const dataUrl = reader.result as string;
+          try {
+            editor?.tf?.insertNodes?.(
+              [
+                {
+                  type: 'img',
+                  url: dataUrl,
+                  name: file.name,
+                  align: 'center',
+                  children: [{ text: '' }],
+                },
+              ],
+              { at: [0] }
+            );
+            editor?.tf?.focus?.();
+          } catch {
+            // non-fatal
+          }
+        };
+        reader.readAsDataURL(file);
+        e.target.value = '';
+      },
+      [editor]
     );
 
     // ── Fallback while loading ──────────────────────────────────────────────
@@ -368,14 +442,42 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                   justifyContent: 'center',
                 }}
               >
-                <Editor
-                  ref={editorRef}
-                  variant="demo"
-                  placeholder={placeholder}
-                  readOnly={isEffectivelyReadOnly}
-                  spellCheck
-                  autoFocus={!isEffectivelyReadOnly}
-                />
+                <div className="w-full max-w-[850px] flex flex-col items-center">
+                  {!isEffectivelyReadOnly && (
+                    <div className="w-full mb-2 flex items-center justify-between px-3 py-1.5 rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xs print:hidden select-none">
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => headerInputRef.current?.click()}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold text-primary hover:bg-primary/10 rounded-md border border-primary/20 transition-colors cursor-pointer"
+                        >
+                          <ImageIcon className="w-3.5 h-3.5" />
+                          <span>+ Add Document Header / Logo</span>
+                        </button>
+                        <span className="text-[11px] text-zinc-500 dark:text-zinc-400 hidden sm:inline">
+                          Place school or company logo at top
+                        </span>
+                      </div>
+                      <input
+                        ref={headerInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleHeaderImageUpload}
+                      />
+                    </div>
+                  )}
+
+                  <Editor
+                    ref={editorRef}
+                    variant="demo"
+                    placeholder={placeholder}
+                    readOnly={isEffectivelyReadOnly}
+                    spellCheck
+                    autoFocus={!isEffectivelyReadOnly}
+                    onKeyDown={handleKeyDown}
+                  />
+                </div>
               </div>
             </EditorContainer>
 

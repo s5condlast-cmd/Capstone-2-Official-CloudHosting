@@ -32,12 +32,26 @@
     line-height: 1.5;
   }
 
-  /* Prevent page breaks inside signature blocks and headers */
+  /* Prevent page breaks inside signature blocks, headers, and images */
   .signature-block,
   .document-header,
+  img,
   h1, h2, h3, h4 {
     page-break-inside: avoid;
     break-inside: avoid;
+  }
+
+  img {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+
+  /* Hide editor floating controls, drag handles, and action buttons in print */
+  [data-slate-editor] button,
+  [data-plate-floating-toolbar],
+  .group\/image button,
+  [data-dnd-handle] {
+    display: none !important;
   }
 
   /* Keep paragraphs with their following content */

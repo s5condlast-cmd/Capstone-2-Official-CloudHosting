@@ -66,6 +66,7 @@ export const MARK_BG_COLOR = 'backgroundColor';
 export const MARK_SUBSCRIPT = 'subscript';
 export const MARK_SUPERSCRIPT = 'superscript';
 export const MARK_KBD = 'kbd';
+export const MARK_FONT_FAMILY = 'fontFamily';
 
 // ---------------------------------------------------------------------------
 // Render components
@@ -105,8 +106,10 @@ import {
   TableCellHeaderElement,
 } from '@/src/components/plate-ui/table-element';
 import { ToggleElement } from '@/src/components/plate-ui/toggle-element';
+import { ImageElement } from '@/src/components/plate-ui/image-element';
 
 export {
+  ImageElement,
   ParagraphElement,
   HeadingElement,
   H1Element,
@@ -332,25 +335,7 @@ export const MediaPlugin = createTSlatePlugin({
         isElement: true,
         isVoid: true,
         type: ELEMENT_IMAGE,
-        component: ({ children, element, ...props }: any) => (
-          <BlockDraggable element={element} handleTopOffset="top-3">
-            <PlateElement as="div" className="my-4" element={element} {...props}>
-              <div contentEditable={false} className="select-none text-center">
-                <img
-                  src={element.url}
-                  alt={element.name || ''}
-                  className="mx-auto block max-h-96 max-w-full rounded-lg border border-zinc-200 dark:border-zinc-800 shadow-xs object-cover"
-                />
-                {element.caption && (
-                  <p className="mt-2 text-center text-xs text-zinc-500 dark:text-zinc-400 font-normal select-text">
-                    {element.caption}
-                  </p>
-                )}
-              </div>
-              {children}
-            </PlateElement>
-          </BlockDraggable>
-        ),
+        component: ImageElement,
       },
     }),
     createTSlatePlugin({
@@ -546,6 +531,17 @@ export const KbdPlugin = createTSlatePlugin({
   },
 });
 
+export const FontFamilyPlugin = createTSlatePlugin({
+  key: MARK_FONT_FAMILY,
+  node: {
+    isLeaf: true,
+    type: MARK_FONT_FAMILY,
+    component: ({ leaf, style, ...props }: any) => (
+      <PlateLeaf style={{ fontFamily: leaf.fontFamily, ...style }} {...props} />
+    ),
+  },
+});
+
 // ---------------------------------------------------------------------------
 // Block property plugins: alignment, lineHeight, indent
 // ---------------------------------------------------------------------------
@@ -633,6 +629,7 @@ export const editorPlugins = [
   SubscriptPlugin,
   SuperscriptPlugin,
   KbdPlugin,
+  FontFamilyPlugin,
   AlignPlugin,
   LineHeightPlugin,
   IndentPlugin,
