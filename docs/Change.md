@@ -2178,3 +2178,57 @@ Per user request reporting excessive line spacing between text entries (`fasdfas
 3. **Zero Regressions & Full Verification**:
    - `npm run lint` (`tsc --noEmit`): 0 errors.
    - `npm run test:editor`: 48/48 tests passing across all 8 test suites.
+
+---
+
+## 26. Official Plate.js Modular UI Registry Alignment (`docs/platejs.md`)
+
+Per user instruction providing the complete official Plate.js v53 registry codebase in `docs/platejs.md` (78 components, 17,761 lines), the document editor was refactored from a monolithic definition into the official, modular Plate.js directory structure and component patterns under `src/components/plate-ui/`.
+
+### 1. Architectural Principles & Directory Structure
+- **Modular Directory Organization**: Split inline element renderers and toolbar buttons into dedicated, individually importable files in `src/components/plate-ui/` matching the official registry paths.
+- **Declarative Toolbar Composition**: Refactored `FixedToolbarButtons` into a clean orchestrator importing modular buttons, preserving the responsive 3-dots overflow menu (`RightOverflowMenu`) for open/collapsed sidebar states.
+- **Base UI Component Bridge**: Added `asChild` composition support via `@base-ui/react` `render` prop in `components/ui/dropdown-menu.tsx` and `components/ui/popover.tsx`, ensuring full compatibility with official Radix-style toolbar button triggers.
+- **Strict Single-Line Spacing Preservation**: Preserved the verified `cn('relative m-0 px-0 py-0.5 leading-normal', className)` spacing on `ParagraphElement` without `as="p"` tag and `whitespace-break-spaces` on `Editor` to prevent double newline voids.
+
+### 2. Implemented Modular Components in `src/components/plate-ui/`
+
+1. **Element & Leaf Renderers**:
+   - `paragraph-element.tsx`: Standard `PlateElement` with verified single-spacing classes.
+   - `heading-element.tsx`: Scaled `H1Element`..`H6Element` with `headingVariants`.
+   - `blockquote-element.tsx`: Border-left accented blockquote element.
+   - `code-leaf.tsx`: Monospace code tag leaf.
+   - `highlight-leaf.tsx`: Amber background leaf mark.
+   - `kbd-leaf.tsx`: Keyboard key tag leaf.
+   - `hr-element.tsx`: Horizontal divider rule.
+   - `link-element.tsx`: Styled anchor tag element.
+   - `date-element.tsx`: Inline calendar pill with date picker popover.
+   - `table-element.tsx`: Full `TableElement`, `TableRowElement`, `TableCellElement`, `TableCellHeaderElement` with border controls.
+   - `toggle-element.tsx`: Collapsible accordion block.
+
+2. **Modular Toolbar Buttons**:
+   - `history-toolbar-button.tsx`: `UndoToolbarButton` & `RedoToolbarButton` with undo/redo stack state.
+   - `mark-toolbar-button.tsx`: Generic text mark toggler using `useMarkToolbarButton` & `useMarkToolbarButtonState`.
+   - `turn-into-toolbar-button.tsx`: Block converter dropdown (Text, H1–H6, Quote, Todo).
+   - `font-size-toolbar-button.tsx`: Stepper pill with dropdown size picker.
+   - `font-color-toolbar-button.tsx`: 10-column color palette with custom hex input.
+   - `align-toolbar-button.tsx`: Left, center, right, and justify alignment selector.
+   - `list-toolbar-button.tsx`: `BulletedListToolbarButton`, `NumberedListToolbarButton`, `TodoListToolbarButton`.
+   - `indent-toolbar-button.tsx`: `IndentToolbarButton` & `OutdentToolbarButton`.
+   - `link-toolbar-button.tsx`: Link insert/edit popover.
+   - `table-toolbar-button.tsx`: 8x8 table grid picker with row/col submenus.
+   - `emoji-toolbar-button.tsx`: Categorized emoji picker popover.
+   - `media-toolbar-button.tsx`: Unified media uploader for images, videos, audio, and attachments.
+   - `line-height-toolbar-button.tsx`: Line spacing dropdown (1, 1.15, 1.5, 2, 2.5, 3).
+   - `mode-toolbar-button.tsx`: Document mode switcher (`editing`, `suggesting`, `viewing`).
+   - `comment-toolbar-button.tsx`: Comment thread viewer and creator with badge indicator.
+   - `export-toolbar-button.tsx`: Word (.docx) and PDF export dropdown.
+   - `toggle-toolbar-button.tsx`: Toggle list item button.
+   - `insert-toolbar-button.tsx`: Unified insert block menu.
+   - `speech-to-text-toolbar-button.tsx`: Isolated dictation button.
+   - `more-toolbar-button.tsx`: Overflow actions menu.
+   - `floating-toolbar-buttons.tsx`: Contextual floating toolbar action suite.
+
+### 3. Verification & Zero Regressions
+- **Type Checking (`npm run lint`)**: Passed with 0 errors across all 30 new modular components and updated consumers.
+- **Test Suite (`npm run test:editor`)**: All 48 test suites passing across database, storage, and editor runtime domains.

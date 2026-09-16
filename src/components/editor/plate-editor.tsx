@@ -290,7 +290,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
           </FixedToolbar>
 
           {/* Mode banner indicator */}
-          {activeMode === 'suggestion' && (
+          {activeMode === 'suggesting' && (
             <div className="flex items-center justify-between px-4 py-1.5 bg-amber-500/10 border-b border-amber-500/20 text-amber-800 dark:text-amber-200 text-xs font-medium shrink-0">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-3.5 h-3.5 text-amber-500" />

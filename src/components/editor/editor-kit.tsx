@@ -79,53 +79,54 @@ function blockStyle(element: any): React.CSSProperties {
   };
 }
 
-function ParagraphElement({ element, style, className, ...props }: any) {
-  return (
-    <PlateElement
-      element={element}
-      style={{ ...blockStyle(element), ...style }}
-      className={cn('relative m-0 px-0 py-0.5 leading-normal', className)}
-      {...props}
-    />
-  );
-}
+import { ParagraphElement } from '@/src/components/plate-ui/paragraph-element';
+import {
+  HeadingElement,
+  H1Element,
+  H2Element,
+  H3Element,
+  H4Element,
+  H5Element,
+  H6Element,
+} from '@/src/components/plate-ui/heading-element';
+import { BlockquoteElement } from '@/src/components/plate-ui/blockquote-element';
+import { CodeLeaf } from '@/src/components/plate-ui/code-leaf';
+import { HighlightLeaf } from '@/src/components/plate-ui/highlight-leaf';
+import { KbdLeaf } from '@/src/components/plate-ui/kbd-leaf';
+import { HrElement } from '@/src/components/plate-ui/hr-element';
+import { LinkElement } from '@/src/components/plate-ui/link-element';
+import { DateElement } from '@/src/components/plate-ui/date-element';
+import {
+  TableElement,
+  TableRowElement,
+  TableCellElement,
+  TableCellHeaderElement,
+} from '@/src/components/plate-ui/table-element';
+import { ToggleElement } from '@/src/components/plate-ui/toggle-element';
 
-function HeadingElement({ element, style, className, ...props }: any) {
-  const level = Number(String(element?.type || 'h1').slice(1));
-  const headingClass = {
-    1: 'mt-6 mb-2 font-heading text-3xl sm:text-4xl font-bold tracking-tight',
-    2: 'mt-5 mb-1.5 font-heading text-2xl font-semibold tracking-tight',
-    3: 'mt-4 mb-1 font-heading text-xl font-semibold tracking-tight',
-    4: 'mt-3 mb-1 font-heading text-lg font-semibold tracking-tight',
-    5: 'mt-2.5 mb-0.5 text-base font-semibold tracking-tight',
-    6: 'mt-2 mb-0.5 text-sm font-semibold tracking-tight',
-  }[level] || 'mt-4 mb-1 font-heading text-xl font-semibold tracking-tight';
-
-  return (
-    <PlateElement
-      as={`h${Math.min(6, Math.max(1, level))}` as any}
-      element={element}
-      style={{ ...blockStyle(element), ...style }}
-      className={cn('relative', headingClass, className)}
-      {...props}
-    />
-  );
-}
-
-function BlockquoteElement({ element, style, className, ...props }: any) {
-  return (
-    <PlateElement
-      as="blockquote"
-      element={element}
-      style={{ ...blockStyle(element), ...style }}
-      className={cn(
-        'relative my-1 border-l-2 border-zinc-300 dark:border-zinc-700 pl-6 italic text-zinc-700 dark:text-zinc-300',
-        className
-      )}
-      {...props}
-    />
-  );
-}
+export {
+  ParagraphElement,
+  HeadingElement,
+  H1Element,
+  H2Element,
+  H3Element,
+  H4Element,
+  H5Element,
+  H6Element,
+  BlockquoteElement,
+  CodeLeaf,
+  HighlightLeaf,
+  KbdLeaf,
+  HrElement,
+  HrElement as HorizontalRuleElement,
+  LinkElement,
+  DateElement,
+  TableElement,
+  TableRowElement,
+  TableCellElement,
+  TableCellHeaderElement,
+  ToggleElement,
+};
 
 function ListElement({ element, style, className, ...props }: any) {
   const ordered = element?.type === ELEMENT_OL;
@@ -183,109 +184,6 @@ function TodoElement({ children, element, style, ...props }: any) {
   );
 }
 
-function ToggleElement({ children, element, style, ...props }: any) {
-  const editor = useEditorRef();
-  const path = usePath();
-
-  return (
-    <PlateElement
-      as="div"
-      element={element}
-      style={{ ...blockStyle(element), ...style }}
-      className="my-2"
-      {...props}
-    >
-      <details
-        open={element?.open !== false}
-        onToggle={(event) => {
-          const open = event.currentTarget.open;
-          if (open !== element?.open) editor.tf.setNodes({ open }, { at: path });
-        }}
-        className="rounded-md border border-zinc-200 px-3 py-2 dark:border-zinc-700"
-      >
-        <summary contentEditable={false} className="cursor-pointer select-none text-sm font-medium text-zinc-600 dark:text-zinc-300">
-          Details
-        </summary>
-        <div className="pt-2">{children}</div>
-      </details>
-    </PlateElement>
-  );
-}
-
-function TableElement({ children, ...props }: any) {
-  return (
-    <PlateElement as="div" className="my-4 overflow-x-auto" {...props}>
-      <table className="w-full table-fixed border-collapse">
-        <tbody>{children}</tbody>
-      </table>
-    </PlateElement>
-  );
-}
-
-function TableRowElement(props: any) {
-  return <PlateElement as="tr" {...props} />;
-}
-
-function TableCellElement({ element, ...props }: any) {
-  return (
-    <PlateElement
-      as={element?.type === ELEMENT_TH ? 'th' : 'td'}
-      element={element}
-      className="min-w-24 border border-zinc-300 px-3 py-2 align-top dark:border-zinc-700"
-      {...props}
-    />
-  );
-}
-
-function HorizontalRuleElement({ children, className, ...props }: any) {
-  return (
-    <PlateElement as="div" className={cn('relative my-4', className)} {...props}>
-      <div className="py-6" contentEditable={false}>
-        <hr className="h-0.5 rounded-sm border-none bg-zinc-200 dark:bg-zinc-800 bg-clip-content" />
-      </div>
-      {children}
-    </PlateElement>
-  );
-}
-
-function LinkElement({ element, className, ...props }: any) {
-  const rawUrl = String(element?.url || '');
-  const href = /^(https?:|mailto:|tel:)/i.test(rawUrl) ? rawUrl : `https://${rawUrl}`;
-  return (
-    <PlateElement
-      as="a"
-      element={element}
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      className={cn(
-        'font-medium text-primary underline decoration-primary/40 underline-offset-4 hover:decoration-primary',
-        className
-      )}
-      {...props}
-    />
-  );
-}
-
-function DateElement({ children, element, className, ...props }: any) {
-  const value = String(element?.date || '');
-  const label = value
-    ? new Date(`${value}T00:00:00`).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })
-    : 'Date';
-
-  return (
-    <PlateElement
-      as="span"
-      element={element}
-      className={cn('rounded bg-zinc-100 px-1.5 py-0.5 text-sm dark:bg-zinc-800', className)}
-      {...props}
-    >
-      <span contentEditable={false}>{label}</span>
-      {children}
-    </PlateElement>
-  );
-}
-
 function StrongLeaf({ className, ...props }: any) {
   return <PlateLeaf as="strong" className={cn('font-bold', className)} {...props} />;
 }
@@ -302,28 +200,6 @@ function StrikethroughLeaf({ className, ...props }: any) {
   return <PlateLeaf as="s" className={cn('line-through', className)} {...props} />;
 }
 
-function CodeLeaf({ className, ...props }: any) {
-  return (
-    <PlateLeaf
-      as="code"
-      className={cn(
-        'whitespace-pre-wrap rounded-md bg-zinc-100 dark:bg-zinc-800 px-[0.3em] py-[0.2em] font-mono text-sm text-zinc-900 dark:text-zinc-100',
-        className
-      )}
-      {...props}
-    />
-  );
-}
-
-function HighlightLeaf({ className, ...props }: any) {
-  return (
-    <PlateLeaf
-      as="mark"
-      className={cn('rounded bg-amber-200/60 dark:bg-amber-400/30 text-inherit px-0.5', className)}
-      {...props}
-    />
-  );
-}
 
 // ---------------------------------------------------------------------------
 // Paragraph plugin
@@ -404,7 +280,7 @@ export const TablePlugin = createTSlatePlugin({
     createTSlatePlugin({ key: ELEMENT_TABLE, node: { component: TableElement, isElement: true, type: ELEMENT_TABLE }, parsers: { html: { deserializer: { rules: [{ validNodeName: 'TABLE' }] } } } }),
     createTSlatePlugin({ key: ELEMENT_TR, node: { component: TableRowElement, isElement: true, type: ELEMENT_TR }, parsers: { html: { deserializer: { rules: [{ validNodeName: 'TR' }] } } } }),
     createTSlatePlugin({ key: ELEMENT_TD, node: { component: TableCellElement, isElement: true, type: ELEMENT_TD }, parsers: { html: { deserializer: { rules: [{ validNodeName: 'TD' }] } } } }),
-    createTSlatePlugin({ key: ELEMENT_TH, node: { component: TableCellElement, isElement: true, type: ELEMENT_TH }, parsers: { html: { deserializer: { rules: [{ validNodeName: 'TH' }] } } } }),
+    createTSlatePlugin({ key: ELEMENT_TH, node: { component: TableCellHeaderElement, isElement: true, type: ELEMENT_TH }, parsers: { html: { deserializer: { rules: [{ validNodeName: 'TH' }] } } } }),
   ],
 });
 
@@ -413,7 +289,7 @@ export const TablePlugin = createTSlatePlugin({
 // ---------------------------------------------------------------------------
 export const HorizontalRulePlugin = createTSlatePlugin({
   key: ELEMENT_HR,
-  node: { component: HorizontalRuleElement, isElement: true, isVoid: true, type: ELEMENT_HR },
+  node: { component: HrElement, isElement: true, isVoid: true, type: ELEMENT_HR },
   parsers: {
     html: { deserializer: { rules: [{ validNodeName: 'HR' }] } },
   },

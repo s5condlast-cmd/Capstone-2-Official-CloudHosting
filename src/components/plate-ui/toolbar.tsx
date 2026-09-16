@@ -106,6 +106,7 @@ export interface ToolbarButtonProps
   extends React.ComponentProps<'button'>,
     VariantProps<typeof toolbarButtonVariants> {
   active?: boolean;
+  pressed?: boolean;
   tooltip?: string;
   isDropdown?: boolean;
 }
@@ -114,6 +115,7 @@ export const ToolbarButton = React.forwardRef<HTMLButtonElement, ToolbarButtonPr
   function ToolbarButton(
     {
       active = false,
+      pressed,
       children,
       className,
       disabled,
@@ -127,6 +129,7 @@ export const ToolbarButton = React.forwardRef<HTMLButtonElement, ToolbarButtonPr
     },
     ref
   ) {
+    const isPressed = pressed !== undefined ? pressed : active;
     const tooltipText = tooltip || title;
 
     return (
@@ -134,8 +137,8 @@ export const ToolbarButton = React.forwardRef<HTMLButtonElement, ToolbarButtonPr
         ref={ref}
         type="button"
         disabled={disabled}
-        aria-pressed={active}
-        aria-checked={active}
+        aria-pressed={isPressed}
+        aria-checked={isPressed}
         title={tooltipText}
         onMouseDown={(e) => {
           // Prevent losing text focus and selection in the Slate editor
@@ -145,7 +148,7 @@ export const ToolbarButton = React.forwardRef<HTMLButtonElement, ToolbarButtonPr
         className={cn(
           toolbarButtonVariants({
             size,
-            variant: active ? 'active' : variant,
+            variant: isPressed ? 'active' : variant,
           }),
           isDropdown && 'pr-1.5 gap-1',
           className
@@ -181,17 +184,33 @@ export function ToolbarSplitButton({
   );
 }
 
-export function ToolbarSplitButtonPrimary({
-  className,
-  children,
-  ...props
-}: React.ComponentProps<'button'>) {
+export interface ToolbarSplitButtonPartProps
+  extends React.ComponentProps<'button'> {
+  active?: boolean;
+  tooltip?: string;
+}
+
+export const ToolbarSplitButtonPrimary = React.forwardRef<
+  HTMLButtonElement,
+  ToolbarSplitButtonPartProps
+>(function ToolbarSplitButtonPrimary(
+  { className, active = false, children, title, tooltip, onClick, ...props },
+  ref
+) {
+  const tooltipText = tooltip || title;
   return (
     <button
+      ref={ref}
       type="button"
-      onMouseDown={(e) => e.preventDefault()}
+      title={tooltipText}
+      aria-pressed={active}
+      onMouseDown={(e) => {
+        e.preventDefault();
+        onClick?.(e as any);
+      }}
       className={cn(
         'inline-flex h-8.5 items-center justify-center px-2 rounded-l-md text-zinc-700 dark:text-zinc-200 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-200/70 dark:hover:bg-zinc-800 transition-colors',
+        active && 'bg-zinc-200 dark:bg-zinc-800 text-zinc-950 dark:text-white font-semibold',
         className
       )}
       {...props}
@@ -199,19 +218,30 @@ export function ToolbarSplitButtonPrimary({
       {children}
     </button>
   );
-}
+});
+ToolbarSplitButtonPrimary.displayName = 'ToolbarSplitButtonPrimary';
 
-export function ToolbarSplitButtonSecondary({
-  className,
-  children,
-  ...props
-}: React.ComponentProps<'button'>) {
+export const ToolbarSplitButtonSecondary = React.forwardRef<
+  HTMLButtonElement,
+  ToolbarSplitButtonPartProps
+>(function ToolbarSplitButtonSecondary(
+  { className, active = false, children, title, tooltip, onClick, ...props },
+  ref
+) {
+  const tooltipText = tooltip || title;
   return (
     <button
+      ref={ref}
       type="button"
-      onMouseDown={(e) => e.preventDefault()}
+      title={tooltipText}
+      aria-pressed={active}
+      onMouseDown={(e) => {
+        e.preventDefault();
+        onClick?.(e as any);
+      }}
       className={cn(
         'inline-flex h-8.5 w-5 items-center justify-center rounded-r-md text-zinc-600 dark:text-zinc-200 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-200/70 dark:hover:bg-zinc-800 transition-colors',
+        active && 'bg-zinc-200 dark:bg-zinc-800 text-zinc-950 dark:text-white',
         className
       )}
       {...props}
@@ -219,7 +249,8 @@ export function ToolbarSplitButtonSecondary({
       {children || <ChevronDown className="w-3.5 h-3.5 text-zinc-600 dark:text-zinc-200" />}
     </button>
   );
-}
+});
+ToolbarSplitButtonSecondary.displayName = 'ToolbarSplitButtonSecondary';
 
 export function ToolbarMenuGroup({
   label,
