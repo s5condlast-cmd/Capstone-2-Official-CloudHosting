@@ -2284,3 +2284,25 @@ Per user requests regarding editor toolbar alignment and functionality (`media_1
 - **TypeScript Compiler (`npm run lint` / `tsc --noEmit`)**: 0 errors.
 - **Editor Test Suite (`npm run test:editor`)**: 48/48 tests passing across all 8 suites.
 
+---
+
+## 28. Auto-Collapse Sidebar on Document Editor & Smooth Toolbar Scroll
+
+Per user alignment during `/grill-me` regarding sidebar behavior and editor toolbar layout:
+
+### 1. Auto-Collapse & Auto-Restore Sidebar (`src/pages/student/StudentDocumentEditor.tsx`)
+- **Rationale**: When navigating to the Document Editor (`/student/editor`), the portal sidebar occupies 256px, constraining available horizontal canvas width on standard desktop/laptop displays (e.g. 1366x768) and pushing right-edge toolbar buttons past the viewport.
+- **Implementation**:
+  - Connected `StudentDocumentEditor` to `SidebarContext`.
+  - On mount, automatically calls `sidebar.setOpen(false)` to collapse the navigation sidebar, instantly granting an additional 256px of screen width for distraction-free document writing and ensuring all toolbar controls are immediately visible.
+  - On unmount (e.g. clicking `< Back` or navigating to Dashboard/Repository), automatically calls `sidebar.setOpen(true)` to re-open the sidebar for seamless portal navigation.
+
+### 2. Smooth Horizontal Wheel Scrolling & Sizing (`src/components/plate-ui/fixed-toolbar.tsx` & `fixed-toolbar-buttons.tsx`)
+- Added `handleWheel` in `FixedToolbar` translating vertical mouse wheel events into horizontal scroll (`scrollLeft += deltaY`) when content overflows, enabling effortless horizontal navigation with standard mouse wheels on smaller viewports.
+- Added `min-w-max` to `FixedToolbarButtons` root container (`flex w-full min-w-max items-center gap-1 flex-nowrap`), guaranteeing that flex items maintain full size and never squish or compress on narrow viewports.
+
+### 3. Verification
+- **TypeScript Compiler (`npm run lint` / `tsc --noEmit`)**: 0 errors.
+- **Editor Test Suite (`npm run test:editor`)**: 48/48 tests passing across all 8 suites.
+
+

@@ -22,6 +22,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/src/lib/supabase';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { DocumentHistoryDrawer } from '@/src/components/editor/DocumentHistoryDrawer';
+import { SidebarContext } from '@/components/ui/sidebar';
 import PlateEditor, { type PlateEditorRef } from '@/src/components/editor/plate-editor';
 import { downloadDocx, printToPdf, serializeToDocx } from '@/src/components/editor/serializers/docxSerializer';
 import {
@@ -82,6 +83,17 @@ export function StudentDocumentEditor() {
 
   // ── Storage engine ───────────────────────────────────────────────────────
   const storageRef = useRef<DocumentHistoryStorage | null>(null);
+
+  // ── Auto-collapse sidebar on enter to maximize editing width ─────────────
+  const sidebar = React.useContext(SidebarContext);
+  useEffect(() => {
+    if (!sidebar) return;
+    sidebar.setOpen(false);
+
+    return () => {
+      sidebar.setOpen(true);
+    };
+  }, [sidebar]);
 
   // ── Initialize: load or create draft ─────────────────────────────────────
   useEffect(() => {

@@ -76,7 +76,7 @@ export function FixedToolbarButtons({
   const isViewing = mode === 'viewing' || readOnly;
 
   return (
-    <div className="flex w-full items-center gap-1 flex-nowrap">
+    <div className="flex w-full min-w-max items-center gap-1 flex-nowrap">
       {/* 0. History: Undo & Redo */}
       <ToolbarGroup className={cn(isViewing && 'opacity-40 pointer-events-none')}>
         <UndoToolbarButton />
