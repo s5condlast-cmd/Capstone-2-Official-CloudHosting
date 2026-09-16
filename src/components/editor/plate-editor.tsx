@@ -23,6 +23,7 @@ import {
   Plus,
   Minus,
   Hash,
+  Move,
 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import {
@@ -182,6 +183,14 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
       scope: externalHeaderFooter?.footer?.scope || 'every_page',
     }));
 
+    const [selectedHeaderImage, setSelectedHeaderImage] = useState(false);
+    const [isDraggingHeaderImage, setIsDraggingHeaderImage] = useState(false);
+    const headerTrackRef = useRef<HTMLDivElement | null>(null);
+
+    const [selectedFooterImage, setSelectedFooterImage] = useState(false);
+    const [isDraggingFooterImage, setIsDraggingFooterImage] = useState(false);
+    const footerTrackRef = useRef<HTMLDivElement | null>(null);
+
     const headerFooterRef = useRef<DocumentHeaderFooterOptions>({
       header: headerState,
       footer: footerState,
@@ -191,6 +200,23 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
       headerFooterRef.current = { header: headerState, footer: footerState };
       onHeaderFooterChange?.({ header: headerState, footer: footerState });
     }, [headerState, footerState, onHeaderFooterChange]);
+
+    // Click outside to deselect header and footer images
+    useEffect(() => {
+      if (!selectedHeaderImage && !selectedFooterImage) return;
+      const handleMouseDown = (e: MouseEvent) => {
+        const target = e.target as HTMLElement | null;
+        if (!target) return;
+        if (!target.closest('[data-header-image]') && !target.closest('[data-header-toolbar]')) {
+          setSelectedHeaderImage(false);
+        }
+        if (!target.closest('[data-footer-image]') && !target.closest('[data-footer-toolbar]')) {
+          setSelectedFooterImage(false);
+        }
+      };
+      document.addEventListener('mousedown', handleMouseDown);
+      return () => document.removeEventListener('mousedown', handleMouseDown);
+    }, [selectedHeaderImage, selectedFooterImage]);
 
     const activeMode: EditorMode = readOnly ? 'viewing' : (mode ?? internalMode);
     const isEffectivelyReadOnly = readOnly || activeMode === 'viewing';
@@ -435,6 +461,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
               name: file.name,
               align: prev.image?.align || 'center',
               width: prev.image?.width || 180,
+              offsetPercent: prev.image?.offsetPercent ?? 50,
             },
           }));
         };
@@ -459,6 +486,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
               name: file.name,
               align: prev.image?.align || 'center',
               width: prev.image?.width || 140,
+              offsetPercent: prev.image?.offsetPercent ?? 50,
             },
           }));
         };
@@ -466,6 +494,127 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
         e.target.value = '';
       },
       []
+    );
+
+    // ── Draggable positioning handlers for Header & Footer logos ──────────────
+    const handleHeaderDragStart = useCallback(
+      (e: React.MouseEvent | React.TouchEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setSelectedHeaderImage(true);
+        setIsDraggingHeaderImage(true);
+
+        const updatePosition = (clientX: number) => {
+          const track = headerTrackRef.current;
+          if (!track) return;
+          const rect = track.getBoundingClientRect();
+          const imgWidth = headerState.image?.width || 180;
+          const availableTrack = Math.max(1, rect.width - imgWidth);
+          const mouseX = clientX - rect.left - imgWidth / 2;
+          const rawPercent = (mouseX / availableTrack) * 100;
+          const clamped = Math.max(0, Math.min(100, Math.round(rawPercent)));
+          const newAlign: 'left' | 'center' | 'right' =
+            clamped <= 33 ? 'left' : clamped >= 67 ? 'right' : 'center';
+
+          setHeaderState((prev) => ({
+            ...prev,
+            image: prev.image
+              ? {
+                  ...prev.image,
+                  offsetPercent: clamped,
+                  align: newAlign,
+                }
+              : null,
+          }));
+        };
+
+        const initialClientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+        updatePosition(initialClientX);
+
+        const onMouseMove = (moveEvent: MouseEvent) => {
+          updatePosition(moveEvent.clientX);
+        };
+
+        const onTouchMove = (touchEvent: TouchEvent) => {
+          if (touchEvent.touches[0]) {
+            updatePosition(touchEvent.touches[0].clientX);
+          }
+        };
+
+        const onEnd = () => {
+          setIsDraggingHeaderImage(false);
+          window.removeEventListener('mousemove', onMouseMove);
+          window.removeEventListener('mouseup', onEnd);
+          window.removeEventListener('touchmove', onTouchMove);
+          window.removeEventListener('touchend', onEnd);
+        };
+
+        window.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('mouseup', onEnd);
+        window.addEventListener('touchmove', onTouchMove, { passive: true });
+        window.addEventListener('touchend', onEnd);
+      },
+      [headerState.image?.width]
+    );
+
+    const handleFooterDragStart = useCallback(
+      (e: React.MouseEvent | React.TouchEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setSelectedFooterImage(true);
+        setIsDraggingFooterImage(true);
+
+        const updatePosition = (clientX: number) => {
+          const track = footerTrackRef.current;
+          if (!track) return;
+          const rect = track.getBoundingClientRect();
+          const imgWidth = footerState.image?.width || 140;
+          const availableTrack = Math.max(1, rect.width - imgWidth);
+          const mouseX = clientX - rect.left - imgWidth / 2;
+          const rawPercent = (mouseX / availableTrack) * 100;
+          const clamped = Math.max(0, Math.min(100, Math.round(rawPercent)));
+          const newAlign: 'left' | 'center' | 'right' =
+            clamped <= 33 ? 'left' : clamped >= 67 ? 'right' : 'center';
+
+          setFooterState((prev) => ({
+            ...prev,
+            image: prev.image
+              ? {
+                  ...prev.image,
+                  offsetPercent: clamped,
+                  align: newAlign,
+                }
+              : null,
+          }));
+        };
+
+        const initialClientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+        updatePosition(initialClientX);
+
+        const onMouseMove = (moveEvent: MouseEvent) => {
+          updatePosition(moveEvent.clientX);
+        };
+
+        const onTouchMove = (touchEvent: TouchEvent) => {
+          if (touchEvent.touches[0]) {
+            updatePosition(touchEvent.touches[0].clientX);
+          }
+        };
+
+        const onEnd = () => {
+          setIsDraggingFooterImage(false);
+          window.removeEventListener('mousemove', onMouseMove);
+          window.removeEventListener('mouseup', onEnd);
+          window.removeEventListener('touchmove', onTouchMove);
+          window.removeEventListener('touchend', onEnd);
+        };
+
+        window.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('mouseup', onEnd);
+        window.addEventListener('touchmove', onTouchMove, { passive: true });
+        window.addEventListener('touchend', onEnd);
+      },
+      [footerState.image?.width]
     );
 
     // ── Fallback while loading ──────────────────────────────────────────────
@@ -589,7 +738,12 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                   justifyContent: 'center',
                 }}
               >
-                <div className="w-full max-w-[850px] flex flex-col items-center">
+                <div
+                  className={cn(
+                    'plate-paper-sheet w-full max-w-[850px] min-h-[850px] bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 shadow-sm rounded-xl px-8 sm:px-12 py-6 sm:py-8 flex flex-col relative transition-all',
+                    activeHeaderFooter && 'ring-1 ring-blue-500/40 shadow-md'
+                  )}
+                >
                   {/* Hidden Header & Footer File Inputs */}
                   <input
                     ref={headerInputRef}
@@ -606,7 +760,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                     onChange={handleFooterImageUpload}
                   />
 
-                  {/* ─── Google Docs Style Header Zone ───────────────────────────── */}
+                  {/* ─── Embedded Header Zone (Inside Paper Sheet) ───────────────── */}
                   {(!isEffectivelyReadOnly || headerState.image?.url || headerState.text?.trim()) && (
                     <div
                       onDoubleClick={() => {
@@ -617,8 +771,8 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                       className={cn(
                         'w-full transition-all select-none print:mb-2 print:border-none',
                         activeHeaderFooter === 'header'
-                          ? 'mb-4 border-b-2 border-blue-500 pb-3 bg-blue-50/20 dark:bg-blue-950/20 p-2.5 rounded-t-lg'
-                          : 'pt-2 pb-1.5 border-b border-transparent hover:border-dashed hover:border-zinc-300 dark:hover:border-zinc-700 cursor-pointer group/header'
+                          ? 'mb-2 pb-2'
+                          : 'pt-1 pb-1.5 border-b border-transparent hover:border-dashed hover:border-zinc-300 dark:hover:border-zinc-700 cursor-pointer group/header'
                       )}
                     >
                       {activeHeaderFooter === 'header' ? (
@@ -683,7 +837,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                             </div>
                           </div>
 
-                          {/* Moveable Logo Toolbar & Preview (if image exists) */}
+                          {/* Moveable & Draggable Logo Toolbar & Track (if image exists) */}
                           {headerState.image?.url && (
                             <div className="flex flex-col gap-1.5 p-2 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xs">
                               {/* Moveable Image Action Bar */}
@@ -695,16 +849,16 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                                   <span className="text-[11px] text-zinc-500 mr-1 font-medium">Position:</span>
                                   <button
                                     type="button"
-                                    title="Align Left"
+                                    title="Align Left (0%)"
                                     onClick={() =>
                                       setHeaderState((prev) => ({
                                         ...prev,
-                                        image: prev.image ? { ...prev.image, align: 'left' } : null,
+                                        image: prev.image ? { ...prev.image, align: 'left', offsetPercent: 0 } : null,
                                       }))
                                     }
                                     className={cn(
                                       'p-1 rounded cursor-pointer transition-colors',
-                                      headerState.image.align === 'left'
+                                      (headerState.image.offsetPercent !== undefined ? headerState.image.offsetPercent <= 33 : headerState.image.align === 'left')
                                         ? 'bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-400 font-bold'
                                         : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
                                     )}
@@ -713,16 +867,16 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                                   </button>
                                   <button
                                     type="button"
-                                    title="Align Center"
+                                    title="Align Center (50%)"
                                     onClick={() =>
                                       setHeaderState((prev) => ({
                                         ...prev,
-                                        image: prev.image ? { ...prev.image, align: 'center' } : null,
+                                        image: prev.image ? { ...prev.image, align: 'center', offsetPercent: 50 } : null,
                                       }))
                                     }
                                     className={cn(
                                       'p-1 rounded cursor-pointer transition-colors',
-                                      headerState.image.align === 'center' || !headerState.image.align
+                                      (headerState.image.offsetPercent !== undefined ? (headerState.image.offsetPercent > 33 && headerState.image.offsetPercent < 67) : (headerState.image.align === 'center' || !headerState.image.align))
                                         ? 'bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-400 font-bold'
                                         : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
                                     )}
@@ -731,16 +885,16 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                                   </button>
                                   <button
                                     type="button"
-                                    title="Align Right"
+                                    title="Align Right (100%)"
                                     onClick={() =>
                                       setHeaderState((prev) => ({
                                         ...prev,
-                                        image: prev.image ? { ...prev.image, align: 'right' } : null,
+                                        image: prev.image ? { ...prev.image, align: 'right', offsetPercent: 100 } : null,
                                       }))
                                     }
                                     className={cn(
                                       'p-1 rounded cursor-pointer transition-colors',
-                                      headerState.image.align === 'right'
+                                      (headerState.image.offsetPercent !== undefined ? headerState.image.offsetPercent >= 67 : headerState.image.align === 'right')
                                         ? 'bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-400 font-bold'
                                         : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
                                     )}
@@ -799,21 +953,56 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                                 </button>
                               </div>
 
-                              {/* Rendered Logo at Selected Alignment */}
+                              {/* Interactive Draggable Logo Track */}
                               <div
-                                className={cn(
-                                  'flex w-full py-1',
-                                  headerState.image.align === 'left' && 'justify-start',
-                                  (!headerState.image.align || headerState.image.align === 'center') && 'justify-center',
-                                  headerState.image.align === 'right' && 'justify-end'
-                                )}
+                                ref={headerTrackRef}
+                                className="relative w-full min-h-[96px] py-2 px-1 border border-dashed border-blue-200/80 dark:border-blue-900/40 rounded-lg bg-blue-50/20 dark:bg-blue-950/20 select-none overflow-hidden"
                               >
-                                <img
-                                  src={headerState.image.url}
-                                  alt="Header Logo"
-                                  style={{ width: `${headerState.image.width || 180}px` }}
-                                  className="max-h-24 object-contain rounded border border-zinc-200 dark:border-zinc-700 p-1 bg-white shadow-2xs"
-                                />
+                                <div
+                                  data-header-image="true"
+                                  onMouseDown={handleHeaderDragStart}
+                                  onTouchStart={handleHeaderDragStart}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedHeaderImage(true);
+                                  }}
+                                  style={{
+                                    position: 'relative',
+                                    marginLeft: `${headerState.image.offsetPercent ?? (headerState.image.align === 'left' ? 0 : headerState.image.align === 'right' ? 100 : 50)}%`,
+                                    transform: `translateX(-${headerState.image.offsetPercent ?? (headerState.image.align === 'left' ? 0 : headerState.image.align === 'right' ? 100 : 50)}%)`,
+                                    width: `${headerState.image.width || 180}px`,
+                                  }}
+                                  className={cn(
+                                    'cursor-grab select-none transition-shadow rounded-md',
+                                    isDraggingHeaderImage && 'cursor-grabbing scale-[1.02] shadow-lg',
+                                    selectedHeaderImage && 'ring-2 ring-blue-500 ring-offset-2 ring-offset-white dark:ring-offset-zinc-900 shadow-md'
+                                  )}
+                                >
+                                  {/* Floating drag badge when selected or dragging */}
+                                  {(selectedHeaderImage || isDraggingHeaderImage) && (
+                                    <div className="absolute -top-7 left-1/2 -translate-x-1/2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-600 text-white text-[10px] font-semibold shadow-md whitespace-nowrap pointer-events-none z-10">
+                                      <Move className="w-2.5 h-2.5" />
+                                      <span>Drag to position ({headerState.image.offsetPercent ?? (headerState.image.align === 'left' ? 0 : headerState.image.align === 'right' ? 100 : 50)}%)</span>
+                                    </div>
+                                  )}
+
+                                  <img
+                                    src={headerState.image.url}
+                                    alt="Header Logo"
+                                    draggable={false}
+                                    className="w-full max-h-24 object-contain rounded border border-zinc-200 dark:border-zinc-700 p-1 bg-white shadow-2xs pointer-events-none"
+                                  />
+
+                                  {/* Selection corner handles */}
+                                  {selectedHeaderImage && (
+                                    <>
+                                      <div className="absolute -top-1 -left-1 w-2.5 h-2.5 bg-blue-600 border border-white rounded-full shadow-xs" />
+                                      <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-blue-600 border border-white rounded-full shadow-xs" />
+                                      <div className="absolute -bottom-1 -left-1 w-2.5 h-2.5 bg-blue-600 border border-white rounded-full shadow-xs" />
+                                      <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 bg-blue-600 border border-white rounded-full shadow-xs" />
+                                    </>
+                                  )}
+                                </div>
                               </div>
                             </div>
                           )}
@@ -875,20 +1064,22 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                         /* Idle State (Faint Google Docs Style Header Preview) */
                         <div className="w-full flex flex-col gap-1.5 document-header-preview">
                           {headerState.image?.url && (
-                            <div
-                              className={cn(
-                                'flex w-full',
-                                headerState.image.align === 'left' && 'justify-start',
-                                (!headerState.image.align || headerState.image.align === 'center') && 'justify-center',
-                                headerState.image.align === 'right' && 'justify-end'
-                              )}
-                            >
-                              <img
-                                src={headerState.image.url}
-                                alt="Header Logo"
-                                style={{ width: `${headerState.image.width || 180}px` }}
-                                className="max-h-24 object-contain opacity-85 group-hover/header:opacity-100 transition-opacity"
-                              />
+                            <div className="w-full py-1 overflow-hidden select-none">
+                              <div
+                                style={{
+                                  position: 'relative',
+                                  marginLeft: `${headerState.image.offsetPercent ?? (headerState.image.align === 'left' ? 0 : headerState.image.align === 'right' ? 100 : 50)}%`,
+                                  transform: `translateX(-${headerState.image.offsetPercent ?? (headerState.image.align === 'left' ? 0 : headerState.image.align === 'right' ? 100 : 50)}%)`,
+                                  width: `${headerState.image.width || 180}px`,
+                                }}
+                              >
+                                <img
+                                  src={headerState.image.url}
+                                  alt="Header Logo"
+                                  draggable={false}
+                                  className="w-full max-h-24 object-contain opacity-85 group-hover/header:opacity-100 transition-opacity"
+                                />
+                              </div>
                             </div>
                           )}
                           {headerState.text?.trim() && (
@@ -914,17 +1105,37 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                     </div>
                   )}
 
+                  {/* Header boundary line when editing header */}
+                  {activeHeaderFooter === 'header' && (
+                    <div className="flex items-center gap-2 my-2 select-none">
+                      <div className="h-px bg-blue-300 dark:bg-blue-700/60 flex-1 border-b border-dashed" />
+                      <span className="text-[10px] uppercase font-bold tracking-wider text-blue-500/80">Header Boundary</span>
+                      <div className="h-px bg-blue-300 dark:bg-blue-700/60 flex-1 border-b border-dashed" />
+                    </div>
+                  )}
+
+                  {/* ─── Slate Document Body (Seamlessly Inside Paper Sheet) ──────── */}
                   <Editor
                     ref={editorRef}
-                    variant="demo"
+                    variant="none"
                     placeholder={placeholder}
                     readOnly={isEffectivelyReadOnly}
                     spellCheck
                     autoFocus={!isEffectivelyReadOnly}
                     onKeyDown={handleKeyDown}
+                    className="flex-1 w-full min-h-[550px] p-0 border-0 shadow-none rounded-none focus-visible:outline-none"
                   />
 
-                  {/* ─── Google Docs Style Footer Zone ───────────────────────────── */}
+                  {/* Footer boundary line when editing footer */}
+                  {activeHeaderFooter === 'footer' && (
+                    <div className="flex items-center gap-2 my-2 select-none">
+                      <div className="h-px bg-blue-300 dark:bg-blue-700/60 flex-1 border-b border-dashed" />
+                      <span className="text-[10px] uppercase font-bold tracking-wider text-blue-500/80">Footer Boundary</span>
+                      <div className="h-px bg-blue-300 dark:bg-blue-700/60 flex-1 border-b border-dashed" />
+                    </div>
+                  )}
+
+                  {/* ─── Embedded Footer Zone (Inside Paper Sheet) ───────────────── */}
                   {(!isEffectivelyReadOnly || footerState.image?.url || footerState.text?.trim() || footerState.pageNumber) && (
                     <div
                       onDoubleClick={() => {
@@ -935,8 +1146,8 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                       className={cn(
                         'w-full transition-all select-none print:mt-2 print:border-none',
                         activeHeaderFooter === 'footer'
-                          ? 'mt-4 border-t-2 border-blue-500 pt-3 bg-blue-50/20 dark:bg-blue-950/20 p-2.5 rounded-b-lg'
-                          : 'mt-2 pt-1.5 pb-2 border-t border-transparent hover:border-dashed hover:border-zinc-300 dark:hover:border-zinc-700 cursor-pointer group/footer'
+                          ? 'mt-2 pt-2'
+                          : 'mt-2 pt-1.5 pb-1 border-t border-transparent hover:border-dashed hover:border-zinc-300 dark:hover:border-zinc-700 cursor-pointer group/footer'
                       )}
                     >
                       {activeHeaderFooter === 'footer' ? (
@@ -1016,7 +1227,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                             </div>
                           </div>
 
-                          {/* Moveable Logo Toolbar & Preview (if image exists) */}
+                          {/* Moveable & Draggable Logo Toolbar & Track (if image exists) */}
                           {footerState.image?.url && (
                             <div className="flex flex-col gap-1.5 p-2 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xs">
                               {/* Moveable Image Action Bar */}
@@ -1028,16 +1239,16 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                                   <span className="text-[11px] text-zinc-500 mr-1 font-medium">Position:</span>
                                   <button
                                     type="button"
-                                    title="Align Left"
+                                    title="Align Left (0%)"
                                     onClick={() =>
                                       setFooterState((prev) => ({
                                         ...prev,
-                                        image: prev.image ? { ...prev.image, align: 'left' } : null,
+                                        image: prev.image ? { ...prev.image, align: 'left', offsetPercent: 0 } : null,
                                       }))
                                     }
                                     className={cn(
                                       'p-1 rounded cursor-pointer transition-colors',
-                                      footerState.image.align === 'left'
+                                      (footerState.image.offsetPercent !== undefined ? footerState.image.offsetPercent <= 33 : footerState.image.align === 'left')
                                         ? 'bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-400 font-bold'
                                         : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
                                     )}
@@ -1046,16 +1257,16 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                                   </button>
                                   <button
                                     type="button"
-                                    title="Align Center"
+                                    title="Align Center (50%)"
                                     onClick={() =>
                                       setFooterState((prev) => ({
                                         ...prev,
-                                        image: prev.image ? { ...prev.image, align: 'center' } : null,
+                                        image: prev.image ? { ...prev.image, align: 'center', offsetPercent: 50 } : null,
                                       }))
                                     }
                                     className={cn(
                                       'p-1 rounded cursor-pointer transition-colors',
-                                      footerState.image.align === 'center' || !footerState.image.align
+                                      (footerState.image.offsetPercent !== undefined ? (footerState.image.offsetPercent > 33 && footerState.image.offsetPercent < 67) : (footerState.image.align === 'center' || !footerState.image.align))
                                         ? 'bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-400 font-bold'
                                         : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
                                     )}
@@ -1064,16 +1275,16 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                                   </button>
                                   <button
                                     type="button"
-                                    title="Align Right"
+                                    title="Align Right (100%)"
                                     onClick={() =>
                                       setFooterState((prev) => ({
                                         ...prev,
-                                        image: prev.image ? { ...prev.image, align: 'right' } : null,
+                                        image: prev.image ? { ...prev.image, align: 'right', offsetPercent: 100 } : null,
                                       }))
                                     }
                                     className={cn(
                                       'p-1 rounded cursor-pointer transition-colors',
-                                      footerState.image.align === 'right'
+                                      (footerState.image.offsetPercent !== undefined ? footerState.image.offsetPercent >= 67 : footerState.image.align === 'right')
                                         ? 'bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-400 font-bold'
                                         : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
                                     )}
@@ -1132,21 +1343,54 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                                 </button>
                               </div>
 
-                              {/* Rendered Logo at Selected Alignment */}
+                              {/* Interactive Draggable Footer Logo Track */}
                               <div
-                                className={cn(
-                                  'flex w-full py-1',
-                                  footerState.image.align === 'left' && 'justify-start',
-                                  (!footerState.image.align || footerState.image.align === 'center') && 'justify-center',
-                                  footerState.image.align === 'right' && 'justify-end'
-                                )}
+                                ref={footerTrackRef}
+                                className="relative w-full min-h-[85px] py-2 px-1 border border-dashed border-blue-200/80 dark:border-blue-900/40 rounded-lg bg-blue-50/20 dark:bg-blue-950/20 select-none overflow-hidden"
                               >
-                                <img
-                                  src={footerState.image.url}
-                                  alt="Footer Logo"
-                                  style={{ width: `${footerState.image.width || 140}px` }}
-                                  className="max-h-20 object-contain rounded border border-zinc-200 dark:border-zinc-700 p-1 bg-white shadow-2xs"
-                                />
+                                <div
+                                  data-footer-image="true"
+                                  onMouseDown={handleFooterDragStart}
+                                  onTouchStart={handleFooterDragStart}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedFooterImage(true);
+                                  }}
+                                  style={{
+                                    position: 'relative',
+                                    marginLeft: `${footerState.image.offsetPercent ?? (footerState.image.align === 'left' ? 0 : footerState.image.align === 'right' ? 100 : 50)}%`,
+                                    transform: `translateX(-${footerState.image.offsetPercent ?? (footerState.image.align === 'left' ? 0 : footerState.image.align === 'right' ? 100 : 50)}%)`,
+                                    width: `${footerState.image.width || 140}px`,
+                                  }}
+                                  className={cn(
+                                    'cursor-grab select-none transition-shadow rounded-md',
+                                    isDraggingFooterImage && 'cursor-grabbing scale-[1.02] shadow-lg',
+                                    selectedFooterImage && 'ring-2 ring-blue-500 ring-offset-2 ring-offset-white dark:ring-offset-zinc-900 shadow-md'
+                                  )}
+                                >
+                                  {(selectedFooterImage || isDraggingFooterImage) && (
+                                    <div className="absolute -top-7 left-1/2 -translate-x-1/2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-600 text-white text-[10px] font-semibold shadow-md whitespace-nowrap pointer-events-none z-10">
+                                      <Move className="w-2.5 h-2.5" />
+                                      <span>Drag to position ({footerState.image.offsetPercent ?? (footerState.image.align === 'left' ? 0 : footerState.image.align === 'right' ? 100 : 50)}%)</span>
+                                    </div>
+                                  )}
+
+                                  <img
+                                    src={footerState.image.url}
+                                    alt="Footer Logo"
+                                    draggable={false}
+                                    className="w-full max-h-20 object-contain rounded border border-zinc-200 dark:border-zinc-700 p-1 bg-white shadow-2xs pointer-events-none"
+                                  />
+
+                                  {selectedFooterImage && (
+                                    <>
+                                      <div className="absolute -top-1 -left-1 w-2.5 h-2.5 bg-blue-600 border border-white rounded-full shadow-xs" />
+                                      <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-blue-600 border border-white rounded-full shadow-xs" />
+                                      <div className="absolute -bottom-1 -left-1 w-2.5 h-2.5 bg-blue-600 border border-white rounded-full shadow-xs" />
+                                      <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 bg-blue-600 border border-white rounded-full shadow-xs" />
+                                    </>
+                                  )}
+                                </div>
                               </div>
                             </div>
                           )}
@@ -1222,20 +1466,22 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                         /* Idle State (Faint Google Docs Style Footer Preview) */
                         <div className="w-full flex flex-col gap-1.5 document-footer-preview">
                           {footerState.image?.url && (
-                            <div
-                              className={cn(
-                                'flex w-full',
-                                footerState.image.align === 'left' && 'justify-start',
-                                (!footerState.image.align || footerState.image.align === 'center') && 'justify-center',
-                                footerState.image.align === 'right' && 'justify-end'
-                              )}
-                            >
-                              <img
-                                src={footerState.image.url}
-                                alt="Footer Logo"
-                                style={{ width: `${footerState.image.width || 140}px` }}
-                                className="max-h-20 object-contain opacity-85 group-hover/footer:opacity-100 transition-opacity"
-                              />
+                            <div className="w-full py-1 overflow-hidden select-none">
+                              <div
+                                style={{
+                                  position: 'relative',
+                                  marginLeft: `${footerState.image.offsetPercent ?? (footerState.image.align === 'left' ? 0 : footerState.image.align === 'right' ? 100 : 50)}%`,
+                                  transform: `translateX(-${footerState.image.offsetPercent ?? (footerState.image.align === 'left' ? 0 : footerState.image.align === 'right' ? 100 : 50)}%)`,
+                                  width: `${footerState.image.width || 140}px`,
+                                }}
+                              >
+                                <img
+                                  src={footerState.image.url}
+                                  alt="Footer Logo"
+                                  draggable={false}
+                                  className="w-full max-h-20 object-contain opacity-85 group-hover/footer:opacity-100 transition-opacity"
+                                />
+                              </div>
                             </div>
                           )}
                           {(footerState.text?.trim() || footerState.pageNumber) && (

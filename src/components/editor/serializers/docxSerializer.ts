@@ -38,6 +38,7 @@ export interface HeaderFooterItem {
     name?: string;
     align?: 'left' | 'center' | 'right';
     width?: number;
+    offsetPercent?: number;
   } | null;
   text?: string;
   textAlign?: 'left' | 'center' | 'right';
@@ -442,9 +443,13 @@ export async function serializeToDocx(
       const dims = getImageDimensions(parsed.data, parsed.type);
       const width = headerFooter.header.image.width || 180;
       const height = Math.round(width * (dims.height / dims.width));
+      const headerImgAlign = headerFooter.header.image.align ||
+        (headerFooter.header.image.offsetPercent !== undefined
+          ? (headerFooter.header.image.offsetPercent <= 33 ? 'left' : headerFooter.header.image.offsetPercent >= 67 ? 'right' : 'center')
+          : 'center');
       headerChildren.push(
         new Paragraph({
-          alignment: toAlignmentType(headerFooter.header.image.align),
+          alignment: toAlignmentType(headerImgAlign),
           children: [
             new ImageRun({
               data: parsed.data,
@@ -481,9 +486,13 @@ export async function serializeToDocx(
       const dims = getImageDimensions(parsed.data, parsed.type);
       const width = headerFooter.footer.image.width || 140;
       const height = Math.round(width * (dims.height / dims.width));
+      const footerImgAlign = headerFooter.footer.image.align ||
+        (headerFooter.footer.image.offsetPercent !== undefined
+          ? (headerFooter.footer.image.offsetPercent <= 33 ? 'left' : headerFooter.footer.image.offsetPercent >= 67 ? 'right' : 'center')
+          : 'center');
       footerChildren.push(
         new Paragraph({
-          alignment: toAlignmentType(headerFooter.footer.image.align),
+          alignment: toAlignmentType(footerImgAlign),
           children: [
             new ImageRun({
               data: parsed.data,

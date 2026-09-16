@@ -32,6 +32,17 @@
     line-height: 1.5;
   }
 
+  .plate-paper-sheet {
+    width: 8.5in !important;
+    max-width: 8.5in !important;
+    min-height: 11in !important;
+    padding: 0 !important;
+    margin: 0 auto !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: white !important;
+  }
+
   /* Prevent page breaks inside signature blocks, headers, and images */
   .signature-block,
   .document-header,

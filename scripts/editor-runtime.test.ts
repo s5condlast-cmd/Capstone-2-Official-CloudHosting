@@ -266,6 +266,31 @@ describe('Plate editor runtime wiring', () => {
 
     assert.ok(blob.size > 2_000, 'Serialized DOCX with Header and Footer should be larger than 2KB');
   });
+
+  it('serializes native Word Header and Footer with offsetPercent-derived alignment', async () => {
+    const tinyPng = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+    const blob = await serializeToDocx(
+      [{ type: 'p', children: [{ text: 'Body content' }] }] as any,
+      'Offset Test',
+      {
+        header: {
+          image: {
+            url: tinyPng,
+            width: 140,
+            offsetPercent: 15, // <= 33 maps to 'left'
+          },
+        },
+        footer: {
+          image: {
+            url: tinyPng,
+            width: 140,
+            offsetPercent: 85, // >= 67 maps to 'right'
+          },
+        },
+      }
+    );
+    assert.ok(blob.size > 1_500);
+  });
 });
 
 

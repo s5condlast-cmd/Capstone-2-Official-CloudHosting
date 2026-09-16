@@ -2589,6 +2589,48 @@ Per user alignment during `/grill-me` regarding native header and footer export 
 - **Editor Test Suite (`npm run test:editor`)**: 55/55 tests passing across all 8 suites, including:
   - Unit test verifying `serializeToDocx` successfully generates native Word `Header` and `Footer` containing images, text, and `PageNumber.CURRENT` / `PageNumber.TOTAL_PAGES`.
 
+---
+
+## 36. Embedded Document Paper Sheet Architecture & Draggable Header/Footer Logo Positioning
+
+Per user request under `/goal` mode ("instead of it outside the plate editor make it on top of the plate editor inside it also allow me to select the image to move around as well to where i want") and reference screenshot `media_1789528736277.png`:
+
+### 1. Unified Embedded Paper Sheet Architecture (`src/components/editor/plate-editor.tsx`)
+- **Card Separation Root Cause**: Previously, `<Editor variant="demo" />` encapsulated the paper background card, borders, and margins. Placing header and footer sections above and below `<Editor>` caused them to render as detached card fragments on the dark workspace canvas with awkward gaps in between.
+- **Unified Sheet Container**:
+  - Re-architected the canvas layout to wrap the entire document in a single, continuous paper sheet container: `.plate-paper-sheet.w-full.max-w-[850px].min-h-[850px].bg-white.dark:bg-zinc-900.border.border-zinc-200/90.dark:border-zinc-800.shadow-sm.rounded-xl.px-8.sm:px-12.py-6.sm:py-8.flex.flex-col.relative`.
+  - Configured Slate editor with `variant="none" className="flex-1 w-full min-h-[550px] p-0 border-0 shadow-none rounded-none focus-visible:outline-none"`.
+  - Embedded the Header Zone directly inside the top margin of the sheet and Footer Zone inside the bottom margin.
+  - While editing, a subtle dashed blue divider (`border-b border-dashed border-blue-400/40`) visually demarcates the header margin from the body without fragmenting the paper surface.
+
+### 2. Interactive Grab-and-Drag Logo Positioning
+- **Visual Selection State**:
+  - Clicking on the header or footer logo selects it, displaying a blue highlight ring (`ring-2 ring-blue-500/80 ring-offset-2`), 4 corner handles, and a center move icon (`Move`).
+  - Clicking anywhere else on the document deselects the image smoothly.
+- **Fluid Mouse & Touch Dragging**:
+  - Dragging the selected logo horizontally tracks the cursor/finger across the full header/footer track.
+  - Formula: `rawPercent = ((mouseX - trackRect.left - imgWidth / 2) / (trackRect.width - imgWidth)) * 100`, clamped between `0%` and `100%`.
+  - Implemented relative positioning `marginLeft: ${offsetPercent}%` and `transform: translateX(-${offsetPercent}%)` so that:
+    - `0%` is flush with the left document margin.
+    - `50%` is centered.
+    - `100%` is flush with the right document margin.
+    - The logo retains its natural document flow height, preventing collisions or overlapping with text or inputs below it.
+  - Displays a real-time floating percentage badge (`X%`) while dragging.
+- **Preset Alignment Synchronization**:
+  - Quick-preset alignment buttons (`[Left]`, `[Center]`, `[Right]`) snap directly to `0%`, `50%`, and `100%`.
+
+### 3. DOCX & PDF Synchronization (`src/components/editor/serializers/docxSerializer.ts`)
+- Extended `HeaderFooterItem.image` interface to include optional `offsetPercent?: number`.
+- Dynamically resolves alignment from `offsetPercent`: `<= 33` -> `'left'`, `>= 67` -> `'right'`, and middle -> `'center'` for native Word header image alignment.
+
+### 4. Print & PDF Layout Overrides (`src/styles/print-document.css`)
+- Added `@media print` rules resetting `.plate-paper-sheet` to standard letter page dimensions (8.5in x 11in) with zero screen borders, box shadows, or extraneous margins.
+
+### 5. Automated Verification
+- **TypeScript Compiler (`npm run lint` / `tsc --noEmit`)**: 0 errors.
+- **Editor Test Suite (`npm run test:editor`)**: 56/56 tests passing across all 8 suites (including unit test for `serializeToDocx` deriving alignment from `offsetPercent`).
+
+
 
 
 
