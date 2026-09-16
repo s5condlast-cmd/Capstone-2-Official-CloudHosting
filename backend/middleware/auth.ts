@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction, RequestHandler } from 'express';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { createUserClient, isSupabaseConfigured } from '../config/supabase';
+import { createUserClient, isSupabaseConfigured } from '../config/supabase.js';
 
 export interface Identity {
   id: string;

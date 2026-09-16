@@ -1,9 +1,9 @@
 import { Router, type Response } from 'express';
 import { randomInt } from 'node:crypto';
 import { z } from 'zod';
-import { getAppOrigin } from '../config/app';
-import { createUserClient, supabaseAdmin, isServiceRoleAvailable } from '../config/supabase';
-import { requireIdentity, requirePortal, requireRole, asyncRoute, portalDenied } from '../middleware/auth';
+import { getAppOrigin } from '../config/app.js';
+import { createUserClient, supabaseAdmin, isServiceRoleAvailable } from '../config/supabase.js';
+import { requireIdentity, requirePortal, requireRole, asyncRoute, portalDenied } from '../middleware/auth.js';
 
 const router = Router();
 const passwordSchema = z.string().min(6).max(12)

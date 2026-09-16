@@ -1,4 +1,4 @@
-import { AiFindings } from '../../src/types';
+import type { AiFindings } from '../../src/types/core.js';
 
 const SYSTEM_PROMPT = `You are the "AI Review Assistant", an intelligent practicum document analyzer.
 Your task is to review the text extracted from a student's uploaded document and compare it against the student's database metadata to verify correctness, completeness, and consistency.

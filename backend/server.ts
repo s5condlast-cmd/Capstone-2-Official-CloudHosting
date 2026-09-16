@@ -1,12 +1,12 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import analyzeRouter from './routes/analyze';
+import analyzeRouter from './routes/analyze.js';
 // Cloudinary router preserved in comments for future reactivation/redesign
 // import cloudinaryRouter from './routes/cloudinary';
-import onedriveRouter from './routes/onedrive';
-import authRouter from './routes/auth';
-import templatesRouter from './routes/templates';
+import onedriveRouter from './routes/onedrive.js';
+import authRouter from './routes/auth.js';
+import templatesRouter from './routes/templates.js';
 
 // Load environment variables from CWD .env
 dotenv.config();

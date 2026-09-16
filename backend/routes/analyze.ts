@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { requireIdentity, requirePortal, requireRole, asyncRoute } from '../middleware/auth';
-import { analyzeDocumentText } from '../services/aiService';
+import { requireIdentity, requirePortal, requireRole, asyncRoute } from '../middleware/auth.js';
+import { analyzeDocumentText } from '../services/aiService.js';
 
 const router = Router();
 router.post('/analyze', requireIdentity, requirePortal, requireRole('admin','adviser','supervisor'), asyncRoute(async (req, res) => {
@@ -18,7 +18,7 @@ router.post('/analyze', requireIdentity, requirePortal, requireRole('admin','adv
   try {
     const processing = await client.from('student_documents').update({ ai_status: 'Processing' }).eq('id', doc.id).select('id').single();
     if (processing.error) throw processing.error;
-    const { extractTextFromPdfBuffer } = await import('../utils/pdfParser');
+    const { extractTextFromPdfBuffer } = await import('../utils/pdfParser.js');
     const text = await extractTextFromPdfBuffer(Buffer.from(await file.data.arrayBuffer()));
     const findings = await analyzeDocumentText(text, { name: doc.student_name, course: doc.course, docType: doc.doc_type, company: '' });
     const updated = await client.from('student_documents').update({ ai_status: 'Completed', ai_findings: findings }).eq('id', doc.id).select('id').single();
