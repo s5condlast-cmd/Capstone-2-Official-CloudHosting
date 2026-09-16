@@ -1,5 +1,32 @@
 # Active Tasks & Development Roadmap
 
+## Document Editor: Plate Audit and Remediation
+
+- [x] Scan the official Plate component catalogue (47 editor UI components and 38 node components) and map it to the portal's `platejs@53.3.11` implementation.
+- [x] Publish the detailed capability/status matrix in [`docs/PLATE_EDITOR_COMPONENT_AUDIT.md`](../PLATE_EDITOR_COMPONENT_AUDIT.md).
+- [x] Register visible Plate renderers for all toolbar-facing blocks, inline nodes, void nodes, and text marks.
+- [x] Replace incompatible/duplicated toolbar transforms with a single Plate v53 command layer.
+- [x] Fix bulleted and numbered lists to use valid nested list structures.
+- [x] Make fixed/floating toolbar active states respond to editor value and selection changes.
+- [x] Fix existing-draft OCC revision initialization, concurrent flush handling, version snapshots, history restore, and submission locking.
+- [x] Add editor runtime regression tests and include them in `npm run test:editor`.
+- [ ] Run authenticated browser QA in Chrome and Edge for every toolbar popover and keyboard shortcut.
+- [ ] Verify table row/column/cell commands with first, middle, and last cells in 1x1 and multi-row tables.
+- [ ] Verify media URL/upload flows and replace data-URL persistence with durable object storage before enabling large files in production.
+- [ ] Verify speech-to-text permission/error behavior on Windows, Android, and iOS; confirm whether it belongs in the general editor or only the Weekly Journal.
+- [ ] Add automated browser coverage for save/reload, version restore, DOCX export, print-to-PDF, and locked-document read-only behavior.
+
+### Antigravity `docs/Change.md` Verification Backlog
+
+- [x] Confirm that `docs/Change.md` is a historical claim rather than the current file inventory.
+- [x] Confirm that `ai-menu.tsx`, `backend/routes/aiEditor.ts`, and `/api/ai/editor-assist` are absent and annotate the change log.
+- [x] Confirm that the current toolbar supersedes the old source snapshot embedded in `docs/Change.md`.
+- [ ] Audit every non-editor file claimed by Antigravity against the current implementation before marking it accepted.
+- [ ] Decide whether to archive the embedded source dump in `docs/Change.md` and replace it with commit links plus a concise, verified change log.
+- [ ] If AI editing is requested again, create a separate security/design task covering authenticated routes, rate limits, provider configuration, streaming, selection-safe replace/insert, and audit logging.
+
+---
+
 [←  Back to Documentation Hub](../README.md) | [Task History & Completed Logs](TASK_HISTORY.md) | [System Map](../architecture/SYSTEM_MAP.md) | [Feature Guides](../features/README.md)
 
 ---

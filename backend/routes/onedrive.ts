@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
-import { getAppOrigin } from '../config/app';
-import { requireIdentity, requirePortal, requireRole, asyncRoute } from '../middleware/auth';
-import { supabaseAdmin, isServiceRoleAvailable } from '../config/supabase';
+import { getAppOrigin } from '../config/app.js';
+import { requireIdentity, requirePortal, requireRole, asyncRoute } from '../middleware/auth.js';
+import { supabaseAdmin, isServiceRoleAvailable } from '../config/supabase.js';
 import { Router, Request, Response } from 'express';
 import multer from 'multer';
 import fs from 'fs/promises';
@@ -13,7 +13,7 @@ import {
   getOneDriveFileMetadata,
   listOneDriveFolder,
   syncFolderFilesToRoot,
-} from '../services/onedriveService';
+} from '../services/onedriveService.js';
 
 import os from 'os';
 import path from 'path';

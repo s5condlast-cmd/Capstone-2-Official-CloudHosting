@@ -9,8 +9,29 @@
  * - FloatingToolbar (contextual floating action bar on text selection)
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Sparkles, Eye } from 'lucide-react';
+import {
+  Sparkles,
+  Eye,
+  Image as ImageIcon,
+  ChevronDown,
+  Check,
+  X,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  Trash2,
+  Plus,
+  Minus,
+  Hash,
+  Move,
+} from 'lucide-react';
 import { cn } from '@/src/lib/utils';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { editorPlugins } from './editor-kit';
 import { EditorContainer, Editor } from '@/src/components/plate-ui/editor';
 import { FixedToolbar } from '@/src/components/plate-ui/fixed-toolbar';
@@ -20,6 +41,11 @@ import {
   type EditorComment,
 } from '@/src/components/plate-ui/fixed-toolbar-buttons';
 import { FloatingToolbar } from '@/src/components/plate-ui/floating-toolbar';
+import { CommentsDrawer } from './CommentsDrawer';
+import {
+  type DocumentHeaderFooterOptions,
+  type HeaderFooterItem,
+} from './serializers/docxSerializer';
 import '@/src/styles/print-document.css';
 
 // ─── Plate v53 dynamic import bridge ──────────────────────────────────────────
@@ -54,8 +80,20 @@ export interface PlateEditorProps {
   comments?: EditorComment[];
   /** Comment added callback */
   onAddComment?: (text: string, selectedText?: string) => void;
-  /** Comment resolved/deleted callback */
+  /** Comment resolved callback */
   onResolveComment?: (id: string) => void;
+  /** Comment un-resolved callback */
+  onUnresolveComment?: (id: string) => void;
+  /** Comment deleted callback */
+  onDeleteComment?: (id: string) => void;
+  /** Logged-in user role for comment badge */
+  currentUserRole?: 'student' | 'adviser' | 'supervisor' | 'admin';
+  /** Logged-in user name for comment author */
+  currentUserName?: string;
+  /** Optional document header and footer configuration */
+  headerFooter?: DocumentHeaderFooterOptions;
+  /** Header & Footer change callback */
+  onHeaderFooterChange?: (headerFooter: DocumentHeaderFooterOptions) => void;
 }
 
 // ─── Default empty content ────────────────────────────────────────────────────
@@ -85,6 +123,7 @@ export interface PlateEditorRef {
   getContent: () => object[];
   getWordCount: () => number;
   getEditorInstance?: () => any;
+  getHeaderFooter: () => DocumentHeaderFooterOptions;
 }
 
 // ─── PlateEditor component ────────────────────────────────────────────────────
@@ -100,12 +139,18 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
       onChange,
       readOnly = false,
       className,
-      placeholder = 'Type your document content here…',
+      placeholder = 'Start writing your document...',
       mode,
       onModeChange,
       comments,
       onAddComment,
       onResolveComment,
+      onUnresolveComment,
+      onDeleteComment,
+      currentUserRole = 'student',
+      currentUserName = 'Student',
+      headerFooter: externalHeaderFooter,
+      onHeaderFooterChange,
     },
     ref
   ) {
@@ -113,12 +158,65 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
     const [PlateComp, setPlateComp] = useState<React.ComponentType<any> | null>(null);
     const [createEditorFn, setCreateEditorFn] = useState<((opts: any) => any) | null>(null);
 
-    // View mode, fullscreen, and zoom state
+    // View mode, fullscreen, zoom, and comments drawer state
     const [internalMode, setInternalMode] = useState<EditorMode>('editing');
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [zoomLevel, setZoomLevel] = useState(100);
     const [internalComments, setInternalComments] = useState<EditorComment[]>([]);
     const [showZoomIndicator, setShowZoomIndicator] = useState(false);
+    const [showCommentsDrawer, setShowCommentsDrawer] = useState(false);
+    const [drawerQuote, setDrawerQuote] = useState('');
+
+    // Google Docs style Header & Footer editing state
+    const [activeHeaderFooter, setActiveHeaderFooter] = useState<'header' | 'footer' | null>(null);
+    const [headerState, setHeaderState] = useState<HeaderFooterItem>(() => ({
+      image: externalHeaderFooter?.header?.image || null,
+      text: externalHeaderFooter?.header?.text || '',
+      textAlign: externalHeaderFooter?.header?.textAlign || 'center',
+      scope: externalHeaderFooter?.header?.scope || 'every_page',
+    }));
+    const [footerState, setFooterState] = useState<HeaderFooterItem>(() => ({
+      image: externalHeaderFooter?.footer?.image || null,
+      text: externalHeaderFooter?.footer?.text || '',
+      pageNumber: externalHeaderFooter?.footer?.pageNumber ?? false,
+      textAlign: externalHeaderFooter?.footer?.textAlign || 'center',
+      scope: externalHeaderFooter?.footer?.scope || 'every_page',
+    }));
+
+    const [selectedHeaderImage, setSelectedHeaderImage] = useState(false);
+    const [isDraggingHeaderImage, setIsDraggingHeaderImage] = useState(false);
+    const headerTrackRef = useRef<HTMLDivElement | null>(null);
+
+    const [selectedFooterImage, setSelectedFooterImage] = useState(false);
+    const [isDraggingFooterImage, setIsDraggingFooterImage] = useState(false);
+    const footerTrackRef = useRef<HTMLDivElement | null>(null);
+
+    const headerFooterRef = useRef<DocumentHeaderFooterOptions>({
+      header: headerState,
+      footer: footerState,
+    });
+
+    useEffect(() => {
+      headerFooterRef.current = { header: headerState, footer: footerState };
+      onHeaderFooterChange?.({ header: headerState, footer: footerState });
+    }, [headerState, footerState, onHeaderFooterChange]);
+
+    // Click outside to deselect header and footer images
+    useEffect(() => {
+      if (!selectedHeaderImage && !selectedFooterImage) return;
+      const handleMouseDown = (e: MouseEvent) => {
+        const target = e.target as HTMLElement | null;
+        if (!target) return;
+        if (!target.closest('[data-header-image]') && !target.closest('[data-header-toolbar]')) {
+          setSelectedHeaderImage(false);
+        }
+        if (!target.closest('[data-footer-image]') && !target.closest('[data-footer-toolbar]')) {
+          setSelectedFooterImage(false);
+        }
+      };
+      document.addEventListener('mousedown', handleMouseDown);
+      return () => document.removeEventListener('mousedown', handleMouseDown);
+    }, [selectedHeaderImage, selectedFooterImage]);
 
     const activeMode: EditorMode = readOnly ? 'viewing' : (mode ?? internalMode);
     const isEffectivelyReadOnly = readOnly || activeMode === 'viewing';
@@ -216,6 +314,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
         getContent: () => contentRef.current,
         getWordCount: () => countWordsInContent(contentRef.current),
         getEditorInstance: () => editorInstanceRef.current,
+        getHeaderFooter: () => headerFooterRef.current,
       };
       if (typeof ref === 'function') {
         ref(handle);
@@ -224,12 +323,298 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
       }
     }, [ref]);
 
+    const handleKeyDown = useCallback(
+      (e: React.KeyboardEvent) => {
+        // ── ENTER: Exit empty lists/toggles to normal paragraph 'p' ───────
+        if (e.key === 'Enter' && !e.shiftKey) {
+          const ed = editor;
+          if (ed?.selection && ed.api) {
+            try {
+              const entry = ed.api.block();
+              if (entry) {
+                const [block, path] = entry;
+                const text = ed.api.string(path) || '';
+
+                // 1. If inside an empty list item or empty toggle/todo, exit to normal paragraph 'p'
+                if (text.trim() === '') {
+                  if (
+                    block.type === 'li' ||
+                    block.type === 'lic' ||
+                    ed.api.above({ match: (n: any) => n.type === 'ul' || n.type === 'ol' })
+                  ) {
+                    e.preventDefault();
+                    ed.tf.unwrapNodes({ match: (n: any) => n.type === 'ul' || n.type === 'ol', split: true });
+                    ed.tf.setNodes({ type: 'p' }, { match: (n: any) => n.type === 'li' || n.type === 'lic' });
+                    return;
+                  }
+                  if (block.type === 'toggle' || block.type === 'todo') {
+                    e.preventDefault();
+                    ed.tf.setNodes({ type: 'p' }, { at: path });
+                    if ((block as any).checked !== undefined) {
+                      ed.tf.unsetNodes(['checked'], { at: path });
+                    }
+                    return;
+                  }
+                } else if (block.type === 'toggle') {
+                  // 2. If inside a toggle with text and user presses Enter, create a normal paragraph below it
+                  e.preventDefault();
+                  ed.tf.insertNodes({ type: 'p', children: [{ text: '' }] });
+                  return;
+                }
+              }
+            } catch {
+              // non-fatal fallback
+            }
+          }
+        }
+
+        // ── BACKSPACE: First Backspace un-lists to paragraph 'p' on same line; second merges up ──
+        if (e.key === 'Backspace' && !e.shiftKey) {
+          const ed = editor;
+          if (ed?.selection && ed.api) {
+            try {
+              const { anchor, focus } = ed.selection;
+              const isCollapsed =
+                anchor.path.join(',') === focus.path.join(',') &&
+                anchor.offset === focus.offset;
+
+              if (isCollapsed) {
+                const entry = ed.api.block();
+                if (entry) {
+                  const [block, path] = entry;
+                  const text = ed.api.string(path) || '';
+                  const isAtStart =
+                    anchor.offset === 0 ||
+                    text.trim() === '' ||
+                    (typeof ed.api.isStart === 'function' && ed.api.isStart(anchor, path));
+
+                  if (isAtStart) {
+                    // 1. If at start of a list item, unwrap it to a normal paragraph on this line
+                    if (
+                      block.type === 'li' ||
+                      block.type === 'lic' ||
+                      ed.api.above({ match: (n: any) => n.type === 'ul' || n.type === 'ol' })
+                    ) {
+                      e.preventDefault();
+                      ed.tf.unwrapNodes({
+                        match: (n: any) => n.type === 'ul' || n.type === 'ol',
+                        split: true,
+                      });
+                      ed.tf.setNodes(
+                        { type: 'p' },
+                        { match: (n: any) => n.type === 'li' || n.type === 'lic' }
+                      );
+                      return;
+                    }
+
+                    // 2. If at start of a toggle or todo checklist, convert to normal paragraph
+                    if (block.type === 'toggle' || block.type === 'todo') {
+                      e.preventDefault();
+                      ed.tf.setNodes({ type: 'p' }, { at: path });
+                      if ((block as any).checked !== undefined) {
+                        ed.tf.unsetNodes(['checked'], { at: path });
+                      }
+                      return;
+                    }
+
+                    // 3. If at start of a blockquote, convert to normal paragraph
+                    if (block.type === 'blockquote') {
+                      e.preventDefault();
+                      ed.tf.setNodes({ type: 'p' }, { at: path });
+                      return;
+                    }
+                  }
+                }
+              }
+            } catch {
+              // non-fatal fallback
+            }
+          }
+        }
+      },
+      [editor]
+    );
+
     const handleChange = useCallback(
       ({ value }: { value: object[] }) => {
         contentRef.current = value;
         onChange?.(value, countWordsInContent(value));
       },
       [onChange]
+    );
+
+    const headerInputRef = useRef<HTMLInputElement>(null);
+    const footerInputRef = useRef<HTMLInputElement>(null);
+
+    const handleHeaderImageUpload = useCallback(
+      (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = () => {
+          const dataUrl = reader.result as string;
+          setHeaderState((prev) => ({
+            ...prev,
+            image: {
+              url: dataUrl,
+              name: file.name,
+              align: prev.image?.align || 'center',
+              width: prev.image?.width || 180,
+              offsetPercent: prev.image?.offsetPercent ?? 50,
+            },
+          }));
+        };
+        reader.readAsDataURL(file);
+        e.target.value = '';
+      },
+      []
+    );
+
+    const handleFooterImageUpload = useCallback(
+      (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = () => {
+          const dataUrl = reader.result as string;
+          setFooterState((prev) => ({
+            ...prev,
+            image: {
+              url: dataUrl,
+              name: file.name,
+              align: prev.image?.align || 'center',
+              width: prev.image?.width || 140,
+              offsetPercent: prev.image?.offsetPercent ?? 50,
+            },
+          }));
+        };
+        reader.readAsDataURL(file);
+        e.target.value = '';
+      },
+      []
+    );
+
+    // ── Draggable positioning handlers for Header & Footer logos ──────────────
+    const handleHeaderDragStart = useCallback(
+      (e: React.MouseEvent | React.TouchEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setSelectedHeaderImage(true);
+        setIsDraggingHeaderImage(true);
+
+        const updatePosition = (clientX: number) => {
+          const track = headerTrackRef.current;
+          if (!track) return;
+          const rect = track.getBoundingClientRect();
+          const imgWidth = headerState.image?.width || 180;
+          const availableTrack = Math.max(1, rect.width - imgWidth);
+          const mouseX = clientX - rect.left - imgWidth / 2;
+          const rawPercent = (mouseX / availableTrack) * 100;
+          const clamped = Math.max(0, Math.min(100, Math.round(rawPercent)));
+          const newAlign: 'left' | 'center' | 'right' =
+            clamped <= 33 ? 'left' : clamped >= 67 ? 'right' : 'center';
+
+          setHeaderState((prev) => ({
+            ...prev,
+            image: prev.image
+              ? {
+                  ...prev.image,
+                  offsetPercent: clamped,
+                  align: newAlign,
+                }
+              : null,
+          }));
+        };
+
+        const initialClientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+        updatePosition(initialClientX);
+
+        const onMouseMove = (moveEvent: MouseEvent) => {
+          updatePosition(moveEvent.clientX);
+        };
+
+        const onTouchMove = (touchEvent: TouchEvent) => {
+          if (touchEvent.touches[0]) {
+            updatePosition(touchEvent.touches[0].clientX);
+          }
+        };
+
+        const onEnd = () => {
+          setIsDraggingHeaderImage(false);
+          window.removeEventListener('mousemove', onMouseMove);
+          window.removeEventListener('mouseup', onEnd);
+          window.removeEventListener('touchmove', onTouchMove);
+          window.removeEventListener('touchend', onEnd);
+        };
+
+        window.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('mouseup', onEnd);
+        window.addEventListener('touchmove', onTouchMove, { passive: true });
+        window.addEventListener('touchend', onEnd);
+      },
+      [headerState.image?.width]
+    );
+
+    const handleFooterDragStart = useCallback(
+      (e: React.MouseEvent | React.TouchEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setSelectedFooterImage(true);
+        setIsDraggingFooterImage(true);
+
+        const updatePosition = (clientX: number) => {
+          const track = footerTrackRef.current;
+          if (!track) return;
+          const rect = track.getBoundingClientRect();
+          const imgWidth = footerState.image?.width || 140;
+          const availableTrack = Math.max(1, rect.width - imgWidth);
+          const mouseX = clientX - rect.left - imgWidth / 2;
+          const rawPercent = (mouseX / availableTrack) * 100;
+          const clamped = Math.max(0, Math.min(100, Math.round(rawPercent)));
+          const newAlign: 'left' | 'center' | 'right' =
+            clamped <= 33 ? 'left' : clamped >= 67 ? 'right' : 'center';
+
+          setFooterState((prev) => ({
+            ...prev,
+            image: prev.image
+              ? {
+                  ...prev.image,
+                  offsetPercent: clamped,
+                  align: newAlign,
+                }
+              : null,
+          }));
+        };
+
+        const initialClientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+        updatePosition(initialClientX);
+
+        const onMouseMove = (moveEvent: MouseEvent) => {
+          updatePosition(moveEvent.clientX);
+        };
+
+        const onTouchMove = (touchEvent: TouchEvent) => {
+          if (touchEvent.touches[0]) {
+            updatePosition(touchEvent.touches[0].clientX);
+          }
+        };
+
+        const onEnd = () => {
+          setIsDraggingFooterImage(false);
+          window.removeEventListener('mousemove', onMouseMove);
+          window.removeEventListener('mouseup', onEnd);
+          window.removeEventListener('touchmove', onTouchMove);
+          window.removeEventListener('touchend', onEnd);
+        };
+
+        window.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('mouseup', onEnd);
+        window.addEventListener('touchmove', onTouchMove, { passive: true });
+        window.addEventListener('touchend', onEnd);
+      },
+      [footerState.image?.width]
     );
 
     // ── Fallback while loading ──────────────────────────────────────────────
@@ -251,7 +636,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
     }
 
     return (
-      <PlateComp editor={editor} onChange={handleChange} readOnly={isEffectivelyReadOnly}>
+      <PlateComp editor={editor} onValueChange={handleChange} readOnly={isEffectivelyReadOnly}>
         <div
           className={cn(
             'plate-editor-wrapper relative flex flex-col rounded-xl overflow-hidden shadow-xs transition-all',
@@ -271,10 +656,12 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
               isFullscreen={isFullscreen}
               onToggleFullscreen={() => setIsFullscreen((prev) => !prev)}
               comments={comments ?? internalComments}
+              onOpenComments={() => setShowCommentsDrawer((prev) => !prev)}
               onAddComment={(t, s) => {
                 const newC: EditorComment = {
                   id: crypto.randomUUID(),
-                  author: 'Student',
+                  author: currentUserName || 'Student',
+                  authorRole: currentUserRole || 'student',
                   text: t,
                   createdAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                   selectedText: s,
@@ -283,14 +670,16 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                 onAddComment?.(t, s);
               }}
               onResolveComment={(id) => {
-                setInternalComments((prev) => prev.filter((c) => c.id !== id));
+                setInternalComments((prev) =>
+                  prev.map((c) => (c.id === id ? { ...c, resolved: true } : c))
+                );
                 onResolveComment?.(id);
               }}
             />
           </FixedToolbar>
 
           {/* Mode banner indicator */}
-          {activeMode === 'suggestion' && (
+          {activeMode === 'suggesting' && (
             <div className="flex items-center justify-between px-4 py-1.5 bg-amber-500/10 border-b border-amber-500/20 text-amber-800 dark:text-amber-200 text-xs font-medium shrink-0">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-3.5 h-3.5 text-amber-500" />
@@ -349,14 +738,780 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                   justifyContent: 'center',
                 }}
               >
-                <Editor
-                  ref={editorRef}
-                  variant="demo"
-                  placeholder={placeholder}
-                  readOnly={isEffectivelyReadOnly}
-                  spellCheck
-                  autoFocus={!isEffectivelyReadOnly}
-                />
+                <div
+                  className={cn(
+                    'plate-paper-sheet w-full max-w-[850px] min-h-[850px] bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 shadow-sm rounded-xl px-8 sm:px-12 py-6 sm:py-8 flex flex-col relative transition-all',
+                    activeHeaderFooter && 'ring-1 ring-blue-500/40 shadow-md'
+                  )}
+                >
+                  {/* Hidden Header & Footer File Inputs */}
+                  <input
+                    ref={headerInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleHeaderImageUpload}
+                  />
+                  <input
+                    ref={footerInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleFooterImageUpload}
+                  />
+
+                  {/* ─── Embedded Header Zone (Inside Paper Sheet) ───────────────── */}
+                  {(!isEffectivelyReadOnly || headerState.image?.url || headerState.text?.trim()) && (
+                    <div
+                      onDoubleClick={() => {
+                        if (!isEffectivelyReadOnly) {
+                          setActiveHeaderFooter((prev) => (prev === 'header' ? null : 'header'));
+                        }
+                      }}
+                      className={cn(
+                        'w-full transition-all select-none print:mb-2 print:border-none',
+                        activeHeaderFooter === 'header'
+                          ? 'mb-2 pb-2'
+                          : 'pt-1 pb-1.5 border-b border-transparent hover:border-dashed hover:border-zinc-300 dark:hover:border-zinc-700 cursor-pointer group/header'
+                      )}
+                    >
+                      {activeHeaderFooter === 'header' ? (
+                        <div className="flex flex-col gap-2.5 w-full">
+                          {/* Header Control Ribbon */}
+                          <div
+                            data-header-toolbar="true"
+                            className="header-footer-ribbon flex items-center justify-between px-3 py-1.5 rounded-lg bg-blue-50/80 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-900/60 shadow-xs"
+                          >
+                            <div className="flex items-center gap-3">
+                              <span className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
+                                Header
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => headerInputRef.current?.click()}
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold text-primary bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 rounded-md border border-zinc-200 dark:border-zinc-700 shadow-xs transition-colors cursor-pointer"
+                              >
+                                <ImageIcon className="w-3.5 h-3.5 text-primary" />
+                                <span>{headerState.image?.url ? 'Replace Logo' : '+ Add Logo / Image'}</span>
+                              </button>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              {/* Scope Dropview: This page only vs Every page */}
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <button
+                                    type="button"
+                                    className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium text-zinc-700 dark:text-zinc-200 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700 shadow-xs cursor-pointer"
+                                  >
+                                    <span>{headerState.scope === 'every_page' ? 'Every page' : 'This page only'}</span>
+                                    <ChevronDown className="w-3.5 h-3.5 text-zinc-500" />
+                                  </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-56 p-1 shadow-lg border border-zinc-200 dark:border-zinc-800">
+                                  <DropdownMenuItem
+                                    onClick={() => setHeaderState((prev) => ({ ...prev, scope: 'every_page' }))}
+                                    className="flex items-center justify-between text-xs px-2.5 py-1.5 cursor-pointer rounded-md"
+                                  >
+                                    <span>Every page</span>
+                                    {headerState.scope === 'every_page' && <Check className="w-3.5 h-3.5 text-primary" />}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => setHeaderState((prev) => ({ ...prev, scope: 'first_page_only' }))}
+                                    className="flex items-center justify-between text-xs px-2.5 py-1.5 cursor-pointer rounded-md"
+                                  >
+                                    <span>This page only (Different first page)</span>
+                                    {headerState.scope === 'first_page_only' && <Check className="w-3.5 h-3.5 text-primary" />}
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+
+                              <button
+                                type="button"
+                                onClick={() => setActiveHeaderFooter(null)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-zinc-700 dark:text-zinc-200 hover:text-zinc-950 dark:hover:text-white bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 border border-zinc-200 dark:border-zinc-700 rounded transition-colors cursor-pointer shadow-xs"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                                <span>Done</span>
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Moveable & Draggable Logo Toolbar & Track (if image exists) */}
+                          {headerState.image?.url && (
+                            <div className="flex flex-col gap-1.5 p-2 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xs">
+                              {/* Moveable Image Action Bar */}
+                              <div
+                                data-header-toolbar="true"
+                                className="flex items-center justify-between gap-2 pb-1.5 border-b border-zinc-100 dark:border-zinc-800 text-xs"
+                              >
+                                <div className="flex items-center gap-1">
+                                  <span className="text-[11px] text-zinc-500 mr-1 font-medium">Position:</span>
+                                  <button
+                                    type="button"
+                                    title="Align Left (0%)"
+                                    onClick={() =>
+                                      setHeaderState((prev) => ({
+                                        ...prev,
+                                        image: prev.image ? { ...prev.image, align: 'left', offsetPercent: 0 } : null,
+                                      }))
+                                    }
+                                    className={cn(
+                                      'p-1 rounded cursor-pointer transition-colors',
+                                      (headerState.image.offsetPercent !== undefined ? headerState.image.offsetPercent <= 33 : headerState.image.align === 'left')
+                                        ? 'bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-400 font-bold'
+                                        : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                                    )}
+                                  >
+                                    <AlignLeft className="w-3.5 h-3.5" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    title="Align Center (50%)"
+                                    onClick={() =>
+                                      setHeaderState((prev) => ({
+                                        ...prev,
+                                        image: prev.image ? { ...prev.image, align: 'center', offsetPercent: 50 } : null,
+                                      }))
+                                    }
+                                    className={cn(
+                                      'p-1 rounded cursor-pointer transition-colors',
+                                      (headerState.image.offsetPercent !== undefined ? (headerState.image.offsetPercent > 33 && headerState.image.offsetPercent < 67) : (headerState.image.align === 'center' || !headerState.image.align))
+                                        ? 'bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-400 font-bold'
+                                        : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                                    )}
+                                  >
+                                    <AlignCenter className="w-3.5 h-3.5" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    title="Align Right (100%)"
+                                    onClick={() =>
+                                      setHeaderState((prev) => ({
+                                        ...prev,
+                                        image: prev.image ? { ...prev.image, align: 'right', offsetPercent: 100 } : null,
+                                      }))
+                                    }
+                                    className={cn(
+                                      'p-1 rounded cursor-pointer transition-colors',
+                                      (headerState.image.offsetPercent !== undefined ? headerState.image.offsetPercent >= 67 : headerState.image.align === 'right')
+                                        ? 'bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-400 font-bold'
+                                        : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                                    )}
+                                  >
+                                    <AlignRight className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+
+                                {/* Width / Size Stepper */}
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-[11px] text-zinc-500 font-medium">Size:</span>
+                                  <button
+                                    type="button"
+                                    title="Decrease size"
+                                    onClick={() =>
+                                      setHeaderState((prev) => ({
+                                        ...prev,
+                                        image: prev.image
+                                          ? { ...prev.image, width: Math.max(80, (prev.image.width || 180) - 20) }
+                                          : null,
+                                      }))
+                                    }
+                                    className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 cursor-pointer"
+                                  >
+                                    <Minus className="w-3 h-3" />
+                                  </button>
+                                  <span className="text-[11px] font-mono text-zinc-700 dark:text-zinc-300 w-12 text-center">
+                                    {headerState.image.width || 180}px
+                                  </span>
+                                  <button
+                                    type="button"
+                                    title="Increase size"
+                                    onClick={() =>
+                                      setHeaderState((prev) => ({
+                                        ...prev,
+                                        image: prev.image
+                                          ? { ...prev.image, width: Math.min(320, (prev.image.width || 180) + 20) }
+                                          : null,
+                                      }))
+                                    }
+                                    className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 cursor-pointer"
+                                  >
+                                    <Plus className="w-3 h-3" />
+                                  </button>
+                                </div>
+
+                                {/* Delete Logo */}
+                                <button
+                                  type="button"
+                                  title="Remove Logo"
+                                  onClick={() => setHeaderState((prev) => ({ ...prev, image: null }))}
+                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 text-[11px] font-medium transition-colors cursor-pointer"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                  <span>Remove</span>
+                                </button>
+                              </div>
+
+                              {/* Interactive Draggable Logo Track */}
+                              <div
+                                ref={headerTrackRef}
+                                className="relative w-full min-h-[96px] py-2 px-1 border border-dashed border-blue-200/80 dark:border-blue-900/40 rounded-lg bg-blue-50/20 dark:bg-blue-950/20 select-none overflow-hidden"
+                              >
+                                <div
+                                  data-header-image="true"
+                                  onMouseDown={handleHeaderDragStart}
+                                  onTouchStart={handleHeaderDragStart}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedHeaderImage(true);
+                                  }}
+                                  style={{
+                                    position: 'relative',
+                                    marginLeft: `${headerState.image.offsetPercent ?? (headerState.image.align === 'left' ? 0 : headerState.image.align === 'right' ? 100 : 50)}%`,
+                                    transform: `translateX(-${headerState.image.offsetPercent ?? (headerState.image.align === 'left' ? 0 : headerState.image.align === 'right' ? 100 : 50)}%)`,
+                                    width: `${headerState.image.width || 180}px`,
+                                  }}
+                                  className={cn(
+                                    'cursor-grab select-none transition-shadow rounded-md',
+                                    isDraggingHeaderImage && 'cursor-grabbing scale-[1.02] shadow-lg',
+                                    selectedHeaderImage && 'ring-2 ring-blue-500 ring-offset-2 ring-offset-white dark:ring-offset-zinc-900 shadow-md'
+                                  )}
+                                >
+                                  {/* Floating drag badge when selected or dragging */}
+                                  {(selectedHeaderImage || isDraggingHeaderImage) && (
+                                    <div className="absolute -top-7 left-1/2 -translate-x-1/2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-600 text-white text-[10px] font-semibold shadow-md whitespace-nowrap pointer-events-none z-10">
+                                      <Move className="w-2.5 h-2.5" />
+                                      <span>Drag to position ({headerState.image.offsetPercent ?? (headerState.image.align === 'left' ? 0 : headerState.image.align === 'right' ? 100 : 50)}%)</span>
+                                    </div>
+                                  )}
+
+                                  <img
+                                    src={headerState.image.url}
+                                    alt="Header Logo"
+                                    draggable={false}
+                                    className="w-full max-h-24 object-contain rounded border border-zinc-200 dark:border-zinc-700 p-1 bg-white shadow-2xs pointer-events-none"
+                                  />
+
+                                  {/* Selection corner handles */}
+                                  {selectedHeaderImage && (
+                                    <>
+                                      <div className="absolute -top-1 -left-1 w-2.5 h-2.5 bg-blue-600 border border-white rounded-full shadow-xs" />
+                                      <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-blue-600 border border-white rounded-full shadow-xs" />
+                                      <div className="absolute -bottom-1 -left-1 w-2.5 h-2.5 bg-blue-600 border border-white rounded-full shadow-xs" />
+                                      <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 bg-blue-600 border border-white rounded-full shadow-xs" />
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Header Text Input Line & Alignment */}
+                          <div className="flex items-center gap-2 p-1.5 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xs">
+                            <input
+                              type="text"
+                              value={headerState.text || ''}
+                              onChange={(e) => setHeaderState((prev) => ({ ...prev, text: e.target.value }))}
+                              placeholder="Type institutional header text (e.g. STI College Marikina • Practicum Department)..."
+                              className="flex-1 bg-transparent px-2 py-1 text-xs text-zinc-800 dark:text-zinc-200 outline-hidden font-medium placeholder:text-zinc-400"
+                              style={{ textAlign: headerState.textAlign || 'center' }}
+                            />
+                            <div className="flex items-center gap-1 border-l border-zinc-200 dark:border-zinc-700 pl-2 shrink-0">
+                              <button
+                                type="button"
+                                title="Align Left"
+                                onClick={() => setHeaderState((prev) => ({ ...prev, textAlign: 'left' }))}
+                                className={cn(
+                                  'p-1 rounded cursor-pointer transition-colors',
+                                  headerState.textAlign === 'left'
+                                    ? 'bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-400 font-bold'
+                                    : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                                )}
+                              >
+                                <AlignLeft className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                title="Align Center"
+                                onClick={() => setHeaderState((prev) => ({ ...prev, textAlign: 'center' }))}
+                                className={cn(
+                                  'p-1 rounded cursor-pointer transition-colors',
+                                  headerState.textAlign === 'center' || !headerState.textAlign
+                                    ? 'bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-400 font-bold'
+                                    : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                                )}
+                              >
+                                <AlignCenter className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                title="Align Right"
+                                onClick={() => setHeaderState((prev) => ({ ...prev, textAlign: 'right' }))}
+                                className={cn(
+                                  'p-1 rounded cursor-pointer transition-colors',
+                                  headerState.textAlign === 'right'
+                                    ? 'bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-400 font-bold'
+                                    : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                                )}
+                              >
+                                <AlignRight className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        /* Idle State (Faint Google Docs Style Header Preview) */
+                        <div className="w-full flex flex-col gap-1.5 document-header-preview">
+                          {headerState.image?.url && (
+                            <div className="w-full py-1 overflow-hidden select-none">
+                              <div
+                                style={{
+                                  position: 'relative',
+                                  marginLeft: `${headerState.image.offsetPercent ?? (headerState.image.align === 'left' ? 0 : headerState.image.align === 'right' ? 100 : 50)}%`,
+                                  transform: `translateX(-${headerState.image.offsetPercent ?? (headerState.image.align === 'left' ? 0 : headerState.image.align === 'right' ? 100 : 50)}%)`,
+                                  width: `${headerState.image.width || 180}px`,
+                                }}
+                              >
+                                <img
+                                  src={headerState.image.url}
+                                  alt="Header Logo"
+                                  draggable={false}
+                                  className="w-full max-h-24 object-contain opacity-85 group-hover/header:opacity-100 transition-opacity"
+                                />
+                              </div>
+                            </div>
+                          )}
+                          {headerState.text?.trim() && (
+                            <div
+                              className={cn(
+                                'text-xs text-zinc-500 font-semibold tracking-wide',
+                                headerState.textAlign === 'left' && 'text-left',
+                                (!headerState.textAlign || headerState.textAlign === 'center') && 'text-center',
+                                headerState.textAlign === 'right' && 'text-right'
+                              )}
+                            >
+                              {headerState.text}
+                            </div>
+                          )}
+                          {!isEffectivelyReadOnly && (
+                            <div className="header-footer-prompt flex items-center justify-between text-[11px] text-zinc-400 opacity-0 group-hover/header:opacity-100 transition-opacity pt-1 border-t border-dashed border-zinc-300 dark:border-zinc-700">
+                              <span>Double-click to edit Header</span>
+                              <span>{headerState.scope === 'every_page' ? 'Every page' : 'This page only'}</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Header boundary line when editing header */}
+                  {activeHeaderFooter === 'header' && (
+                    <div className="flex items-center gap-2 my-2 select-none">
+                      <div className="h-px bg-blue-300 dark:bg-blue-700/60 flex-1 border-b border-dashed" />
+                      <span className="text-[10px] uppercase font-bold tracking-wider text-blue-500/80">Header Boundary</span>
+                      <div className="h-px bg-blue-300 dark:bg-blue-700/60 flex-1 border-b border-dashed" />
+                    </div>
+                  )}
+
+                  {/* ─── Slate Document Body (Seamlessly Inside Paper Sheet) ──────── */}
+                  <Editor
+                    ref={editorRef}
+                    variant="none"
+                    placeholder={placeholder}
+                    readOnly={isEffectivelyReadOnly}
+                    spellCheck
+                    autoFocus={!isEffectivelyReadOnly}
+                    onKeyDown={handleKeyDown}
+                    className="flex-1 w-full min-h-[550px] p-0 border-0 shadow-none rounded-none focus-visible:outline-none"
+                  />
+
+                  {/* Footer boundary line when editing footer */}
+                  {activeHeaderFooter === 'footer' && (
+                    <div className="flex items-center gap-2 my-2 select-none">
+                      <div className="h-px bg-blue-300 dark:bg-blue-700/60 flex-1 border-b border-dashed" />
+                      <span className="text-[10px] uppercase font-bold tracking-wider text-blue-500/80">Footer Boundary</span>
+                      <div className="h-px bg-blue-300 dark:bg-blue-700/60 flex-1 border-b border-dashed" />
+                    </div>
+                  )}
+
+                  {/* ─── Embedded Footer Zone (Inside Paper Sheet) ───────────────── */}
+                  {(!isEffectivelyReadOnly || footerState.image?.url || footerState.text?.trim() || footerState.pageNumber) && (
+                    <div
+                      onDoubleClick={() => {
+                        if (!isEffectivelyReadOnly) {
+                          setActiveHeaderFooter((prev) => (prev === 'footer' ? null : 'footer'));
+                        }
+                      }}
+                      className={cn(
+                        'w-full transition-all select-none print:mt-2 print:border-none',
+                        activeHeaderFooter === 'footer'
+                          ? 'mt-2 pt-2'
+                          : 'mt-2 pt-1.5 pb-1 border-t border-transparent hover:border-dashed hover:border-zinc-300 dark:hover:border-zinc-700 cursor-pointer group/footer'
+                      )}
+                    >
+                      {activeHeaderFooter === 'footer' ? (
+                        <div className="flex flex-col gap-2.5 w-full">
+                          {/* Footer Control Ribbon */}
+                          <div
+                            data-footer-toolbar="true"
+                            className="header-footer-ribbon flex items-center justify-between px-3 py-1.5 rounded-lg bg-blue-50/80 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-900/60 shadow-xs"
+                          >
+                            <div className="flex items-center gap-3">
+                              <span className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
+                                Footer
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => footerInputRef.current?.click()}
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold text-primary bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 rounded-md border border-zinc-200 dark:border-zinc-700 shadow-xs transition-colors cursor-pointer"
+                              >
+                                <ImageIcon className="w-3.5 h-3.5 text-primary" />
+                                <span>{footerState.image?.url ? 'Replace Logo' : '+ Add Logo / Image'}</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setFooterState((prev) => ({ ...prev, pageNumber: !prev.pageNumber }))
+                                }
+                                className={cn(
+                                  'inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md border shadow-xs transition-colors cursor-pointer',
+                                  footerState.pageNumber
+                                    ? 'bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-700'
+                                    : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700'
+                                )}
+                              >
+                                <Hash className="w-3.5 h-3.5" />
+                                <span>{footerState.pageNumber ? '✓ Page Number Active' : '+ Insert Page Number'}</span>
+                              </button>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              {/* Scope Dropview: This page only vs Every page */}
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <button
+                                    type="button"
+                                    className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium text-zinc-700 dark:text-zinc-200 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700 shadow-xs cursor-pointer"
+                                  >
+                                    <span>{footerState.scope === 'every_page' ? 'Every page' : 'This page only'}</span>
+                                    <ChevronDown className="w-3.5 h-3.5 text-zinc-500" />
+                                  </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-56 p-1 shadow-lg border border-zinc-200 dark:border-zinc-800">
+                                  <DropdownMenuItem
+                                    onClick={() => setFooterState((prev) => ({ ...prev, scope: 'every_page' }))}
+                                    className="flex items-center justify-between text-xs px-2.5 py-1.5 cursor-pointer rounded-md"
+                                  >
+                                    <span>Every page</span>
+                                    {footerState.scope === 'every_page' && <Check className="w-3.5 h-3.5 text-primary" />}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => setFooterState((prev) => ({ ...prev, scope: 'first_page_only' }))}
+                                    className="flex items-center justify-between text-xs px-2.5 py-1.5 cursor-pointer rounded-md"
+                                  >
+                                    <span>This page only (Different first page)</span>
+                                    {footerState.scope === 'first_page_only' && <Check className="w-3.5 h-3.5 text-primary" />}
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+
+                              <button
+                                type="button"
+                                onClick={() => setActiveHeaderFooter(null)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-zinc-700 dark:text-zinc-200 hover:text-zinc-950 dark:hover:text-white bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 border border-zinc-200 dark:border-zinc-700 rounded transition-colors cursor-pointer shadow-xs"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                                <span>Done</span>
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Moveable & Draggable Logo Toolbar & Track (if image exists) */}
+                          {footerState.image?.url && (
+                            <div className="flex flex-col gap-1.5 p-2 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xs">
+                              {/* Moveable Image Action Bar */}
+                              <div
+                                data-footer-toolbar="true"
+                                className="flex items-center justify-between gap-2 pb-1.5 border-b border-zinc-100 dark:border-zinc-800 text-xs"
+                              >
+                                <div className="flex items-center gap-1">
+                                  <span className="text-[11px] text-zinc-500 mr-1 font-medium">Position:</span>
+                                  <button
+                                    type="button"
+                                    title="Align Left (0%)"
+                                    onClick={() =>
+                                      setFooterState((prev) => ({
+                                        ...prev,
+                                        image: prev.image ? { ...prev.image, align: 'left', offsetPercent: 0 } : null,
+                                      }))
+                                    }
+                                    className={cn(
+                                      'p-1 rounded cursor-pointer transition-colors',
+                                      (footerState.image.offsetPercent !== undefined ? footerState.image.offsetPercent <= 33 : footerState.image.align === 'left')
+                                        ? 'bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-400 font-bold'
+                                        : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                                    )}
+                                  >
+                                    <AlignLeft className="w-3.5 h-3.5" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    title="Align Center (50%)"
+                                    onClick={() =>
+                                      setFooterState((prev) => ({
+                                        ...prev,
+                                        image: prev.image ? { ...prev.image, align: 'center', offsetPercent: 50 } : null,
+                                      }))
+                                    }
+                                    className={cn(
+                                      'p-1 rounded cursor-pointer transition-colors',
+                                      (footerState.image.offsetPercent !== undefined ? (footerState.image.offsetPercent > 33 && footerState.image.offsetPercent < 67) : (footerState.image.align === 'center' || !footerState.image.align))
+                                        ? 'bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-400 font-bold'
+                                        : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                                    )}
+                                  >
+                                    <AlignCenter className="w-3.5 h-3.5" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    title="Align Right (100%)"
+                                    onClick={() =>
+                                      setFooterState((prev) => ({
+                                        ...prev,
+                                        image: prev.image ? { ...prev.image, align: 'right', offsetPercent: 100 } : null,
+                                      }))
+                                    }
+                                    className={cn(
+                                      'p-1 rounded cursor-pointer transition-colors',
+                                      (footerState.image.offsetPercent !== undefined ? footerState.image.offsetPercent >= 67 : footerState.image.align === 'right')
+                                        ? 'bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-400 font-bold'
+                                        : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                                    )}
+                                  >
+                                    <AlignRight className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+
+                                {/* Width / Size Stepper */}
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-[11px] text-zinc-500 font-medium">Size:</span>
+                                  <button
+                                    type="button"
+                                    title="Decrease size"
+                                    onClick={() =>
+                                      setFooterState((prev) => ({
+                                        ...prev,
+                                        image: prev.image
+                                          ? { ...prev.image, width: Math.max(80, (prev.image.width || 140) - 20) }
+                                          : null,
+                                      }))
+                                    }
+                                    className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 cursor-pointer"
+                                  >
+                                    <Minus className="w-3 h-3" />
+                                  </button>
+                                  <span className="text-[11px] font-mono text-zinc-700 dark:text-zinc-300 w-12 text-center">
+                                    {footerState.image.width || 140}px
+                                  </span>
+                                  <button
+                                    type="button"
+                                    title="Increase size"
+                                    onClick={() =>
+                                      setFooterState((prev) => ({
+                                        ...prev,
+                                        image: prev.image
+                                          ? { ...prev.image, width: Math.min(320, (prev.image.width || 140) + 20) }
+                                          : null,
+                                      }))
+                                    }
+                                    className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 cursor-pointer"
+                                  >
+                                    <Plus className="w-3 h-3" />
+                                  </button>
+                                </div>
+
+                                {/* Delete Logo */}
+                                <button
+                                  type="button"
+                                  title="Remove Logo"
+                                  onClick={() => setFooterState((prev) => ({ ...prev, image: null }))}
+                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 text-[11px] font-medium transition-colors cursor-pointer"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                  <span>Remove</span>
+                                </button>
+                              </div>
+
+                              {/* Interactive Draggable Footer Logo Track */}
+                              <div
+                                ref={footerTrackRef}
+                                className="relative w-full min-h-[85px] py-2 px-1 border border-dashed border-blue-200/80 dark:border-blue-900/40 rounded-lg bg-blue-50/20 dark:bg-blue-950/20 select-none overflow-hidden"
+                              >
+                                <div
+                                  data-footer-image="true"
+                                  onMouseDown={handleFooterDragStart}
+                                  onTouchStart={handleFooterDragStart}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedFooterImage(true);
+                                  }}
+                                  style={{
+                                    position: 'relative',
+                                    marginLeft: `${footerState.image.offsetPercent ?? (footerState.image.align === 'left' ? 0 : footerState.image.align === 'right' ? 100 : 50)}%`,
+                                    transform: `translateX(-${footerState.image.offsetPercent ?? (footerState.image.align === 'left' ? 0 : footerState.image.align === 'right' ? 100 : 50)}%)`,
+                                    width: `${footerState.image.width || 140}px`,
+                                  }}
+                                  className={cn(
+                                    'cursor-grab select-none transition-shadow rounded-md',
+                                    isDraggingFooterImage && 'cursor-grabbing scale-[1.02] shadow-lg',
+                                    selectedFooterImage && 'ring-2 ring-blue-500 ring-offset-2 ring-offset-white dark:ring-offset-zinc-900 shadow-md'
+                                  )}
+                                >
+                                  {(selectedFooterImage || isDraggingFooterImage) && (
+                                    <div className="absolute -top-7 left-1/2 -translate-x-1/2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-600 text-white text-[10px] font-semibold shadow-md whitespace-nowrap pointer-events-none z-10">
+                                      <Move className="w-2.5 h-2.5" />
+                                      <span>Drag to position ({footerState.image.offsetPercent ?? (footerState.image.align === 'left' ? 0 : footerState.image.align === 'right' ? 100 : 50)}%)</span>
+                                    </div>
+                                  )}
+
+                                  <img
+                                    src={footerState.image.url}
+                                    alt="Footer Logo"
+                                    draggable={false}
+                                    className="w-full max-h-20 object-contain rounded border border-zinc-200 dark:border-zinc-700 p-1 bg-white shadow-2xs pointer-events-none"
+                                  />
+
+                                  {selectedFooterImage && (
+                                    <>
+                                      <div className="absolute -top-1 -left-1 w-2.5 h-2.5 bg-blue-600 border border-white rounded-full shadow-xs" />
+                                      <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-blue-600 border border-white rounded-full shadow-xs" />
+                                      <div className="absolute -bottom-1 -left-1 w-2.5 h-2.5 bg-blue-600 border border-white rounded-full shadow-xs" />
+                                      <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 bg-blue-600 border border-white rounded-full shadow-xs" />
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Footer Text Input Line & Alignment */}
+                          <div className="flex items-center gap-2 p-1.5 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xs">
+                            <input
+                              type="text"
+                              value={footerState.text || ''}
+                              onChange={(e) => setFooterState((prev) => ({ ...prev, text: e.target.value }))}
+                              placeholder="Type footer text (e.g. Confidential • STI College Marikina)..."
+                              className="flex-1 bg-transparent px-2 py-1 text-xs text-zinc-800 dark:text-zinc-200 outline-hidden font-medium placeholder:text-zinc-400"
+                              style={{ textAlign: footerState.textAlign || 'center' }}
+                            />
+                            <div className="flex items-center gap-1 border-l border-zinc-200 dark:border-zinc-700 pl-2 shrink-0">
+                              <button
+                                type="button"
+                                title="Align Left"
+                                onClick={() => setFooterState((prev) => ({ ...prev, textAlign: 'left' }))}
+                                className={cn(
+                                  'p-1 rounded cursor-pointer transition-colors',
+                                  footerState.textAlign === 'left'
+                                    ? 'bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-400 font-bold'
+                                    : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                                )}
+                              >
+                                <AlignLeft className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                title="Align Center"
+                                onClick={() => setFooterState((prev) => ({ ...prev, textAlign: 'center' }))}
+                                className={cn(
+                                  'p-1 rounded cursor-pointer transition-colors',
+                                  footerState.textAlign === 'center' || !footerState.textAlign
+                                    ? 'bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-400 font-bold'
+                                    : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                                )}
+                              >
+                                <AlignCenter className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                title="Align Right"
+                                onClick={() => setFooterState((prev) => ({ ...prev, textAlign: 'right' }))}
+                                className={cn(
+                                  'p-1 rounded cursor-pointer transition-colors',
+                                  footerState.textAlign === 'right'
+                                    ? 'bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-400 font-bold'
+                                    : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                                )}
+                              >
+                                <AlignRight className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Footer Page Number Preview (if active) */}
+                          {footerState.pageNumber && (
+                            <div
+                              className={cn(
+                                'text-xs text-zinc-400 font-mono py-0.5 px-2 bg-zinc-50 dark:bg-zinc-800/60 rounded border border-zinc-200/60 dark:border-zinc-700/60',
+                                footerState.textAlign === 'left' && 'text-left',
+                                (!footerState.textAlign || footerState.textAlign === 'center') && 'text-center',
+                                footerState.textAlign === 'right' && 'text-right'
+                              )}
+                            >
+                              Page 1 of 1
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        /* Idle State (Faint Google Docs Style Footer Preview) */
+                        <div className="w-full flex flex-col gap-1.5 document-footer-preview">
+                          {footerState.image?.url && (
+                            <div className="w-full py-1 overflow-hidden select-none">
+                              <div
+                                style={{
+                                  position: 'relative',
+                                  marginLeft: `${footerState.image.offsetPercent ?? (footerState.image.align === 'left' ? 0 : footerState.image.align === 'right' ? 100 : 50)}%`,
+                                  transform: `translateX(-${footerState.image.offsetPercent ?? (footerState.image.align === 'left' ? 0 : footerState.image.align === 'right' ? 100 : 50)}%)`,
+                                  width: `${footerState.image.width || 140}px`,
+                                }}
+                              >
+                                <img
+                                  src={footerState.image.url}
+                                  alt="Footer Logo"
+                                  draggable={false}
+                                  className="w-full max-h-20 object-contain opacity-85 group-hover/footer:opacity-100 transition-opacity"
+                                />
+                              </div>
+                            </div>
+                          )}
+                          {(footerState.text?.trim() || footerState.pageNumber) && (
+                            <div
+                              className={cn(
+                                'flex items-center gap-2 text-xs text-zinc-500 font-medium',
+                                footerState.textAlign === 'left' && 'justify-start text-left',
+                                (!footerState.textAlign || footerState.textAlign === 'center') && 'justify-center text-center',
+                                footerState.textAlign === 'right' && 'justify-end text-right'
+                              )}
+                            >
+                              {footerState.text?.trim() && <span>{footerState.text}</span>}
+                              {footerState.pageNumber && (
+                                <span className="font-mono text-zinc-400">
+                                  {footerState.text?.trim() ? ' • ' : ''}Page 1 of 1
+                                </span>
+                              )}
+                            </div>
+                          )}
+                          {!isEffectivelyReadOnly && (
+                            <div className="header-footer-prompt flex items-center justify-between text-[11px] text-zinc-400 opacity-0 group-hover/footer:opacity-100 transition-opacity pt-1 border-t border-dashed border-zinc-300 dark:border-zinc-700">
+                              <span>Double-click to edit Footer</span>
+                              <span>{footerState.scope === 'every_page' ? 'Every page' : 'This page only'}</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             </EditorContainer>
 
@@ -387,7 +1542,57 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
           </div>
 
           {/* Floating formatting toolbar on text selection */}
-          {!isEffectivelyReadOnly && <FloatingToolbar editor={editor} />}
+          {!isEffectivelyReadOnly && (
+            <FloatingToolbar
+              editor={editor}
+              onAddComment={(selectedText) => {
+                setDrawerQuote(selectedText);
+                setShowCommentsDrawer(true);
+              }}
+            />
+          )}
+
+          {/* Comments and Feedback Side Panel Drawer */}
+          <CommentsDrawer
+            open={showCommentsDrawer}
+            onClose={() => {
+              setShowCommentsDrawer(false);
+              setDrawerQuote('');
+            }}
+            comments={comments ?? internalComments}
+            onAddComment={(t, s) => {
+              const newC: EditorComment = {
+                id: crypto.randomUUID(),
+                author: currentUserName || 'Student',
+                authorRole: currentUserRole || 'student',
+                text: t,
+                createdAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                selectedText: s,
+              };
+              setInternalComments((prev) => [newC, ...prev]);
+              onAddComment?.(t, s);
+            }}
+            onResolveComment={(id) => {
+              setInternalComments((prev) =>
+                prev.map((c) => (c.id === id ? { ...c, resolved: true } : c))
+              );
+              onResolveComment?.(id);
+            }}
+            onUnresolveComment={(id) => {
+              setInternalComments((prev) =>
+                prev.map((c) => (c.id === id ? { ...c, resolved: false } : c))
+              );
+              onUnresolveComment?.(id);
+            }}
+            onDeleteComment={(id) => {
+              setInternalComments((prev) => prev.filter((c) => c.id !== id));
+              onDeleteComment?.(id);
+            }}
+            selectedText={drawerQuote}
+            onClearSelectedText={() => setDrawerQuote('')}
+            currentUserRole={currentUserRole}
+            currentUserName={currentUserName}
+          />
         </div>
       </PlateComp>
     );

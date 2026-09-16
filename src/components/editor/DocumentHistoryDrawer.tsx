@@ -28,6 +28,7 @@ interface DocumentVersion {
 interface DocumentHistoryDrawerProps {
   draftId: string;
   currentRevision: number;
+  onBeforeRestore?: () => Promise<number>;
   onClose: () => void;
   onRestoreComplete: (newContent: object[], newRevision: number, newTitle: string) => void;
 }
@@ -37,6 +38,7 @@ interface DocumentHistoryDrawerProps {
 export function DocumentHistoryDrawer({
   draftId,
   currentRevision,
+  onBeforeRestore,
   onClose,
   onRestoreComplete,
 }: DocumentHistoryDrawerProps) {
@@ -82,9 +84,12 @@ export function DocumentHistoryDrawer({
 
       setRestoring(true);
       try {
+        const expectedRevision = onBeforeRestore
+          ? await onBeforeRestore()
+          : currentRevision;
         const { data, error: err } = await supabase.rpc('restore_editor_version', {
           p_version_id: version.version_id,
-          p_expected_revision: currentRevision,
+          p_expected_revision: expectedRevision,
         });
         if (err) throw new Error(err.message);
 
@@ -98,7 +103,7 @@ export function DocumentHistoryDrawer({
         setRestoring(false);
       }
     },
-    [currentRevision, onClose, onRestoreComplete, restoring]
+    [currentRevision, onBeforeRestore, onClose, onRestoreComplete, restoring]
   );
 
   const selectedVersion = versions.find(v => v.version_id === selectedId) ?? null;

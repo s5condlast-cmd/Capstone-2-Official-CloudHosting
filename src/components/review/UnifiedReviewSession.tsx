@@ -224,6 +224,18 @@ export const UnifiedReviewSession: React.FC<UnifiedReviewSessionProps> = ({
           <Button
             variant="outline"
             size="sm"
+            onClick={() => {
+              window.open(`/student/editor?draft=${student.submissionId}&mode=review`, '_blank');
+            }}
+            icon={<FileText size={14} />}
+            className="text-xs font-semibold text-primary border-primary/30 hover:bg-primary/10"
+          >
+            Open in Document Editor
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
             onClick={onBack}
             icon={<ArrowLeft size={14} />}
             className="text-xs font-semibold"

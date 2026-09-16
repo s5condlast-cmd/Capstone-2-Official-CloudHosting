@@ -13,16 +13,21 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
-  ArrowLeft, Save, Download, Clock, Send, Copy,
+  ChevronLeft, Save, Download, Clock, Send, Copy,
   AlertTriangle, CheckCircle, Wifi, WifiOff, Loader2,
-  History, FileText, Users
+  History, FileText, Users, ShieldCheck
 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import { toast } from 'sonner';
 import { supabase } from '@/src/lib/supabase';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { DocumentHistoryDrawer } from '@/src/components/editor/DocumentHistoryDrawer';
+import { SidebarContext, SidebarTrigger } from '@/components/ui/sidebar';
 import PlateEditor, { type PlateEditorRef } from '@/src/components/editor/plate-editor';
+import {
+  type EditorComment,
+  type EditorMode,
+} from '@/src/components/plate-ui/fixed-toolbar-buttons';
 import { downloadDocx, printToPdf, serializeToDocx } from '@/src/components/editor/serializers/docxSerializer';
 import {
   DocumentHistoryStorage,
@@ -78,9 +83,92 @@ export function StudentDocumentEditor() {
   const [showMultiTabWarning, setShowMultiTabWarning] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [titleEditing, setTitleEditing] = useState(false);
+  const [editorEpoch, setEditorEpoch] = useState(0);
+
+  // ── Multi-Role Reviewer Detection & Mode ─────────────────────────────────
+  const isReviewer = user?.role === 'adviser' || user?.role === 'supervisor' || user?.role === 'admin' || searchParams.get('mode') === 'review';
+  const [editorMode, setEditorMode] = useState<EditorMode>(() => isReviewer ? 'suggesting' : 'editing');
+
+  // ── Comments State & Local Synchronization ──────────────────────────────
+  const [comments, setComments] = useState<EditorComment[]>(() => {
+    if (!draftIdParam) return [];
+    try {
+      const stored = localStorage.getItem(`comments_${draftIdParam}`);
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const handleAddComment = useCallback((text: string, selectedText?: string) => {
+    const newComment: EditorComment = {
+      id: crypto.randomUUID(),
+      author: user?.name || (user as any)?.full_name || (isReviewer ? 'Reviewer' : 'Student'),
+      authorRole: (user?.role as any) || 'student',
+      text,
+      createdAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      selectedText,
+      resolved: false,
+    };
+    setComments((prev) => {
+      const updated = [newComment, ...prev];
+      if (draftIdParam || draft?.id) {
+        localStorage.setItem(`comments_${draftIdParam || draft?.id}`, JSON.stringify(updated));
+      }
+      return updated;
+    });
+    toast.success('Comment added');
+  }, [user, isReviewer, draftIdParam, draft?.id]);
+
+  const handleResolveComment = useCallback((id: string) => {
+    setComments((prev) => {
+      const updated = prev.map((c) => (c.id === id ? { ...c, resolved: true } : c));
+      if (draftIdParam || draft?.id) {
+        localStorage.setItem(`comments_${draftIdParam || draft?.id}`, JSON.stringify(updated));
+      }
+      return updated;
+    });
+    toast.success('Comment resolved');
+  }, [draftIdParam, draft?.id]);
+
+  const handleUnresolveComment = useCallback((id: string) => {
+    setComments((prev) => {
+      const updated = prev.map((c) => (c.id === id ? { ...c, resolved: false } : c));
+      if (draftIdParam || draft?.id) {
+        localStorage.setItem(`comments_${draftIdParam || draft?.id}`, JSON.stringify(updated));
+      }
+      return updated;
+    });
+  }, [draftIdParam, draft?.id]);
+
+  const handleDeleteComment = useCallback((id: string) => {
+    setComments((prev) => {
+      const updated = prev.filter((c) => c.id !== id);
+      if (draftIdParam || draft?.id) {
+        localStorage.setItem(`comments_${draftIdParam || draft?.id}`, JSON.stringify(updated));
+      }
+      return updated;
+    });
+    toast.success('Comment deleted');
+  }, [draftIdParam, draft?.id]);
 
   // ── Storage engine ───────────────────────────────────────────────────────
   const storageRef = useRef<DocumentHistoryStorage | null>(null);
+
+  // ── Auto-collapse sidebar on enter (once) to maximize editing width ──────
+  const sidebar = React.useContext(SidebarContext);
+  const sidebarRef = useRef(sidebar);
+  sidebarRef.current = sidebar;
+
+  useEffect(() => {
+    // Only collapse once on initial page load; does not lock the sidebar
+    sidebarRef.current?.setOpen(false);
+
+    return () => {
+      // Re-open sidebar when leaving editor so portal navigation is accessible
+      sidebarRef.current?.setOpen(true);
+    };
+  }, []); // Strictly empty dependency array so user manual toggles are never overridden
 
   // ── Initialize: load or create draft ─────────────────────────────────────
   useEffect(() => {
@@ -166,7 +254,14 @@ export function StudentDocumentEditor() {
             setShowConflictBanner(true);
           },
           onMultiTabConflict: () => setShowMultiTabWarning(true),
+          onSaved: (saved) => {
+            setDraft((current) => current
+              ? { ...current, revision: saved.revision, updatedAt: saved.updatedAt }
+              : current
+            );
+          },
         });
+        await storage.load(loadedDraft.revision);
         storageRef.current = storage;
 
         // Print on load if requested
@@ -256,9 +351,8 @@ export function StudentDocumentEditor() {
       if (!draft) return;
       setDraft(prev => prev ? { ...prev, content: newContent, revision: newRevision, title: newTitle } : prev);
       setTitle(newTitle);
-      if (storageRef.current) {
-        storageRef.current['cloudRevision' as any] = newRevision;
-      }
+      storageRef.current?.setCloudRevision(newRevision);
+      setEditorEpoch((value) => value + 1);
     },
     [draft]
   );
@@ -266,8 +360,9 @@ export function StudentDocumentEditor() {
   // ── Export ───────────────────────────────────────────────────────────────
   const handleExportDocx = useCallback(async () => {
     const content = editorRef.current?.getContent() ?? draft?.content ?? [];
+    const headerFooter = editorRef.current?.getHeaderFooter?.();
     try {
-      await downloadDocx(content as any[], title);
+      await downloadDocx(content as any[], title, headerFooter);
     } catch {
       toast.error('Export failed. Please try again.');
     }
@@ -288,9 +383,12 @@ export function StudentDocumentEditor() {
     setSubmitting(true);
     try {
       // 1. Flush pending draft revision
-      if (storageRef.current) {
-        await storageRef.current.flushNow();
-      }
+      const savedDraft = storageRef.current
+        ? await storageRef.current.flushNow()
+        : null;
+      const expectedRevision = savedDraft?.revision
+        ?? storageRef.current?.getCloudRevision()
+        ?? draft.revision;
 
       // 2. Generate DOCX artifact
       const content = editorRef.current?.getContent() ?? draft.content;
@@ -304,7 +402,7 @@ export function StudentDocumentEditor() {
       const { error: lockError } = await supabase.rpc('lock_editor_draft_for_submission', {
         p_draft_id: draft.id,
         p_submission_id: submissionDoc.id,
-        p_expected_revision: draft.revision + 1, // after flush
+        p_expected_revision: expectedRevision,
       });
 
       if (lockError) {
@@ -312,7 +410,12 @@ export function StudentDocumentEditor() {
         return;
       }
 
-      setDraft(prev => prev ? { ...prev, status: 'locked', submissionId: submissionDoc.id } : prev);
+      setDraft(prev => prev ? {
+        ...prev,
+        revision: expectedRevision,
+        status: 'locked',
+        submissionId: submissionDoc.id,
+      } : prev);
       toast.success('Document submitted successfully! Your adviser has been notified.');
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Submission failed. Please retry.');
@@ -378,11 +481,15 @@ export function StudentDocumentEditor() {
       <div className="flex items-center gap-3 flex-wrap">
         <button
           onClick={() => navigate('/student/documents')}
-          className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+          className="flex items-center gap-1 text-sm font-medium text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
         >
-          <ArrowLeft className="w-4 h-4" />
-          Repository
+          <ChevronLeft className="w-4 h-4" />
+          Back
         </button>
+
+        <div className="h-4 w-px bg-zinc-200 dark:bg-zinc-800" />
+
+        <SidebarTrigger className="text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 cursor-pointer" />
 
         <div className="flex-1 min-w-0">
           {titleEditing ? (
@@ -490,7 +597,23 @@ export function StudentDocumentEditor() {
         />
       )}
 
-      {isLocked && (
+      {isReviewer && (
+        <div className="flex items-center justify-between p-3 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-800 dark:text-blue-200 text-xs shrink-0">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4 text-blue-500" />
+            <span className="font-semibold">Review Mode Active ({user?.role?.toUpperCase()}):</span>
+            <span>You can highlight text and leave comments, or use the Mode switcher to make direct edits.</span>
+          </div>
+          <button
+            onClick={() => navigate(-1)}
+            className="px-2.5 py-1 rounded-lg bg-blue-500 text-white font-medium hover:bg-blue-600 transition-colors"
+          >
+            Back to Review Hub
+          </button>
+        </div>
+      )}
+
+      {isLocked && !isReviewer && (
         <div className="flex items-center gap-2 px-4 py-2.5 bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-lg text-sm text-zinc-600 dark:text-zinc-400">
           <CheckCircle className="w-4 h-4 text-green-500 shrink-0" />
           <span>This document has been officially submitted and is now read-only. Use "Duplicate as Draft" for further edits.</span>
@@ -499,18 +622,34 @@ export function StudentDocumentEditor() {
 
       {/* Plate editor */}
       <PlateEditor
+        key={`${draft?.id ?? 'new'}:${editorEpoch}`}
         ref={editorRef}
         initialContent={draft?.content ?? [{ type: 'p', children: [{ text: '' }] }]}
         onChange={handleEditorChange}
-        readOnly={isLocked}
-        placeholder="Start writing your document…"
+        readOnly={isLocked && !isReviewer}
+        placeholder="Start writing your document..."
+        mode={editorMode}
+        onModeChange={setEditorMode}
+        comments={comments}
+        onAddComment={handleAddComment}
+        onResolveComment={handleResolveComment}
+        onUnresolveComment={handleUnresolveComment}
+        onDeleteComment={handleDeleteComment}
+        currentUserRole={(user?.role as any) || 'student'}
+        currentUserName={user?.name || (user as any)?.full_name || 'User'}
       />
 
       {/* History drawer */}
       {showHistory && draft && (
         <DocumentHistoryDrawer
           draftId={draft.id}
-          currentRevision={draft.revision}
+          currentRevision={storageRef.current?.getCloudRevision() ?? draft.revision}
+          onBeforeRestore={async () => {
+            const saved = await storageRef.current?.flushNow();
+            return saved?.revision
+              ?? storageRef.current?.getCloudRevision()
+              ?? draft.revision;
+          }}
           onClose={() => setShowHistory(false)}
           onRestoreComplete={handleRestoreComplete}
         />

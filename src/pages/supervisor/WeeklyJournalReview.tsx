@@ -518,6 +518,16 @@ export const WeeklyJournalReview: React.FC = () => {
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      window.open(`/student/editor?draft=${selectedJournal.id}&mode=review`, '_blank');
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20 text-xs font-bold transition-colors"
+                    title="Open document editor to add inline comments and review text"
+                  >
+                    <FileText size={13} /> Open in Document Editor
+                  </button>
+
                   <a
                     href={selectedJournal.pdfUrl}
                     download

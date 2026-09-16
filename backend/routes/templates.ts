@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import multer from 'multer';
-import { requireIdentity, requirePortal, requireRole, asyncRoute } from '../middleware/auth';
+import { requireIdentity, requirePortal, requireRole, asyncRoute } from '../middleware/auth.js';
 
 export const isValidTemplateId = (id: unknown): id is string => typeof id === 'string' && /^[a-zA-Z0-9_-]{1,128}$/.test(id);
 const router = Router();

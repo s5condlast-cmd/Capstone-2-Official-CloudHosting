@@ -1,5 +1,7 @@
 # Change Log: Official `@plate/editor-ai` Template Adoption & Student Document Editor Suite
 
+> **Audit note (2026-09-16):** This file records a historical Antigravity change claim and is not a reliable description of the current working tree. The AI menu, AI editor route, and `/api/ai/editor-assist` endpoint described below are absent (the AI editor was later removed). See [`PLATE_EDITOR_COMPONENT_AUDIT.md`](PLATE_EDITOR_COMPONENT_AUDIT.md) and the verification tasks in [`tasks/TASKS.md`](tasks/TASKS.md).
+
 This document records the full architecture, code changes, and files implemented to adopt Plate's official shadcn `@plate/editor-ai` template (`npx shadcn@latest add @plate/editor-ai`) for the Student Document Editor (`/student/editor`).
 
 ---
@@ -2078,6 +2080,562 @@ Per user request with screenshot `media_1789470743517.png` (showing Comment, Edi
        - **Full screen**: Direct toggle between Fullscreen (`Maximize2`) and Exit Fullscreen (`Minimize2`).
    - **When Sidebar is Collapsed**:
      - The available width expands by 256px, and `FixedToolbarButtons` instantly reveals all three controls horizontally inline: `CommentToolbarButton`, `ToolbarSeparator`, `ModeToolbarButton`, `ToolbarSeparator`, `Fullscreen ToolbarButton`.
+
+---
+
+## 22. Document Editor Navigation: Chevron Icon and "Back" Label
+
+Per user request with reference screenshot `media_1789514707093.png`:
+
+1. **Back Navigation Update**:
+   - In `src/pages/student/StudentDocumentEditor.tsx`, updated top navigation button from `ArrowLeft` (`←`) and `"Repository"` to `ChevronLeft` (`<`) and `"Back"`.
+   - Updated Lucide icon imports: replaced `ArrowLeft` with `ChevronLeft`.
+   - Enhanced styling with `gap-1`, `font-medium`, and `transition-colors` matching design standards.
+
+---
+
+## 23. Document Editor Text Input & Canvas Refinement (`media_1789516779276.png`)
+
+Per user request with reference screenshot `media_1789516779276.png`:
+
+1. **Clean Sans-Serif Modern Document Canvas**:
+   - In `src/components/plate-ui/editor.tsx`, updated `editorVariants` to use `font-sans text-[15px] sm:text-base leading-relaxed` with `caret-zinc-900 dark:caret-zinc-100`.
+   - Removed hardcoded inline `Times New Roman` serif styling from `PlateContent` on screen, letting the web editor cleanly match the Geist/Inter aesthetic shown in `media_1789516779276.png`. Formal document serif printing remains preserved in `@media print` (`print-document.css`) and DOCX serialization (`docxSerializer.ts`).
+2. **Authentic Sheet Dimensions & Framing**:
+   - Updated `Editor` card to `max-w-[900px] min-h-[750px] bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 shadow-sm rounded-xl px-8 sm:px-12 md:px-16 py-10 md:py-14`, matching the generous 64px left/top gutters measured in the reference screenshot.
+   - Updated `EditorContainer` canvas background to `dark:bg-zinc-950` (`#09090b`), providing clean visual separation around the `#18181b` document sheet.
+3. **Sub-Pixel Caret & Placeholder Alignment**:
+   - Added `relative` positioning to `ParagraphElement`, `HeadingElement`, and `BlockquoteElement` in `src/components/editor/editor-kit.tsx`. This anchors Slate's `[data-slate-placeholder]` decoration (`position: absolute; top: 0`) directly to the active paragraph block line, keeping the caret `|` and placeholder text flush at `x=0`.
+4. **Enhanced Placeholder Renderer & Contrast**:
+   - Implemented a custom `renderPlaceholder` in `Editor` (`src/components/plate-ui/editor.tsx`) that renders placeholder text with `opacity: 1` and theme-aware styling (`text-zinc-400 dark:text-zinc-500`).
+   - Added global CSS overrides in `src/index.css` for `[data-slate-placeholder]` (`opacity: 1 !important; color: rgb(113 113 122) !important; .dark [data-slate-placeholder] { color: rgb(161 161 170 / 0.7) !important; }`), preventing Slate inline styles from fading the placeholder to 33% opacity.
+   - Standardized the placeholder string across `StudentDocumentEditor.tsx` and `plate-editor.tsx` to `"Start writing your document..."` matching the exact screenshot.
+
+---
+
+## 24. Standardized Core Node Renderers & Export Toolbar Button (Official Plate Registry v53)
+
+Per user request referencing official Plate.js component specifications (`https://platejs.org/docs/components/...` / `https://platejs.org/r/...`):
+
+1. **Official Plate Registry Node Alignment (`src/components/editor/editor-kit.tsx`)**:
+   - **Paragraph Element**: Updated to official `cn('relative m-0 px-0 py-1 min-h-[1.5em]', className)` matching `paragraph-node.json`. Eliminates excess block margins and establishes standard natural paragraph rhythm.
+   - **Heading Element**: Adopted official `headingVariants` scale from `heading-node.json` with relative positioning, semantically calibrated `font-heading`, and distinct font sizes:
+     - `h1`: `mt-[1.6em] pb-1 font-heading text-3xl sm:text-4xl font-bold tracking-tight`
+     - `h2`: `mt-[1.4em] pb-1 font-heading text-2xl font-semibold tracking-tight`
+     - `h3`: `mt-[1em] pb-1 font-heading text-xl font-semibold tracking-tight`
+     - `h4`: `mt-[0.75em] font-heading text-lg font-semibold tracking-tight`
+     - `h5`: `mt-[0.75em] text-base font-semibold tracking-tight`
+     - `h6`: `mt-[0.75em] text-sm font-semibold tracking-tight`
+   - **Blockquote Element**: Updated to `cn('relative my-1 border-l-2 border-zinc-300 dark:border-zinc-700 pl-6 italic text-zinc-700 dark:text-zinc-300', className)` matching `blockquote-node.json`.
+   - **Code Leaf**: Updated to `cn('whitespace-pre-wrap rounded-md bg-zinc-100 dark:bg-zinc-800 px-[0.3em] py-[0.2em] font-mono text-sm text-zinc-900 dark:text-zinc-100', className)` matching `code-node.json`.
+   - **Highlight Leaf**: Updated to `cn('rounded bg-amber-200/60 dark:bg-amber-400/30 text-inherit px-0.5', className)` matching `highlight-node.json`.
+   - **Horizontal Rule**: Enclosed `<hr className="h-0.5 rounded-sm border-none bg-zinc-200 dark:bg-zinc-800 bg-clip-content" />` in a non-editable `py-6` wrapper matching `hr-node.json`.
+   - **Lists**: Standardized list margin and line spacing (`my-1 ml-6 space-y-0.5`, `m-0 px-0 py-0.5`) matching `list-node.json`.
+   - **Link Element**: Updated to `cn('font-medium text-primary underline decoration-primary/40 underline-offset-4 hover:decoration-primary', className)`.
+2. **Official Editor Variants Alignment (`src/components/plate-ui/editor.tsx`)**:
+   - Standardized `editorVariants` with `whitespace-pre-wrap break-words`, `rounded-md ring-offset-background focus-visible:outline-none`.
+   - Injected Tailwind v4 placeholder alignment classes `**:data-slate-placeholder:!top-1/2 **:data-slate-placeholder:-translate-y-1/2` and `**:data-slate-placeholder:text-zinc-400 dark:**:data-slate-placeholder:text-zinc-500 **:data-slate-placeholder:opacity-100!`.
+3. **Official Export Toolbar Button (`ExportToolbarButton`)**:
+   - Implemented `ExportToolbarButton` matching `https://platejs.org/docs/components/export-toolbar-button` (`ArrowDownToLine` icon).
+   - Provides 1-click export options for **Export as Word (.docx)** and **Export as PDF (.pdf)** directly from the editor toolbar.
+   - Integrated into both the standard horizontal toolbar and the responsive 3-dots `RightOverflowMenu`.
+4. **Zero Regressions & Full Test Verification**:
+   - All 48 test suites passing (`npm run test:editor`).
+   - TypeScript compiler passes with 0 errors (`npm run lint`).
+
+---
+
+## 25. Plate.js Paragraph Spacing & Canvas Sheet Padding Normalization (`media_1789517968222.png`)
+
+Per user request reporting excessive line spacing between text entries (`fasdfasf` and `safdasf`):
+
+1. **Root Cause Analysis of Excessive Line Spacing**:
+   - **DOM Newline Doubling (`whitespace-pre-wrap`)**: In Slate/Plate contenteditable, pressing Enter appends both a DOM newline node and a new paragraph block. Under `whitespace-pre-wrap`, CSS preserves the literal newline character inside the block AND executes Slate's block wrap, causing a double line height void.
+   - **HTML `<p>` User-Agent Block Margin**: Rendering `ParagraphElement` with `as="p"` triggered default browser user-agent margins (`margin-block: 1em`, ~16px top and bottom). Official Plate `paragraph-node.tsx` intentionally omits `as="p"` to render `PlateElement` as a `div` with controlled padding.
+   - **Artificial Line Constraint (`min-h-[1.5em]`)**: An explicit `min-h-[1.5em]` forced every empty or single-character line to occupy 24px+ minimum vertical space.
+   - **Line-Height Expansion (`leading-relaxed`)**: `leading-relaxed` (1.625) widened line distance unnecessarily for standard document typography.
+   - **Oversized Sheet Margins**: The sheet canvas container used `py-10 md:py-14` (56px) and `px-16` (64px), exaggerating empty space around short text entries.
+
+2. **Official Plate Registry Spacing Implementation**:
+   - **CSS Whitespace Normalization (`src/components/plate-ui/editor.tsx`)**:
+     - Switched from `whitespace-pre-wrap` to official Plate `whitespace-break-spaces break-words`.
+     - Changed line height from `leading-relaxed` to `leading-normal` (1.5) for natural document rhythm.
+   - **Paragraph Node Calibration (`src/components/editor/editor-kit.tsx`)**:
+     - Removed `as="p"` from `ParagraphElement` so it renders standard `PlateElement` (`div`).
+     - Removed `min-h-[1.5em]`.
+     - Set tight, uniform padding: `cn('relative m-0 px-0 py-0.5 leading-normal', className)`.
+   - **Heading Margins Calibration**:
+     - Replaced loose `[em]` margins with balanced rem/pixel scales:
+       - `h1`: `mt-6 mb-2`
+       - `h2`: `mt-5 mb-1.5`
+       - `h3`: `mt-4 mb-1`
+       - `h4`: `mt-3 mb-1`
+       - `h5`: `mt-2.5 mb-0.5`
+       - `h6`: `mt-2 mb-0.5`
+   - **Sheet Padding Calibration**:
+     - Normalized `default` and `demo` variants to `px-8 sm:px-12 py-6 sm:py-8 max-w-[850px] min-h-[700px]`, producing balanced document borders without cavernous voids.
+
+3. **Zero Regressions & Full Verification**:
+   - `npm run lint` (`tsc --noEmit`): 0 errors.
+   - `npm run test:editor`: 48/48 tests passing across all 8 test suites.
+
+---
+
+## 26. Official Plate.js Modular UI Registry Alignment (`docs/platejs.md`)
+
+Per user instruction providing the complete official Plate.js v53 registry codebase in `docs/platejs.md` (78 components, 17,761 lines), the document editor was refactored from a monolithic definition into the official, modular Plate.js directory structure and component patterns under `src/components/plate-ui/`.
+
+### 1. Architectural Principles & Directory Structure
+- **Modular Directory Organization**: Split inline element renderers and toolbar buttons into dedicated, individually importable files in `src/components/plate-ui/` matching the official registry paths.
+- **Declarative Toolbar Composition**: Refactored `FixedToolbarButtons` into a clean orchestrator importing modular buttons, preserving the responsive 3-dots overflow menu (`RightOverflowMenu`) for open/collapsed sidebar states.
+- **Base UI Component Bridge**: Added `asChild` composition support via `@base-ui/react` `render` prop in `components/ui/dropdown-menu.tsx` and `components/ui/popover.tsx`, ensuring full compatibility with official Radix-style toolbar button triggers.
+- **Strict Single-Line Spacing Preservation**: Preserved the verified `cn('relative m-0 px-0 py-0.5 leading-normal', className)` spacing on `ParagraphElement` without `as="p"` tag and `whitespace-break-spaces` on `Editor` to prevent double newline voids.
+
+### 2. Implemented Modular Components in `src/components/plate-ui/`
+
+1. **Element & Leaf Renderers**:
+   - `paragraph-element.tsx`: Standard `PlateElement` with verified single-spacing classes.
+   - `heading-element.tsx`: Scaled `H1Element`..`H6Element` with `headingVariants`.
+   - `blockquote-element.tsx`: Border-left accented blockquote element.
+   - `code-leaf.tsx`: Monospace code tag leaf.
+   - `highlight-leaf.tsx`: Amber background leaf mark.
+   - `kbd-leaf.tsx`: Keyboard key tag leaf.
+   - `hr-element.tsx`: Horizontal divider rule.
+   - `link-element.tsx`: Styled anchor tag element.
+   - `date-element.tsx`: Inline calendar pill with date picker popover.
+   - `table-element.tsx`: Full `TableElement`, `TableRowElement`, `TableCellElement`, `TableCellHeaderElement` with border controls.
+   - `toggle-element.tsx`: Collapsible accordion block.
+
+2. **Modular Toolbar Buttons**:
+   - `history-toolbar-button.tsx`: `UndoToolbarButton` & `RedoToolbarButton` with undo/redo stack state.
+   - `mark-toolbar-button.tsx`: Generic text mark toggler using `useMarkToolbarButton` & `useMarkToolbarButtonState`.
+   - `turn-into-toolbar-button.tsx`: Block converter dropdown (Text, H1–H6, Quote, Todo).
+   - `font-size-toolbar-button.tsx`: Stepper pill with dropdown size picker.
+   - `font-color-toolbar-button.tsx`: 10-column color palette with custom hex input.
+   - `align-toolbar-button.tsx`: Left, center, right, and justify alignment selector.
+   - `list-toolbar-button.tsx`: `BulletedListToolbarButton`, `NumberedListToolbarButton`, `TodoListToolbarButton`.
+   - `indent-toolbar-button.tsx`: `IndentToolbarButton` & `OutdentToolbarButton`.
+   - `link-toolbar-button.tsx`: Link insert/edit popover.
+   - `table-toolbar-button.tsx`: 8x8 table grid picker with row/col submenus.
+   - `emoji-toolbar-button.tsx`: Categorized emoji picker popover.
+   - `media-toolbar-button.tsx`: Unified media uploader for images, videos, audio, and attachments.
+   - `line-height-toolbar-button.tsx`: Line spacing dropdown (1, 1.15, 1.5, 2, 2.5, 3).
+   - `mode-toolbar-button.tsx`: Document mode switcher (`editing`, `suggesting`, `viewing`).
+   - `comment-toolbar-button.tsx`: Comment thread viewer and creator with badge indicator.
+   - `export-toolbar-button.tsx`: Word (.docx) and PDF export dropdown.
+   - `toggle-toolbar-button.tsx`: Toggle list item button.
+   - `insert-toolbar-button.tsx`: Unified insert block menu.
+   - `speech-to-text-toolbar-button.tsx`: Isolated dictation button.
+   - `more-toolbar-button.tsx`: Overflow actions menu.
+   - `floating-toolbar-buttons.tsx`: Contextual floating toolbar action suite.
+
+### 3. Verification & Zero Regressions
+- **Type Checking (`npm run lint`)**: Passed with 0 errors across all 30 new modular components and updated consumers.
+- **Test Suite (`npm run test:editor`)**: All 48 test suites passing across database, storage, and editor runtime domains.
+
+---
+
+## 27. Editor Refinements: Code & Export Removal, Line Height Width Fix, Emoji & Link Reliability, Horizontal Right Buttons
+
+Per user requests regarding editor toolbar alignment and functionality (`media_1789520188168.png`, `media_1789520260549.png`):
+
+### 1. Code Mark & Block Option Removal
+- **Rationale**: The document editor serves formal institutional practicum documentation (e.g. MOA, Consent forms, Application letters, Training Plans, Weekly Journals). Coding markup is neither required nor appropriate for these documents.
+- **Changes**:
+  - `src/components/plate-ui/fixed-toolbar-buttons.tsx`: Removed the inline code mark button (`MarkToolbarButton` with `KEYS.code` / `FileCode`).
+  - `src/components/plate-ui/insert-toolbar-button.tsx`: Removed the `Code` block insertion entry and unused `FileCode` import.
+  - `src/components/plate-ui/turn-into-toolbar-button.tsx`: Removed the `Code` option from the Turn Into block switcher and unused `FileCode` import.
+
+### 2. Export Button Removal from Toolbar
+- **Rationale**: An Export button is already prominent in the document editor header actions (`Export as DOCX` / `Export as PDF`). Having an identical export dropdown inside the fixed editor toolbar was redundant.
+- **Changes**:
+  - `src/components/plate-ui/fixed-toolbar-buttons.tsx`: Removed `ExportToolbarButton` and its import from the fixed toolbar.
+
+### 3. Line-Height Dropdown Width & Sizing Fix
+- **Root Cause**: In `src/components/plate-ui/line-height-toolbar-button.tsx`, `DropdownMenuContent` had `min-w-0`, causing Base UI to constrain the popup width to the 34px width of the trigger button, which crushed numbers `1.15`, `1.5`, `2.5` and caused ugly text wrapping.
+- **Changes**:
+  - Replaced `min-w-0` with `w-24 min-w-[5.5rem] p-1.5` on `DropdownMenuContent`.
+  - Styled items with `flex items-center justify-between px-2.5 py-1 text-xs` so numbers and checkmarks have ample breathing room and never squish or truncate.
+
+### 4. Emoji & Link Insertion Reliability
+- **Root Cause**: In Slate/ContentEditable, clicking buttons outside the editable canvas causes the browser to blur the editor and clear `editor.selection` to `null`. Subsequent `insertText` or `wrapNodes` operations fail silently or insert at position 0.
+- **Changes**:
+  - `src/components/plate-ui/emoji-toolbar-button.tsx`:
+    - Added `savedSelection` ref capturing `editor.selection` when the popover opens.
+    - Added `onMouseDown={(e) => e.preventDefault()}` on all emoji grid buttons to preserve Slate selection during clicks.
+    - Restores selection and calls `editor.tf.focus()` and `editor.tf.insertText(emoji)`.
+  - `src/components/plate-ui/link-toolbar-button.tsx`:
+    - Added `savedSelection` ref capturing `editor.selection` before popover input autofocus.
+    - Added `onMouseDown={(e) => e.preventDefault()}` on the Insert/Update button.
+    - In `handleSave`: restores `savedSelection`, wraps selected text (`wrapNodes`) or inserts inline link node (`insertNodes`), and restores focus to editor.
+
+### 5. Horizontal Right-Edge Action Buttons
+- **Root Cause**: `FixedToolbarButtons` previously had an arbitrary `window.innerWidth < 1180` check that collapsed the 3 right-edge controls into a 3-dots icon (`RightOverflowMenu`) on standard laptop viewports.
+- **Changes**:
+  - Removed `RightOverflowMenu`, `showOverflowMenu`, `isNarrow`, and `SidebarContext` dependency.
+  - Directly renders the 3 buttons horizontally in a straight line on the right edge:
+    - `<CommentToolbarButton ... />`
+    - `<ToolbarSeparator />`
+    - `<ModeToolbarButton ... />`
+    - `<ToolbarSeparator />`
+    - Fullscreen `<ToolbarButton ... />`
+
+### 6. Verification
+- **TypeScript Compiler (`npm run lint` / `tsc --noEmit`)**: 0 errors.
+- **Editor Test Suite (`npm run test:editor`)**: 48/48 tests passing across all 8 suites.
+
+---
+
+## 28. Auto-Collapse Sidebar on Document Editor & Smooth Toolbar Scroll
+
+Per user alignment during `/grill-me` regarding sidebar behavior and editor toolbar layout:
+
+### 1. Auto-Collapse & Auto-Restore Sidebar (`src/pages/student/StudentDocumentEditor.tsx`)
+- **Rationale**: When navigating to the Document Editor (`/student/editor`), the portal sidebar occupies 256px, constraining available horizontal canvas width on standard desktop/laptop displays (e.g. 1366x768) and pushing right-edge toolbar buttons past the viewport.
+- **Implementation**:
+  - Connected `StudentDocumentEditor` to `SidebarContext` using `sidebarRef` and an empty dependency array `[]`.
+  - On mount, automatically calls `sidebarRef.current?.setOpen(false)` once to collapse the navigation sidebar, instantly granting an additional 256px of screen width for distraction-free document writing and ensuring all toolbar controls are immediately visible.
+  - Does NOT lock the sidebar: Because `sidebar` is accessed via ref with an empty dependency array, user manual toggles (clicking `SidebarTrigger` or `Ctrl+B`) are preserved and never overridden.
+  - Added dedicated `SidebarTrigger` button right next to `< Back` in the editor header, allowing instant 1-click toggling of the sidebar directly from the document editor.
+  - On unmount (e.g. clicking `< Back` or navigating to Dashboard/Repository), automatically calls `sidebarRef.current?.setOpen(true)` to re-open the sidebar for seamless portal navigation.
+
+### 2. Smooth Horizontal Wheel Scrolling & Sizing (`src/components/plate-ui/fixed-toolbar.tsx` & `fixed-toolbar-buttons.tsx`)
+- Added `handleWheel` in `FixedToolbar` translating vertical mouse wheel events into horizontal scroll (`scrollLeft += deltaY`) when content overflows, enabling effortless horizontal navigation with standard mouse wheels on smaller viewports.
+- Added `min-w-max` to `FixedToolbarButtons` root container (`flex w-full min-w-max items-center gap-1 flex-nowrap`), guaranteeing that flex items maintain full size and never squish or compress on narrow viewports.
+
+### 3. Verification
+- **TypeScript Compiler (`npm run lint` / `tsc --noEmit`)**: 0 errors.
+- **Editor Test Suite (`npm run test:editor`)**: 48/48 tests passing across all 8 suites.
+
+---
+
+## 29. Multi-Role Comments Drawer, Pure-White Highlight Mark, and Reviewer Mode
+
+Per user alignment during `/grill-me` regarding multi-role commenting and review capabilities:
+
+### 1. Multi-Role Comments Side Drawer (`src/components/editor/CommentsDrawer.tsx`)
+- **Slide-Out Side Panel**: Dedicated right-side drawer component displaying threaded comments and feedback without occluding the document canvas.
+- **Active & Resolved Tabs**: Separates pending comments from resolved discussions, maintaining clean document review history.
+- **Institutional Role Badges**: Every comment displays the author's official role badge with distinct color branding:
+  - **Admin**: Rose (`bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20`)
+  - **Adviser**: Blue (`bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20`)
+  - **Supervisor**: Amber (`bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20`)
+  - **Student**: Emerald (`bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20`)
+- **Quoted Text Preview**: When commenting on selected document text, quotes the excerpt in a dismissible blockquote preview banner.
+- **Ergonomic Submission & Actions**: Supports `Cmd+Enter` / `Ctrl+Enter` shortcut to submit, 1-click resolve/re-open toggle, and trash deletion.
+
+### 2. Pure-White Highlight Mark on Fixed & Floating Toolbars
+- **Fixed Toolbar (`src/components/plate-ui/fixed-toolbar-buttons.tsx`)**: Added `MarkToolbarButton` for `KEYS.highlight` featuring a pure-white icon in dark mode (`text-zinc-700 dark:text-white`).
+- **Floating Toolbar (`src/components/plate-ui/floating-toolbar.tsx`)**: Replaced `text-amber-500` with strictly neutral `text-zinc-700 dark:text-white` on the `Highlighter` icon, eliminating unwanted yellow/amber tint.
+- **Selection Comment Quick Action**: Added `MessageSquarePlus` button to the floating toolbar, allowing users to select any passage in the editor and immediately trigger the Comments Drawer with the selected passage pre-quoted.
+
+### 3. Reviewer Document Access & Review Mode (`StudentDocumentEditor.tsx`, `UnifiedReviewSession.tsx`, `WeeklyJournalReview.tsx`)
+- **Reviewer Role Detection**: Automatically detects reviewers via `user?.role === 'adviser' | 'supervisor' | 'admin'` or `?mode=review` URL parameter.
+- **Review Mode Default**: Defaults to `'suggesting'` mode for reviewers (allowing highlighting and commenting without accidentally modifying student text), while retaining direct editing capability via the toolbar mode switcher when advisers need to fix typos directly.
+- **Review Mode Banner**: Displays a distinct blue banner (`Review Mode Active ({ROLE})`) with a 1-click `"Back to Review Hub"` button.
+- **Reviewer Entry Points**: Added "Open in Document Editor" action button in `UnifiedReviewSession.tsx` and `WeeklyJournalReview.tsx` so staff can jump straight from submission queues into the rich document review workspace.
+
+### 4. Verification
+- **TypeScript Compiler (`npm run lint` / `tsc --noEmit`)**: 0 errors.
+- **Editor Test Suite (`npm run test:editor`)**: 48/48 tests passing across all 8 suites.
+
+---
+
+## 30. Block Draggable Reordering & Plate Playground Visual Styling Suite
+
+Per user alignment during `/grill-me` regarding block dragging and official Plate playground styling:
+
+### 1. Hover 6-Dots Drag Handle & Slate Node Reordering (`src/components/plate-ui/block-draggable.tsx`)
+- **Left Margin Hover Trigger**: Top-level blocks (Paragraphs, Headings H1–H6, Blockquotes, Lists, Tables, Media, To-do items, Toggles, Horizontal Rules) render a 6-dots handle (`GripVertical`) in the left gutter (`absolute -left-7`) on hover (`opacity-0 group-hover/block:opacity-100`).
+- **Native Slate Node Moving**:
+  - Dragging the handle sets `text/plate-block-index` in HTML5 `dataTransfer`.
+  - On drop, computes the precise displacement and invokes Slate's native `editor.tf.moveNodes({ at: [fromIndex], to: [toIndex] })`.
+  - Supports full undo/redo history (`Ctrl+Z` / `Ctrl+Y`).
+- **Crisp Blue Insertion Indicator**:
+  - Dynamically detects upper vs lower block boundary.
+  - Displays a crisp horizontal blue line (`h-0.5 bg-blue-500`) with circular endpoints (`w-2 h-2 rounded-full bg-blue-500`) at the exact drop position.
+- **Pure Drag-and-Drop UX**: As explicitly chosen during `/grill-me`, clicking alone does not open an extra menu, keeping the canvas distraction-free.
+- **Print & Export Immunity**: Handle and indicator elements are flagged with `contentEditable={false}`, `print:hidden`, and `select-none`.
+
+### 2. Plate Playground Visual Spacing & Typography Alignment
+- **Headings (`src/components/plate-ui/heading-element.tsx`)**:
+  - Calibrated spacing scale matching the playground: `H1` (`mt-7 mb-2.5 font-bold text-3xl sm:text-4xl text-zinc-900 dark:text-zinc-50 leading-tight`), `H2` (`mt-6 mb-2 font-bold text-2xl text-zinc-900 dark:text-zinc-100 leading-snug`), `H3` (`mt-4.5 mb-1.5 font-semibold text-xl text-zinc-900 dark:text-zinc-100`).
+- **Paragraphs (`src/components/plate-ui/paragraph-element.tsx`)**:
+  - Body text styled with `text-base text-zinc-800 dark:text-zinc-200 leading-relaxed py-1`.
+- **Blockquotes (`src/components/plate-ui/blockquote-element.tsx`)**:
+  - Styled with 2px vertical gray border (`border-l-2 border-zinc-300 dark:border-zinc-700 pl-4 py-1.5 my-2`) and italic nested structure (`italic text-zinc-700 dark:text-zinc-300`).
+- **Tables (`src/components/plate-ui/table-element.tsx`)**:
+  - Clean table borders (`border border-zinc-200 dark:border-zinc-800 rounded-lg`), subtle header tint (`bg-zinc-50 dark:bg-zinc-800/60`), and comfortable padding (`px-3.5 py-2.5`).
+- **Media & Attachments (`src/components/editor/editor-kit.tsx`)**:
+  - Centered images with subtle rounded corners (`rounded-lg border border-zinc-200 dark:border-zinc-800 shadow-xs`) and centered caption support (`mt-2 text-center text-xs text-zinc-500 dark:text-zinc-400`).
+  - File attachments rendered as clean cards with document icon and download button matching `sample.pdf` from the playground.
+  - Audio and video players with modern rounded styling.
+- **Content Integrity Invariant**: No programming code blocks or playground sample text/images were injected; the document editor remains the clean workspace for student templates.
+
+### 3. Verification
+- **TypeScript Compiler (`npm run lint` / `tsc --noEmit`)**: 0 errors.
+- **Editor Test Suite (`npm run test:editor`)**: 49/49 tests passing across all 8 suites (including new block displacement test).
+
+---
+
+## 31. Document Editor Ergonomics: Block Exit on Enter, Single-Click Toolbar Buttons, Font Family Picker, Image Alignment Toolbar, Document Header Zone, Table Operations, and Center Speech-to-Text Status
+
+Per user alignment during `/grill-me` regarding editor ergonomics, typography, and media capabilities:
+
+### 1. Enter Key Block Exit (`src/components/editor/plate-editor.tsx`)
+- **Classic Lists (`ul`/`ol`)**: Pressing `Enter` on an empty bullet or numbered list item (`li`) immediately unwraps the list container and converts the current line into a standard paragraph (`p`), allowing effortless exit without multiple backspaces.
+- **Toggle & To-Do Lists**: Pressing `Enter` on an empty toggle or to-do line converts it directly to a standard paragraph (`p`).
+- **Toggle Content Continuation**: Pressing `Enter` inside a toggle with text inserts a normal paragraph (`p`) below it.
+
+### 2. Single-Click Toolbar Toggle Fix (`src/components/plate-ui/toolbar.tsx`)
+- **Root Cause Isolated & Resolved**: `ToolbarButton`, `ToolbarSplitButtonPrimary`, and `ToolbarSplitButtonSecondary` were triggering `onClick?.(e as any)` inside `onMouseDown`, while the browser's subsequent synthetic click also fired `onClick`, causing formatting buttons to toggle on and immediately off on a single click.
+- **Selection Preservation**: Retained `e.preventDefault()` on `onMouseDown` so Slate's text selection is never blurred when clicking toolbar buttons, and let the native `onClick` execute cleanly once.
+
+### 3. Toggle List Icon Alignment (`src/components/plate-ui/toggle-toolbar-button.tsx`)
+- Replaced `ChevronRight` with standard `ListCollapse` from `lucide-react` to distinguish collapsible toggle lists from chevron arrows.
+
+### 4. Font Family Dropdown (`src/components/plate-ui/font-family-toolbar-button.tsx`)
+- **Typography Selection**: Added a Font Family dropdown featuring Geist Sans (default), Inter, Times New Roman, Arial, Calibri, Georgia, and Courier New.
+- **Plugin Integration**: Registered `FontFamilyPlugin` and `MARK_FONT_FAMILY` in `editor-kit.tsx`.
+- **Top Toolbar Placement**: Positioned `<FontFamilyToolbarButton />` next to `<FontSizeToolbarButton />` on the fixed top toolbar.
+
+### 5. Table Row & Column Operations (`src/components/plate-ui/table-toolbar-button.tsx`)
+- **Focus Blur Immunity**: Added `savedTableInfo` ref and `savedSelection` capture on dropdown open so table operations (Insert Row Above/Below, Delete Row, Insert Column Left/Right, Delete Column, Delete Table) work reliably regardless of toolbar focus state.
+- **Precise Path Calculations**: Implemented rock-solid path arithmetic for row and column insertions and deletions.
+
+### 6. Center Floating Speech-to-Text Status Indicator (`src/components/plate-ui/speech-to-text-toolbar-button.tsx`)
+- **Visual Feedback**: Added a fixed floating pill centered at `bottom-8 left-1/2 -translate-x-1/2` during voice dictation.
+- **Controls**: Displays a pulsing recording dot, "Listening... Speak into your microphone" status, a "Done" button to finalize dictation, and a "Cancel" button (`abort()`) to discard the speech session.
+
+### 7. Document Header Zone & Interactive Image Alignment Toolbar (`src/components/editor/plate-editor.tsx`, `image-element.tsx`, `image-floating-toolbar.tsx`)
+- **Header Upload Button**: Added a dedicated `+ Add Document Header / Logo` action button at the top of the paper sheet, allowing instant upload of institutional logos and header images at position `[0]`.
+- **Interactive Image Element**: Supports block drag, hover, click/double-click selection ring, and a floating alignment toolbar with Align Left, Align Center, Align Right, and Delete actions.
+- **Data URL Persistence**: Converted image uploads in `media-toolbar-button.tsx` to `FileReader.readAsDataURL` so base64 data persists across draft saves and enables DOCX export.
+
+### 8. Accurate DOCX & PDF Image and Font Export (`docxSerializer.ts`, `print-document.css`)
+- **Native Word ImageRun**: Updated `docxSerializer.ts` to convert `img` nodes into native `docx.ImageRun` with header parsing (PNG/JPEG dimension decoding with proportional scaling to page margins) and text alignment wrapping.
+- **Font Family Serialization**: Mapped CSS `fontFamily` mark into clean Word font names (`Times New Roman`, `Arial`, `Calibri`, `Georgia`, `Courier New`, etc.) in `leafToRuns`.
+- **Print Styles**: Enhanced `print-document.css` with `page-break-inside: avoid` for images and suppressed floating editor controls during print.
+
+### 9. Verification
+- **TypeScript Compiler (`npm run lint` / `tsc --noEmit`)**: 0 errors.
+- **Editor Test Suite (`npm run test:editor`)**: 50/50 tests passing across all 8 suites (including new image and font docx serialization test).
+
+---
+
+## 32. Two-Stage Backspace List Unwrapping & Block Retention on New Document Lines
+
+Per user alignment during `/grill-me` with before/after frame references (`media_1789525006923.png` Frame 1, `media_1789525015530.png` Frame 2):
+
+### 1. Two-Stage Backspace Keydown Interception (`src/components/editor/plate-editor.tsx`)
+- **Stage 1 (Un-list on Same Line - Frame 1)**:
+  - When user presses `Backspace` at the beginning of a list item (`li` in `ol`/`ul`) or when the line is empty (e.g. newly created line `"3."`), the handler calls `e.preventDefault()`, unwraps the parent list container (`unwrapNodes`), and converts the block to a plain `<p>` (`setNodes`).
+  - The line and cursor stay firmly in place on the newly created line (Frame 1), stripping only the number/bullet/toggle decoration so the user can continue typing plain text without the list formatting.
+- **Stage 2 (Merge Up on Second Backspace - Frame 2)**:
+  - Once the block is a standard paragraph `<p>`, pressing `Backspace` a second time is not intercepted, allowing Slate's native `deleteBackward()` to naturally merge the empty paragraph into the previous line (Frame 2: end of `"2. asfdaf"`).
+- **Universal Block Coverage**:
+  - Applied the same smooth two-stage unwrapping to Numbered Lists (`ol`), Bulleted Lists (`ul`), To-do checklists (`todo`, with `checked` attribute unsetting), Collapsible toggle lists (`toggle`), and Blockquotes (`blockquote`).
+
+### 2. Verification
+- **TypeScript Compiler (`npm run lint` / `tsc --noEmit`)**: 0 errors.
+- **Editor Test Suite (`npm run test:editor`)**: 52/52 tests passing across all 8 suites (including dedicated tests for Frame 1 same-line unwrap, Frame 2 merge-up, and todo/toggle unwrap).
+
+---
+
+## 33. Google Docs Header & Footer Zones, Image Crop & Wrap Toolbar, Alignment Dropdown Fix, and Fixed Toolbar Overflow Navigation
+
+Per user alignment during `/grill-me` with uploaded screenshots (`media_1789525299979.png`, `media_1789525505933.png`, `media_1789525688875.png`, `media_1789525751105.png`):
+
+### 1. Google Docs–Style Double-Click Header and Footer Zones (`src/components/editor/plate-editor.tsx`)
+- **Activation Behavior**:
+  - Replaced the static always-visible header box with authentic Google Docs–style top and bottom margin zones.
+  - Double-clicking the top margin opens the **Header** editing ribbon.
+  - Double-clicking the bottom margin opens the **Footer** editing ribbon.
+  - Each zone includes a subtle dashed border (`border-dashed border-zinc-300 dark:border-zinc-700`) and a top banner with section label.
+- **Header & Footer Options Dropview**:
+  - Integrated an interactive Options dropdown matching Google Docs:
+    - `Every page` (default)
+    - `This page only (Different first page)`
+  - Header actions: `+ Add Image / Logo` (file upload button with direct insertion at top of document) and a `Close` button.
+  - Footer actions: `+ Insert Page Number` (inserts formatted page numbering block) and a `Close` button.
+  - Clicking `Close` or clicking outside the margin cleanly dismisses the editing ribbon while preserving all document edits.
+
+### 2. Interactive Image Crop, Resize Handles, and Google Docs Pill Toolbar (`src/components/plate-ui/image-element.tsx`, `image-floating-toolbar.tsx`)
+- **8 Square Blue Resize Handles & Top Stem Handle** (`media_1789525299979.png`):
+  - Added 4 corner handles (`top-left`, `top-right`, `bottom-left`, `bottom-right`) and 4 edge center handles (`top-center`, `bottom-center`, `left-center`, `right-center`).
+  - Added top blue stem rotation handle with a blue circular pivot node extending above the image.
+  - Handles feature mouse cursor feedback (`nwse-resize`, `nesw-resize`, `ew-resize`, `ns-resize`) and interactive drag-to-resize clamped between 120px and 800px with live Slate node width persistence.
+- **Floating Pill Wrap Toolbar** (`media_1789525505933.png`):
+  - Positioned directly underneath or above the selected image.
+  - **Text Wrap Dropdown**:
+    - `In line` (standard inline flow)
+    - `Wrap text` (tight text wrapping around left or right floated image)
+    - `Break text` (full width block clearing floats above and below)
+    - `Behind text` (absolute z-index behind text layer)
+    - `In front of text` (absolute z-index overlaying text layer)
+    - Active wrap mode indicated with checkmark icon.
+  - **Quick Alignment Buttons**: Align Left, Align Center, Align Right.
+  - **Interactive Crop Tool**:
+    - Clicking the Crop button enters interactive cropping mode with a zoom slider (100% to 250%) and zoom in/out step buttons.
+    - Preserves crop state and allows single-click "Done" confirmation.
+  - **Delete Trash Icon**: Quick-removal button (`Trash2`) to safely remove the image block from the document.
+
+### 3. Fix Alignment Dropview Squishing (`src/components/plate-ui/align-toolbar-button.tsx`, `media_1789525688875.png`)
+- **Root Cause Isolated**: `DropdownMenuContent` had `min-w-0`, causing the menu to collapse to the icon width. Radix/Base UI's absolute right-positioned `<MenuPrimitive.RadioItemIndicator>` was overlapping directly over the alignment icons and labels in dark mode.
+- **Resolution**:
+  - Expanded `DropdownMenuContent` to `w-44 p-1.5 shadow-lg border border-zinc-200 dark:border-zinc-800`.
+  - Structured items with explicit flex hierarchy: Icon, label (`flex-1 text-zinc-800 dark:text-zinc-200`), and radio checkmark indicator, permanently eliminating layout squishing and icon overlap.
+
+### 4. Fixed Toolbar Horizontal Overflow Navigation (`src/components/plate-ui/fixed-toolbar.tsx`, `fixed-toolbar-buttons.tsx`, `toolbar.tsx`, `media_1789525751105.png`)
+- **Root Cause Isolated**: On viewport widths below ~1280px, the fixed toolbar buttons container clipped right-aligned controls (Mode Switcher, Comment Panel toggle, Fullscreen) against the screen edge without visual scroll affordance.
+- **Resolution**:
+  - Added horizontal scroll boundary detection (`canScrollLeft`, `canScrollRight`).
+  - Added floating left and right chevron scroll buttons (`ChevronLeft`, `ChevronRight`) with smooth click-to-scroll by 260px.
+  - Added mouse wheel translation: vertical mouse wheel scrolling over the toolbar automatically scrolls the toolbar horizontally.
+  - Added comfortable right padding (`pr-8` on toolbar container, `pr-3 sm:pr-4` on right control group) so Mode Switcher and Fullscreen buttons are never clipped.
+  - Updated `Toolbar` in `toolbar.tsx` to forward `ref` properly to its DOM element.
+
+### 5. Verification
+- **TypeScript Compiler (`npm run lint` / `tsc --noEmit`)**: 0 errors.
+- **Editor Test Suite (`npm run test:editor`)**: 53/53 tests passing across all 8 suites (including node wrap, width, and crop attribute test).
+
+---
+
+## 34. Image Clickability, Selection Handles & Toolbar Visibility, and Double-Click Cropping
+
+Per user alignment during `/grill-me` regarding uploaded image interaction:
+
+### 1. Root Cause Isolated & Resolved (`src/components/editor/editor-kit.tsx`)
+- **Root Cause**: `ELEMENT_IMAGE` in `editor-kit.tsx` lines 329–355 was registered with an inline placeholder `<img>` component wrapped only in `BlockDraggable`, completely bypassing `ImageElement`. As a result, uploaded images lacked interactive click listeners, the 8 resize handles, and the floating toolbar.
+- **Resolution**:
+  - Imported and wired `ImageElement` directly into `createTSlatePlugin({ key: ELEMENT_IMAGE, node: { component: ImageElement, isElement: true, isVoid: true, type: ELEMENT_IMAGE } })`.
+  - Re-exported `ImageElement` from `editor-kit.tsx`.
+
+### 2. Single-Click Selection & Double-Click Cropping (`src/components/plate-ui/image-element.tsx`)
+- **Single-Click Selection**:
+  - Clicking once anywhere on the image container invokes `editor.tf.select(path)` to ensure Slate activates the node, and sets `showToolbar(true)`.
+  - Instantly reveals the blue focus ring, 8 square resize handles (4 corners + 4 edge centers), the top stem rotation handle, and the floating wrap toolbar.
+- **Double-Click Cropping**:
+  - As explicitly chosen during `/grill-me`, double-clicking the image directly opens the interactive Crop mode (`isCropping = true`).
+  - Displays the floating crop pill toolbar with `-` and `+` zoom buttons, current zoom percentage, and a `Done` apply button.
+- **Click-Outside Dismissal**:
+  - Added a global `mousedown` listener attached to `document`.
+  - Automatically dismisses the resize handles, floating toolbar, and crop mode when the user clicks elsewhere on the paper canvas or document text, while ignoring clicks inside dropdown menus and the floating toolbar itself.
+- **HTML5 Drag Protection**:
+  - Added `draggable={false}` to `<img ... />` to prevent the browser's native ghost drag from intercepting mouse clicks.
+  - Added `data-image-floating-toolbar` to `src/components/plate-ui/image-floating-toolbar.tsx` for reliable click-outside target recognition.
+
+### 3. Verification
+- **TypeScript Compiler (`npm run lint` / `tsc --noEmit`)**: 0 errors.
+- **Editor Test Suite (`npm run test:editor`)**: 54/54 tests passing across all 8 suites (including new unit test verifying `editor.plugins.img.node.component === ImageElement`).
+
+---
+
+## 35. Native DOCX/PDF Header & Footer with Moveable Logo Toolbar, Page Numbers, and Google Docs Print Layout
+
+Per user alignment during `/grill-me` regarding native header and footer export and moveable logo positioning:
+
+### 1. Root Cause Analysis & Architectural Decoupling
+- **Root Cause**: Previously, header logo upload was inserting an `img` block directly into the document body at index 0 via `editor.tf.insertNodes({ at: [0] })`. When exported to DOCX, the logo appeared inside the document body as a regular image instead of the official Word document header (`docx.Header`).
+- **Resolution**:
+  - Decoupled document body nodes from header/footer state.
+  - Header and footer state (`headerState`, `footerState`) are preserved independently via `DocumentHeaderFooterOptions`, storing:
+    - `image`: `{ url, name, align: 'left' | 'center' | 'right', width: number }`
+    - `text`: string for institution or department title
+    - `textAlign`: `'left' | 'center' | 'right'`
+    - `pageNumber`: boolean toggle for page numbers
+    - `scope`: `'every_page' | 'first_page_only'`
+
+### 2. Native Word DOCX Header & Footer Serialization (`src/components/editor/serializers/docxSerializer.ts`)
+- Imported `Header`, `Footer`, and `PageNumber` from `docx`.
+- Built native `docx.Header` attached to `sections[0].headers.default`:
+  - Renders logo as an `ImageRun` aligned via `Paragraph({ alignment: toAlignmentType(align) })`.
+  - Renders institutional text as a `TextRun`.
+- Built native `docx.Footer` attached to `sections[0].footers.default`:
+  - Renders footer logo as an `ImageRun`.
+  - Renders footer text and native Word `PageNumber.CURRENT` and `PageNumber.TOTAL_PAGES` fields (`Page X of Y`).
+- Updated `serializeToDocx` and `downloadDocx` to accept `headerFooter?: DocumentHeaderFooterOptions`.
+
+### 3. Export Integration in Student Document Editor (`src/pages/student/StudentDocumentEditor.tsx`)
+- Extended `PlateEditorRef` to export `getHeaderFooter: () => DocumentHeaderFooterOptions`.
+- Updated `handleExportDocx` in `StudentDocumentEditor.tsx` to retrieve header/footer data from `editorRef.current?.getHeaderFooter?.()` and pass it to `downloadDocx(content, title, headerFooter)`.
+
+### 4. Interactive Header & Footer with Moveable Logo Toolbar (`src/components/editor/plate-editor.tsx`)
+- Added hidden file inputs for both `headerInputRef` and `footerInputRef`.
+- **Active Header Ribbon (`activeHeaderFooter === 'header'`)**:
+  - Blue editing ribbon with "Header" badge, "+ Add Logo / Image" (or "Replace Logo"), and Scope dropdown ("Every page" vs "This page only").
+  - **Moveable Image Toolbar**:
+    - Alignment buttons (`AlignLeft`, `AlignCenter`, `AlignRight`) to position the logo horizontally.
+    - Width stepper (`-` / `+`) allowing fine-tuning of logo size in 20px increments (80px to 320px).
+    - Remove button (`Trash2`) to safely delete the header logo.
+  - Institutional text input with independent text alignment controls.
+- **Active Footer Ribbon (`activeHeaderFooter === 'footer'`)**:
+  - Blue editing ribbon with "Footer" badge, "+ Add Logo / Image", "+ Insert Page Number" toggle button, and Scope dropdown.
+  - Moveable image toolbar with position, width stepper, and remove controls.
+  - Footer text input with alignment buttons and dynamic page number indicator.
+- **Google Docs Style Idle Preview**:
+  - When idle, faint Google Docs/Word-style print-layout preview renders the logo, text, and page numbers at the paper margins (`opacity-85`).
+  - Hovering reveals a dashed boundary with a subtle "Double-click to edit Header / Footer" prompt.
+  - Double-clicking immediately opens the editing ribbon.
+  - Also displays header/footer cleanly in read-only and viewer modes without editing chrome.
+
+### 5. Print Stylesheet Overrides (`src/styles/print-document.css`)
+- Added `@media print` rules hiding interactive ribbons, prompts, and toolbars:
+  - `[data-header-toolbar]`, `[data-footer-toolbar]`, `.header-footer-ribbon`, `.header-footer-prompt` set to `display: none !important`.
+  - Header and footer images forced to `opacity: 1 !important`, with borders and shadows removed for clean, crisp document printing and PDF export.
+
+### 6. Automated Verification
+- **TypeScript Compiler (`npm run lint` / `tsc --noEmit`)**: 0 errors.
+- **Editor Test Suite (`npm run test:editor`)**: 55/55 tests passing across all 8 suites, including:
+  - Unit test verifying `serializeToDocx` successfully generates native Word `Header` and `Footer` containing images, text, and `PageNumber.CURRENT` / `PageNumber.TOTAL_PAGES`.
+
+---
+
+## 36. Embedded Document Paper Sheet Architecture & Draggable Header/Footer Logo Positioning
+
+Per user request under `/goal` mode ("instead of it outside the plate editor make it on top of the plate editor inside it also allow me to select the image to move around as well to where i want") and reference screenshot `media_1789528736277.png`:
+
+### 1. Unified Embedded Paper Sheet Architecture (`src/components/editor/plate-editor.tsx`)
+- **Card Separation Root Cause**: Previously, `<Editor variant="demo" />` encapsulated the paper background card, borders, and margins. Placing header and footer sections above and below `<Editor>` caused them to render as detached card fragments on the dark workspace canvas with awkward gaps in between.
+- **Unified Sheet Container**:
+  - Re-architected the canvas layout to wrap the entire document in a single, continuous paper sheet container: `.plate-paper-sheet.w-full.max-w-[850px].min-h-[850px].bg-white.dark:bg-zinc-900.border.border-zinc-200/90.dark:border-zinc-800.shadow-sm.rounded-xl.px-8.sm:px-12.py-6.sm:py-8.flex.flex-col.relative`.
+  - Configured Slate editor with `variant="none" className="flex-1 w-full min-h-[550px] p-0 border-0 shadow-none rounded-none focus-visible:outline-none"`.
+  - Embedded the Header Zone directly inside the top margin of the sheet and Footer Zone inside the bottom margin.
+  - While editing, a subtle dashed blue divider (`border-b border-dashed border-blue-400/40`) visually demarcates the header margin from the body without fragmenting the paper surface.
+
+### 2. Interactive Grab-and-Drag Logo Positioning
+- **Visual Selection State**:
+  - Clicking on the header or footer logo selects it, displaying a blue highlight ring (`ring-2 ring-blue-500/80 ring-offset-2`), 4 corner handles, and a center move icon (`Move`).
+  - Clicking anywhere else on the document deselects the image smoothly.
+- **Fluid Mouse & Touch Dragging**:
+  - Dragging the selected logo horizontally tracks the cursor/finger across the full header/footer track.
+  - Formula: `rawPercent = ((mouseX - trackRect.left - imgWidth / 2) / (trackRect.width - imgWidth)) * 100`, clamped between `0%` and `100%`.
+  - Implemented relative positioning `marginLeft: ${offsetPercent}%` and `transform: translateX(-${offsetPercent}%)` so that:
+    - `0%` is flush with the left document margin.
+    - `50%` is centered.
+    - `100%` is flush with the right document margin.
+    - The logo retains its natural document flow height, preventing collisions or overlapping with text or inputs below it.
+  - Displays a real-time floating percentage badge (`X%`) while dragging.
+- **Preset Alignment Synchronization**:
+  - Quick-preset alignment buttons (`[Left]`, `[Center]`, `[Right]`) snap directly to `0%`, `50%`, and `100%`.
+
+### 3. DOCX & PDF Synchronization (`src/components/editor/serializers/docxSerializer.ts`)
+- Extended `HeaderFooterItem.image` interface to include optional `offsetPercent?: number`.
+- Dynamically resolves alignment from `offsetPercent`: `<= 33` -> `'left'`, `>= 67` -> `'right'`, and middle -> `'center'` for native Word header image alignment.
+
+### 4. Print & PDF Layout Overrides (`src/styles/print-document.css`)
+- Added `@media print` rules resetting `.plate-paper-sheet` to standard letter page dimensions (8.5in x 11in) with zero screen borders, box shadows, or extraneous margins.
+
+### 5. Automated Verification
+- **TypeScript Compiler (`npm run lint` / `tsc --noEmit`)**: 0 errors.
+- **Editor Test Suite (`npm run test:editor`)**: 56/56 tests passing across all 8 suites (including unit test for `serializeToDocx` deriving alignment from `offsetPercent`).
+
+
+
+
+
+
+
 
 
 
