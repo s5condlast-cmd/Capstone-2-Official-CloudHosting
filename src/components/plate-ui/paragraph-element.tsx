@@ -4,6 +4,7 @@ import * as React from 'react';
 import type { PlateElementProps } from 'platejs/react';
 import { PlateElement } from 'platejs/react';
 import { cn } from '@/src/lib/utils';
+import { BlockDraggable } from './block-draggable';
 
 export function ParagraphElement({
   className,
@@ -21,14 +22,15 @@ export function ParagraphElement({
   };
 
   return (
-    <PlateElement
-      element={element}
-      style={elementStyle}
-      className={cn('relative m-0 px-0 py-0.5 leading-normal', className)}
-      {...props}
-    >
-      {children}
-    </PlateElement>
+    <BlockDraggable element={element} handleTopOffset="top-1">
+      <PlateElement
+        element={element}
+        style={elementStyle}
+        className={cn('relative m-0 px-0 py-1 leading-relaxed text-zinc-800 dark:text-zinc-200', className)}
+        {...props}
+      >
+        {children}
+      </PlateElement>
+    </BlockDraggable>
   );
 }
-

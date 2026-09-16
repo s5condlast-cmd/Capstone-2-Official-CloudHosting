@@ -5,6 +5,7 @@ import type { PlateElementProps } from 'platejs/react';
 import { PlateElement, useEditorRef } from 'platejs/react';
 import { ChevronRight } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
+import { BlockDraggable } from './block-draggable';
 
 export function ToggleElement({
   className,
@@ -28,28 +29,29 @@ export function ToggleElement({
   };
 
   return (
-    <PlateElement
-      {...props}
-      element={element}
-      className={cn('relative pl-6 my-1', className)}
-    >
-      <button
-        type="button"
-        onClick={handleToggle}
-        className="-left-0.5 absolute top-0.5 size-5 cursor-pointer select-none inline-flex items-center justify-center rounded p-0 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-        contentEditable={false}
+    <BlockDraggable element={element} handleTopOffset="top-0.5">
+      <PlateElement
+        {...props}
+        element={element}
+        className={cn('relative pl-6 my-1', className)}
       >
-        <ChevronRight
-          className={cn(
-            'w-3.5 h-3.5 transition-transform duration-100',
-            open ? 'rotate-90' : 'rotate-0'
-          )}
-        />
-      </button>
-      <div className={cn(!open && 'hidden')}>
-        {children}
-      </div>
-    </PlateElement>
+        <button
+          type="button"
+          onClick={handleToggle}
+          className="-left-0.5 absolute top-0.5 size-5 cursor-pointer select-none inline-flex items-center justify-center rounded p-0 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+          contentEditable={false}
+        >
+          <ChevronRight
+            className={cn(
+              'w-3.5 h-3.5 transition-transform duration-100',
+              open ? 'rotate-90' : 'rotate-0'
+            )}
+          />
+        </button>
+        <div className={cn(!open && 'hidden')}>
+          {children}
+        </div>
+      </PlateElement>
+    </BlockDraggable>
   );
 }
-

@@ -96,4 +96,22 @@ describe('Plate editor runtime wiring', () => {
 
     assert.ok(blob.size > 1_000);
   });
+
+  it('reorders blocks using Plate transform moveNodes with correct displacement', () => {
+    const editor = createEditor([
+      { type: 'h1', children: [{ text: 'Title' }] },
+      { type: 'p', children: [{ text: 'First paragraph' }] },
+      { type: 'p', children: [{ text: 'Second paragraph' }] },
+    ]);
+
+    // Move first paragraph (index 1) to after second paragraph (index 2)
+    let from = 1;
+    let to = 2 + 1;
+    if (from < to) to = to - 1;
+    editor.tf.moveNodes({ at: [from], to: [to] });
+
+    assert.equal((editor.children[1] as any).children[0].text, 'Second paragraph');
+    assert.equal((editor.children[2] as any).children[0].text, 'First paragraph');
+  });
 });
+

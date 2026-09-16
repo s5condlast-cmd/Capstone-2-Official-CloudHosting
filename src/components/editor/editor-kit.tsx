@@ -18,7 +18,9 @@ import {
   useEditorRef,
   usePath,
 } from 'platejs/react';
+import { FileText } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
+import { BlockDraggable } from '@/src/components/plate-ui/block-draggable';
 
 const createTSlatePlugin = createTPlatePlugin;
 
@@ -131,13 +133,15 @@ export {
 function ListElement({ element, style, className, ...props }: any) {
   const ordered = element?.type === ELEMENT_OL;
   return (
-    <PlateElement
-      as={ordered ? 'ol' : 'ul'}
-      element={element}
-      style={{ listStyleType: element?.listStyleType || (ordered ? 'decimal' : 'disc'), ...style }}
-      className={cn('my-1 ml-6 space-y-0.5', ordered ? 'list-decimal' : 'list-disc', className)}
-      {...props}
-    />
+    <BlockDraggable element={element} handleTopOffset="top-1">
+      <PlateElement
+        as={ordered ? 'ol' : 'ul'}
+        element={element}
+        style={{ listStyleType: element?.listStyleType || (ordered ? 'decimal' : 'disc'), ...style }}
+        className={cn('my-1 ml-6 space-y-0.5', ordered ? 'list-decimal' : 'list-disc', className)}
+        {...props}
+      />
+    </BlockDraggable>
   );
 }
 
@@ -162,25 +166,27 @@ function TodoElement({ children, element, style, ...props }: any) {
   const path = usePath();
 
   return (
-    <PlateElement
-      as="div"
-      element={element}
-      style={{ ...blockStyle(element), ...style }}
-      className="my-1 flex items-start gap-2"
-      {...props}
-    >
-      <input
-        type="checkbox"
-        checked={Boolean(element?.checked)}
-        onChange={(event) => editor.tf.setNodes({ checked: event.target.checked }, { at: path })}
-        contentEditable={false}
-        className="mt-1.5 cursor-pointer accent-primary"
-        aria-label="Mark task complete"
-      />
-      <div className={element?.checked ? 'flex-1 text-zinc-400 line-through' : 'flex-1'}>
-        {children}
-      </div>
-    </PlateElement>
+    <BlockDraggable element={element} handleTopOffset="top-1">
+      <PlateElement
+        as="div"
+        element={element}
+        style={{ ...blockStyle(element), ...style }}
+        className="my-1 flex items-start gap-2"
+        {...props}
+      >
+        <input
+          type="checkbox"
+          checked={Boolean(element?.checked)}
+          onChange={(event) => editor.tf.setNodes({ checked: event.target.checked }, { at: path })}
+          contentEditable={false}
+          className="mt-1.5 cursor-pointer accent-primary"
+          aria-label="Mark task complete"
+        />
+        <div className={element?.checked ? 'flex-1 text-zinc-400 line-through' : 'flex-1'}>
+          {children}
+        </div>
+      </PlateElement>
+    </BlockDraggable>
   );
 }
 
@@ -327,12 +333,23 @@ export const MediaPlugin = createTSlatePlugin({
         isVoid: true,
         type: ELEMENT_IMAGE,
         component: ({ children, element, ...props }: any) => (
-          <PlateElement as="div" className="my-3" element={element} {...props}>
-            <div contentEditable={false} className="select-none">
-              <img src={element.url} alt={element.name || ''} className="mx-auto block max-h-96 max-w-full rounded-md shadow-sm" />
-            </div>
-            {children}
-          </PlateElement>
+          <BlockDraggable element={element} handleTopOffset="top-3">
+            <PlateElement as="div" className="my-4" element={element} {...props}>
+              <div contentEditable={false} className="select-none text-center">
+                <img
+                  src={element.url}
+                  alt={element.name || ''}
+                  className="mx-auto block max-h-96 max-w-full rounded-lg border border-zinc-200 dark:border-zinc-800 shadow-xs object-cover"
+                />
+                {element.caption && (
+                  <p className="mt-2 text-center text-xs text-zinc-500 dark:text-zinc-400 font-normal select-text">
+                    {element.caption}
+                  </p>
+                )}
+              </div>
+              {children}
+            </PlateElement>
+          </BlockDraggable>
         ),
       },
     }),
@@ -343,12 +360,14 @@ export const MediaPlugin = createTSlatePlugin({
         isVoid: true,
         type: ELEMENT_VIDEO,
         component: ({ children, element, ...props }: any) => (
-          <PlateElement as="div" className="my-3" element={element} {...props}>
-            <div contentEditable={false} className="select-none">
-              <video controls src={element.url} className="mx-auto block max-h-96 max-w-full rounded-md" />
-            </div>
-            {children}
-          </PlateElement>
+          <BlockDraggable element={element} handleTopOffset="top-3">
+            <PlateElement as="div" className="my-4" element={element} {...props}>
+              <div contentEditable={false} className="select-none">
+                <video controls src={element.url} className="mx-auto block max-h-96 max-w-full rounded-lg border border-zinc-200 dark:border-zinc-800 shadow-xs" />
+              </div>
+              {children}
+            </PlateElement>
+          </BlockDraggable>
         ),
       },
     }),
@@ -359,12 +378,14 @@ export const MediaPlugin = createTSlatePlugin({
         isVoid: true,
         type: ELEMENT_AUDIO,
         component: ({ children, element, ...props }: any) => (
-          <PlateElement as="div" className="my-3" element={element} {...props}>
-            <div contentEditable={false} className="select-none">
-              <audio controls src={element.url} className="w-full" />
-            </div>
-            {children}
-          </PlateElement>
+          <BlockDraggable element={element} handleTopOffset="top-2">
+            <PlateElement as="div" className="my-3" element={element} {...props}>
+              <div contentEditable={false} className="select-none p-2.5 rounded-xl bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700/60">
+                <audio controls src={element.url} className="w-full" />
+              </div>
+              {children}
+            </PlateElement>
+          </BlockDraggable>
         ),
       },
     }),
@@ -375,15 +396,30 @@ export const MediaPlugin = createTSlatePlugin({
         isVoid: true,
         type: ELEMENT_FILE,
         component: ({ children, element, ...props }: any) => (
-          <PlateElement as="div" className="my-2" element={element} {...props}>
-            <div className="flex select-none items-center gap-2 rounded-md border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-700 dark:bg-zinc-800" contentEditable={false}>
-              <span className="rounded bg-zinc-200 px-2 py-0.5 text-xs font-semibold text-zinc-700 dark:bg-zinc-700 dark:text-zinc-300">ATTACHMENT</span>
-              <a href={element.url} target="_blank" rel="noopener noreferrer" className="truncate text-sm font-medium text-primary hover:underline">
-                {element.name || element.url}
-              </a>
-            </div>
-            {children}
-          </PlateElement>
+          <BlockDraggable element={element} handleTopOffset="top-2">
+            <PlateElement as="div" className="my-2.5" element={element} {...props}>
+              <div className="flex select-none items-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50/80 p-3 dark:border-zinc-700/80 dark:bg-zinc-800/60 shadow-2xs hover:bg-zinc-100/80 dark:hover:bg-zinc-800 transition-colors" contentEditable={false}>
+                <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary/10 text-primary shrink-0">
+                  <FileText className="h-5 w-5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                    {element.name || element.url}
+                  </p>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">Attachment</p>
+                </div>
+                <a
+                  href={element.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-md px-2.5 py-1 text-xs font-semibold text-primary hover:bg-primary/10 border border-primary/20 transition-colors shrink-0"
+                >
+                  Download
+                </a>
+              </div>
+              {children}
+            </PlateElement>
+          </BlockDraggable>
         ),
       },
     }),

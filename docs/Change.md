@@ -2339,6 +2339,44 @@ Per user alignment during `/grill-me` regarding multi-role commenting and review
 - **TypeScript Compiler (`npm run lint` / `tsc --noEmit`)**: 0 errors.
 - **Editor Test Suite (`npm run test:editor`)**: 48/48 tests passing across all 8 suites.
 
+---
+
+## 30. Block Draggable Reordering & Plate Playground Visual Styling Suite
+
+Per user alignment during `/grill-me` regarding block dragging and official Plate playground styling:
+
+### 1. Hover 6-Dots Drag Handle & Slate Node Reordering (`src/components/plate-ui/block-draggable.tsx`)
+- **Left Margin Hover Trigger**: Top-level blocks (Paragraphs, Headings H1–H6, Blockquotes, Lists, Tables, Media, To-do items, Toggles, Horizontal Rules) render a 6-dots handle (`GripVertical`) in the left gutter (`absolute -left-7`) on hover (`opacity-0 group-hover/block:opacity-100`).
+- **Native Slate Node Moving**:
+  - Dragging the handle sets `text/plate-block-index` in HTML5 `dataTransfer`.
+  - On drop, computes the precise displacement and invokes Slate's native `editor.tf.moveNodes({ at: [fromIndex], to: [toIndex] })`.
+  - Supports full undo/redo history (`Ctrl+Z` / `Ctrl+Y`).
+- **Crisp Blue Insertion Indicator**:
+  - Dynamically detects upper vs lower block boundary.
+  - Displays a crisp horizontal blue line (`h-0.5 bg-blue-500`) with circular endpoints (`w-2 h-2 rounded-full bg-blue-500`) at the exact drop position.
+- **Pure Drag-and-Drop UX**: As explicitly chosen during `/grill-me`, clicking alone does not open an extra menu, keeping the canvas distraction-free.
+- **Print & Export Immunity**: Handle and indicator elements are flagged with `contentEditable={false}`, `print:hidden`, and `select-none`.
+
+### 2. Plate Playground Visual Spacing & Typography Alignment
+- **Headings (`src/components/plate-ui/heading-element.tsx`)**:
+  - Calibrated spacing scale matching the playground: `H1` (`mt-7 mb-2.5 font-bold text-3xl sm:text-4xl text-zinc-900 dark:text-zinc-50 leading-tight`), `H2` (`mt-6 mb-2 font-bold text-2xl text-zinc-900 dark:text-zinc-100 leading-snug`), `H3` (`mt-4.5 mb-1.5 font-semibold text-xl text-zinc-900 dark:text-zinc-100`).
+- **Paragraphs (`src/components/plate-ui/paragraph-element.tsx`)**:
+  - Body text styled with `text-base text-zinc-800 dark:text-zinc-200 leading-relaxed py-1`.
+- **Blockquotes (`src/components/plate-ui/blockquote-element.tsx`)**:
+  - Styled with 2px vertical gray border (`border-l-2 border-zinc-300 dark:border-zinc-700 pl-4 py-1.5 my-2`) and italic nested structure (`italic text-zinc-700 dark:text-zinc-300`).
+- **Tables (`src/components/plate-ui/table-element.tsx`)**:
+  - Clean table borders (`border border-zinc-200 dark:border-zinc-800 rounded-lg`), subtle header tint (`bg-zinc-50 dark:bg-zinc-800/60`), and comfortable padding (`px-3.5 py-2.5`).
+- **Media & Attachments (`src/components/editor/editor-kit.tsx`)**:
+  - Centered images with subtle rounded corners (`rounded-lg border border-zinc-200 dark:border-zinc-800 shadow-xs`) and centered caption support (`mt-2 text-center text-xs text-zinc-500 dark:text-zinc-400`).
+  - File attachments rendered as clean cards with document icon and download button matching `sample.pdf` from the playground.
+  - Audio and video players with modern rounded styling.
+- **Content Integrity Invariant**: No programming code blocks or playground sample text/images were injected; the document editor remains the clean workspace for student templates.
+
+### 3. Verification
+- **TypeScript Compiler (`npm run lint` / `tsc --noEmit`)**: 0 errors.
+- **Editor Test Suite (`npm run test:editor`)**: 49/49 tests passing across all 8 suites (including new block displacement test).
+
+
 
 
 
