@@ -38,7 +38,7 @@ export function LineHeightToolbarButton() {
         </ToolbarButton>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent className="min-w-0 p-1" align="start">
+      <DropdownMenuContent className="w-24 min-w-[5.5rem] p-1.5" align="start">
         <DropdownMenuRadioGroup
           value={value}
           onValueChange={(val) => {
@@ -49,10 +49,10 @@ export function LineHeightToolbarButton() {
           {LINE_HEIGHTS.map((height) => (
             <DropdownMenuRadioItem
               key={height}
-              className="px-3 py-1 text-xs cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded font-mono"
+              className="flex items-center justify-between px-2.5 py-1 text-xs cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded font-medium"
               value={height}
             >
-              {height}
+              <span>{height}</span>
             </DropdownMenuRadioItem>
           ))}
         </DropdownMenuRadioGroup>
@@ -60,3 +60,4 @@ export function LineHeightToolbarButton() {
     </DropdownMenu>
   );
 }
+

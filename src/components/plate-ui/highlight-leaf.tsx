@@ -19,3 +19,4 @@ export function HighlightLeaf({ className, children, ...props }: PlateLeafProps)
     </PlateLeaf>
   );
 }
+

@@ -8,7 +8,6 @@ import {
   Heading2,
   Heading3,
   Table,
-  FileCode,
   Quote,
   Minus,
   List,
@@ -100,12 +99,6 @@ export function InsertToolbarButton() {
               },
             ]);
           },
-        },
-        {
-          icon: FileCode,
-          label: 'Code',
-          value: KEYS.codeBlock,
-          action: (ed) => setBlockType(ed, KEYS.codeBlock),
         },
         {
           icon: Quote,
@@ -235,3 +228,4 @@ export function InsertToolbarButton() {
     </DropdownMenu>
   );
 }
+

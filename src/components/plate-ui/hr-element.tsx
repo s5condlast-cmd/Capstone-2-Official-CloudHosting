@@ -30,3 +30,4 @@ export function HrElement(props: PlateElementProps) {
     </PlateElement>
   );
 }
+

@@ -15,6 +15,7 @@ export function LinkToolbarButton() {
   const [open, setOpen] = React.useState(false);
   const [url, setUrl] = React.useState('');
   const [text, setText] = React.useState('');
+  const savedSelection = React.useRef<any>(null);
 
   const activeLinkNode = useEditorSelector((ed) => {
     try {
@@ -31,6 +32,9 @@ export function LinkToolbarButton() {
 
   React.useEffect(() => {
     if (open) {
+      if (editor?.selection) {
+        savedSelection.current = editor.selection;
+      }
       if (activeLinkNode) {
         setUrl(String((activeLinkNode as any).url || ''));
         setText(
@@ -39,7 +43,8 @@ export function LinkToolbarButton() {
       } else {
         setUrl('');
         try {
-          const selected = editor?.api?.string?.(editor.selection) || '';
+          const sel = savedSelection.current || editor?.selection;
+          const selected = sel ? editor?.api?.string?.(sel) || '' : '';
           setText(selected);
         } catch {
           setText('');
@@ -55,6 +60,12 @@ export function LinkToolbarButton() {
       : `https://${url.trim()}`;
 
     try {
+      const sel = savedSelection.current || editor?.selection;
+      if (sel) {
+        editor?.tf?.select?.(sel);
+      }
+      editor?.tf?.focus?.();
+
       if (isLinkActive) {
         editor?.tf?.setNodes?.(
           { url: finalUrl },
@@ -62,9 +73,19 @@ export function LinkToolbarButton() {
         );
       } else {
         const displayText = text.trim() || finalUrl;
-        editor?.tf?.insertNodes?.([
-          { type: 'a', url: finalUrl, children: [{ text: displayText }] },
-        ]);
+        const ed = editor as any;
+        const isExpanded = Boolean(ed?.api?.isExpanded ? ed.api.isExpanded() : false);
+
+        if (isExpanded && text.trim() === (ed?.api?.string ? ed.api.string(sel) : '')) {
+          editor?.tf?.wrapNodes?.(
+            { type: 'a', url: finalUrl, children: [] },
+            { split: true }
+          );
+        } else {
+          editor?.tf?.insertNodes?.([
+            { type: 'a', url: finalUrl, children: [{ text: displayText }] },
+          ]);
+        }
       }
       editor?.tf?.focus?.();
     } catch { /* non-fatal */ }
@@ -74,6 +95,10 @@ export function LinkToolbarButton() {
 
   const handleUnlink = () => {
     try {
+      const sel = savedSelection.current || editor?.selection;
+      if (sel) {
+        editor?.tf?.select?.(sel);
+      }
       editor?.tf?.unwrapNodes?.({ match: (n: any) => n.type === 'a' });
       editor?.tf?.focus?.();
     } catch { /* non-fatal */ }
@@ -87,6 +112,11 @@ export function LinkToolbarButton() {
           active={isLinkActive}
           tooltip={isLinkActive ? 'Edit link' : 'Insert link (Ctrl+K)'}
           aria-label="Link"
+          onMouseDown={() => {
+            if (editor?.selection) {
+              savedSelection.current = editor.selection;
+            }
+          }}
         >
           <Link2 className="w-4 h-4 text-zinc-700 dark:text-zinc-200" />
         </ToolbarButton>
@@ -169,8 +199,9 @@ export function LinkToolbarButton() {
             <button
               type="button"
               disabled={!url.trim()}
+              onMouseDown={(e) => e.preventDefault()}
               onClick={handleSave}
-              className="px-3 py-1 text-xs font-semibold rounded bg-primary text-primary-fg disabled:opacity-40"
+              className="px-3 py-1 text-xs font-semibold rounded bg-primary text-primary-fg disabled:opacity-40 cursor-pointer"
             >
               {isLinkActive ? 'Update' : 'Insert'}
             </button>
@@ -180,3 +211,4 @@ export function LinkToolbarButton() {
     </Popover>
   );
 }
+

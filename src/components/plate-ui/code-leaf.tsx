@@ -19,3 +19,4 @@ export function CodeLeaf({ className, children, ...props }: PlateLeafProps) {
     </PlateLeaf>
   );
 }
+

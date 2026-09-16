@@ -14,7 +14,6 @@ import {
   Pilcrow,
   Quote,
   Square,
-  FileCode,
   Check,
 } from 'lucide-react';
 import { KEYS } from 'platejs';
@@ -90,11 +89,6 @@ export const turnIntoItems = [
     icon: <Quote className="w-4 h-4" />,
     label: 'Quote',
     value: KEYS.blockquote,
-  },
-  {
-    icon: <FileCode className="w-4 h-4" />,
-    label: 'Code',
-    value: KEYS.codeBlock,
   },
 ];
 

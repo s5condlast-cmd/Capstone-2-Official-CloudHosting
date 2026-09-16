@@ -77,3 +77,4 @@ export function H5Element(props: PlateElementProps) {
 export function H6Element(props: PlateElementProps) {
   return <HeadingElement variant="h6" {...props} />;
 }
+

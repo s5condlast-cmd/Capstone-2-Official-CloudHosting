@@ -2232,3 +2232,55 @@ Per user instruction providing the complete official Plate.js v53 registry codeb
 ### 3. Verification & Zero Regressions
 - **Type Checking (`npm run lint`)**: Passed with 0 errors across all 30 new modular components and updated consumers.
 - **Test Suite (`npm run test:editor`)**: All 48 test suites passing across database, storage, and editor runtime domains.
+
+---
+
+## 27. Editor Refinements: Code & Export Removal, Line Height Width Fix, Emoji & Link Reliability, Horizontal Right Buttons
+
+Per user requests regarding editor toolbar alignment and functionality (`media_1789520188168.png`, `media_1789520260549.png`):
+
+### 1. Code Mark & Block Option Removal
+- **Rationale**: The document editor serves formal institutional practicum documentation (e.g. MOA, Consent forms, Application letters, Training Plans, Weekly Journals). Coding markup is neither required nor appropriate for these documents.
+- **Changes**:
+  - `src/components/plate-ui/fixed-toolbar-buttons.tsx`: Removed the inline code mark button (`MarkToolbarButton` with `KEYS.code` / `FileCode`).
+  - `src/components/plate-ui/insert-toolbar-button.tsx`: Removed the `Code` block insertion entry and unused `FileCode` import.
+  - `src/components/plate-ui/turn-into-toolbar-button.tsx`: Removed the `Code` option from the Turn Into block switcher and unused `FileCode` import.
+
+### 2. Export Button Removal from Toolbar
+- **Rationale**: An Export button is already prominent in the document editor header actions (`Export as DOCX` / `Export as PDF`). Having an identical export dropdown inside the fixed editor toolbar was redundant.
+- **Changes**:
+  - `src/components/plate-ui/fixed-toolbar-buttons.tsx`: Removed `ExportToolbarButton` and its import from the fixed toolbar.
+
+### 3. Line-Height Dropdown Width & Sizing Fix
+- **Root Cause**: In `src/components/plate-ui/line-height-toolbar-button.tsx`, `DropdownMenuContent` had `min-w-0`, causing Base UI to constrain the popup width to the 34px width of the trigger button, which crushed numbers `1.15`, `1.5`, `2.5` and caused ugly text wrapping.
+- **Changes**:
+  - Replaced `min-w-0` with `w-24 min-w-[5.5rem] p-1.5` on `DropdownMenuContent`.
+  - Styled items with `flex items-center justify-between px-2.5 py-1 text-xs` so numbers and checkmarks have ample breathing room and never squish or truncate.
+
+### 4. Emoji & Link Insertion Reliability
+- **Root Cause**: In Slate/ContentEditable, clicking buttons outside the editable canvas causes the browser to blur the editor and clear `editor.selection` to `null`. Subsequent `insertText` or `wrapNodes` operations fail silently or insert at position 0.
+- **Changes**:
+  - `src/components/plate-ui/emoji-toolbar-button.tsx`:
+    - Added `savedSelection` ref capturing `editor.selection` when the popover opens.
+    - Added `onMouseDown={(e) => e.preventDefault()}` on all emoji grid buttons to preserve Slate selection during clicks.
+    - Restores selection and calls `editor.tf.focus()` and `editor.tf.insertText(emoji)`.
+  - `src/components/plate-ui/link-toolbar-button.tsx`:
+    - Added `savedSelection` ref capturing `editor.selection` before popover input autofocus.
+    - Added `onMouseDown={(e) => e.preventDefault()}` on the Insert/Update button.
+    - In `handleSave`: restores `savedSelection`, wraps selected text (`wrapNodes`) or inserts inline link node (`insertNodes`), and restores focus to editor.
+
+### 5. Horizontal Right-Edge Action Buttons
+- **Root Cause**: `FixedToolbarButtons` previously had an arbitrary `window.innerWidth < 1180` check that collapsed the 3 right-edge controls into a 3-dots icon (`RightOverflowMenu`) on standard laptop viewports.
+- **Changes**:
+  - Removed `RightOverflowMenu`, `showOverflowMenu`, `isNarrow`, and `SidebarContext` dependency.
+  - Directly renders the 3 buttons horizontally in a straight line on the right edge:
+    - `<CommentToolbarButton ... />`
+    - `<ToolbarSeparator />`
+    - `<ModeToolbarButton ... />`
+    - `<ToolbarSeparator />`
+    - Fullscreen `<ToolbarButton ... />`
+
+### 6. Verification
+- **TypeScript Compiler (`npm run lint` / `tsc --noEmit`)**: 0 errors.
+- **Editor Test Suite (`npm run test:editor`)**: 48/48 tests passing across all 8 suites.
+

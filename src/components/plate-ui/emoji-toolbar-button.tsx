@@ -29,11 +29,27 @@ export function EmojiToolbarButton() {
   const editor = useEditorRef();
   const [open, setOpen] = React.useState(false);
   const [filter, setFilter] = React.useState('');
+  const savedSelection = React.useRef<any>(null);
+
+  React.useEffect(() => {
+    if (open) {
+      if (editor?.selection) {
+        savedSelection.current = editor.selection;
+      }
+    }
+  }, [open, editor]);
 
   const handleSelectEmoji = (emoji: string) => {
     try {
-      editor?.tf?.insertText?.(emoji);
+      if (savedSelection.current) {
+        editor?.tf?.select?.(savedSelection.current);
+      }
       editor?.tf?.focus?.();
+      if (editor?.tf?.insertText) {
+        editor.tf.insertText(emoji);
+      } else if ((editor as any)?.insertText) {
+        (editor as any).insertText(emoji);
+      }
     } catch { /* non-fatal */ }
     setOpen(false);
   };
@@ -45,6 +61,11 @@ export function EmojiToolbarButton() {
           pressed={open}
           tooltip="Insert emoji"
           aria-label="Insert emoji"
+          onMouseDown={() => {
+            if (editor?.selection) {
+              savedSelection.current = editor.selection;
+            }
+          }}
         >
           <Smile className="w-4 h-4 text-zinc-700 dark:text-zinc-200" />
         </ToolbarButton>
@@ -73,6 +94,7 @@ export function EmojiToolbarButton() {
                     <button
                       key={e}
                       type="button"
+                      onMouseDown={(e) => e.preventDefault()}
                       onClick={() => handleSelectEmoji(e)}
                       className="w-7 h-7 flex items-center justify-center text-base hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded transition-colors cursor-pointer"
                     >
@@ -88,3 +110,4 @@ export function EmojiToolbarButton() {
     </Popover>
   );
 }
+
