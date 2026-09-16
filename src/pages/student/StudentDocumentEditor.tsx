@@ -15,7 +15,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ChevronLeft, Save, Download, Clock, Send, Copy,
   AlertTriangle, CheckCircle, Wifi, WifiOff, Loader2,
-  History, FileText, Users
+  History, FileText, Users, ShieldCheck
 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import { toast } from 'sonner';
@@ -24,6 +24,10 @@ import { useAuth } from '@/src/contexts/AuthContext';
 import { DocumentHistoryDrawer } from '@/src/components/editor/DocumentHistoryDrawer';
 import { SidebarContext, SidebarTrigger } from '@/components/ui/sidebar';
 import PlateEditor, { type PlateEditorRef } from '@/src/components/editor/plate-editor';
+import {
+  type EditorComment,
+  type EditorMode,
+} from '@/src/components/plate-ui/fixed-toolbar-buttons';
 import { downloadDocx, printToPdf, serializeToDocx } from '@/src/components/editor/serializers/docxSerializer';
 import {
   DocumentHistoryStorage,
@@ -80,6 +84,73 @@ export function StudentDocumentEditor() {
   const [submitting, setSubmitting] = useState(false);
   const [titleEditing, setTitleEditing] = useState(false);
   const [editorEpoch, setEditorEpoch] = useState(0);
+
+  // ── Multi-Role Reviewer Detection & Mode ─────────────────────────────────
+  const isReviewer = user?.role === 'adviser' || user?.role === 'supervisor' || user?.role === 'admin' || searchParams.get('mode') === 'review';
+  const [editorMode, setEditorMode] = useState<EditorMode>(() => isReviewer ? 'suggesting' : 'editing');
+
+  // ── Comments State & Local Synchronization ──────────────────────────────
+  const [comments, setComments] = useState<EditorComment[]>(() => {
+    if (!draftIdParam) return [];
+    try {
+      const stored = localStorage.getItem(`comments_${draftIdParam}`);
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const handleAddComment = useCallback((text: string, selectedText?: string) => {
+    const newComment: EditorComment = {
+      id: crypto.randomUUID(),
+      author: user?.name || (user as any)?.full_name || (isReviewer ? 'Reviewer' : 'Student'),
+      authorRole: (user?.role as any) || 'student',
+      text,
+      createdAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      selectedText,
+      resolved: false,
+    };
+    setComments((prev) => {
+      const updated = [newComment, ...prev];
+      if (draftIdParam || draft?.id) {
+        localStorage.setItem(`comments_${draftIdParam || draft?.id}`, JSON.stringify(updated));
+      }
+      return updated;
+    });
+    toast.success('Comment added');
+  }, [user, isReviewer, draftIdParam, draft?.id]);
+
+  const handleResolveComment = useCallback((id: string) => {
+    setComments((prev) => {
+      const updated = prev.map((c) => (c.id === id ? { ...c, resolved: true } : c));
+      if (draftIdParam || draft?.id) {
+        localStorage.setItem(`comments_${draftIdParam || draft?.id}`, JSON.stringify(updated));
+      }
+      return updated;
+    });
+    toast.success('Comment resolved');
+  }, [draftIdParam, draft?.id]);
+
+  const handleUnresolveComment = useCallback((id: string) => {
+    setComments((prev) => {
+      const updated = prev.map((c) => (c.id === id ? { ...c, resolved: false } : c));
+      if (draftIdParam || draft?.id) {
+        localStorage.setItem(`comments_${draftIdParam || draft?.id}`, JSON.stringify(updated));
+      }
+      return updated;
+    });
+  }, [draftIdParam, draft?.id]);
+
+  const handleDeleteComment = useCallback((id: string) => {
+    setComments((prev) => {
+      const updated = prev.filter((c) => c.id !== id);
+      if (draftIdParam || draft?.id) {
+        localStorage.setItem(`comments_${draftIdParam || draft?.id}`, JSON.stringify(updated));
+      }
+      return updated;
+    });
+    toast.success('Comment deleted');
+  }, [draftIdParam, draft?.id]);
 
   // ── Storage engine ───────────────────────────────────────────────────────
   const storageRef = useRef<DocumentHistoryStorage | null>(null);
@@ -525,7 +596,23 @@ export function StudentDocumentEditor() {
         />
       )}
 
-      {isLocked && (
+      {isReviewer && (
+        <div className="flex items-center justify-between p-3 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-800 dark:text-blue-200 text-xs shrink-0">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4 text-blue-500" />
+            <span className="font-semibold">Review Mode Active ({user?.role?.toUpperCase()}):</span>
+            <span>You can highlight text and leave comments, or use the Mode switcher to make direct edits.</span>
+          </div>
+          <button
+            onClick={() => navigate(-1)}
+            className="px-2.5 py-1 rounded-lg bg-blue-500 text-white font-medium hover:bg-blue-600 transition-colors"
+          >
+            Back to Review Hub
+          </button>
+        </div>
+      )}
+
+      {isLocked && !isReviewer && (
         <div className="flex items-center gap-2 px-4 py-2.5 bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-lg text-sm text-zinc-600 dark:text-zinc-400">
           <CheckCircle className="w-4 h-4 text-green-500 shrink-0" />
           <span>This document has been officially submitted and is now read-only. Use "Duplicate as Draft" for further edits.</span>
@@ -538,8 +625,17 @@ export function StudentDocumentEditor() {
         ref={editorRef}
         initialContent={draft?.content ?? [{ type: 'p', children: [{ text: '' }] }]}
         onChange={handleEditorChange}
-        readOnly={isLocked}
+        readOnly={isLocked && !isReviewer}
         placeholder="Start writing your document..."
+        mode={editorMode}
+        onModeChange={setEditorMode}
+        comments={comments}
+        onAddComment={handleAddComment}
+        onResolveComment={handleResolveComment}
+        onUnresolveComment={handleUnresolveComment}
+        onDeleteComment={handleDeleteComment}
+        currentUserRole={(user?.role as any) || 'student'}
+        currentUserName={user?.name || (user as any)?.full_name || 'User'}
       />
 
       {/* History drawer */}

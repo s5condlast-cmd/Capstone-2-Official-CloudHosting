@@ -2307,5 +2307,38 @@ Per user alignment during `/grill-me` regarding sidebar behavior and editor tool
 - **TypeScript Compiler (`npm run lint` / `tsc --noEmit`)**: 0 errors.
 - **Editor Test Suite (`npm run test:editor`)**: 48/48 tests passing across all 8 suites.
 
+---
+
+## 29. Multi-Role Comments Drawer, Pure-White Highlight Mark, and Reviewer Mode
+
+Per user alignment during `/grill-me` regarding multi-role commenting and review capabilities:
+
+### 1. Multi-Role Comments Side Drawer (`src/components/editor/CommentsDrawer.tsx`)
+- **Slide-Out Side Panel**: Dedicated right-side drawer component displaying threaded comments and feedback without occluding the document canvas.
+- **Active & Resolved Tabs**: Separates pending comments from resolved discussions, maintaining clean document review history.
+- **Institutional Role Badges**: Every comment displays the author's official role badge with distinct color branding:
+  - **Admin**: Rose (`bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20`)
+  - **Adviser**: Blue (`bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20`)
+  - **Supervisor**: Amber (`bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20`)
+  - **Student**: Emerald (`bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20`)
+- **Quoted Text Preview**: When commenting on selected document text, quotes the excerpt in a dismissible blockquote preview banner.
+- **Ergonomic Submission & Actions**: Supports `Cmd+Enter` / `Ctrl+Enter` shortcut to submit, 1-click resolve/re-open toggle, and trash deletion.
+
+### 2. Pure-White Highlight Mark on Fixed & Floating Toolbars
+- **Fixed Toolbar (`src/components/plate-ui/fixed-toolbar-buttons.tsx`)**: Added `MarkToolbarButton` for `KEYS.highlight` featuring a pure-white icon in dark mode (`text-zinc-700 dark:text-white`).
+- **Floating Toolbar (`src/components/plate-ui/floating-toolbar.tsx`)**: Replaced `text-amber-500` with strictly neutral `text-zinc-700 dark:text-white` on the `Highlighter` icon, eliminating unwanted yellow/amber tint.
+- **Selection Comment Quick Action**: Added `MessageSquarePlus` button to the floating toolbar, allowing users to select any passage in the editor and immediately trigger the Comments Drawer with the selected passage pre-quoted.
+
+### 3. Reviewer Document Access & Review Mode (`StudentDocumentEditor.tsx`, `UnifiedReviewSession.tsx`, `WeeklyJournalReview.tsx`)
+- **Reviewer Role Detection**: Automatically detects reviewers via `user?.role === 'adviser' | 'supervisor' | 'admin'` or `?mode=review` URL parameter.
+- **Review Mode Default**: Defaults to `'suggesting'` mode for reviewers (allowing highlighting and commenting without accidentally modifying student text), while retaining direct editing capability via the toolbar mode switcher when advisers need to fix typos directly.
+- **Review Mode Banner**: Displays a distinct blue banner (`Review Mode Active ({ROLE})`) with a 1-click `"Back to Review Hub"` button.
+- **Reviewer Entry Points**: Added "Open in Document Editor" action button in `UnifiedReviewSession.tsx` and `WeeklyJournalReview.tsx` so staff can jump straight from submission queues into the rich document review workspace.
+
+### 4. Verification
+- **TypeScript Compiler (`npm run lint` / `tsc --noEmit`)**: 0 errors.
+- **Editor Test Suite (`npm run test:editor`)**: 48/48 tests passing across all 8 suites.
+
+
 
 

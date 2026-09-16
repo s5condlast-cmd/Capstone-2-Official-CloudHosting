@@ -11,6 +11,7 @@ import {
   Underline,
   Strikethrough,
   Highlighter,
+  MessageSquarePlus,
 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import { isMarkActive, toggleMark } from '@/src/components/editor/editor-commands';
@@ -18,9 +19,10 @@ import { ToolbarButton } from './toolbar';
 
 export interface FloatingToolbarProps {
   editor: any;
+  onAddComment?: (selectedText: string) => void;
 }
 
-export function FloatingToolbar({ editor }: FloatingToolbarProps) {
+export function FloatingToolbar({ editor, onAddComment }: FloatingToolbarProps) {
   useEditorVersion();
   useSelectionVersion();
 
@@ -124,7 +126,19 @@ export function FloatingToolbar({ editor }: FloatingToolbarProps) {
         onClick={() => toggleMark(editor, 'highlight')}
         tooltip="Highlight"
       >
-        <Highlighter className="w-3.5 h-3.5 text-amber-500" />
+        <Highlighter className="w-3.5 h-3.5 text-zinc-700 dark:text-white" />
+      </ToolbarButton>
+
+      <div className="mx-0.5 h-3.5 w-px bg-zinc-200 dark:bg-zinc-800" />
+
+      <ToolbarButton
+        onClick={() => {
+          const text = window.getSelection()?.toString() || '';
+          onAddComment?.(text);
+        }}
+        tooltip="Add Comment"
+      >
+        <MessageSquarePlus className="w-3.5 h-3.5 text-zinc-700 dark:text-white" />
       </ToolbarButton>
     </div>
   );

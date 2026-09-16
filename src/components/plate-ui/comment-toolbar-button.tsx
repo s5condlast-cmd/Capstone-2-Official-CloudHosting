@@ -15,6 +15,7 @@ export interface CommentItem {
   id: string;
   text: string;
   author: string;
+  authorRole?: 'student' | 'adviser' | 'supervisor' | 'admin';
   createdAt: string;
   selectedText?: string;
   resolved?: boolean;
@@ -22,12 +23,14 @@ export interface CommentItem {
 
 export interface CommentToolbarButtonProps {
   comments?: CommentItem[];
+  onOpenDrawer?: () => void;
   onAddComment?: (comment: CommentItem) => void;
   onResolveComment?: (id: string) => void;
 }
 
 export function CommentToolbarButton({
   comments = [],
+  onOpenDrawer,
   onAddComment,
   onResolveComment,
 }: CommentToolbarButtonProps) {
@@ -37,6 +40,24 @@ export function CommentToolbarButton({
   const [selectedQuote, setSelectedQuote] = React.useState('');
 
   const activeComments = comments.filter((c) => !c.resolved);
+
+  if (onOpenDrawer) {
+    return (
+      <ToolbarButton
+        onClick={onOpenDrawer}
+        tooltip="Comments & Feedback"
+        aria-label="Comments"
+        className="relative"
+      >
+        <MessageSquareText className="w-4 h-4 text-zinc-700 dark:text-zinc-200" />
+        {activeComments.length > 0 && (
+          <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-fg shadow-xs">
+            {activeComments.length}
+          </span>
+        )}
+      </ToolbarButton>
+    );
+  }
 
   React.useEffect(() => {
     if (open) {

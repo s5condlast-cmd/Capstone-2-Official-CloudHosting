@@ -6,6 +6,7 @@ import {
   Italic,
   Underline,
   Strikethrough,
+  Highlighter,
   Maximize2,
   Minimize2,
 } from 'lucide-react';
@@ -42,6 +43,7 @@ export type EditorMode = 'editing' | 'suggesting' | 'viewing';
 export interface EditorComment {
   id: string;
   author: string;
+  authorRole?: 'student' | 'adviser' | 'supervisor' | 'admin';
   text: string;
   createdAt: string;
   selectedText?: string;
@@ -55,6 +57,7 @@ export interface FixedToolbarButtonsProps {
   isFullscreen?: boolean;
   onToggleFullscreen?: () => void;
   comments?: EditorComment[];
+  onOpenComments?: () => void;
   onAddComment?: (text: string, selectedText?: string) => void;
   onResolveComment?: (id: string) => void;
 }
@@ -66,6 +69,7 @@ export function FixedToolbarButtons({
   isFullscreen = false,
   onToggleFullscreen,
   comments = [],
+  onOpenComments,
   onAddComment,
   onResolveComment,
 }: FixedToolbarButtonsProps) {
@@ -108,6 +112,10 @@ export function FixedToolbarButtons({
           <Strikethrough className="w-4 h-4 text-zinc-700 dark:text-zinc-200" />
         </MarkToolbarButton>
 
+        <MarkToolbarButton nodeType={KEYS.highlight} tooltip="Highlight">
+          <Highlighter className="w-4 h-4 text-zinc-700 dark:text-white" />
+        </MarkToolbarButton>
+
         {/* Text Color & Background Color */}
         <FontColorToolbarButton nodeType="color" tooltip="Text color" />
         <FontColorToolbarButton nodeType="backgroundColor" tooltip="Background color" />
@@ -147,6 +155,7 @@ export function FixedToolbarButtons({
         <ToolbarSeparator />
         <CommentToolbarButton
           comments={comments}
+          onOpenDrawer={onOpenComments}
           onAddComment={(item) => onAddComment?.(item.text, item.selectedText)}
           onResolveComment={onResolveComment}
         />

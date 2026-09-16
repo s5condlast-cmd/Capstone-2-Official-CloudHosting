@@ -20,6 +20,7 @@ import {
   type EditorComment,
 } from '@/src/components/plate-ui/fixed-toolbar-buttons';
 import { FloatingToolbar } from '@/src/components/plate-ui/floating-toolbar';
+import { CommentsDrawer } from './CommentsDrawer';
 import '@/src/styles/print-document.css';
 
 // ─── Plate v53 dynamic import bridge ──────────────────────────────────────────
@@ -54,8 +55,16 @@ export interface PlateEditorProps {
   comments?: EditorComment[];
   /** Comment added callback */
   onAddComment?: (text: string, selectedText?: string) => void;
-  /** Comment resolved/deleted callback */
+  /** Comment resolved callback */
   onResolveComment?: (id: string) => void;
+  /** Comment un-resolved callback */
+  onUnresolveComment?: (id: string) => void;
+  /** Comment deleted callback */
+  onDeleteComment?: (id: string) => void;
+  /** Logged-in user role for comment badge */
+  currentUserRole?: 'student' | 'adviser' | 'supervisor' | 'admin';
+  /** Logged-in user name for comment author */
+  currentUserName?: string;
 }
 
 // ─── Default empty content ────────────────────────────────────────────────────
@@ -106,6 +115,10 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
       comments,
       onAddComment,
       onResolveComment,
+      onUnresolveComment,
+      onDeleteComment,
+      currentUserRole = 'student',
+      currentUserName = 'Student',
     },
     ref
   ) {
@@ -113,12 +126,14 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
     const [PlateComp, setPlateComp] = useState<React.ComponentType<any> | null>(null);
     const [createEditorFn, setCreateEditorFn] = useState<((opts: any) => any) | null>(null);
 
-    // View mode, fullscreen, and zoom state
+    // View mode, fullscreen, zoom, and comments drawer state
     const [internalMode, setInternalMode] = useState<EditorMode>('editing');
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [zoomLevel, setZoomLevel] = useState(100);
     const [internalComments, setInternalComments] = useState<EditorComment[]>([]);
     const [showZoomIndicator, setShowZoomIndicator] = useState(false);
+    const [showCommentsDrawer, setShowCommentsDrawer] = useState(false);
+    const [drawerQuote, setDrawerQuote] = useState('');
 
     const activeMode: EditorMode = readOnly ? 'viewing' : (mode ?? internalMode);
     const isEffectivelyReadOnly = readOnly || activeMode === 'viewing';
@@ -271,10 +286,12 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
               isFullscreen={isFullscreen}
               onToggleFullscreen={() => setIsFullscreen((prev) => !prev)}
               comments={comments ?? internalComments}
+              onOpenComments={() => setShowCommentsDrawer((prev) => !prev)}
               onAddComment={(t, s) => {
                 const newC: EditorComment = {
                   id: crypto.randomUUID(),
-                  author: 'Student',
+                  author: currentUserName || 'Student',
+                  authorRole: currentUserRole || 'student',
                   text: t,
                   createdAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                   selectedText: s,
@@ -283,7 +300,9 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                 onAddComment?.(t, s);
               }}
               onResolveComment={(id) => {
-                setInternalComments((prev) => prev.filter((c) => c.id !== id));
+                setInternalComments((prev) =>
+                  prev.map((c) => (c.id === id ? { ...c, resolved: true } : c))
+                );
                 onResolveComment?.(id);
               }}
             />
@@ -387,7 +406,57 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
           </div>
 
           {/* Floating formatting toolbar on text selection */}
-          {!isEffectivelyReadOnly && <FloatingToolbar editor={editor} />}
+          {!isEffectivelyReadOnly && (
+            <FloatingToolbar
+              editor={editor}
+              onAddComment={(selectedText) => {
+                setDrawerQuote(selectedText);
+                setShowCommentsDrawer(true);
+              }}
+            />
+          )}
+
+          {/* Comments and Feedback Side Panel Drawer */}
+          <CommentsDrawer
+            open={showCommentsDrawer}
+            onClose={() => {
+              setShowCommentsDrawer(false);
+              setDrawerQuote('');
+            }}
+            comments={comments ?? internalComments}
+            onAddComment={(t, s) => {
+              const newC: EditorComment = {
+                id: crypto.randomUUID(),
+                author: currentUserName || 'Student',
+                authorRole: currentUserRole || 'student',
+                text: t,
+                createdAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                selectedText: s,
+              };
+              setInternalComments((prev) => [newC, ...prev]);
+              onAddComment?.(t, s);
+            }}
+            onResolveComment={(id) => {
+              setInternalComments((prev) =>
+                prev.map((c) => (c.id === id ? { ...c, resolved: true } : c))
+              );
+              onResolveComment?.(id);
+            }}
+            onUnresolveComment={(id) => {
+              setInternalComments((prev) =>
+                prev.map((c) => (c.id === id ? { ...c, resolved: false } : c))
+              );
+              onUnresolveComment?.(id);
+            }}
+            onDeleteComment={(id) => {
+              setInternalComments((prev) => prev.filter((c) => c.id !== id));
+              onDeleteComment?.(id);
+            }}
+            selectedText={drawerQuote}
+            onClearSelectedText={() => setDrawerQuote('')}
+            currentUserRole={currentUserRole}
+            currentUserName={currentUserName}
+          />
         </div>
       </PlateComp>
     );
