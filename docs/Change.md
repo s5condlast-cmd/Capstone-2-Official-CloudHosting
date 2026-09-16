@@ -2293,9 +2293,11 @@ Per user alignment during `/grill-me` regarding sidebar behavior and editor tool
 ### 1. Auto-Collapse & Auto-Restore Sidebar (`src/pages/student/StudentDocumentEditor.tsx`)
 - **Rationale**: When navigating to the Document Editor (`/student/editor`), the portal sidebar occupies 256px, constraining available horizontal canvas width on standard desktop/laptop displays (e.g. 1366x768) and pushing right-edge toolbar buttons past the viewport.
 - **Implementation**:
-  - Connected `StudentDocumentEditor` to `SidebarContext`.
-  - On mount, automatically calls `sidebar.setOpen(false)` to collapse the navigation sidebar, instantly granting an additional 256px of screen width for distraction-free document writing and ensuring all toolbar controls are immediately visible.
-  - On unmount (e.g. clicking `< Back` or navigating to Dashboard/Repository), automatically calls `sidebar.setOpen(true)` to re-open the sidebar for seamless portal navigation.
+  - Connected `StudentDocumentEditor` to `SidebarContext` using `sidebarRef` and an empty dependency array `[]`.
+  - On mount, automatically calls `sidebarRef.current?.setOpen(false)` once to collapse the navigation sidebar, instantly granting an additional 256px of screen width for distraction-free document writing and ensuring all toolbar controls are immediately visible.
+  - Does NOT lock the sidebar: Because `sidebar` is accessed via ref with an empty dependency array, user manual toggles (clicking `SidebarTrigger` or `Ctrl+B`) are preserved and never overridden.
+  - Added dedicated `SidebarTrigger` button right next to `< Back` in the editor header, allowing instant 1-click toggling of the sidebar directly from the document editor.
+  - On unmount (e.g. clicking `< Back` or navigating to Dashboard/Repository), automatically calls `sidebarRef.current?.setOpen(true)` to re-open the sidebar for seamless portal navigation.
 
 ### 2. Smooth Horizontal Wheel Scrolling & Sizing (`src/components/plate-ui/fixed-toolbar.tsx` & `fixed-toolbar-buttons.tsx`)
 - Added `handleWheel` in `FixedToolbar` translating vertical mouse wheel events into horizontal scroll (`scrollLeft += deltaY`) when content overflows, enabling effortless horizontal navigation with standard mouse wheels on smaller viewports.
@@ -2304,5 +2306,6 @@ Per user alignment during `/grill-me` regarding sidebar behavior and editor tool
 ### 3. Verification
 - **TypeScript Compiler (`npm run lint` / `tsc --noEmit`)**: 0 errors.
 - **Editor Test Suite (`npm run test:editor`)**: 48/48 tests passing across all 8 suites.
+
 
 

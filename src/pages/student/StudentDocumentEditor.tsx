@@ -22,7 +22,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/src/lib/supabase';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { DocumentHistoryDrawer } from '@/src/components/editor/DocumentHistoryDrawer';
-import { SidebarContext } from '@/components/ui/sidebar';
+import { SidebarContext, SidebarTrigger } from '@/components/ui/sidebar';
 import PlateEditor, { type PlateEditorRef } from '@/src/components/editor/plate-editor';
 import { downloadDocx, printToPdf, serializeToDocx } from '@/src/components/editor/serializers/docxSerializer';
 import {
@@ -84,16 +84,20 @@ export function StudentDocumentEditor() {
   // ── Storage engine ───────────────────────────────────────────────────────
   const storageRef = useRef<DocumentHistoryStorage | null>(null);
 
-  // ── Auto-collapse sidebar on enter to maximize editing width ─────────────
+  // ── Auto-collapse sidebar on enter (once) to maximize editing width ──────
   const sidebar = React.useContext(SidebarContext);
+  const sidebarRef = useRef(sidebar);
+  sidebarRef.current = sidebar;
+
   useEffect(() => {
-    if (!sidebar) return;
-    sidebar.setOpen(false);
+    // Only collapse once on initial page load; does not lock the sidebar
+    sidebarRef.current?.setOpen(false);
 
     return () => {
-      sidebar.setOpen(true);
+      // Re-open sidebar when leaving editor so portal navigation is accessible
+      sidebarRef.current?.setOpen(true);
     };
-  }, [sidebar]);
+  }, []); // Strictly empty dependency array so user manual toggles are never overridden
 
   // ── Initialize: load or create draft ─────────────────────────────────────
   useEffect(() => {
@@ -410,6 +414,10 @@ export function StudentDocumentEditor() {
           <ChevronLeft className="w-4 h-4" />
           Back
         </button>
+
+        <div className="h-4 w-px bg-zinc-200 dark:bg-zinc-800" />
+
+        <SidebarTrigger className="text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 cursor-pointer" />
 
         <div className="flex-1 min-w-0">
           {titleEditing ? (
