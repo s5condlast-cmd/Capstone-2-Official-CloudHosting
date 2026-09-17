@@ -11,14 +11,14 @@ export function FixedToolbar({ className, children, ...props }: React.ComponentP
   const toolbarRef = React.useRef<HTMLDivElement>(null);
 
   return (
-    <div className="relative w-full group/fixed-toolbar flex justify-center">
+    <div className="relative w-full group/fixed-toolbar flex items-center">
       <Toolbar
         ref={toolbarRef}
         {...props}
         className={cn(
-          'sticky top-0 left-0 z-30 w-full justify-between rounded-full',
-          'border border-zinc-200/90 dark:border-zinc-700/80 bg-[#edf2fa]/95 dark:bg-zinc-800/95 px-2.5 py-1 min-h-[42px] max-h-[44px]',
-          'backdrop-blur-sm shadow-xs select-none print:hidden overflow-hidden',
+          'sticky top-0 left-0 z-30 w-full justify-between',
+          'border-0 bg-transparent px-1 py-0.5 min-h-[38px] max-h-[42px]',
+          'select-none print:hidden overflow-hidden',
           className
         )}
       >

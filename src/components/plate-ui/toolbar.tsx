@@ -50,7 +50,7 @@ export function ToolbarGroup({
   return (
     <div
       className={cn(
-        'group/toolbar-group flex items-center gap-0.5 shrink-0',
+        'group/toolbar-group flex items-center gap-1 shrink-0',
         className
       )}
     >
@@ -68,7 +68,7 @@ export function ToolbarSeparator({
     <div
       role="separator"
       className={cn(
-        'mx-1 h-4 w-px bg-zinc-200 dark:bg-zinc-800 shrink-0 group-last/toolbar-group:hidden',
+        'mx-1.5 h-5 w-px bg-zinc-300/80 dark:bg-zinc-700/80 shrink-0 group-last/toolbar-group:hidden',
         className
       )}
       {...props}

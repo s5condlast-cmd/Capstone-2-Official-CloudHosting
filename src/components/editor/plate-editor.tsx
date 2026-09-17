@@ -195,7 +195,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
     const [internalComments, setInternalComments] = useState<EditorComment[]>([]);
     const [showZoomIndicator, setShowZoomIndicator] = useState(false);
     const [showCommentsRail, setShowCommentsRail] = useState(() => (comments && comments.length > 0) || false);
-    const [showOutline, setShowOutline] = useState(true);
+    const [showOutline, setShowOutline] = useState(false);
     const [showRuler, setShowRuler] = useState(true);
     const [drawerQuote, setDrawerQuote] = useState('');
     const [currentWordCount, setCurrentWordCount] = useState(() => countWordsInContent(initialContent));
@@ -737,9 +737,9 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
             );
           })()}
 
-          {/* Fixed top pale rounded pill formatting toolbar */}
-          <div className="w-full px-3 py-1 flex justify-center bg-zinc-50/50 dark:bg-zinc-900/50 border-b border-zinc-200/60 dark:border-zinc-800/60 shrink-0">
-            <FixedToolbar className="max-w-full">
+          {/* Google Docs Full-Width Formatting Toolbar Bar */}
+          <div className="w-full bg-[#f9fbfd] dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80 px-3 py-1 flex items-center shrink-0">
+            <FixedToolbar className="w-full">
               <FixedToolbarButtons
                 editor={editor}
                 mode={activeMode}
