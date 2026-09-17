@@ -28,6 +28,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/src/lib/supabase';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { DocumentHistoryDrawer } from '@/src/components/editor/DocumentHistoryDrawer';
+import { SidebarContext } from '@/components/ui/sidebar';
 import PlateEditor, { type PlateEditorRef } from '@/src/components/editor/plate-editor';
 import {
   type EditorComment,
@@ -175,11 +176,11 @@ export function StudentDocumentEditor() {
 
   useEffect(() => {
     // Only collapse once on initial page load; does not lock the sidebar
-    sidebarRef.current?.setOpen(false);
+    sidebarRef.current?.setOpen?.(false);
 
     return () => {
       // Re-open sidebar when leaving editor so portal navigation is accessible
-      sidebarRef.current?.setOpen(true);
+      sidebarRef.current?.setOpen?.(true);
     };
   }, []); // Strictly empty dependency array so user manual toggles are never overridden
 
