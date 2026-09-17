@@ -100,6 +100,8 @@ export interface PlateEditorProps {
   onHeaderFooterChange?: (headerFooter: DocumentHeaderFooterOptions) => void;
   /** Optional cloud sync status for bottom telemetry bar */
   syncStatus?: 'saved' | 'saving' | 'offline' | 'conflict' | 'error';
+  /** Optional document title for export */
+  documentTitle?: string;
 }
 
 // ─── Default empty content ────────────────────────────────────────────────────
@@ -158,6 +160,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
       headerFooter: externalHeaderFooter,
       onHeaderFooterChange,
       syncStatus = 'saved',
+      documentTitle,
     },
     ref
   ) {
@@ -689,6 +692,8 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                 );
                 onResolveComment?.(id);
               }}
+              documentTitle={documentTitle}
+              headerFooter={{ header: headerState, footer: footerState }}
             />
           </FixedToolbar>
 

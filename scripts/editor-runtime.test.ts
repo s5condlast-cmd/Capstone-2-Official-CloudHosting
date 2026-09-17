@@ -10,7 +10,17 @@ import {
 } from '../src/components/editor/editor-commands';
 import { editorPlugins } from '../src/components/editor/editor-kit';
 import { ImageElement } from '../src/components/plate-ui/image-element';
-import { serializeToDocx } from '../src/components/editor/serializers/docxSerializer';
+import {
+  serializeToDocx,
+  leafToRuns,
+  collectParagraphChildren,
+  elementToTable,
+} from '../src/components/editor/serializers/docxSerializer';
+import {
+  wrapContentEnvelope,
+  unwrapContentEnvelope,
+} from '../src/lib/documentHistoryStorage';
+import { ExternalHyperlink } from 'docx';
 function createEditor(value: any[]) {
   return createPlateEditor({ plugins: editorPlugins, value });
 }
@@ -315,6 +325,128 @@ describe('Plate editor runtime wiring', () => {
       }
     );
     assert.ok(blob.size > 1_500);
+  });
+
+  it('converts px font size strings to accurate half-points (16px -> 24 half-points / 12pt)', () => {
+    const runs16px = leafToRuns({ text: 'Hello 16px', fontSize: '16px' });
+    assert.equal(runs16px.length, 1);
+    // 16px * 0.75 = 12pt = 24 half-points
+    const rPr16 = (runs16px[0] as any).properties?.root;
+    const sizeElem = rPr16?.find((e: any) => e?.rootKey === 'w:sz');
+    assert.ok(sizeElem, 'w:sz element should be present');
+    assert.equal(sizeElem.root[0]?.root?.val, 24, '16px must convert to 24 half-points (12pt), not 16 or 32');
+
+    const runs12pt = leafToRuns({ text: 'Hello 12pt', fontSize: '12pt' });
+    const rPr12 = (runs12pt[0] as any).properties?.root;
+    const sizeElemPt = rPr12?.find((e: any) => e?.rootKey === 'w:sz');
+    assert.equal(sizeElemPt.root[0]?.root?.val, 24, '12pt must convert to 24 half-points');
+  });
+
+  it('serializes inline link elements to ExternalHyperlink instances', () => {
+    const linkElement = {
+      type: 'a',
+      url: 'https://sti.edu/practicum',
+      children: [{ text: 'Practicum Portal' }],
+    };
+    const runs = collectParagraphChildren([linkElement as any]);
+    assert.equal(runs.length, 1);
+    assert.ok(runs[0] instanceof ExternalHyperlink, 'Link element must serialize to ExternalHyperlink');
+    assert.equal((runs[0] as any).options?.link, 'https://sti.edu/practicum');
+  });
+
+  it('serializes table elements with cell widths, colSpan, and rowSpan', () => {
+    const tableElement = {
+      type: 'table',
+      children: [
+        {
+          type: 'tr',
+          header: true,
+          children: [
+            {
+              type: 'th',
+              colSpan: 2,
+              rowSpan: 1,
+              width: 300,
+              children: [{ type: 'p', children: [{ text: 'Header Cell' }] }],
+            },
+          ],
+        },
+      ],
+    };
+    const docxTable = elementToTable(tableElement as any);
+    assert.ok(docxTable, 'elementToTable should produce a docx Table');
+  });
+
+  it('wraps and unwraps document envelopes with headerFooter settings and backwards compatibility', () => {
+    const sampleBody = [{ type: 'p', children: [{ text: 'Draft body' }] }];
+    const sampleHf = {
+      header: { text: 'Official STI Header', scope: 'first_page_only' as const },
+      footer: { text: 'Confidential', pageNumber: true, scope: 'every_page' as const },
+    };
+
+    // 1. Wrap
+    const envelope = wrapContentEnvelope(sampleBody, sampleHf, 42);
+    assert.equal((envelope as any).schemaVersion, 1);
+    assert.equal((envelope as any).type, 'document_envelope');
+    assert.deepEqual((envelope as any).body, sampleBody);
+    assert.deepEqual((envelope as any).headerFooter, sampleHf);
+
+    // 2. Unwrap envelope
+    const unwrapped = unwrapContentEnvelope(envelope);
+    assert.deepEqual(unwrapped.content, sampleBody);
+    assert.deepEqual(unwrapped.headerFooter, sampleHf);
+
+    // 3. Unwrap legacy raw array (backwards-compatibility)
+    const legacyUnwrapped = unwrapContentEnvelope(sampleBody);
+    assert.deepEqual(legacyUnwrapped.content, sampleBody);
+    assert.equal(legacyUnwrapped.headerFooter, undefined);
+  });
+
+  it('serializes document with first_page_only header and nested lists without errors', async () => {
+    const tinyPng = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+    const content = [
+      {
+        type: 'ul',
+        children: [
+          {
+            type: 'li',
+            children: [
+              { type: 'lic', children: [{ text: 'Level 0 Bullet' }] },
+              {
+                type: 'ol',
+                children: [
+                  {
+                    type: 'li',
+                    children: [
+                      { type: 'lic', children: [{ text: 'Level 1 Numbered' }] },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ];
+
+    const blob = await serializeToDocx(
+      content as any,
+      'Nested Lists and Scope Test',
+      {
+        header: {
+          image: { url: tinyPng, width: 150 },
+          text: 'First Page Only Header',
+          scope: 'first_page_only',
+        },
+        footer: {
+          text: 'Every Page Footer',
+          pageNumber: true,
+          scope: 'every_page',
+        },
+      }
+    );
+
+    assert.ok(blob.size > 2_000, 'Serialized DOCX with first_page_only header should be valid and >2KB');
   });
 });
 

@@ -17,8 +17,58 @@
 
 import { get, set, del } from 'idb-keyval';
 import { supabase } from '@/src/lib/supabase';
+import type { DocumentHeaderFooterOptions } from '@/src/components/editor/serializers/docxSerializer';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
+
+export interface DocumentEnvelope {
+  schemaVersion: 1;
+  type: 'document_envelope';
+  body: object[];
+  headerFooter?: DocumentHeaderFooterOptions | null;
+  wordCount?: number;
+  updatedAt?: string;
+}
+
+/**
+ * Wrap rich content and header/footer settings into a versioned envelope for persistence.
+ */
+export function wrapContentEnvelope(
+  content: object[],
+  headerFooter?: DocumentHeaderFooterOptions | null,
+  wordCount?: number
+): object {
+  return {
+    schemaVersion: 1,
+    type: 'document_envelope',
+    body: content,
+    headerFooter: headerFooter ?? null,
+    wordCount: wordCount ?? 0,
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+/**
+ * Unwrap content that may be a versioned envelope or a legacy raw array of Slate nodes.
+ */
+export function unwrapContentEnvelope(raw: unknown): {
+  content: object[];
+  headerFooter?: DocumentHeaderFooterOptions;
+} {
+  if (Array.isArray(raw)) {
+    return { content: raw };
+  }
+  if (raw && typeof raw === 'object') {
+    const obj = raw as Record<string, unknown>;
+    if (obj.type === 'document_envelope' && Array.isArray(obj.body)) {
+      return {
+        content: obj.body as object[],
+        headerFooter: (obj.headerFooter as DocumentHeaderFooterOptions) || undefined,
+      };
+    }
+  }
+  return { content: [{ type: 'p', children: [{ text: '' }] }] };
+}
 
 export interface DraftState {
   id: string;
@@ -28,6 +78,7 @@ export interface DraftState {
   templateName?: string;
   phase?: string;
   content: object[];
+  headerFooter?: DocumentHeaderFooterOptions;
   wordCount: number;
   revision: number;
   status: 'draft' | 'submitted' | 'locked';
@@ -284,13 +335,17 @@ export class DocumentHistoryStorage {
       await writeCached(resolution.cloudDraft);
     } else if (resolution.type === 'fork_local') {
       // Fork: create new draft with local content
+      const payloadContent = localState.headerFooter
+        ? wrapContentEnvelope(localState.content, localState.headerFooter, localState.wordCount)
+        : localState.content;
+
       await supabase.rpc('create_editor_draft', {
         p_id: resolution.newDraftId,
         p_title: `[Offline Copy] ${localState.title}`,
         p_template_id: localState.templateId ?? null,
         p_template_name: localState.templateName ?? null,
         p_phase: localState.phase ?? null,
-        p_content: localState.content,
+        p_content: payloadContent,
         p_word_count: localState.wordCount,
       });
     }
@@ -343,19 +398,40 @@ export class DocumentHistoryStorage {
 
     const save = async (): Promise<DraftState> => {
       this.onStatusChange?.('saving');
+      const payloadContent = state.headerFooter
+        ? wrapContentEnvelope(state.content, state.headerFooter, state.wordCount)
+        : state.content;
+
       const { data, error } = await supabase.rpc('save_editor_draft', {
         p_draft_id: this.draftId,
         p_expected_revision: this.cloudRevision,
         p_title: state.title,
-        p_content: state.content,
+        p_content: payloadContent,
         p_word_count: state.wordCount,
       });
       if (error) throw new Error(error.message);
 
-      const result = data as { conflict: boolean; draft?: DraftState; current?: DraftState };
+      const result = data as { conflict: boolean; draft?: any; current?: any };
 
       if (result.conflict) {
-        const remote = result.current!;
+        const rawRemote = result.current!;
+        const { content: remoteContent, headerFooter: remoteHF } = unwrapContentEnvelope(rawRemote.content);
+        const remote: DraftState = {
+          id: rawRemote.id,
+          userId: rawRemote.user_id,
+          title: rawRemote.title,
+          templateId: rawRemote.template_id,
+          templateName: rawRemote.template_name,
+          phase: rawRemote.phase,
+          content: remoteContent,
+          headerFooter: remoteHF,
+          wordCount: rawRemote.word_count,
+          revision: rawRemote.revision,
+          status: rawRemote.status,
+          submissionId: rawRemote.submission_id,
+          createdAt: rawRemote.created_at,
+          updatedAt: rawRemote.updated_at,
+        };
         this.onStatusChange?.('conflict');
         this.onConflict?.(state, remote);
         throw new Error('CONFLICT');
@@ -365,7 +441,11 @@ export class DocumentHistoryStorage {
       this.cloudRevision = saved.revision;
       if (this.pendingState === state) this.pendingState = null;
       this.onStatusChange?.('saved');
-      const acknowledged = { ...state, revision: saved.revision, updatedAt: saved.updatedAt };
+      const acknowledged: DraftState = {
+        ...state,
+        revision: saved.revision,
+        updatedAt: saved.updated_at || saved.updatedAt || new Date().toISOString(),
+      };
       await writeCached(acknowledged);
       this.onSaved?.(acknowledged);
       void this.maybeAutoVersion(state);

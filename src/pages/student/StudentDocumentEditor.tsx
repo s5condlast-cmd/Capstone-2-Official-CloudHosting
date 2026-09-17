@@ -28,13 +28,20 @@ import {
   type EditorComment,
   type EditorMode,
 } from '@/src/components/plate-ui/fixed-toolbar-buttons';
-import { downloadDocx, printToPdf, serializeToDocx } from '@/src/components/editor/serializers/docxSerializer';
+import {
+  downloadDocx,
+  printToPdf,
+  serializeToDocx,
+  type DocumentHeaderFooterOptions,
+} from '@/src/components/editor/serializers/docxSerializer';
 import {
   DocumentHistoryStorage,
   DraftState,
   SyncStatus,
   countWords,
   registerDraftInIndex,
+  unwrapContentEnvelope,
+  wrapContentEnvelope,
 } from '@/src/lib/documentHistoryStorage';
 import { submissionStorage } from '@/src/lib/submissionStorage';
 
@@ -44,6 +51,7 @@ interface LocalDraft {
   id: string;
   title: string;
   content: object[];
+  headerFooter?: DocumentHeaderFooterOptions;
   wordCount: number;
   revision: number;
   status: 'draft' | 'submitted' | 'locked';
@@ -191,10 +199,12 @@ export function StudentDocumentEditor() {
 
           if (error || !data) throw new Error('Draft not found or access denied.');
           const row = data as any;
+          const { content: unwrappedContent, headerFooter: unwrappedHF } = unwrapContentEnvelope(row.content);
           loadedDraft = {
             id: row.id,
             title: row.title,
-            content: row.content ?? [],
+            content: unwrappedContent,
+            headerFooter: unwrappedHF,
             wordCount: row.word_count,
             revision: row.revision,
             status: row.status,
@@ -295,6 +305,7 @@ export function StudentDocumentEditor() {
         templateName: draft.templateName ?? undefined,
         phase: draft.phase ?? undefined,
         content,
+        headerFooter: draft.headerFooter,
         wordCount: wc,
         revision: draft.revision,
         status: draft.status,
@@ -302,6 +313,33 @@ export function StudentDocumentEditor() {
         createdAt: draft.createdAt,
         updatedAt: new Date().toISOString(),
       };
+      storageRef.current.onChange(updatedState);
+    },
+    [draft, title, user]
+  );
+
+  // ── Header/Footer change ──────────────────────────────────────────────────
+  const handleHeaderFooterChange = useCallback(
+    (hf: DocumentHeaderFooterOptions) => {
+      if (!draft || !storageRef.current) return;
+      const content = editorRef.current?.getContent() ?? draft.content;
+      const updatedState: DraftState = {
+        id: draft.id,
+        userId: user!.id,
+        title,
+        templateId: draft.templateId ?? undefined,
+        templateName: draft.templateName ?? undefined,
+        phase: draft.phase ?? undefined,
+        content,
+        headerFooter: hf,
+        wordCount: editorRef.current?.getWordCount() ?? draft.wordCount,
+        revision: draft.revision,
+        status: draft.status,
+        submissionId: draft.submissionId,
+        createdAt: draft.createdAt,
+        updatedAt: new Date().toISOString(),
+      };
+      setDraft(prev => prev ? { ...prev, headerFooter: hf } : prev);
       storageRef.current.onChange(updatedState);
     },
     [draft, title, user]
@@ -321,6 +359,7 @@ export function StudentDocumentEditor() {
         templateName: draft.templateName ?? undefined,
         phase: draft.phase ?? undefined,
         content,
+        headerFooter: draft.headerFooter,
         wordCount: editorRef.current.getWordCount(),
         revision: draft.revision,
         status: draft.status,
@@ -347,9 +386,15 @@ export function StudentDocumentEditor() {
 
   // ── Restore from history ─────────────────────────────────────────────────
   const handleRestoreComplete = useCallback(
-    (newContent: object[], newRevision: number, newTitle: string) => {
+    (newContent: object[], newRevision: number, newTitle: string, newHeaderFooter?: DocumentHeaderFooterOptions) => {
       if (!draft) return;
-      setDraft(prev => prev ? { ...prev, content: newContent, revision: newRevision, title: newTitle } : prev);
+      setDraft(prev => prev ? {
+        ...prev,
+        content: newContent,
+        headerFooter: newHeaderFooter ?? prev.headerFooter,
+        revision: newRevision,
+        title: newTitle
+      } : prev);
       setTitle(newTitle);
       storageRef.current?.setCloudRevision(newRevision);
       setEditorEpoch((value) => value + 1);
@@ -360,13 +405,13 @@ export function StudentDocumentEditor() {
   // ── Export ───────────────────────────────────────────────────────────────
   const handleExportDocx = useCallback(async () => {
     const content = editorRef.current?.getContent() ?? draft?.content ?? [];
-    const headerFooter = editorRef.current?.getHeaderFooter?.();
+    const headerFooter = editorRef.current?.getHeaderFooter?.() ?? draft?.headerFooter;
     try {
       await downloadDocx(content as any[], title, headerFooter);
     } catch {
       toast.error('Export failed. Please try again.');
     }
-  }, [draft?.content, title]);
+  }, [draft?.content, draft?.headerFooter, title]);
 
   const handleExportPdf = useCallback(() => {
     printToPdf();
@@ -390,9 +435,10 @@ export function StudentDocumentEditor() {
         ?? storageRef.current?.getCloudRevision()
         ?? draft.revision;
 
-      // 2. Generate DOCX artifact
+      // 2. Generate DOCX artifact with complete header/footer options
       const content = editorRef.current?.getContent() ?? draft.content;
-      const blob = await serializeToDocx(content as any, title);
+      const headerFooter = editorRef.current?.getHeaderFooter?.() ?? draft.headerFooter;
+      const blob = await serializeToDocx(content as any, title, headerFooter);
       const file = new File([blob], `${title}.docx`, { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
 
       // 3. Upload to student_submissions and create student_documents row
@@ -429,6 +475,10 @@ export function StudentDocumentEditor() {
     if (!draft || !user) return;
     const newId = crypto.randomUUID();
     const content = editorRef.current?.getContent() ?? draft.content;
+    const headerFooter = editorRef.current?.getHeaderFooter?.() ?? draft.headerFooter;
+    const payloadContent = headerFooter
+      ? wrapContentEnvelope(content, headerFooter, countWords(content))
+      : content;
     try {
       const { error } = await supabase.rpc('create_editor_draft', {
         p_id: newId,
@@ -436,7 +486,7 @@ export function StudentDocumentEditor() {
         p_template_id: draft.templateId,
         p_template_name: draft.templateName,
         p_phase: draft.phase,
-        p_content: content,
+        p_content: payloadContent,
         p_word_count: countWords(content),
       });
       if (error) throw new Error(error.message);
@@ -625,6 +675,8 @@ export function StudentDocumentEditor() {
         key={`${draft?.id ?? 'new'}:${editorEpoch}`}
         ref={editorRef}
         initialContent={draft?.content ?? [{ type: 'p', children: [{ text: '' }] }]}
+        headerFooter={draft?.headerFooter}
+        onHeaderFooterChange={handleHeaderFooterChange}
         onChange={handleEditorChange}
         readOnly={isLocked && !isReviewer}
         placeholder="Start writing your document..."
@@ -638,6 +690,7 @@ export function StudentDocumentEditor() {
         currentUserRole={(user?.role as any) || 'student'}
         currentUserName={user?.name || (user as any)?.full_name || 'User'}
         syncStatus={syncStatus}
+        documentTitle={title}
       />
 
       {/* History drawer */}

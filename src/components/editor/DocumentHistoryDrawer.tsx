@@ -11,6 +11,8 @@ import { cn } from '@/src/lib/utils';
 import { supabase } from '@/src/lib/supabase';
 import { toast } from 'sonner';
 import { format, formatDistanceToNow } from 'date-fns';
+import { unwrapContentEnvelope } from '@/src/lib/documentHistoryStorage';
+import type { DocumentHeaderFooterOptions } from '@/src/components/editor/serializers/docxSerializer';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -30,7 +32,7 @@ interface DocumentHistoryDrawerProps {
   currentRevision: number;
   onBeforeRestore?: () => Promise<number>;
   onClose: () => void;
-  onRestoreComplete: (newContent: object[], newRevision: number, newTitle: string) => void;
+  onRestoreComplete: (newContent: object[], newRevision: number, newTitle: string, newHeaderFooter?: DocumentHeaderFooterOptions) => void;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -94,7 +96,8 @@ export function DocumentHistoryDrawer({
         if (err) throw new Error(err.message);
 
         const restored = data as { id: string; title: string; content: object[]; revision: number };
-        onRestoreComplete(restored.content, restored.revision, restored.title);
+        const { content: unwrappedContent, headerFooter: unwrappedHF } = unwrapContentEnvelope(restored.content);
+        onRestoreComplete(unwrappedContent, restored.revision, restored.title, unwrappedHF);
         toast.success('Version restored successfully.');
         onClose();
       } catch (e) {

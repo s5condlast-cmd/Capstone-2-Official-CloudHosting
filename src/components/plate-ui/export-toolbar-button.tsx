@@ -1,8 +1,7 @@
-'use client';
-
 import * as React from 'react';
 import { ArrowDownToLine, FileText } from 'lucide-react';
 import { useEditorRef } from 'platejs/react';
+import { toast } from 'sonner';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,29 +9,51 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { ToolbarButton } from './toolbar';
+import type { DocumentHeaderFooterOptions } from '@/src/components/editor/serializers/docxSerializer';
 
-export function ExportToolbarButton() {
+export interface ExportToolbarButtonProps {
+  documentTitle?: string;
+  headerFooter?: DocumentHeaderFooterOptions;
+  onExportWord?: () => void;
+  onExportPdf?: () => void;
+}
+
+export function ExportToolbarButton({
+  documentTitle,
+  headerFooter,
+  onExportWord,
+  onExportPdf,
+}: ExportToolbarButtonProps) {
   const editor = useEditorRef();
   const [open, setOpen] = React.useState(false);
 
   const handleExportWord = async () => {
     setOpen(false);
+    if (onExportWord) {
+      onExportWord();
+      return;
+    }
     try {
       const { downloadDocx } = await import('@/src/components/editor/serializers/docxSerializer');
       const nodes = editor?.children || [];
-      await downloadDocx(nodes, 'document.docx');
-    } catch {
-      // non-fatal
+      await downloadDocx(nodes, documentTitle || 'document', headerFooter);
+      toast.success('Word document exported successfully.');
+    } catch (e) {
+      toast.error('Word export failed. Please try again.');
     }
   };
 
   const handleExportPdf = async () => {
     setOpen(false);
+    if (onExportPdf) {
+      onExportPdf();
+      return;
+    }
     try {
       const { printToPdf } = await import('@/src/components/editor/serializers/docxSerializer');
       printToPdf();
     } catch {
-      // non-fatal
+      toast.error('PDF export failed. Please try again.');
     }
   };
 

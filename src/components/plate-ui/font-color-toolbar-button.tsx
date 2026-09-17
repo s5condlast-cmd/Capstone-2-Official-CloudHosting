@@ -22,13 +22,13 @@ export const DEFAULT_COLORS = [
 ];
 
 export interface FontColorToolbarButtonProps {
-  nodeType: 'color' | 'backgroundColor';
+  nodeType?: 'color' | 'backgroundColor';
   tooltip?: string;
   children?: React.ReactNode;
 }
 
 export function FontColorToolbarButton({
-  nodeType,
+  nodeType = 'color',
   tooltip,
   children,
 }: FontColorToolbarButtonProps) {
