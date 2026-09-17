@@ -72,7 +72,7 @@ export const DocumentRuler: React.FC<DocumentRulerProps> = ({
         {/* Central Printable Area (White / Bright 6.5 inches / 624px) */}
         <div
           style={{ width: `${printableWidth}px` }}
-          className="h-full bg-white dark:bg-zinc-900 relative shrink-0"
+          className="h-full bg-white relative shrink-0"
         />
 
         {/* Right Margin Gutter (Shaded 1 inch / 96px) */}
@@ -92,11 +92,11 @@ export const DocumentRuler: React.FC<DocumentRulerProps> = ({
                 {/* Tick Mark Line */}
                 <div
                   className={cn(
-                    'absolute bottom-0 w-px bg-zinc-400 dark:bg-zinc-600',
-                    isInch && 'h-2.5 bg-zinc-600 dark:bg-zinc-400',
-                    isHalfInch && 'h-2 bg-zinc-500 dark:bg-zinc-500',
-                    isQuarterInch && 'h-1.5 bg-zinc-400/80 dark:bg-zinc-600',
-                    !isInch && !isHalfInch && !isQuarterInch && 'h-1 bg-zinc-300 dark:bg-zinc-700'
+                    'absolute bottom-0 w-px bg-zinc-400',
+                    isInch && 'h-2.5 bg-zinc-700',
+                    isHalfInch && 'h-2 bg-zinc-600',
+                    isQuarterInch && 'h-1.5 bg-zinc-400',
+                    !isInch && !isHalfInch && !isQuarterInch && 'h-1 bg-zinc-300'
                   )}
                   style={{ left: `${px}px` }}
                 />
@@ -104,7 +104,7 @@ export const DocumentRuler: React.FC<DocumentRulerProps> = ({
                 {/* Inch Number Label */}
                 {showNumber && (
                   <span
-                    className="absolute top-0.5 text-[9px] font-mono font-medium text-zinc-500 dark:text-zinc-400 -translate-x-1/2 select-none"
+                    className="absolute top-0.5 text-[9px] font-mono font-medium text-zinc-700 -translate-x-1/2 select-none"
                     style={{ left: `${px}px` }}
                   >
                     {inchNumber}

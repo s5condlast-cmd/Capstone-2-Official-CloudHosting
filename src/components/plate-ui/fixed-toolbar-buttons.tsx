@@ -2397,7 +2397,7 @@ export function ModeToolbarButton({
         type="button"
         onClick={() => setOpen((prev) => !prev)}
         className={cn(
-          'inline-flex h-8.5 items-center gap-1.5 px-2 rounded-md text-xs font-semibold',
+          'inline-flex h-8 items-center gap-1.5 px-2.5 rounded-md text-xs font-semibold',
           'border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 shadow-xs',
           'text-zinc-800 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors'
         )}
@@ -2666,175 +2666,184 @@ export function FixedToolbarButtons({
     }
   };
 
+  const scrollRef = React.useRef<HTMLDivElement>(null);
+
+  const handleHorizontalWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    if (
+      scrollRef.current &&
+      Math.abs(e.deltaY) > Math.abs(e.deltaX) &&
+      scrollRef.current.scrollWidth > scrollRef.current.clientWidth
+    ) {
+      scrollRef.current.scrollLeft += e.deltaY;
+    }
+  };
+
   return (
-    <div className="flex w-full items-center gap-1 flex-wrap">
-      {/* 1. Search, Undo, Redo, Print, Paint format */}
-      <ToolbarGroup className="items-center">
-        <ToolbarButton
-          onClick={() => {
-            const searchStr = window.prompt('Find in document:');
-            if (searchStr && typeof (window as any).find === 'function') {
-              (window as any).find(searchStr);
-            }
-          }}
-          tooltip="Search in document (Ctrl+F)"
-          aria-label="Search in document"
-        >
-          <Search className="w-4 h-4" />
-        </ToolbarButton>
+    <div className="flex w-full items-center justify-between min-w-0 gap-1 select-none">
+      {/* ─── Scrollable Formatting Tools Track (Single Row, Never Wraps) ─── */}
+      <div
+        ref={scrollRef}
+        onWheel={handleHorizontalWheel}
+        className="flex-1 min-w-0 overflow-x-auto no-scrollbar py-0.5 flex items-center scroll-smooth"
+      >
+        <div className="flex items-center gap-0.5 sm:gap-1 flex-nowrap min-w-max">
+          {/* 1. Search, Undo, Redo, Print, Paint format */}
+          <ToolbarGroup className="items-center">
+            <ToolbarButton
+              onClick={() => {
+                const searchStr = window.prompt('Find in document:');
+                if (searchStr && typeof (window as any).find === 'function') {
+                  (window as any).find(searchStr);
+                }
+              }}
+              tooltip="Search in document (Ctrl+F)"
+              aria-label="Search in document"
+            >
+              <Search className="w-4 h-4" />
+            </ToolbarButton>
 
-        <ToolbarButton
-          onClick={() => editor?.undo?.()}
-          disabled={isViewing}
-          tooltip="Undo (Ctrl+Z)"
-          aria-label="Undo"
-        >
-          <Undo className="w-4 h-4" />
-        </ToolbarButton>
+            <ToolbarButton
+              onClick={() => editor?.undo?.()}
+              disabled={isViewing}
+              tooltip="Undo (Ctrl+Z)"
+              aria-label="Undo"
+            >
+              <Undo className="w-4 h-4" />
+            </ToolbarButton>
 
-        <ToolbarButton
-          onClick={() => editor?.redo?.()}
-          disabled={isViewing}
-          tooltip="Redo (Ctrl+Y)"
-          aria-label="Redo"
-        >
-          <Redo className="w-4 h-4" />
-        </ToolbarButton>
+            <ToolbarButton
+              onClick={() => editor?.redo?.()}
+              disabled={isViewing}
+              tooltip="Redo (Ctrl+Y)"
+              aria-label="Redo"
+            >
+              <Redo className="w-4 h-4" />
+            </ToolbarButton>
 
-        <ToolbarButton
-          onClick={() => window.print()}
-          tooltip="Print (Ctrl+P)"
-          aria-label="Print"
-        >
-          <Printer className="w-4 h-4" />
-        </ToolbarButton>
+            <ToolbarButton
+              onClick={() => window.print()}
+              tooltip="Print (Ctrl+P)"
+              aria-label="Print"
+            >
+              <Printer className="w-4 h-4" />
+            </ToolbarButton>
 
-        <PaintFormatButton editor={editor} disabled={isViewing} />
-      </ToolbarGroup>
+            <PaintFormatButton editor={editor} disabled={isViewing} />
+          </ToolbarGroup>
 
-      <ToolbarSeparator />
+          {/* 2. Zoom, Paragraph Style, Font Family, Font Size */}
+          <ToolbarGroup className={cn('items-center', isViewing && 'opacity-60')}>
+            <ZoomToolbarButton zoomLevel={zoomLevel} onZoomChange={onZoomChange} />
+            <TurnIntoToolbarButton editor={editor} />
+            <FontFamilyToolbarButton editor={editor} />
+            <FontSizeToolbarButton editor={editor} />
+          </ToolbarGroup>
 
-      {/* 2. Zoom, Paragraph Style, Font Family, Font Size */}
-      <ToolbarGroup className={cn('items-center', isViewing && 'opacity-60')}>
-        <ZoomToolbarButton zoomLevel={zoomLevel} onZoomChange={onZoomChange} />
-        <ToolbarSeparator />
-        <TurnIntoToolbarButton editor={editor} />
-        <FontFamilyToolbarButton editor={editor} />
-        <FontSizeToolbarButton editor={editor} />
-      </ToolbarGroup>
+          {/* 3. Text Formatting Marks: Bold, Italic, Underline, Strikethrough, Text Color, Highlight Color */}
+          <ToolbarGroup className={cn('items-center', isViewing && 'opacity-40 pointer-events-none')}>
+            <ToolbarButton
+              active={isBold}
+              onClick={() => toggleMark(editor, 'bold')}
+              tooltip="Bold (Ctrl+B)"
+            >
+              <Bold className="w-4 h-4" />
+            </ToolbarButton>
 
-      <ToolbarSeparator />
+            <ToolbarButton
+              active={isItalic}
+              onClick={() => toggleMark(editor, 'italic')}
+              tooltip="Italic (Ctrl+I)"
+            >
+              <Italic className="w-4 h-4" />
+            </ToolbarButton>
 
-      {/* 3. Text Formatting Marks: Bold, Italic, Underline, Strikethrough, Text Color, Highlight Color */}
-      <ToolbarGroup className={cn('items-center', isViewing && 'opacity-40 pointer-events-none')}>
-        <ToolbarButton
-          active={isBold}
-          onClick={() => toggleMark(editor, 'bold')}
-          tooltip="Bold (Ctrl+B)"
-        >
-          <Bold className="w-4 h-4" />
-        </ToolbarButton>
+            <ToolbarButton
+              active={isUnderline}
+              onClick={() => toggleMark(editor, 'underline')}
+              tooltip="Underline (Ctrl+U)"
+            >
+              <Underline className="w-4 h-4" />
+            </ToolbarButton>
 
-        <ToolbarButton
-          active={isItalic}
-          onClick={() => toggleMark(editor, 'italic')}
-          tooltip="Italic (Ctrl+I)"
-        >
-          <Italic className="w-4 h-4" />
-        </ToolbarButton>
+            <ToolbarButton
+              active={isStrikethrough}
+              onClick={() => toggleMark(editor, 'strikethrough')}
+              tooltip="Strikethrough"
+            >
+              <Strikethrough className="w-4 h-4" />
+            </ToolbarButton>
 
-        <ToolbarButton
-          active={isUnderline}
-          onClick={() => toggleMark(editor, 'underline')}
-          tooltip="Underline (Ctrl+U)"
-        >
-          <Underline className="w-4 h-4" />
-        </ToolbarButton>
+            <ColorPickerDropdown
+              editor={editor}
+              nodeType="color"
+              icon={Baseline}
+              tooltip="Text color"
+            />
 
-        <ToolbarButton
-          active={isStrikethrough}
-          onClick={() => toggleMark(editor, 'strikethrough')}
-          tooltip="Strikethrough"
-        >
-          <Strikethrough className="w-4 h-4" />
-        </ToolbarButton>
+            <ColorPickerDropdown
+              editor={editor}
+              nodeType="backgroundColor"
+              icon={PaintBucket}
+              tooltip="Highlight color"
+            />
+          </ToolbarGroup>
 
-        <ColorPickerDropdown
-          editor={editor}
-          nodeType="color"
-          icon={Baseline}
-          tooltip="Text color"
-        />
+          {/* 4. Link, Add Comment, Image */}
+          <ToolbarGroup className={cn('items-center', isViewing && 'opacity-40 pointer-events-none')}>
+            <ToolbarButton onClick={handleLink} tooltip="Insert link (Ctrl+K)">
+              <Link2 className="w-4 h-4" />
+            </ToolbarButton>
 
-        <ColorPickerDropdown
-          editor={editor}
-          nodeType="backgroundColor"
-          icon={PaintBucket}
-          tooltip="Highlight color"
-        />
-      </ToolbarGroup>
+            <CommentToolbarButton
+              editor={editor}
+              comments={comments}
+              onAddComment={onAddComment}
+              onResolveComment={onResolveComment}
+            />
 
-      <ToolbarSeparator />
+            <MediaToolbarButton editor={editor} />
+          </ToolbarGroup>
 
-      {/* 4. Link, Add Comment, Image */}
-      <ToolbarGroup className={cn('items-center', isViewing && 'opacity-40 pointer-events-none')}>
-        <ToolbarButton onClick={handleLink} tooltip="Insert link (Ctrl+K)">
-          <Link2 className="w-4 h-4" />
-        </ToolbarButton>
+          {/* 5. Alignment, Line Spacing, Lists, Indent, Clear Formatting */}
+          <ToolbarGroup className={cn('items-center', isViewing && 'opacity-40 pointer-events-none')}>
+            <AlignToolbarButton editor={editor} />
+            <LineHeightToolbarButton editor={editor} />
 
-        <CommentToolbarButton
-          editor={editor}
-          comments={comments}
-          onAddComment={onAddComment}
-          onResolveComment={onResolveComment}
-        />
+            <ToolbarButton
+              active={isTodo}
+              onClick={() => setBlockType(editor, isTodo ? 'p' : 'todo')}
+              tooltip="Checklist"
+            >
+              <ListTodo className="w-4 h-4" />
+            </ToolbarButton>
 
-        <MediaToolbarButton editor={editor} />
-      </ToolbarGroup>
+            <BulletedListToolbarButton editor={editor} />
+            <NumberedListToolbarButton editor={editor} />
 
-      <ToolbarSeparator />
+            <ToolbarButton onClick={handleOutdent} tooltip="Decrease indent">
+              <OutdentIcon className="w-4 h-4" />
+            </ToolbarButton>
 
-      {/* 5. Alignment, Line Spacing, Lists, Indent, Clear Formatting */}
-      <ToolbarGroup className={cn('items-center', isViewing && 'opacity-40 pointer-events-none')}>
-        <AlignToolbarButton editor={editor} />
-        <LineHeightToolbarButton editor={editor} />
+            <ToolbarButton onClick={handleIndent} tooltip="Increase indent">
+              <IndentIcon className="w-4 h-4" />
+            </ToolbarButton>
 
-        <ToolbarButton
-          active={isTodo}
-          onClick={() => setBlockType(editor, isTodo ? 'p' : 'todo')}
-          tooltip="Checklist"
-        >
-          <ListTodo className="w-4 h-4" />
-        </ToolbarButton>
+            <ToolbarButton
+              onClick={() => {
+                const marks = ['bold', 'italic', 'underline', 'strikethrough', 'code', 'color', 'backgroundColor', 'fontSize', 'fontFamily'];
+                marks.forEach((m) => removeMark(editor, m));
+                setBlockType(editor, 'p');
+              }}
+              tooltip="Clear formatting (Ctrl+\)"
+            >
+              <Eraser className="w-4 h-4" />
+            </ToolbarButton>
+          </ToolbarGroup>
+        </div>
+      </div>
 
-        <BulletedListToolbarButton editor={editor} />
-        <NumberedListToolbarButton editor={editor} />
-
-        <ToolbarButton onClick={handleOutdent} tooltip="Decrease indent">
-          <OutdentIcon className="w-4 h-4" />
-        </ToolbarButton>
-
-        <ToolbarButton onClick={handleIndent} tooltip="Increase indent">
-          <IndentIcon className="w-4 h-4" />
-        </ToolbarButton>
-
-        <ToolbarButton
-          onClick={() => {
-            const marks = ['bold', 'italic', 'underline', 'strikethrough', 'code', 'color', 'backgroundColor', 'fontSize', 'fontFamily'];
-            marks.forEach((m) => removeMark(editor, m));
-            setBlockType(editor, 'p');
-          }}
-          tooltip="Clear formatting (Ctrl+\)"
-        >
-          <Eraser className="w-4 h-4" />
-        </ToolbarButton>
-      </ToolbarGroup>
-
-      {/* Flexible spacer */}
-      <div className="flex-1 min-w-2" />
-
-      {/* 6. Pinned Right-End Cluster: Mode dropdown + Separator + Fullscreen up-chevron */}
-      <div className="ml-auto flex items-center gap-1 shrink-0 pl-1">
+      {/* ─── Pinned Right-End Cluster: Mode dropdown + Separator + Fullscreen chevron ─── */}
+      <div className="flex items-center gap-1 shrink-0 pl-2 ml-1 border-l border-zinc-200/80 dark:border-zinc-700/80">
         <ModeToolbarButton
           mode={mode}
           onModeChange={onModeChange}

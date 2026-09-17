@@ -113,8 +113,8 @@ export interface PlateEditorProps {
   onExportPdf?: () => void;
   onDuplicate?: () => void;
   onRename?: () => void;
-  /** Top Document Identity / Action Bar slot (optional custom component) */
-  topBar?: React.ReactNode;
+  /** Top Document Identity / Action Bar slot (can accept a render function passing menuBar) */
+  topBar?: React.ReactNode | ((props: { menuBar: React.ReactNode }) => React.ReactNode);
 }
 
 // ─── Default empty content ────────────────────────────────────────────────────
@@ -683,45 +683,59 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
             className
           )}
         >
-          {/* Top Document Identity / Action Row (if provided) */}
-          {topBar}
+          {/* Top Document Identity / Menu Bar Row */}
+          {(() => {
+            const menuBarElement = (
+              <DocumentMenuBar
+                editor={editor}
+                documentTitle={documentTitle || 'Untitled Document'}
+                isLocked={isEffectivelyReadOnly}
+                isReviewer={currentUserRole !== 'student'}
+                mode={activeMode}
+                onModeChange={(m) => {
+                  setInternalMode(m);
+                  onModeChange?.(m);
+                }}
+                showOutline={showOutline}
+                onToggleOutline={() => setShowOutline((prev) => !prev)}
+                showComments={showCommentsRail}
+                onToggleComments={() => setShowCommentsRail((prev) => !prev)}
+                showRuler={showRuler}
+                onToggleRuler={() => setShowRuler((prev) => !prev)}
+                isFullscreen={isFullscreen}
+                onToggleFullscreen={() => setIsFullscreen((prev) => !prev)}
+                zoomLevel={zoomLevel}
+                onZoomChange={setZoomLevel}
+                wordCount={currentWordCount}
+                onSaveVersion={onSaveVersion}
+                onShowHistory={onShowHistory}
+                onExportDocx={onExportDocx}
+                onExportPdf={onExportPdf}
+                onDuplicate={onDuplicate}
+                onRename={onRename}
+                onOpenHeaderFooter={(type) => setActiveHeaderFooter(type)}
+                onOpenImagePicker={() => {
+                  const url = window.prompt('Enter image URL:');
+                  if (url) {
+                    editor?.tf?.insertNodes?.([{ type: 'img', url, children: [{ text: '' }] }]);
+                  }
+                }}
+              />
+            );
 
-          {/* Google Docs Compact Menu Bar: File, Edit, View, Insert, Format, Tools */}
-          <DocumentMenuBar
-            editor={editor}
-            documentTitle={documentTitle || 'Untitled Document'}
-            isLocked={isEffectivelyReadOnly}
-            isReviewer={currentUserRole !== 'student'}
-            mode={activeMode}
-            onModeChange={(m) => {
-              setInternalMode(m);
-              onModeChange?.(m);
-            }}
-            showOutline={showOutline}
-            onToggleOutline={() => setShowOutline((prev) => !prev)}
-            showComments={showCommentsRail}
-            onToggleComments={() => setShowCommentsRail((prev) => !prev)}
-            showRuler={showRuler}
-            onToggleRuler={() => setShowRuler((prev) => !prev)}
-            isFullscreen={isFullscreen}
-            onToggleFullscreen={() => setIsFullscreen((prev) => !prev)}
-            zoomLevel={zoomLevel}
-            onZoomChange={setZoomLevel}
-            wordCount={currentWordCount}
-            onSaveVersion={onSaveVersion}
-            onShowHistory={onShowHistory}
-            onExportDocx={onExportDocx}
-            onExportPdf={onExportPdf}
-            onDuplicate={onDuplicate}
-            onRename={onRename}
-            onOpenHeaderFooter={(type) => setActiveHeaderFooter(type)}
-            onOpenImagePicker={() => {
-              const url = window.prompt('Enter image URL:');
-              if (url) {
-                editor?.tf?.insertNodes?.([{ type: 'img', url, children: [{ text: '' }] }]);
-              }
-            }}
-          />
+            if (typeof topBar === 'function') {
+              return topBar({ menuBar: menuBarElement });
+            }
+
+            return (
+              <>
+                {topBar}
+                <div className="w-full px-4 py-0.5 bg-white dark:bg-zinc-900 border-b border-zinc-200/60 dark:border-zinc-800/60 shrink-0">
+                  {menuBarElement}
+                </div>
+              </>
+            );
+          })()}
 
           {/* Fixed top pale rounded pill formatting toolbar */}
           <div className="w-full px-3 py-1 flex justify-center bg-zinc-50/50 dark:bg-zinc-900/50 border-b border-zinc-200/60 dark:border-zinc-800/60 shrink-0">
@@ -828,7 +842,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
             )}
 
             {/* Scrollable canvas containing the paper document sheet */}
-            <div ref={canvasRef} className="relative flex-1 flex flex-col min-h-0 overflow-hidden bg-[#f8fafd] dark:bg-zinc-950">
+            <div ref={canvasRef} className="relative flex-1 flex flex-col min-h-0 overflow-hidden bg-[#f0f4f9] dark:bg-[#131417]">
               <EditorContainer
               variant={isFullscreen ? 'fullWidth' : 'demo'}
               className={cn(
@@ -861,7 +875,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                 {/* ─── Authentic 8.5" × 11" US Letter Paper Sheet ─────────────── */}
                 <div
                   className={cn(
-                    'plate-paper-sheet w-[816px] max-w-[816px] min-h-[1056px] bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 shadow-[0_1px_3px_rgba(0,0,0,0.08),0_4px_16px_rgba(0,0,0,0.05)] dark:shadow-[0_4px_24px_rgba(0,0,0,0.5)] rounded-xs px-[96px] pb-[96px] flex flex-col relative transition-all',
+                    'plate-paper-sheet w-[816px] max-w-[816px] min-h-[1056px] bg-white text-zinc-900 border border-zinc-200/90 shadow-[0_1px_4px_rgba(0,0,0,0.12),0_8px_30px_rgba(0,0,0,0.15)] dark:shadow-[0_8px_36px_rgba(0,0,0,0.7)] rounded-[2px] px-[96px] pb-[96px] flex flex-col relative transition-all',
                     activeHeaderFooter && 'ring-1 ring-blue-500/40 shadow-md'
                   )}
                 >
@@ -901,7 +915,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                       spellCheck
                       autoFocus={!isEffectivelyReadOnly}
                       onKeyDown={handleKeyDown}
-                      className="flex-1 w-full min-h-[650px] p-0 border-0 shadow-none rounded-none focus-visible:outline-none"
+                      className="flex-1 w-full min-h-[650px] p-0 border-0 shadow-none rounded-none focus-visible:outline-none text-zinc-900 selection:bg-blue-100 selection:text-zinc-900 placeholder:text-zinc-400"
                     />
                   </div>
 

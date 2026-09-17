@@ -91,9 +91,9 @@ export const toolbarButtonVariants = cva(
     },
     variants: {
       size: {
-        default: 'h-8.5 min-w-8.5 px-2',
-        sm: 'h-8 min-w-8 px-2',
-        lg: 'h-9.5 min-w-9.5 px-2.5',
+        default: 'h-8 min-w-8 px-1.5',
+        sm: 'h-7.5 min-w-7.5 px-1.5',
+        lg: 'h-9 min-w-9 px-2.5',
       },
       variant: {
         default: 'bg-transparent',

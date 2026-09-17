@@ -531,103 +531,114 @@ export function StudentDocumentEditor() {
       <PlateEditor
         key={`${draft?.id ?? 'new'}:${editorEpoch}`}
         ref={editorRef}
-        topBar={
-          <div className="flex items-center gap-3 flex-wrap px-4 py-2.5 bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80 shrink-0">
-            <button
-              onClick={() => navigate('/student/documents')}
-              className="flex items-center gap-1 text-sm font-medium text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              Back
-            </button>
+        topBar={({ menuBar }) => (
+          <div className="flex items-center justify-between gap-3 px-4 py-2 bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80 shrink-0">
+            {/* Left: Back + Divider + SidebarTrigger + (Row 1: Title & Telemetry, Row 2: MenuBar) */}
+            <div className="flex items-center gap-3 min-w-0">
+              <button
+                onClick={() => navigate('/student/documents')}
+                className="flex items-center gap-1 text-sm font-medium text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors shrink-0 cursor-pointer"
+                title="Back to Repository"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                <span>Back</span>
+              </button>
 
-            <div className="h-4 w-px bg-zinc-200 dark:bg-zinc-800" />
+              <div className="h-9 w-px bg-zinc-200 dark:bg-zinc-800 shrink-0" />
 
-            <SidebarTrigger className="text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 cursor-pointer" />
+              <SidebarTrigger className="text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 cursor-pointer shrink-0" />
 
-            <div className="flex-1 min-w-0">
-              {titleEditing ? (
-                <input
-                  autoFocus
-                  value={title}
-                  onChange={e => handleTitleChange(e.target.value)}
-                  onBlur={() => setTitleEditing(false)}
-                  onKeyDown={e => { if (e.key === 'Enter') setTitleEditing(false); }}
-                  className="w-full text-base font-semibold bg-transparent border-b border-zinc-300 dark:border-zinc-600 focus:outline-none focus:border-primary text-zinc-900 dark:text-zinc-100 py-0.5"
-                  maxLength={120}
-                />
-              ) : (
-                <button
-                  onClick={() => !isLocked && setTitleEditing(true)}
-                  className={cn(
-                    'text-base font-semibold text-zinc-900 dark:text-zinc-100 text-left truncate w-full',
-                    !isLocked && 'hover:text-primary cursor-text'
+              <div className="flex flex-col justify-center min-w-0">
+                {/* Row 1: Document Title + Telemetry */}
+                <div className="flex items-center gap-2.5 min-w-0">
+                  {titleEditing ? (
+                    <input
+                      autoFocus
+                      value={title}
+                      onChange={e => handleTitleChange(e.target.value)}
+                      onBlur={() => setTitleEditing(false)}
+                      onKeyDown={e => { if (e.key === 'Enter') setTitleEditing(false); }}
+                      className="text-base font-semibold bg-transparent border-b border-zinc-300 dark:border-zinc-600 focus:outline-none focus:border-primary text-zinc-900 dark:text-zinc-100 py-0.5 min-w-[200px]"
+                      maxLength={120}
+                    />
+                  ) : (
+                    <button
+                      onClick={() => !isLocked && setTitleEditing(true)}
+                      className={cn(
+                        'text-base font-semibold text-zinc-900 dark:text-zinc-100 text-left truncate max-w-[360px]',
+                        !isLocked && 'hover:text-primary cursor-text'
+                      )}
+                      title={isLocked ? undefined : 'Click to rename'}
+                    >
+                      {title}
+                    </button>
                   )}
-                  title={isLocked ? undefined : 'Click to rename'}
-                >
-                  {title}
-                </button>
-              )}
+
+                  <TelemetryStrip syncStatus={syncStatus} wordCount={wordCount} isLocked={isLocked} />
+                </div>
+
+                {/* Row 2: File Edit View Insert Format Tools sitting directly beneath title */}
+                <div className="-ml-1.5 mt-0.5 flex items-center">
+                  {menuBar}
+                </div>
+              </div>
             </div>
 
-            {/* Telemetry */}
-            <TelemetryStrip syncStatus={syncStatus} wordCount={wordCount} isLocked={isLocked} />
-
-            {/* Actions */}
-            <div className="flex items-center gap-2 flex-wrap">
+            {/* Right: Actions */}
+            <div className="flex items-center gap-1.5 shrink-0">
               {!isLocked && (
                 <>
                   <button
                     onClick={handleSaveVersion}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
                   >
-                    <Save className="w-3.5 h-3.5" />
-                    Save Version
+                    <Save className="w-3.5 h-3.5 text-zinc-500" />
+                    <span className="hidden sm:inline">Save Version</span>
                   </button>
                   <button
                     onClick={() => setShowHistory(true)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
                   >
-                    <History className="w-3.5 h-3.5" />
-                    History
+                    <History className="w-3.5 h-3.5 text-zinc-500" />
+                    <span className="hidden sm:inline">History</span>
                   </button>
                 </>
               )}
               <button
                 onClick={handleExportDocx}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
               >
-                <Download className="w-3.5 h-3.5" />
-                Export Word
+                <Download className="w-3.5 h-3.5 text-zinc-500" />
+                <span className="hidden md:inline">Export Word</span>
               </button>
               <button
                 onClick={handleExportPdf}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
               >
-                <Download className="w-3.5 h-3.5" />
-                Export PDF
+                <Download className="w-3.5 h-3.5 text-zinc-500" />
+                <span className="hidden md:inline">Export PDF</span>
               </button>
               {isLocked ? (
                 <button
                   onClick={handleDuplicate}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:opacity-90 transition-opacity"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:opacity-90 transition-opacity shadow-xs cursor-pointer"
                 >
                   <Copy className="w-3.5 h-3.5" />
-                  Duplicate as Draft
+                  <span>Duplicate as Draft</span>
                 </button>
               ) : (
                 <button
                   onClick={() => void handleSubmit()}
                   disabled={submitting}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:opacity-90 disabled:opacity-50 transition-opacity"
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-600 dark:hover:bg-blue-700 transition-colors disabled:opacity-50 shadow-xs cursor-pointer"
                 >
                   {submitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
-                  Submit
+                  <span>Submit</span>
                 </button>
               )}
             </div>
           </div>
-        }
+        )}
         initialContent={draft?.content ?? [{ type: 'p', children: [{ text: '' }] }]}
         headerFooter={draft?.headerFooter}
         onHeaderFooterChange={handleHeaderFooterChange}
