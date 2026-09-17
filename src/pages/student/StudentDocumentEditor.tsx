@@ -95,7 +95,7 @@ export function StudentDocumentEditor() {
 
   // ── Multi-Role Reviewer Detection & Mode ─────────────────────────────────
   const isReviewer = user?.role === 'adviser' || user?.role === 'supervisor' || user?.role === 'admin' || searchParams.get('mode') === 'review';
-  const [editorMode, setEditorMode] = useState<EditorMode>(() => isReviewer ? 'suggesting' : 'editing');
+  const [editorMode, setEditorMode] = useState<EditorMode>(() => isReviewer ? 'suggestion' : 'editing');
 
   // ── Comments State & Local Synchronization ──────────────────────────────
   const [comments, setComments] = useState<EditorComment[]>(() => {
@@ -528,152 +528,106 @@ export function StudentDocumentEditor() {
   return (
     <div className="flex flex-col gap-4">
       {/* Top bar */}
-      <div className="flex items-center gap-3 flex-wrap">
-        <button
-          onClick={() => navigate('/student/documents')}
-          className="flex items-center gap-1 text-sm font-medium text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
-        >
-          <ChevronLeft className="w-4 h-4" />
-          Back
-        </button>
-
-        <div className="h-4 w-px bg-zinc-200 dark:bg-zinc-800" />
-
-        <SidebarTrigger className="text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 cursor-pointer" />
-
-        <div className="flex-1 min-w-0">
-          {titleEditing ? (
-            <input
-              autoFocus
-              value={title}
-              onChange={e => handleTitleChange(e.target.value)}
-              onBlur={() => setTitleEditing(false)}
-              onKeyDown={e => { if (e.key === 'Enter') setTitleEditing(false); }}
-              className="w-full text-base font-semibold bg-transparent border-b border-zinc-300 dark:border-zinc-600 focus:outline-none focus:border-primary text-zinc-900 dark:text-zinc-100 py-0.5"
-              maxLength={120}
-            />
-          ) : (
-            <button
-              onClick={() => !isLocked && setTitleEditing(true)}
-              className={cn(
-                'text-base font-semibold text-zinc-900 dark:text-zinc-100 text-left truncate w-full',
-                !isLocked && 'hover:text-primary cursor-text'
-              )}
-              title={isLocked ? undefined : 'Click to rename'}
-            >
-              {title}
-            </button>
-          )}
-        </div>
-
-        {/* Telemetry */}
-        <TelemetryStrip syncStatus={syncStatus} wordCount={wordCount} isLocked={isLocked} />
-
-        {/* Actions */}
-        <div className="flex items-center gap-2 flex-wrap">
-          {!isLocked && (
-            <>
-              <button
-                onClick={handleSaveVersion}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800"
-              >
-                <Save className="w-3.5 h-3.5" />
-                Save Version
-              </button>
-              <button
-                onClick={() => setShowHistory(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800"
-              >
-                <History className="w-3.5 h-3.5" />
-                History
-              </button>
-            </>
-          )}
-          <button
-            onClick={handleExportDocx}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800"
-          >
-            <Download className="w-3.5 h-3.5" />
-            Export Word
-          </button>
-          <button
-            onClick={handleExportPdf}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800"
-          >
-            <Download className="w-3.5 h-3.5" />
-            Export PDF
-          </button>
-          {isLocked ? (
-            <button
-              onClick={handleDuplicate}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:opacity-90"
-            >
-              <Copy className="w-3.5 h-3.5" />
-              Duplicate as Draft
-            </button>
-          ) : (
-            <button
-              onClick={() => void handleSubmit()}
-              disabled={submitting}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:opacity-90 disabled:opacity-50"
-            >
-              {submitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
-              Submit
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Banners */}
-      {showMultiTabWarning && (
-        <div className="flex items-center gap-2 px-4 py-2.5 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg text-sm text-amber-700 dark:text-amber-400">
-          <Users className="w-4 h-4 shrink-0" />
-          <span>This document is open in another tab. Editing here may cause conflicts.</span>
-          <button onClick={() => setShowMultiTabWarning(false)} className="ml-auto text-xs underline">Dismiss</button>
-        </div>
-      )}
-
-      {showConflictBanner && conflictLocal && conflictRemote && (
-        <ConflictBanner
-          local={conflictLocal}
-          remote={conflictRemote}
-          storage={storageRef.current}
-          onResolved={() => {
-            setShowConflictBanner(false);
-            setConflictLocal(null);
-            setConflictRemote(null);
-          }}
-          draftId={draft?.id ?? ''}
-        />
-      )}
-
-      {isReviewer && (
-        <div className="flex items-center justify-between p-3 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-800 dark:text-blue-200 text-xs shrink-0">
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-blue-500" />
-            <span className="font-semibold">Review Mode Active ({user?.role?.toUpperCase()}):</span>
-            <span>You can highlight text and leave comments, or use the Mode switcher to make direct edits.</span>
-          </div>
-          <button
-            onClick={() => navigate(-1)}
-            className="px-2.5 py-1 rounded-lg bg-blue-500 text-white font-medium hover:bg-blue-600 transition-colors"
-          >
-            Back to Review Hub
-          </button>
-        </div>
-      )}
-
-      {isLocked && !isReviewer && (
-        <div className="flex items-center gap-2 px-4 py-2.5 bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-lg text-sm text-zinc-600 dark:text-zinc-400">
-          <CheckCircle className="w-4 h-4 text-green-500 shrink-0" />
-          <span>This document has been officially submitted and is now read-only. Use "Duplicate as Draft" for further edits.</span>
-        </div>
-      )}
-
-      {/* Plate editor */}
       <PlateEditor
         key={`${draft?.id ?? 'new'}:${editorEpoch}`}
         ref={editorRef}
+        topBar={
+          <div className="flex items-center gap-3 flex-wrap px-4 py-2.5 bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80 shrink-0">
+            <button
+              onClick={() => navigate('/student/documents')}
+              className="flex items-center gap-1 text-sm font-medium text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              Back
+            </button>
+
+            <div className="h-4 w-px bg-zinc-200 dark:bg-zinc-800" />
+
+            <SidebarTrigger className="text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 cursor-pointer" />
+
+            <div className="flex-1 min-w-0">
+              {titleEditing ? (
+                <input
+                  autoFocus
+                  value={title}
+                  onChange={e => handleTitleChange(e.target.value)}
+                  onBlur={() => setTitleEditing(false)}
+                  onKeyDown={e => { if (e.key === 'Enter') setTitleEditing(false); }}
+                  className="w-full text-base font-semibold bg-transparent border-b border-zinc-300 dark:border-zinc-600 focus:outline-none focus:border-primary text-zinc-900 dark:text-zinc-100 py-0.5"
+                  maxLength={120}
+                />
+              ) : (
+                <button
+                  onClick={() => !isLocked && setTitleEditing(true)}
+                  className={cn(
+                    'text-base font-semibold text-zinc-900 dark:text-zinc-100 text-left truncate w-full',
+                    !isLocked && 'hover:text-primary cursor-text'
+                  )}
+                  title={isLocked ? undefined : 'Click to rename'}
+                >
+                  {title}
+                </button>
+              )}
+            </div>
+
+            {/* Telemetry */}
+            <TelemetryStrip syncStatus={syncStatus} wordCount={wordCount} isLocked={isLocked} />
+
+            {/* Actions */}
+            <div className="flex items-center gap-2 flex-wrap">
+              {!isLocked && (
+                <>
+                  <button
+                    onClick={handleSaveVersion}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+                  >
+                    <Save className="w-3.5 h-3.5" />
+                    Save Version
+                  </button>
+                  <button
+                    onClick={() => setShowHistory(true)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+                  >
+                    <History className="w-3.5 h-3.5" />
+                    History
+                  </button>
+                </>
+              )}
+              <button
+                onClick={handleExportDocx}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+              >
+                <Download className="w-3.5 h-3.5" />
+                Export Word
+              </button>
+              <button
+                onClick={handleExportPdf}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+              >
+                <Download className="w-3.5 h-3.5" />
+                Export PDF
+              </button>
+              {isLocked ? (
+                <button
+                  onClick={handleDuplicate}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:opacity-90 transition-opacity"
+                >
+                  <Copy className="w-3.5 h-3.5" />
+                  Duplicate as Draft
+                </button>
+              ) : (
+                <button
+                  onClick={() => void handleSubmit()}
+                  disabled={submitting}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:opacity-90 disabled:opacity-50 transition-opacity"
+                >
+                  {submitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                  Submit
+                </button>
+              )}
+            </div>
+          </div>
+        }
         initialContent={draft?.content ?? [{ type: 'p', children: [{ text: '' }] }]}
         headerFooter={draft?.headerFooter}
         onHeaderFooterChange={handleHeaderFooterChange}
@@ -691,6 +645,12 @@ export function StudentDocumentEditor() {
         currentUserName={user?.name || (user as any)?.full_name || 'User'}
         syncStatus={syncStatus}
         documentTitle={title}
+        onSaveVersion={handleSaveVersion}
+        onShowHistory={() => setShowHistory(true)}
+        onExportDocx={handleExportDocx}
+        onExportPdf={handleExportPdf}
+        onDuplicate={handleDuplicate}
+        onRename={() => setTitleEditing(true)}
       />
 
       {/* History drawer */}

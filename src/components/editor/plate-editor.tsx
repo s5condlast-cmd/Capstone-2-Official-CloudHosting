@@ -25,6 +25,7 @@ import {
   Hash,
   Move,
   Crop,
+  PanelLeftOpen,
 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import {
@@ -42,6 +43,9 @@ import {
   type EditorComment,
 } from '@/src/components/plate-ui/fixed-toolbar-buttons';
 import { FloatingToolbar } from '@/src/components/plate-ui/floating-toolbar';
+import { DocumentMenuBar } from './DocumentMenuBar';
+import { DocumentOutline } from './DocumentOutline';
+import { DocumentCommentsRail } from './DocumentCommentsRail';
 import { CommentsDrawer } from './CommentsDrawer';
 import { DocumentRuler } from './DocumentRuler';
 import { DocumentHeaderZone } from './DocumentHeaderZone';
@@ -102,6 +106,15 @@ export interface PlateEditorProps {
   syncStatus?: 'saved' | 'saving' | 'offline' | 'conflict' | 'error';
   /** Optional document title for export */
   documentTitle?: string;
+  /** Actions and callbacks */
+  onSaveVersion?: () => void;
+  onShowHistory?: () => void;
+  onExportDocx?: () => void;
+  onExportPdf?: () => void;
+  onDuplicate?: () => void;
+  onRename?: () => void;
+  /** Top Document Identity / Action Bar slot (optional custom component) */
+  topBar?: React.ReactNode;
 }
 
 // ─── Default empty content ────────────────────────────────────────────────────
@@ -161,6 +174,13 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
       onHeaderFooterChange,
       syncStatus = 'saved',
       documentTitle,
+      onSaveVersion,
+      onShowHistory,
+      onExportDocx,
+      onExportPdf,
+      onDuplicate,
+      onRename,
+      topBar,
     },
     ref
   ) {
@@ -168,13 +188,15 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
     const [PlateComp, setPlateComp] = useState<React.ComponentType<any> | null>(null);
     const [createEditorFn, setCreateEditorFn] = useState<((opts: any) => any) | null>(null);
 
-    // View mode, fullscreen, zoom, and comments drawer state
+    // View mode, fullscreen, zoom, outline, ruler, and comments state
     const [internalMode, setInternalMode] = useState<EditorMode>('editing');
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [zoomLevel, setZoomLevel] = useState(100);
     const [internalComments, setInternalComments] = useState<EditorComment[]>([]);
     const [showZoomIndicator, setShowZoomIndicator] = useState(false);
-    const [showCommentsDrawer, setShowCommentsDrawer] = useState(false);
+    const [showCommentsRail, setShowCommentsRail] = useState(() => (comments && comments.length > 0) || false);
+    const [showOutline, setShowOutline] = useState(true);
+    const [showRuler, setShowRuler] = useState(true);
     const [drawerQuote, setDrawerQuote] = useState('');
     const [currentWordCount, setCurrentWordCount] = useState(() => countWordsInContent(initialContent));
 
@@ -661,44 +683,88 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
             className
           )}
         >
-          {/* Fixed top toolbar matching official Plate layout */}
-          <FixedToolbar>
-            <FixedToolbarButtons
-              editor={editor}
-              mode={activeMode}
-              onModeChange={(m) => {
-                setInternalMode(m);
-                onModeChange?.(m);
-              }}
-              isFullscreen={isFullscreen}
-              onToggleFullscreen={() => setIsFullscreen((prev) => !prev)}
-              comments={comments ?? internalComments}
-              onOpenComments={() => setShowCommentsDrawer((prev) => !prev)}
-              onAddComment={(t, s) => {
-                const newC: EditorComment = {
-                  id: crypto.randomUUID(),
-                  author: currentUserName || 'Student',
-                  authorRole: currentUserRole || 'student',
-                  text: t,
-                  createdAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                  selectedText: s,
-                };
-                setInternalComments((prev) => [newC, ...prev]);
-                onAddComment?.(t, s);
-              }}
-              onResolveComment={(id) => {
-                setInternalComments((prev) =>
-                  prev.map((c) => (c.id === id ? { ...c, resolved: true } : c))
-                );
-                onResolveComment?.(id);
-              }}
-              documentTitle={documentTitle}
-              headerFooter={{ header: headerState, footer: footerState }}
-            />
-          </FixedToolbar>
+          {/* Top Document Identity / Action Row (if provided) */}
+          {topBar}
+
+          {/* Google Docs Compact Menu Bar: File, Edit, View, Insert, Format, Tools */}
+          <DocumentMenuBar
+            editor={editor}
+            documentTitle={documentTitle || 'Untitled Document'}
+            isLocked={isEffectivelyReadOnly}
+            isReviewer={currentUserRole !== 'student'}
+            mode={activeMode}
+            onModeChange={(m) => {
+              setInternalMode(m);
+              onModeChange?.(m);
+            }}
+            showOutline={showOutline}
+            onToggleOutline={() => setShowOutline((prev) => !prev)}
+            showComments={showCommentsRail}
+            onToggleComments={() => setShowCommentsRail((prev) => !prev)}
+            showRuler={showRuler}
+            onToggleRuler={() => setShowRuler((prev) => !prev)}
+            isFullscreen={isFullscreen}
+            onToggleFullscreen={() => setIsFullscreen((prev) => !prev)}
+            zoomLevel={zoomLevel}
+            onZoomChange={setZoomLevel}
+            wordCount={currentWordCount}
+            onSaveVersion={onSaveVersion}
+            onShowHistory={onShowHistory}
+            onExportDocx={onExportDocx}
+            onExportPdf={onExportPdf}
+            onDuplicate={onDuplicate}
+            onRename={onRename}
+            onOpenHeaderFooter={(type) => setActiveHeaderFooter(type)}
+            onOpenImagePicker={() => {
+              const url = window.prompt('Enter image URL:');
+              if (url) {
+                editor?.tf?.insertNodes?.([{ type: 'img', url, children: [{ text: '' }] }]);
+              }
+            }}
+          />
+
+          {/* Fixed top pale rounded pill formatting toolbar */}
+          <div className="w-full px-3 py-1 flex justify-center bg-zinc-50/50 dark:bg-zinc-900/50 border-b border-zinc-200/60 dark:border-zinc-800/60 shrink-0">
+            <FixedToolbar className="max-w-full">
+              <FixedToolbarButtons
+                editor={editor}
+                mode={activeMode}
+                onModeChange={(m) => {
+                  setInternalMode(m);
+                  onModeChange?.(m);
+                }}
+                isFullscreen={isFullscreen}
+                onToggleFullscreen={() => setIsFullscreen((prev) => !prev)}
+                zoomLevel={zoomLevel}
+                onZoomChange={setZoomLevel}
+                comments={comments ?? internalComments}
+                onOpenComments={() => setShowCommentsRail((prev) => !prev)}
+                onAddComment={(t, s) => {
+                  const newC: EditorComment = {
+                    id: crypto.randomUUID(),
+                    author: currentUserName || 'Student',
+                    authorRole: currentUserRole || 'student',
+                    text: t,
+                    createdAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    selectedText: s,
+                  };
+                  setInternalComments((prev) => [newC, ...prev]);
+                  onAddComment?.(t, s);
+                }}
+                onResolveComment={(id) => {
+                  setInternalComments((prev) =>
+                    prev.map((c) => (c.id === id ? { ...c, resolved: true } : c))
+                  );
+                  onResolveComment?.(id);
+                }}
+                documentTitle={documentTitle}
+                headerFooter={{ header: headerState, footer: footerState }}
+              />
+            </FixedToolbar>
+          </div>
 
           {/* Mode banner indicator */}
-          {activeMode === 'suggesting' && (
+          {(activeMode === 'suggesting' || activeMode === 'suggestion') && (
             <div className="flex items-center justify-between px-4 py-1.5 bg-amber-500/10 border-b border-amber-500/20 text-amber-800 dark:text-amber-200 text-xs font-medium shrink-0">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-3.5 h-3.5 text-amber-500" />
@@ -738,9 +804,32 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
             </div>
           )}
 
-          {/* Scrollable canvas containing the paper document sheet */}
-          <div ref={canvasRef} className="relative flex-1 flex flex-col min-h-0 overflow-hidden">
-            <EditorContainer
+          {/* ─── Google Docs Workspace (Outline + Paper Canvas + Comments Rail) ─── */}
+          <div className="flex-1 flex flex-row min-h-0 overflow-hidden relative">
+            {/* Left Collapsible Outline */}
+            <DocumentOutline
+              content={contentRef.current}
+              documentTitle={documentTitle || 'Untitled Document'}
+              isOpen={showOutline}
+              onClose={() => setShowOutline(false)}
+            />
+
+            {/* Subtle button to reopen outline if closed */}
+            {!showOutline && (
+              <button
+                type="button"
+                onClick={() => setShowOutline(true)}
+                title="Show document outline"
+                aria-label="Show document outline"
+                className="absolute top-3 left-3 z-30 p-1.5 rounded-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 shadow-xs hover:bg-zinc-50 dark:hover:bg-zinc-700 text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 transition-colors"
+              >
+                <PanelLeftOpen className="w-4 h-4" />
+              </button>
+            )}
+
+            {/* Scrollable canvas containing the paper document sheet */}
+            <div ref={canvasRef} className="relative flex-1 flex flex-col min-h-0 overflow-hidden bg-[#f8fafd] dark:bg-zinc-950">
+              <EditorContainer
               variant={isFullscreen ? 'fullWidth' : 'demo'}
               className={cn(
                 'flex-1 overflow-y-auto p-4 md:p-8',
@@ -759,13 +848,15 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                 }}
               >
                 {/* ─── Google Docs Horizontal Ruler ──────────────────────────── */}
-                <DocumentRuler
-                  width={816}
-                  leftMargin={96}
-                  rightMargin={96}
-                  zoom={zoomLevel}
-                  className="mb-0"
-                />
+                {showRuler && (
+                  <DocumentRuler
+                    width={816}
+                    leftMargin={96}
+                    rightMargin={96}
+                    zoom={zoomLevel}
+                    className="mb-0"
+                  />
+                )}
 
                 {/* ─── Authentic 8.5" × 11" US Letter Paper Sheet ─────────────── */}
                 <div
@@ -1351,6 +1442,49 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                 )}
               </div>
             )}
+            </div>
+
+            {/* Right Docked Comments Rail */}
+            <DocumentCommentsRail
+              open={showCommentsRail}
+              onClose={() => {
+                setShowCommentsRail(false);
+                setDrawerQuote('');
+              }}
+              comments={comments ?? internalComments}
+              onAddComment={(t, s) => {
+                const newC: EditorComment = {
+                  id: crypto.randomUUID(),
+                  author: currentUserName || 'Student',
+                  authorRole: currentUserRole || 'student',
+                  text: t,
+                  createdAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                  selectedText: s,
+                };
+                setInternalComments((prev) => [newC, ...prev]);
+                onAddComment?.(t, s);
+              }}
+              onResolveComment={(id) => {
+                setInternalComments((prev) =>
+                  prev.map((c) => (c.id === id ? { ...c, resolved: true } : c))
+                );
+                onResolveComment?.(id);
+              }}
+              onUnresolveComment={(id) => {
+                setInternalComments((prev) =>
+                  prev.map((c) => (c.id === id ? { ...c, resolved: false } : c))
+                );
+                onUnresolveComment?.(id);
+              }}
+              onDeleteComment={(id) => {
+                setInternalComments((prev) => prev.filter((c) => c.id !== id));
+                onDeleteComment?.(id);
+              }}
+              selectedText={drawerQuote}
+              onClearSelectedText={() => setDrawerQuote('')}
+              currentUserRole={currentUserRole}
+              currentUserName={currentUserName}
+            />
           </div>
 
           {/* Floating formatting toolbar on text selection */}
@@ -1359,52 +1493,10 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
               editor={editor}
               onAddComment={(selectedText) => {
                 setDrawerQuote(selectedText);
-                setShowCommentsDrawer(true);
+                setShowCommentsRail(true);
               }}
             />
           )}
-
-          {/* Comments and Feedback Side Panel Drawer */}
-          <CommentsDrawer
-            open={showCommentsDrawer}
-            onClose={() => {
-              setShowCommentsDrawer(false);
-              setDrawerQuote('');
-            }}
-            comments={comments ?? internalComments}
-            onAddComment={(t, s) => {
-              const newC: EditorComment = {
-                id: crypto.randomUUID(),
-                author: currentUserName || 'Student',
-                authorRole: currentUserRole || 'student',
-                text: t,
-                createdAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                selectedText: s,
-              };
-              setInternalComments((prev) => [newC, ...prev]);
-              onAddComment?.(t, s);
-            }}
-            onResolveComment={(id) => {
-              setInternalComments((prev) =>
-                prev.map((c) => (c.id === id ? { ...c, resolved: true } : c))
-              );
-              onResolveComment?.(id);
-            }}
-            onUnresolveComment={(id) => {
-              setInternalComments((prev) =>
-                prev.map((c) => (c.id === id ? { ...c, resolved: false } : c))
-              );
-              onUnresolveComment?.(id);
-            }}
-            onDeleteComment={(id) => {
-              setInternalComments((prev) => prev.filter((c) => c.id !== id));
-              onDeleteComment?.(id);
-            }}
-            selectedText={drawerQuote}
-            onClearSelectedText={() => setDrawerQuote('')}
-            currentUserRole={currentUserRole}
-            currentUserName={currentUserName}
-          />
         </div>
       </PlateComp>
     );

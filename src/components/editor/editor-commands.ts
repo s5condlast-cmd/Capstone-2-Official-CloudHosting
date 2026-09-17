@@ -100,3 +100,86 @@ export function toggleList(editor: any, type: ListType, listStyleType?: string):
     });
   }
 }
+
+export function setAlignment(editor: any, align: 'left' | 'center' | 'right' | 'justify'): void {
+  setBlockProperty(editor, 'align', align === 'left' ? undefined : align);
+}
+
+export function setLineHeight(editor: any, lineHeight: number): void {
+  setBlockProperty(editor, 'lineHeight', lineHeight);
+}
+
+export function indent(editor: any): void {
+  try {
+    const block = getActiveBlock(editor);
+    const current = Number(block?.indent) || 0;
+    setBlockProperty(editor, 'indent', Math.min(10, current + 1));
+  } catch { /* non-fatal */ }
+}
+
+export function outdent(editor: any): void {
+  try {
+    const block = getActiveBlock(editor);
+    const current = Number(block?.indent) || 0;
+    setBlockProperty(editor, 'indent', Math.max(0, current - 1));
+  } catch { /* non-fatal */ }
+}
+
+export function clearFormatting(editor: any): void {
+  try {
+    const marks = [
+      'bold', 'italic', 'underline', 'strikethrough', 'code',
+      'color', 'backgroundColor', 'fontSize', 'subscript', 'superscript', 'fontFamily'
+    ];
+    for (const m of marks) {
+      removeMark(editor, m);
+    }
+    setBlockType(editor, 'p');
+    setBlockProperty(editor, 'align', undefined);
+    setBlockProperty(editor, 'lineHeight', undefined);
+    setBlockProperty(editor, 'indent', 0);
+  } catch { /* non-fatal */ }
+}
+
+export function insertDivider(editor: any): void {
+  try {
+    editor?.tf?.insertNodes?.({
+      type: 'hr',
+      children: [{ text: '' }],
+    });
+  } catch { /* non-fatal */ }
+}
+
+export function insertDate(editor: any): void {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    editor?.tf?.insertNodes?.({
+      type: 'date',
+      date: today,
+      children: [{ text: '' }],
+    });
+  } catch { /* non-fatal */ }
+}
+
+export function insertTable(editor: any, rows = 3, cols = 3): void {
+  try {
+    const tableNode = {
+      type: 'table',
+      children: Array.from({ length: rows }, (_, r) => ({
+        type: 'tr',
+        header: r === 0,
+        children: Array.from({ length: cols }, () => ({
+          type: r === 0 ? 'th' : 'td',
+          children: [{ type: 'p', children: [{ text: '' }] }],
+        })),
+      })),
+    };
+    editor?.tf?.insertNodes?.(tableNode);
+  } catch { /* non-fatal */ }
+}
+
+export function selectAll(editor: any): void {
+  try {
+    editor?.tf?.select?.([]);
+  } catch { /* non-fatal */ }
+}

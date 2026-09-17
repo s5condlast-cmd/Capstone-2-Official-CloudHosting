@@ -105,8 +105,8 @@ export function FixedToolbar({ className, children, onWheel, ...props }: React.C
         {...props}
         onWheel={handleWheel}
         className={cn(
-          'sticky top-0 left-0 z-30 w-full justify-between overflow-x-auto rounded-t-xl',
-          'border border-zinc-200 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/95 pl-2.5 pr-8 py-2 min-h-[48px]',
+          'sticky top-0 left-0 z-30 w-full justify-between overflow-x-auto rounded-full',
+          'border border-zinc-200/90 dark:border-zinc-700/80 bg-[#edf2fa]/95 dark:bg-zinc-800/95 px-3 py-1 min-h-[44px]',
           'backdrop-blur-sm shadow-xs select-none print:hidden scroll-smooth',
           '[&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]',
           className

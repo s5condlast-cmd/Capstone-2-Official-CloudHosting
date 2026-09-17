@@ -71,6 +71,12 @@ import {
   ZoomOut,
   ExternalLink,
   Unlink,
+  Search,
+  Printer,
+  PaintRoller,
+  ChevronUp,
+  Undo,
+  Redo,
 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import {
@@ -526,6 +532,180 @@ const TURN_INTO_OPTIONS = [
   { id: 'toggle', label: 'Toggle list', icon: ListCollapse },
   { id: 'blockquote', label: 'Quote', icon: Quote },
 ];
+
+// ─── Google Docs Zoom Toolbar Button ──────────────────────────────────────────
+
+function ZoomToolbarButton({
+  zoomLevel = 100,
+  onZoomChange,
+}: {
+  zoomLevel?: number;
+  onZoomChange?: (z: number) => void;
+}) {
+  const [open, setOpen] = React.useState(false);
+  const anchorRef = React.useRef<HTMLDivElement>(null);
+
+  const ZOOM_LEVELS = [50, 75, 90, 100, 125, 150, 200];
+
+  return (
+    <div ref={anchorRef} className="relative">
+      <ToolbarButton
+        isDropdown
+        onClick={() => setOpen(!open)}
+        tooltip="Zoom"
+        aria-label="Zoom"
+        className="px-2 h-8.5 font-medium min-w-[72px] justify-between gap-1 text-xs"
+      >
+        <span className="font-semibold text-zinc-800 dark:text-zinc-200">
+          {zoomLevel}%
+        </span>
+        <ChevronDown className="w-3 h-3 text-zinc-400" />
+      </ToolbarButton>
+
+      <PortalPopover
+        anchorRef={anchorRef}
+        open={open}
+        onClose={() => setOpen(false)}
+        className="w-36 p-1 z-50 shadow-lg"
+      >
+        <button
+          type="button"
+          onMouseDown={(e) => {
+            e.preventDefault();
+            onZoomChange?.(100);
+            setOpen(false);
+          }}
+          className="w-full text-left px-2.5 py-1.5 rounded-md text-xs hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center justify-between"
+        >
+          <span>Fit (100%)</span>
+          {zoomLevel === 100 && <Check className="w-3.5 h-3.5 text-primary" />}
+        </button>
+        <div className="h-px bg-zinc-100 dark:bg-zinc-800 my-1" />
+        {ZOOM_LEVELS.map((z) => (
+          <button
+            key={z}
+            type="button"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              onZoomChange?.(z);
+              setOpen(false);
+            }}
+            className="w-full text-left px-2.5 py-1.5 rounded-md text-xs hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center justify-between"
+          >
+            <span>{z}%</span>
+            {zoomLevel === z && <Check className="w-3.5 h-3.5 text-primary" />}
+          </button>
+        ))}
+      </PortalPopover>
+    </div>
+  );
+}
+
+// ─── Google Docs Font Family Toolbar Button ───────────────────────────────────
+
+const FONT_OPTIONS = [
+  { label: 'Arial', value: 'Arial' },
+  { label: 'Times New Roman', value: 'Times New Roman' },
+  { label: 'Calibri', value: 'Calibri' },
+  { label: 'Georgia', value: 'Georgia' },
+  { label: 'Courier New', value: 'Courier New' },
+  { label: 'Trebuchet MS', value: 'Trebuchet MS' },
+  { label: 'Verdana', value: 'Verdana' },
+];
+
+function FontFamilyToolbarButton({ editor }: { editor: any }) {
+  const [open, setOpen] = React.useState(false);
+  const anchorRef = React.useRef<HTMLDivElement>(null);
+
+  const activeFont = getMarkValue(editor, 'fontFamily') || 'Arial';
+
+  return (
+    <div ref={anchorRef} className="relative">
+      <ToolbarButton
+        isDropdown
+        onClick={() => setOpen(!open)}
+        tooltip="Font family"
+        aria-label="Font family"
+        className="px-2.5 h-8.5 font-medium min-w-[110px] max-w-[130px] justify-between gap-1.5 text-xs truncate"
+      >
+        <span className="truncate font-medium text-zinc-800 dark:text-zinc-200" style={{ fontFamily: activeFont }}>
+          {activeFont}
+        </span>
+        <ChevronDown className="w-3 h-3 text-zinc-400 shrink-0" />
+      </ToolbarButton>
+
+      <PortalPopover
+        anchorRef={anchorRef}
+        open={open}
+        onClose={() => setOpen(false)}
+        className="w-48 max-h-72 overflow-y-auto p-1.5 z-50 shadow-lg"
+      >
+        <div className="px-2.5 py-1 text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
+          Fonts
+        </div>
+        {FONT_OPTIONS.map((f) => (
+          <button
+            key={f.value}
+            type="button"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              addMark(editor, 'fontFamily', f.value);
+              setOpen(false);
+            }}
+            className="w-full text-left px-2.5 py-1.5 rounded-md text-xs hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center justify-between"
+            style={{ fontFamily: f.value }}
+          >
+            <span>{f.label}</span>
+            {activeFont === f.value && <Check className="w-3.5 h-3.5 text-primary shrink-0" />}
+          </button>
+        ))}
+      </PortalPopover>
+    </div>
+  );
+}
+
+// ─── Google Docs Paint Format Button ──────────────────────────────────────────
+
+function PaintFormatButton({ editor, disabled }: { editor: any; disabled?: boolean }) {
+  const [activeMarks, setActiveMarks] = React.useState<Record<string, any> | null>(null);
+
+  const handleClick = () => {
+    if (disabled) return;
+    if (activeMarks) {
+      setActiveMarks(null);
+    } else {
+      const marks = editor?.api?.marks?.() || {};
+      setActiveMarks(marks);
+    }
+  };
+
+  React.useEffect(() => {
+    if (!activeMarks || !editor?.on) return;
+    const applyMarks = () => {
+      try {
+        if (activeMarks && Object.keys(activeMarks).length > 0) {
+          editor?.tf?.addMarks?.(activeMarks);
+        }
+      } catch { /* non-fatal */ }
+      setActiveMarks(null);
+    };
+
+    const unsub = editor.on('change', applyMarks);
+    return () => unsub?.();
+  }, [activeMarks, editor]);
+
+  return (
+    <ToolbarButton
+      active={Boolean(activeMarks)}
+      onClick={handleClick}
+      tooltip={activeMarks ? 'Format copied. Click text to apply' : 'Paint format'}
+      aria-label="Paint format"
+      disabled={disabled}
+    >
+      <PaintRoller className="w-4 h-4" />
+    </ToolbarButton>
+  );
+}
 
 function TurnIntoToolbarButton({ editor }: { editor: any }) {
   const [open, setOpen] = React.useState(false);
@@ -1986,6 +2166,7 @@ function MoreToolbarButton({ editor }: { editor: any }) {
 export interface EditorComment {
   id: string;
   author: string;
+  authorRole?: 'student' | 'adviser' | 'supervisor' | 'admin';
   text: string;
   createdAt: string;
   selectedText?: string;
@@ -2167,7 +2348,7 @@ export function CommentToolbarButton({
 
 // ─── Mode Switcher Dropdown (Editing, Suggesting, Viewing) ─────────────────────
 
-export type EditorMode = 'editing' | 'viewing' | 'suggestion';
+export type EditorMode = 'editing' | 'viewing' | 'suggestion' | 'suggesting';
 
 interface ModeToolbarButtonProps {
   mode?: EditorMode;
@@ -2413,8 +2594,11 @@ export interface FixedToolbarButtonsProps {
   zoomLevel?: number;
   onZoomChange?: (zoom: number) => void;
   comments?: EditorComment[];
+  onOpenComments?: () => void;
   onAddComment?: (text: string, selectedText?: string) => void;
   onResolveComment?: (id: string) => void;
+  documentTitle?: string;
+  headerFooter?: any;
 }
 
 export function FixedToolbarButtons({
@@ -2426,8 +2610,11 @@ export function FixedToolbarButtons({
   zoomLevel = 100,
   onZoomChange,
   comments = [],
+  onOpenComments,
   onAddComment,
   onResolveComment,
+  documentTitle,
+  headerFooter,
 }: FixedToolbarButtonsProps) {
   const [, forceUpdate] = React.useReducer((x) => x + 1, 0);
 
@@ -2481,15 +2668,65 @@ export function FixedToolbarButtons({
 
   return (
     <div className="flex w-full items-center gap-1 flex-wrap">
-      {/* 1. Insert (+ v), Turn Into (Heading 1 v), Font Size ([- 12 +]) */}
-      <ToolbarGroup className={cn(isViewing && 'opacity-40 pointer-events-none')}>
-        <InsertToolbarButton editor={editor} />
+      {/* 1. Search, Undo, Redo, Print, Paint format */}
+      <ToolbarGroup className="items-center">
+        <ToolbarButton
+          onClick={() => {
+            const searchStr = window.prompt('Find in document:');
+            if (searchStr && typeof (window as any).find === 'function') {
+              (window as any).find(searchStr);
+            }
+          }}
+          tooltip="Search in document (Ctrl+F)"
+          aria-label="Search in document"
+        >
+          <Search className="w-4 h-4" />
+        </ToolbarButton>
+
+        <ToolbarButton
+          onClick={() => editor?.undo?.()}
+          disabled={isViewing}
+          tooltip="Undo (Ctrl+Z)"
+          aria-label="Undo"
+        >
+          <Undo className="w-4 h-4" />
+        </ToolbarButton>
+
+        <ToolbarButton
+          onClick={() => editor?.redo?.()}
+          disabled={isViewing}
+          tooltip="Redo (Ctrl+Y)"
+          aria-label="Redo"
+        >
+          <Redo className="w-4 h-4" />
+        </ToolbarButton>
+
+        <ToolbarButton
+          onClick={() => window.print()}
+          tooltip="Print (Ctrl+P)"
+          aria-label="Print"
+        >
+          <Printer className="w-4 h-4" />
+        </ToolbarButton>
+
+        <PaintFormatButton editor={editor} disabled={isViewing} />
+      </ToolbarGroup>
+
+      <ToolbarSeparator />
+
+      {/* 2. Zoom, Paragraph Style, Font Family, Font Size */}
+      <ToolbarGroup className={cn('items-center', isViewing && 'opacity-60')}>
+        <ZoomToolbarButton zoomLevel={zoomLevel} onZoomChange={onZoomChange} />
+        <ToolbarSeparator />
         <TurnIntoToolbarButton editor={editor} />
+        <FontFamilyToolbarButton editor={editor} />
         <FontSizeToolbarButton editor={editor} />
       </ToolbarGroup>
 
-      {/* 2. Marks: Bold, Italic, Underline, Strikethrough, Inline Code, Text Color, Background Color */}
-      <ToolbarGroup className={cn(isViewing && 'opacity-40 pointer-events-none')}>
+      <ToolbarSeparator />
+
+      {/* 3. Text Formatting Marks: Bold, Italic, Underline, Strikethrough, Text Color, Highlight Color */}
+      <ToolbarGroup className={cn('items-center', isViewing && 'opacity-40 pointer-events-none')}>
         <ToolbarButton
           active={isBold}
           onClick={() => toggleMark(editor, 'bold')}
@@ -2526,80 +2763,78 @@ export function FixedToolbarButtons({
           editor={editor}
           nodeType="color"
           icon={Baseline}
-          tooltip="Text Color"
+          tooltip="Text color"
         />
 
         <ColorPickerDropdown
           editor={editor}
           nodeType="backgroundColor"
           icon={PaintBucket}
-          tooltip="Background Color"
+          tooltip="Highlight color"
         />
       </ToolbarGroup>
 
-      {/* 3. Alignment, Numbered List, Bulleted List, To-do list, Toggle list */}
-      <ToolbarGroup className={cn(isViewing && 'opacity-40 pointer-events-none')}>
-        <AlignToolbarButton editor={editor} />
-        <NumberedListToolbarButton editor={editor} />
-        <BulletedListToolbarButton editor={editor} />
+      <ToolbarSeparator />
 
-        <ToolbarButton
-          active={isTodo}
-          onClick={() => setBlockType(editor, isTodo ? 'p' : 'todo')}
-          tooltip="To-do checklist"
-        >
-          <ListTodo className="w-4 h-4" />
-        </ToolbarButton>
-
-        <ToolbarButton
-          active={isToggle}
-          onClick={() => setBlockType(editor, isToggle ? 'p' : 'toggle')}
-          tooltip="Toggle list"
-        >
-          <ListCollapse className="w-4 h-4" />
-        </ToolbarButton>
-      </ToolbarGroup>
-
-      {/* 4. Link, Table, Emoji */}
-      <ToolbarGroup className={cn(isViewing && 'opacity-40 pointer-events-none')}>
-        <ToolbarButton onClick={handleLink} tooltip="Insert Link">
+      {/* 4. Link, Add Comment, Image */}
+      <ToolbarGroup className={cn('items-center', isViewing && 'opacity-40 pointer-events-none')}>
+        <ToolbarButton onClick={handleLink} tooltip="Insert link (Ctrl+K)">
           <Link2 className="w-4 h-4" />
         </ToolbarButton>
 
-        <LinkToolbarButton editor={editor} />
-        <TableToolbarButton editor={editor} />
-        <EmojiToolbarButton editor={editor} />
-      </ToolbarGroup>
-
-      {/* 5. Unified Media Suite & Speech to Text */}
-      <ToolbarGroup className={cn(isViewing && 'opacity-40 pointer-events-none')}>
-        <MediaToolbarButton editor={editor} />
-        <SpeechToTextToolbarButton editor={editor} disabled={isViewing} />
-      </ToolbarGroup>
-
-      {/* 6. Line Height, Outdent, Indent */}
-      <ToolbarGroup className={cn(isViewing && 'opacity-40 pointer-events-none', '[&>div[role=separator]]:hidden')}>
-        <LineHeightToolbarButton editor={editor} />
-
-        <ToolbarButton onClick={handleOutdent} tooltip="Decrease Indent">
-          <OutdentIcon className="w-4 h-4" />
-        </ToolbarButton>
-
-        <ToolbarButton onClick={handleIndent} tooltip="Increase Indent">
-          <IndentIcon className="w-4 h-4" />
-        </ToolbarButton>
-      </ToolbarGroup>
-
-      {/* 7. Right-Aligned Actions (Comment, Mode, Fullscreen) touching container edge */}
-      <div className="ml-auto flex items-center gap-1 shrink-0">
-        <ToolbarSeparator />
         <CommentToolbarButton
           editor={editor}
           comments={comments}
           onAddComment={onAddComment}
           onResolveComment={onResolveComment}
         />
-        <ToolbarSeparator />
+
+        <MediaToolbarButton editor={editor} />
+      </ToolbarGroup>
+
+      <ToolbarSeparator />
+
+      {/* 5. Alignment, Line Spacing, Lists, Indent, Clear Formatting */}
+      <ToolbarGroup className={cn('items-center', isViewing && 'opacity-40 pointer-events-none')}>
+        <AlignToolbarButton editor={editor} />
+        <LineHeightToolbarButton editor={editor} />
+
+        <ToolbarButton
+          active={isTodo}
+          onClick={() => setBlockType(editor, isTodo ? 'p' : 'todo')}
+          tooltip="Checklist"
+        >
+          <ListTodo className="w-4 h-4" />
+        </ToolbarButton>
+
+        <BulletedListToolbarButton editor={editor} />
+        <NumberedListToolbarButton editor={editor} />
+
+        <ToolbarButton onClick={handleOutdent} tooltip="Decrease indent">
+          <OutdentIcon className="w-4 h-4" />
+        </ToolbarButton>
+
+        <ToolbarButton onClick={handleIndent} tooltip="Increase indent">
+          <IndentIcon className="w-4 h-4" />
+        </ToolbarButton>
+
+        <ToolbarButton
+          onClick={() => {
+            const marks = ['bold', 'italic', 'underline', 'strikethrough', 'code', 'color', 'backgroundColor', 'fontSize', 'fontFamily'];
+            marks.forEach((m) => removeMark(editor, m));
+            setBlockType(editor, 'p');
+          }}
+          tooltip="Clear formatting (Ctrl+\)"
+        >
+          <Eraser className="w-4 h-4" />
+        </ToolbarButton>
+      </ToolbarGroup>
+
+      {/* Flexible spacer */}
+      <div className="flex-1 min-w-2" />
+
+      {/* 6. Pinned Right-End Cluster: Mode dropdown + Separator + Fullscreen up-chevron */}
+      <div className="ml-auto flex items-center gap-1 shrink-0 pl-1">
         <ModeToolbarButton
           mode={mode}
           onModeChange={onModeChange}
@@ -2608,12 +2843,19 @@ export function FixedToolbarButtons({
         <ToolbarButton
           active={isFullscreen}
           onClick={onToggleFullscreen}
-          tooltip={isFullscreen ? 'Exit full screen (Esc)' : 'Full screen'}
+          tooltip={isFullscreen ? 'Exit full screen (Esc)' : 'Enter full screen'}
+          aria-label={isFullscreen ? 'Exit full screen (Esc)' : 'Enter full screen'}
+          className={cn(
+            'p-1.5 h-8 w-8 rounded-full transition-colors flex items-center justify-center',
+            isFullscreen
+              ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40'
+              : 'text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200/60 dark:hover:bg-zinc-700/60'
+          )}
         >
           {isFullscreen ? (
-            <Minimize2 className="w-4 h-4 text-primary" />
+            <ChevronDown className="w-4 h-4" />
           ) : (
-            <Maximize2 className="w-4 h-4" />
+            <ChevronUp className="w-4 h-4" />
           )}
         </ToolbarButton>
       </div>

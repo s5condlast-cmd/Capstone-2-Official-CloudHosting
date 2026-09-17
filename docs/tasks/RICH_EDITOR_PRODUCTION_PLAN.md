@@ -2,6 +2,8 @@
 
 Date: 2026-09-18. Status: proposed implementation plan; no application changes made.
 
+UI companion: [Google Docs reference layout plan](GOOGLE_DOCS_EDITOR_UI_PLAN.md) specifies the user's screenshot-based layout, omits Extensions and Help, and assigns fullscreen to the arrow beside Editing. Its current-code notes supersede older persistence/submission observations below where those have since changed.
+
 ## Target and accuracy contract
 
 The user confirmed that **official school DOCX/PDF templates are the first release priority**. Students must be able to complete those templates without losing official wording, logos, tables, signatures, formatting, or page layout. The adviser must receive exactly the document the student reviewed.

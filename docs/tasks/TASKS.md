@@ -4,6 +4,8 @@
 
 Production-readiness follow-up: [Rich editor production and DOCX/PDF fidelity plan](RICH_EDITOR_PRODUCTION_PLAN.md). This defines the proposed implementation order and certification gates for official school templates.
 
+UI follow-up: [Google Docs reference editor plan](GOOGLE_DOCS_EDITOR_UI_PLAN.md), including six menus, synchronized system actions, and the fullscreen arrow beside Editing.
+
 - [x] Scan the official Plate component catalogue (47 editor UI components and 38 node components) and map it to the portal's `platejs@53.3.11` implementation.
 - [x] Publish the detailed capability/status matrix in [`docs/PLATE_EDITOR_COMPONENT_AUDIT.md`](../PLATE_EDITOR_COMPONENT_AUDIT.md).
 - [x] Register visible Plate renderers for all toolbar-facing blocks, inline nodes, void nodes, and text marks.
