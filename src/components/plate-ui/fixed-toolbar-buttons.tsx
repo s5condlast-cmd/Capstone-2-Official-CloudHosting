@@ -2687,21 +2687,8 @@ export function FixedToolbarButtons({
         className="flex-1 min-w-0 overflow-x-auto no-scrollbar py-0.5 flex items-center scroll-smooth"
       >
         <div className="flex items-center gap-0.5 sm:gap-1 flex-nowrap min-w-max">
-          {/* 1. Search, Undo, Redo, Print, Paint format */}
+          {/* 1. Undo, Redo, Print */}
           <ToolbarGroup className="items-center">
-            <ToolbarButton
-              onClick={() => {
-                const searchStr = window.prompt('Find in document:');
-                if (searchStr && typeof (window as any).find === 'function') {
-                  (window as any).find(searchStr);
-                }
-              }}
-              tooltip="Search in document (Ctrl+F)"
-              aria-label="Search in document"
-            >
-              <Search className="w-4 h-4" />
-            </ToolbarButton>
-
             <ToolbarButton
               onClick={() => editor?.undo?.()}
               disabled={isViewing}
@@ -2727,8 +2714,6 @@ export function FixedToolbarButtons({
             >
               <Printer className="w-4 h-4" />
             </ToolbarButton>
-
-            <PaintFormatButton editor={editor} disabled={isViewing} />
           </ToolbarGroup>
 
           {/* 2. Zoom, Paragraph Style, Font Family, Font Size */}
