@@ -214,17 +214,19 @@ export function SiteHeader({ user, theme, onToggleTheme, onSearchClick, onLogout
 
         {/* Calendar Button */}
         {user && (
-          <Link to={getCalendarRoute(user.role)}>
-            <Button
-              variant="ghost"
-              size="icon"
-              title="Daily Time Record / Calendar"
-              className="size-8 text-muted-foreground hover:text-foreground cursor-pointer"
-            >
-              <CalendarIcon className="size-4" />
-              <span className="sr-only">Calendar</span>
-            </Button>
-          </Link>
+          <Button
+            render={<Link to={getCalendarRoute(user.role)} />}
+            variant="ghost"
+            size="icon"
+            title="Daily Time Record / Calendar"
+            className={cn(
+              "size-8 text-muted-foreground hover:text-foreground cursor-pointer",
+              location.pathname.endsWith("/calendar") && "bg-accent text-foreground font-semibold"
+            )}
+          >
+            <CalendarIcon className="size-4" />
+            <span className="sr-only">Calendar</span>
+          </Button>
         )}
 
         {/* Theme Toggle */}
