@@ -103,19 +103,26 @@ export function StudentDocumentEditor() {
   const exitFullscreenRef = useRef<(() => void) | null>(null);
 
   const getReturnRoute = useCallback(() => {
+    const returnUrlParam = searchParams.get('returnUrl');
+    if (returnUrlParam) return returnUrlParam;
+
+    const phaseParam = draft?.phase ? `?phase=${draft.phase}` : '';
     switch (user?.role) {
       case 'admin': return '/admin/documents';
       case 'adviser': return '/adviser/review';
       case 'supervisor': return '/supervisor/interns';
-      case 'student': default: return '/student/documents';
+      case 'student': default: return `/student/documents${phaseParam}`;
     }
-  }, [user?.role]);
+  }, [user?.role, searchParams, draft?.phase]);
 
   const handleSafeNavigate = useCallback(
     async (to: string) => {
       try {
         if (storageRef.current) {
-          await storageRef.current.flushNow();
+          await Promise.race([
+            storageRef.current.flushNow(1000),
+            new Promise((resolve) => setTimeout(resolve, 400)),
+          ]);
         }
       } catch (err) {
         console.warn('Storage flush error during navigation:', err);
@@ -565,8 +572,8 @@ export function StudentDocumentEditor() {
                   type="button"
                   onClick={() => void handleSafeNavigate(getReturnRoute())}
                   className="group relative flex items-center justify-center p-0.5 rounded-lg text-zinc-800 dark:text-zinc-200 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-colors shrink-0 cursor-pointer shadow-none border-0 bg-transparent"
-                  title="Back to Documents"
-                  aria-label="Back to Documents"
+                  title={draft?.templateName ? `Back to ${draft.templateName} in Repository` : "Back to Documents"}
+                  aria-label={draft?.templateName ? `Back to ${draft.templateName} in Repository` : "Back to Documents"}
                 >
                 <div className="relative flex items-center justify-center w-10 h-[46px] transition-transform group-hover:scale-105">
                   <FileText size={46} className="w-10 h-[46px] text-zinc-800 dark:text-zinc-200 group-hover:opacity-0 transition-opacity" />

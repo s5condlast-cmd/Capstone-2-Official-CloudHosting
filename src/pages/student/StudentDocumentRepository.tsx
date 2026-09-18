@@ -9,7 +9,7 @@
  * - Template actions: Download DOCX, Download PDF, Edit in Editor
  */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   FileText, Download, Edit3, Trash2, RotateCcw,
   Plus, RefreshCw, AlertCircle, Loader2, FolderOpen,
@@ -59,9 +59,16 @@ const PHASES: { key: Phase; label: string }[] = [
 
 export function StudentDocumentRepository() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const phaseQuery = searchParams.get('phase') as Phase | null;
   const { user } = useAuth();
 
-  const [activePhase, setActivePhase] = useState<Phase>('before_ojt');
+  const [activePhase, setActivePhase] = useState<Phase>(() => {
+    if (phaseQuery === 'before_ojt' || phaseQuery === 'in_ojt' || phaseQuery === 'final') {
+      return phaseQuery;
+    }
+    return 'before_ojt';
+  });
   const [drafts, setDrafts] = useState<DraftRow[]>([]);
   const [loadingDrafts, setLoadingDrafts] = useState(true);
   const [loadingProfile, setLoadingProfile] = useState(true);
@@ -70,6 +77,13 @@ export function StudentDocumentRepository() {
 
   // Undo-delete state
   const [pendingDelete, setPendingDelete] = useState<{ draft: DraftRow; timeoutId: ReturnType<typeof setTimeout> } | null>(null);
+
+  // Sync activePhase if searchParam changes
+  useEffect(() => {
+    if (phaseQuery === 'before_ojt' || phaseQuery === 'in_ojt' || phaseQuery === 'final') {
+      setActivePhase(phaseQuery);
+    }
+  }, [phaseQuery]);
 
   // ── Load profile phase ──────────────────────────────────────────────────
   useEffect(() => {
@@ -82,15 +96,17 @@ export function StudentDocumentRepository() {
           .select('practicum_phase')
           .eq('id', user.id)
           .single();
-        const phase = (data?.practicum_phase as Phase | null) ?? 'before_ojt';
-        setActivePhase(phase);
+        if (!phaseQuery) {
+          const phase = (data?.practicum_phase as Phase | null) ?? 'before_ojt';
+          setActivePhase(phase);
+        }
       } catch {
-        setActivePhase('before_ojt');
+        if (!phaseQuery) setActivePhase('before_ojt');
       } finally {
         setLoadingProfile(false);
       }
     })();
-  }, [user?.id]);
+  }, [user?.id, phaseQuery]);
 
   // ── Load drafts from Supabase ───────────────────────────────────────────
   const loadDrafts = useCallback(async () => {

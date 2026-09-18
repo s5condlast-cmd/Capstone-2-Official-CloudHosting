@@ -238,21 +238,10 @@ function Sidebar({
   }
 
   return (
-    <>
-      {/* Fullscreen Backdrop Overlay (rendered when data-editor-fullscreen="true" and sidebar is expanded) */}
-      <div
-        data-slot="sidebar-fullscreen-backdrop"
-        onClick={() => setOpen(false)}
-        className={cn(
-          "fixed inset-0 z-[115] bg-black/40 backdrop-blur-xs transition-opacity duration-200 hidden",
-          open && "is-open"
-        )}
-        aria-hidden="true"
-      />
-      <div
-        className="group peer hidden text-sidebar-foreground md:block"
-        data-state={state}
-        data-collapsible={state === "collapsed" ? collapsible : ""}
+    <div
+      className="group peer hidden text-sidebar-foreground md:block"
+      data-state={state}
+      data-collapsible={state === "collapsed" ? collapsible : ""}
         data-variant={variant}
         data-side={side}
         data-slot="sidebar"
@@ -291,7 +280,6 @@ function Sidebar({
           </div>
         </div>
       </div>
-    </>
   )
 }
 
@@ -579,7 +567,7 @@ function SidebarMenuButton({
 
   return (
     <Tooltip>
-      <TooltipTrigger render={comp} />
+      <TooltipTrigger render={comp} closeOnClick={false} />
       <TooltipContent
         side="right"
         align="center"

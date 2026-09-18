@@ -234,8 +234,9 @@ export class DocumentHistoryStorage {
   /**
    * Force an immediate cloud save (e.g., before navigating away).
    * Returns the updated draft revision or throws on conflict.
+   * Protects caller with a timeout against slow/offline network hangs while persisting to IDB immediately.
    */
-  async flushNow(): Promise<DraftState | null> {
+  async flushNow(timeoutMs: number = 1500): Promise<DraftState | null> {
     if (this.cloudSaveTimer) {
       clearTimeout(this.cloudSaveTimer);
       this.cloudSaveTimer = null;
@@ -249,13 +250,23 @@ export class DocumentHistoryStorage {
       }
     }
 
+    const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), timeoutMs));
+
     let inFlightResult: DraftState | null = null;
     if (this.cloudSavePromise) {
-      inFlightResult = await this.cloudSavePromise;
+      try {
+        inFlightResult = await Promise.race([this.cloudSavePromise, timeoutPromise]);
+      } catch {
+        /* let subsequent operations handle */
+      }
     }
     if (!this.pendingState) return inFlightResult;
 
-    return this.doCloudSave();
+    try {
+      return await Promise.race([this.doCloudSave(), timeoutPromise]);
+    } catch {
+      return null;
+    }
   }
 
   /**
