@@ -196,7 +196,7 @@ export function DocumentMenuBar({
   };
 
   const MENU_TRIGGER_CLASS =
-    'px-3 py-1.5 text-sm font-medium rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors focus:outline-none cursor-pointer text-zinc-700 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white';
+    'px-2.5 py-1 text-sm font-medium rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors focus:outline-none cursor-pointer text-zinc-700 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white';
 
   return (
     <>

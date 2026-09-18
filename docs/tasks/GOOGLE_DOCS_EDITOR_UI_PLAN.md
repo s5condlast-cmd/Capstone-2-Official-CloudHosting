@@ -14,6 +14,8 @@ Recreate the screenshot's compact menu row, single-row rounded formatting toolba
 
 This is a UI workstream under the [production and document-fidelity plan](RICH_EDITOR_PRODUCTION_PLAN.md). Visual similarity does not replace the DOCX/PDF release gates in that plan.
 
+Header implementation companion: [Document editor header layout and spacing plan](DOCUMENT_EDITOR_HEADER_LAYOUT_PLAN.md) defines the exact grid, measurements, responsive compression, and acceptance checks for the document title/menu/action area.
+
 ## Current implementation to reuse
 
 - `StudentDocumentEditor.tsx` owns title, save status, exports, history, submission, and document role/mode state.

@@ -538,27 +538,27 @@ export function StudentDocumentEditor() {
         key={`${draft?.id ?? 'new'}:${editorEpoch}`}
         ref={editorRef}
         topBar={({ menuBar }) => (
-          <div className="flex items-center justify-between gap-4 px-4 sm:px-5 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80 shrink-0 select-none">
+          <div className="flex items-center justify-between gap-4 px-4 sm:px-6 py-2.5 sm:py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80 shrink-0 select-none">
             {/* Left: Document Return Button + 2-Row Stack (Title on top, MenuBar below) */}
             <div className="flex items-center gap-3 min-w-0 flex-1">
               {/* Document Return Button (Lucide Black & White, No Shadow, Spans Both Lines) */}
               <button
                 type="button"
                 onClick={() => navigate('/student/documents')}
-                className="group relative flex items-center justify-center p-0.5 rounded-lg text-zinc-800 dark:text-zinc-200 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-colors shrink-0 cursor-pointer shadow-none border-0 bg-transparent"
+                className="group relative flex items-center justify-center p-1 rounded-lg text-zinc-800 dark:text-zinc-200 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-colors shrink-0 cursor-pointer shadow-none border-0 bg-transparent"
                 title="Back to Documents"
                 aria-label="Back to Documents"
               >
-                <div className="relative flex items-center justify-center w-[42px] h-[48px] transition-transform group-hover:scale-105">
-                  <FileText size={52} className="w-[52px] h-[52px] text-zinc-800 dark:text-zinc-200 group-hover:opacity-0 transition-opacity" />
-                  <ArrowLeft size={26} className="w-[26px] h-[26px] text-zinc-900 dark:text-white absolute inset-0 m-auto opacity-0 group-hover:opacity-100 transition-opacity stroke-[2.2]" />
+                <div className="relative flex items-center justify-center w-10 h-11 transition-transform group-hover:scale-105">
+                  <FileText size={44} className="w-11 h-11 text-zinc-800 dark:text-zinc-200 group-hover:opacity-0 transition-opacity" />
+                  <ArrowLeft size={22} className="w-[22px] h-[22px] text-zinc-900 dark:text-white absolute inset-0 m-auto opacity-0 group-hover:opacity-100 transition-opacity stroke-[2.2]" />
                 </div>
               </button>
 
               {/* Stacked 2-row block directly beside the document icon */}
               <div className="flex flex-col justify-center min-w-0 flex-1">
                 {/* Row 1: Document Title + Telemetry */}
-                <div className="flex items-center gap-3 min-w-0">
+                <div className="flex items-center gap-2.5 min-w-0">
                   {titleEditing ? (
                     <input
                       autoFocus
@@ -586,18 +586,18 @@ export function StudentDocumentEditor() {
                 </div>
 
                 {/* Row 2: File Edit View Insert Format Tools sitting directly beneath Title */}
-                <div className="-ml-3 mt-1 flex items-center min-w-0">
+                <div className="-ml-2.5 mt-0.5 flex items-center min-w-0">
                   {menuBar}
                 </div>
               </div>
             </div>
 
             {/* Right: Actions (History, Export, Submit) */}
-            <div className="flex items-center gap-3 shrink-0 ml-4">
+            <div className="flex items-center gap-2.5 shrink-0 ml-4">
               {!isLocked && (
                 <button
                   onClick={() => setShowHistory(true)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-sm font-medium border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
                   title="Version history (Ctrl+Alt+H)"
                 >
                   <History className="w-4 h-4 text-zinc-500" />
@@ -610,7 +610,7 @@ export function StudentDocumentEditor() {
                 <DropdownMenuTrigger asChild>
                   <button
                     type="button"
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-sm font-medium border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
                   >
                     <Download className="w-4 h-4 text-zinc-500" />
                     <span>Export</span>
@@ -638,7 +638,7 @@ export function StudentDocumentEditor() {
               {isLocked ? (
                 <button
                   onClick={handleDuplicate}
-                  className="flex items-center gap-2 px-4.5 py-2 rounded-lg text-sm font-medium bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:opacity-90 transition-opacity shadow-xs cursor-pointer"
+                  className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-medium bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:opacity-90 transition-opacity shadow-xs cursor-pointer"
                 >
                   <Copy className="w-4 h-4" />
                   <span>Duplicate as Draft</span>
@@ -647,7 +647,7 @@ export function StudentDocumentEditor() {
                 <button
                   onClick={() => void handleSubmit()}
                   disabled={submitting}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold bg-white hover:bg-zinc-100 active:bg-zinc-200 text-zinc-900 dark:text-zinc-900 border border-zinc-200/90 dark:border-zinc-700 shadow-sm transition-all disabled:opacity-50 cursor-pointer"
+                  className="flex items-center gap-1.5 px-4.5 py-1.5 rounded-full text-sm font-semibold bg-white hover:bg-zinc-100 active:bg-zinc-200 text-zinc-900 dark:text-zinc-900 border border-zinc-200/90 dark:border-zinc-700 shadow-sm transition-all disabled:opacity-50 cursor-pointer"
                 >
                   {submitting ? (
                     <Loader2 className="w-4 h-4 animate-spin text-zinc-700" />
