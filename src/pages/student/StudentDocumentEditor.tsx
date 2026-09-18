@@ -532,11 +532,12 @@ export function StudentDocumentEditor() {
   const isLocked = draft?.status === 'locked';
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex-1 flex flex-col w-full h-full min-h-0 overflow-hidden">
       {/* Top bar */}
       <PlateEditor
         key={`${draft?.id ?? 'new'}:${editorEpoch}`}
         ref={editorRef}
+        className="flex-1 min-h-0 h-full rounded-none border-0 shadow-none"
         topBar={({ menuBar }) => (
           <div className="flex items-center justify-between gap-4 px-3 pt-3 sm:pt-3.5 pb-2 sm:pb-2.5 bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80 shrink-0 select-none">
             {/* Left: Document Return Button + 2-Row Stack (Title on top, MenuBar below) */}

@@ -6,6 +6,7 @@ import { SiteHeader } from '@/components/site-header';
 import { User } from '@/src/types';
 import { motion, AnimatePresence } from 'motion/react';
 import { CommandPalette } from '../ui/CommandPalette';
+import { cn } from '@/src/lib/utils';
 
 interface MainLayoutProps {
   user: User | null;
@@ -60,17 +61,32 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ user, onLogout }) => {
           onLogout={onLogout}
         />
 
-        <div className="flex-1 overflow-y-auto bg-background transition-colors duration-200">
-          <motion.div
-            key={location.pathname}
-            initial={{ opacity: 0.95 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.1, ease: 'easeOut' }}
-            className="px-4 md:px-6 py-5 md:py-6 w-full max-w-[1720px] mx-auto"
-          >
-            <Outlet />
-          </motion.div>
-        </div>
+        {(() => {
+          const isEditorRoute = location.pathname.includes('/editor');
+
+          return (
+            <div
+              className={cn(
+                'flex-1 bg-background transition-colors duration-200 min-h-0',
+                isEditorRoute ? 'overflow-hidden flex flex-col' : 'overflow-y-auto'
+              )}
+            >
+              <motion.div
+                key={location.pathname}
+                initial={{ opacity: 0.95 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.1, ease: 'easeOut' }}
+                className={cn(
+                  isEditorRoute
+                    ? 'flex-1 flex flex-col w-full h-full min-h-0 p-0 m-0 max-w-none'
+                    : 'px-4 md:px-6 py-5 md:py-6 w-full max-w-[1720px] mx-auto'
+                )}
+              >
+                <Outlet />
+              </motion.div>
+            </div>
+          );
+        })()}
       </SidebarInset>
     </SidebarProvider>
   );
