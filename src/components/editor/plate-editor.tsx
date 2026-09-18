@@ -117,6 +117,8 @@ export interface PlateEditorProps {
   topBar?: React.ReactNode | ((props: { menuBar: React.ReactNode }) => React.ReactNode);
   /** Whether to show the bottom telemetry status bar (default: false) */
   showStatusBar?: boolean;
+  /** Whether to show the horizontal document ruler (default: false) */
+  showRuler?: boolean;
 }
 
 // ─── Default empty content ────────────────────────────────────────────────────
@@ -184,6 +186,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
       onRename,
       topBar,
       showStatusBar = false,
+      showRuler: initialShowRuler = false,
     },
     ref
   ) {
@@ -199,7 +202,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
     const [showZoomIndicator, setShowZoomIndicator] = useState(false);
     const [showCommentsRail, setShowCommentsRail] = useState(() => (comments && comments.length > 0) || false);
     const [showOutline, setShowOutline] = useState(false);
-    const [showRuler, setShowRuler] = useState(true);
+    const [showRuler, setShowRuler] = useState(initialShowRuler);
     const [drawerQuote, setDrawerQuote] = useState('');
     const [currentWordCount, setCurrentWordCount] = useState(() => countWordsInContent(initialContent));
 
