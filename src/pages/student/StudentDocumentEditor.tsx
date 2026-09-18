@@ -15,7 +15,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ChevronLeft, ChevronDown, Save, Download, Clock, Send, Copy,
   AlertTriangle, CheckCircle, Wifi, WifiOff, Loader2,
-  History, FileText, Users, ShieldCheck
+  History, FileText, Users, ShieldCheck, ArrowLeft
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -545,30 +545,35 @@ export function StudentDocumentEditor() {
               <button
                 type="button"
                 onClick={() => navigate('/student/documents')}
-                className="group relative flex items-center justify-center w-10 h-10 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all shrink-0 cursor-pointer"
+                className="group relative flex items-center justify-center w-11 h-12 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all shrink-0 cursor-pointer"
                 title="Back to Documents"
                 aria-label="Back to Documents"
               >
-                <div className="relative w-7 h-9 transition-transform group-hover:scale-105">
-                  <svg viewBox="0 0 28 36" fill="none" className="w-full h-full drop-shadow-xs">
-                    {/* Document Page */}
+                <div className="relative w-8.5 h-11 transition-transform group-hover:scale-105 flex items-center justify-center">
+                  <svg viewBox="0 0 32 40" fill="none" className="w-full h-full drop-shadow-sm">
+                    <defs>
+                      <linearGradient id="gdocs_icon_grad" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stopColor="#478bf5" />
+                        <stop offset="100%" stopColor="#1a73e8" />
+                      </linearGradient>
+                    </defs>
+                    {/* Main Document Body */}
                     <path
-                      d="M3 2C1.89543 2 1 2.89543 1 4V32C1 33.1046 1.89543 34 3 34H25C26.1046 34 27 33.1046 27 32V11L18 2H3Z"
-                      fill="#4285F4"
+                      d="M4 2C2.89543 2 2 2.89543 2 4V36C2 37.1046 2.89543 38 4 38H28C29.1046 38 30 37.1046 30 36V12L20 2H4Z"
+                      fill="url(#gdocs_icon_grad)"
                     />
-                    {/* Dog-ear fold */}
+                    {/* Dog-ear Fold */}
                     <path
-                      d="M18 2L27 11H20C18.8954 11 18 10.1046 18 9V2Z"
-                      fill="#A1C2FA"
+                      d="M20 2L30 12H23C21.3431 12 20 10.6569 20 9V2Z"
+                      fill="#A8C7FA"
                     />
-                    {/* Text lines */}
-                    <rect x="6" y="16" width="16" height="2.5" rx="1.25" fill="white" />
-                    <rect x="6" y="21.5" width="16" height="2.5" rx="1.25" fill="white" />
-                    <rect x="6" y="27" width="10" height="2.5" rx="1.25" fill="white" />
+                    {/* Two White Document Lines */}
+                    <rect x="7" y="19" width="18" height="2.5" rx="1.25" fill="white" />
+                    <rect x="7" y="25" width="12" height="2.5" rx="1.25" fill="white" />
                   </svg>
                   {/* Back arrow overlay on hover */}
-                  <div className="absolute inset-0 flex items-center justify-center bg-blue-600/95 rounded-[4px] opacity-0 group-hover:opacity-100 transition-opacity">
-                    <ChevronLeft className="w-5 h-5 text-white stroke-[2.5]" />
+                  <div className="absolute inset-0 flex items-center justify-center bg-blue-600 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-150 shadow-md shadow-blue-500/30">
+                    <ArrowLeft className="w-5 h-5 text-white stroke-[2.5]" />
                   </div>
                 </div>
               </button>
@@ -656,7 +661,7 @@ export function StudentDocumentEditor() {
               {isLocked ? (
                 <button
                   onClick={handleDuplicate}
-                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:opacity-90 transition-opacity shadow-xs cursor-pointer"
+                  className="flex items-center gap-2 px-5 py-2 rounded-full text-xs font-semibold bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:opacity-90 transition-opacity shadow-sm cursor-pointer"
                 >
                   <Copy className="w-3.5 h-3.5" />
                   <span>Duplicate as Draft</span>
@@ -665,9 +670,13 @@ export function StudentDocumentEditor() {
                 <button
                   onClick={() => void handleSubmit()}
                   disabled={submitting}
-                  className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-colors disabled:opacity-50 shadow-xs cursor-pointer"
+                  className="flex items-center gap-2 px-5 py-2 rounded-full text-xs sm:text-sm font-semibold bg-blue-600 hover:bg-blue-700 active:scale-95 text-white transition-all disabled:opacity-50 shadow-md shadow-blue-500/25 cursor-pointer shrink-0"
                 >
-                  {submitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                  {submitting ? (
+                    <Loader2 className="w-4 h-4 animate-spin text-white" />
+                  ) : (
+                    <Send className="w-4 h-4 text-white stroke-[2.2]" />
+                  )}
                   <span>Submit</span>
                 </button>
               )}
