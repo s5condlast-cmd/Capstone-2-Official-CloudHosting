@@ -195,15 +195,18 @@ export function DocumentMenuBar({
     }
   };
 
+  const MENU_TRIGGER_CLASS =
+    'px-2 py-0.5 text-xs font-normal rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors focus:outline-none cursor-pointer text-zinc-700 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white';
+
   return (
     <>
-      <div className="flex items-center gap-1 select-none print:hidden flex-nowrap min-w-max text-zinc-700 dark:text-zinc-300">
+      <div className="flex items-center gap-0.5 select-none print:hidden flex-nowrap min-w-max text-zinc-700 dark:text-zinc-300">
         {/* 1. FILE MENU */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="px-2.5 py-1 text-sm font-medium rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors focus:outline-none cursor-pointer"
+              className={MENU_TRIGGER_CLASS}
             >
               File
             </button>
@@ -267,7 +270,7 @@ export function DocumentMenuBar({
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="px-2.5 py-1 text-sm font-medium rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors focus:outline-none cursor-pointer"
+              className={MENU_TRIGGER_CLASS}
             >
               Edit
             </button>
@@ -334,7 +337,7 @@ export function DocumentMenuBar({
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="px-2.5 py-1 text-sm font-medium rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors focus:outline-none cursor-pointer"
+              className={MENU_TRIGGER_CLASS}
             >
               View
             </button>
@@ -439,7 +442,7 @@ export function DocumentMenuBar({
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="px-2.5 py-1 text-sm font-medium rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors focus:outline-none cursor-pointer"
+              className={MENU_TRIGGER_CLASS}
             >
               Insert
             </button>
@@ -531,7 +534,7 @@ export function DocumentMenuBar({
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="px-2.5 py-1 text-sm font-medium rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors focus:outline-none cursor-pointer"
+              className={MENU_TRIGGER_CLASS}
             >
               Format
             </button>
@@ -696,7 +699,7 @@ export function DocumentMenuBar({
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="px-2.5 py-1 text-sm font-medium rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors focus:outline-none cursor-pointer"
+              className={MENU_TRIGGER_CLASS}
             >
               Tools
             </button>
