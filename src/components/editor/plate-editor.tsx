@@ -320,12 +320,10 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
       if (!el) return;
 
       const handleWheel = (e: WheelEvent) => {
-        // Zoom if Ctrl/Cmd is held OR if cursor is over the canvas workspace outside editable text
+        // Zoom strictly if Ctrl/Cmd is held (like Google Docs / Word Online)
         const isCtrl = e.ctrlKey || e.metaKey;
-        const target = e.target as HTMLElement | null;
-        const isInsideText = target?.closest?.('[data-editor-content]');
 
-        if (isCtrl || !isInsideText) {
+        if (isCtrl) {
           e.preventDefault();
           const step = 5;
           const delta = e.deltaY > 0 ? -step : step;
