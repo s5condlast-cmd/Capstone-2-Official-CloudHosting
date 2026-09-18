@@ -61,6 +61,7 @@ import {
   Subscript,
   Keyboard,
   Eraser,
+  RemoveFormatting,
   X,
   MessageSquareText,
   Pencil,
@@ -3010,7 +3011,7 @@ export function FixedToolbarButtons({
                       }}
                       tooltip="Clear formatting (Ctrl+\)"
                     >
-                      <Eraser className="w-4 h-4" />
+                      <RemoveFormatting className="w-4 h-4" />
                     </ToolbarButton>
                   </div>
                 )}
@@ -3069,7 +3070,7 @@ export function FixedToolbarButtons({
                 }}
                 tooltip="Clear formatting (Ctrl+\)"
               >
-                <Eraser className="w-4 h-4" />
+                <RemoveFormatting className="w-4 h-4" />
               </ToolbarButton>
             </ToolbarGroup>
           )}
