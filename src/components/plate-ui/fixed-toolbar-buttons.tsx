@@ -25,6 +25,7 @@ import {
   Strikethrough,
   Baseline,
   PaintBucket,
+  Paintbrush,
   AlignLeft,
   AlignCenter,
   AlignRight,
@@ -2855,7 +2856,7 @@ export function FixedToolbarButtons({
               <ColorPickerDropdown
                 editor={editor}
                 nodeType="backgroundColor"
-                icon={PaintBucket}
+                icon={Paintbrush}
                 tooltip="Highlight color"
               />
             </ToolbarGroup>
@@ -2990,7 +2991,7 @@ export function FixedToolbarButtons({
                 <ColorPickerDropdown
                   editor={editor}
                   nodeType="backgroundColor"
-                  icon={PaintBucket}
+                  icon={Paintbrush}
                   tooltip="Highlight color"
                 />
               </div>
@@ -3088,9 +3089,9 @@ export function FixedToolbarButtons({
           )}
         >
           {isFullscreen ? (
-            <ChevronDown className="w-4 h-4" />
+            <Minimize2 className="w-4 h-4" />
           ) : (
-            <ChevronUp className="w-4 h-4" />
+            <Maximize2 className="w-4 h-4" />
           )}
         </ToolbarButton>
       </div>

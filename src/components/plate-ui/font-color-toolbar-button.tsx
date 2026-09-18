@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Baseline, PaintBucket, Check, X } from 'lucide-react';
+import { Baseline, Paintbrush, Check, X } from 'lucide-react';
 import { useEditorRef, useEditorSelector } from 'platejs/react';
 import {
   DropdownMenu,
@@ -58,7 +58,7 @@ export function FontColorToolbarButton({
   };
 
   const isBg = nodeType === 'backgroundColor';
-  const Icon = isBg ? PaintBucket : Baseline;
+  const Icon = isBg ? Paintbrush : Baseline;
   const label = tooltip || (isBg ? 'Background color' : 'Text color');
 
   return (
