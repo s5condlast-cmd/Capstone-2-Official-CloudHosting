@@ -133,7 +133,7 @@ export function DocumentOutline({
 
       {/* Active Document Title */}
       <div className="px-3 py-2 border-b border-zinc-100 dark:border-zinc-800/50">
-        <div className="flex items-center gap-2 text-xs font-medium text-zinc-900 dark:text-zinc-100 truncate">
+        <div className="flex items-center gap-2 text-xs font-medium text-zinc-600 dark:text-zinc-300 truncate">
           <FileText className="w-3.5 h-3.5 text-primary shrink-0" />
           <span className="truncate" title={documentTitle}>
             {documentTitle || 'Untitled Document'}

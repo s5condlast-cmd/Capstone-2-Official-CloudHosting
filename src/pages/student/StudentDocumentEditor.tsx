@@ -567,15 +567,15 @@ export function StudentDocumentEditor() {
                       onChange={e => handleTitleChange(e.target.value)}
                       onBlur={() => setTitleEditing(false)}
                       onKeyDown={e => { if (e.key === 'Enter') setTitleEditing(false); }}
-                      className="text-base font-medium leading-tight bg-transparent border-b border-primary focus:outline-none text-zinc-900 dark:text-zinc-100 py-0.5 px-0.5 min-w-[180px] max-w-[480px] shrink-0"
+                      className="text-base font-medium leading-tight bg-transparent border-b border-zinc-400 dark:border-zinc-500 focus:outline-none text-zinc-600 dark:text-zinc-300 py-0.5 px-0.5 min-w-[180px] max-w-[480px] shrink-0"
                       maxLength={120}
                     />
                   ) : (
                     <button
                       onClick={() => !isLocked && setTitleEditing(true)}
                       className={cn(
-                        'text-base font-medium leading-tight text-zinc-900 dark:text-zinc-100 text-left truncate min-w-[140px] max-w-[480px] shrink-0',
-                        !isLocked && 'hover:text-primary cursor-text hover:underline decoration-dashed underline-offset-4'
+                        'text-base font-medium leading-tight text-zinc-500 dark:text-zinc-400 text-left truncate min-w-[140px] max-w-[480px] shrink-0 transition-colors',
+                        !isLocked && 'hover:text-zinc-800 dark:hover:text-zinc-200 cursor-text hover:underline decoration-dashed underline-offset-4'
                       )}
                       title={isLocked ? undefined : 'Click to rename'}
                     >

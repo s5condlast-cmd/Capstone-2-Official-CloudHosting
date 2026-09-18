@@ -196,11 +196,11 @@ export function DocumentMenuBar({
   };
 
   const MENU_TRIGGER_CLASS =
-    'px-2 py-0.5 text-sm font-normal rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors focus:outline-none cursor-pointer text-zinc-700 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white';
+    'px-2 py-0.5 text-sm font-medium rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors focus:outline-none cursor-pointer text-zinc-800 dark:text-zinc-200 hover:text-zinc-950 dark:hover:text-white antialiased';
 
   return (
     <>
-      <div className="flex items-center gap-0.5 select-none print:hidden flex-nowrap min-w-max text-zinc-700 dark:text-zinc-300">
+      <div className="flex items-center gap-0.5 select-none print:hidden flex-nowrap min-w-max text-zinc-800 dark:text-zinc-200 antialiased">
         {/* 1. FILE MENU */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

@@ -272,10 +272,11 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
     const editorRef = useRef<HTMLDivElement | null>(null);
     const contentRef = useRef<object[]>(initialContent);
     const editorInstanceRef = useRef<any>(null);
+    const wrapperRef = useRef<HTMLDivElement | null>(null);
     const canvasRef = useRef<HTMLDivElement | null>(null);
     const zoomTimerRef = useRef<any>(null);
 
-    // ── Fullscreen Escape Listener ──────────────────────────────────────────
+    // ── Fullscreen Escape Listener & Ancestor Scroll Lock ───────────────────
     useEffect(() => {
       if (!isFullscreen) return;
       const handleKeyDown = (e: KeyboardEvent) => {
@@ -284,7 +285,32 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
         }
       };
       window.addEventListener('keydown', handleKeyDown);
-      return () => window.removeEventListener('keydown', handleKeyDown);
+
+      // Collect and lock all ancestor scroll containers (removes "the big one" native scrollbar)
+      const scrollParents: { el: HTMLElement; overflowY: string }[] = [];
+      let el: HTMLElement | null = wrapperRef.current?.parentElement ?? null;
+      while (el && el !== document.body) {
+        const computed = window.getComputedStyle(el);
+        if (computed.overflowY === 'auto' || computed.overflowY === 'scroll') {
+          scrollParents.push({ el, overflowY: el.style.overflowY });
+          el.style.overflowY = 'hidden';
+        }
+        el = el.parentElement;
+      }
+
+      const prevBodyOverflow = document.body.style.overflow;
+      const prevHtmlOverflow = document.documentElement.style.overflow;
+      document.body.style.overflow = 'hidden';
+      document.documentElement.style.overflow = 'hidden';
+
+      return () => {
+        window.removeEventListener('keydown', handleKeyDown);
+        document.body.style.overflow = prevBodyOverflow;
+        document.documentElement.style.overflow = prevHtmlOverflow;
+        scrollParents.forEach(({ el, overflowY }) => {
+          el.style.overflowY = overflowY;
+        });
+      };
     }, [isFullscreen]);
 
     // ── Mousewheel scroll zoom inside canvas ─────────────────────────────────
@@ -683,12 +709,14 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
     return (
       <PlateComp editor={editor} onValueChange={handleChange} readOnly={isEffectivelyReadOnly}>
         <div
+          ref={wrapperRef}
           className={cn(
             'plate-editor-wrapper relative flex flex-col rounded-xl overflow-hidden shadow-xs transition-all border border-zinc-200/90 dark:border-zinc-800/90 bg-white dark:bg-zinc-900',
             isFullscreen
-              ? 'fixed inset-0 z-[100] w-screen h-screen rounded-none bg-zinc-100 dark:bg-zinc-950 border-none'
+              ? '!fixed !inset-0 !z-[100] !w-full !h-full !max-w-none !max-h-none rounded-none bg-zinc-100 dark:bg-zinc-950 border-none m-0'
               : 'h-[calc(100vh-7rem)] min-h-[600px]',
-            className
+            className,
+            isFullscreen && '!fixed !inset-0 !z-[100] !w-full !h-full !max-w-none !max-h-none'
           )}
         >
           {/* Top Document Identity / Menu Bar Row */}
@@ -852,7 +880,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
             {/* Scrollable canvas containing the paper document sheet */}
             <div ref={canvasRef} className="relative flex-1 flex flex-col min-h-0 overflow-hidden bg-[#f0f4f9] dark:bg-zinc-950">
               <EditorContainer
-                variant={isFullscreen ? 'fullWidth' : 'default'}
+                variant="default"
                 className={cn(
                   'flex-1 min-h-0 overflow-y-auto editor-scrollbar bg-[#f0f4f9] dark:bg-zinc-950 p-4 md:p-8',
                   zoomLevel > 100 && 'overflow-x-auto'
