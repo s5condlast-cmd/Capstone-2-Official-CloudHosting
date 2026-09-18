@@ -9,6 +9,7 @@
  * - FloatingToolbar (contextual floating action bar on text selection)
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Sparkles,
   Eye,
@@ -710,6 +711,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
       <PlateComp editor={editor} onValueChange={handleChange} readOnly={isEffectivelyReadOnly}>
         <div
           ref={wrapperRef}
+          data-editor-fullscreen={isFullscreen ? 'true' : 'false'}
           className={cn(
             'plate-editor-wrapper relative flex flex-col rounded-xl overflow-hidden shadow-xs transition-all border border-zinc-200/90 dark:border-zinc-800/90 bg-white dark:bg-zinc-900',
             isFullscreen

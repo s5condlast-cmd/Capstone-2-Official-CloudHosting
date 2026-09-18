@@ -583,12 +583,12 @@ function ZoomToolbarButton({
         onClick={() => setOpen(!open)}
         tooltip="Zoom"
         aria-label="Zoom"
-        className="px-2 h-8.5 font-medium min-w-[72px] justify-between gap-1 text-xs"
+        className="px-2.5 h-8.5 font-medium min-w-[76px] justify-between gap-1.5 text-[13px]"
       >
-        <span className="font-semibold text-zinc-800 dark:text-zinc-200">
+        <span className="font-semibold text-zinc-800 dark:text-zinc-200 text-[13px]">
           {zoomLevel}%
         </span>
-        <ChevronDown className="w-3 h-3 text-zinc-400" />
+        <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
       </ToolbarButton>
 
       <PortalPopover
@@ -633,20 +633,23 @@ function ZoomToolbarButton({
 // ─── Google Docs Font Family Toolbar Button ───────────────────────────────────
 
 const FONT_OPTIONS = [
-  { label: 'Arial', value: 'Arial' },
-  { label: 'Times New Roman', value: 'Times New Roman' },
-  { label: 'Calibri', value: 'Calibri' },
-  { label: 'Georgia', value: 'Georgia' },
-  { label: 'Courier New', value: 'Courier New' },
-  { label: 'Trebuchet MS', value: 'Trebuchet MS' },
-  { label: 'Verdana', value: 'Verdana' },
+  { label: 'Inter', value: 'Inter, sans-serif' },
+  { label: 'Geist Sans', value: 'Geist, sans-serif' },
+  { label: 'Arial', value: 'Arial, Helvetica, sans-serif' },
+  { label: 'Times New Roman', value: '"Times New Roman", Times, serif' },
+  { label: 'Calibri', value: 'Calibri, sans-serif' },
+  { label: 'Georgia', value: 'Georgia, serif' },
+  { label: 'Courier New', value: '"Courier New", Courier, monospace' },
+  { label: 'Trebuchet MS', value: 'Trebuchet MS, sans-serif' },
+  { label: 'Verdana', value: 'Verdana, sans-serif' },
 ];
 
 function FontFamilyToolbarButton({ editor }: { editor: any }) {
   const [open, setOpen] = React.useState(false);
   const anchorRef = React.useRef<HTMLDivElement>(null);
 
-  const activeFont = getMarkValue(editor, 'fontFamily') || 'Arial';
+  const rawFont = getMarkValue(editor, 'fontFamily');
+  const activeOption = FONT_OPTIONS.find((f) => f.value === rawFont || f.label === rawFont || f.label.toLowerCase() === (rawFont || '').toLowerCase()) || FONT_OPTIONS[0];
 
   return (
     <div ref={anchorRef} className="relative">
@@ -655,12 +658,12 @@ function FontFamilyToolbarButton({ editor }: { editor: any }) {
         onClick={() => setOpen(!open)}
         tooltip="Font family"
         aria-label="Font family"
-        className="px-2.5 h-8.5 font-medium min-w-[110px] max-w-[130px] justify-between gap-1.5 text-xs truncate"
+        className="px-2.5 h-8.5 font-medium min-w-[115px] max-w-[145px] justify-between gap-1.5 text-[13px] truncate"
       >
-        <span className="truncate font-medium text-zinc-800 dark:text-zinc-200" style={{ fontFamily: activeFont }}>
-          {activeFont}
+        <span className="truncate font-medium text-zinc-800 dark:text-zinc-200 text-[13px]" style={{ fontFamily: activeOption.value }}>
+          {activeOption.label}
         </span>
-        <ChevronDown className="w-3 h-3 text-zinc-400 shrink-0" />
+        <ChevronDown className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
       </ToolbarButton>
 
       <PortalPopover
@@ -681,11 +684,11 @@ function FontFamilyToolbarButton({ editor }: { editor: any }) {
               addMark(editor, 'fontFamily', f.value);
               setOpen(false);
             }}
-            className="w-full text-left px-2.5 py-1.5 rounded-md text-xs hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center justify-between"
+            className="w-full text-left px-2.5 py-1.5 rounded-md text-[13px] hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center justify-between"
             style={{ fontFamily: f.value }}
           >
             <span>{f.label}</span>
-            {activeFont === f.value && <Check className="w-3.5 h-3.5 text-primary shrink-0" />}
+            {activeOption.value === f.value && <Check className="w-3.5 h-3.5 text-primary shrink-0" />}
           </button>
         ))}
       </PortalPopover>
@@ -749,9 +752,9 @@ function TurnIntoToolbarButton({ editor }: { editor: any }) {
         isDropdown
         onClick={() => setOpen(!open)}
         tooltip="Turn into"
-        className="px-2.5 h-8.5 font-medium min-w-[110px] justify-between gap-1.5"
+        className="px-2.5 h-8.5 font-medium min-w-[110px] justify-between gap-1.5 text-[13px]"
       >
-        <span className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">
+        <span className="text-[13px] font-semibold text-zinc-800 dark:text-zinc-200">
           {currentOption.label}
         </span>
         <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
@@ -848,7 +851,7 @@ function FontSizeToolbarButton({ editor }: { editor: any }) {
           e.preventDefault();
           setOpen(!open);
         }}
-        className="px-2 h-7.5 flex items-center justify-center text-xs font-bold text-zinc-900 dark:text-zinc-100 hover:bg-zinc-200/80 dark:hover:bg-zinc-700 rounded transition-colors min-w-[32px]"
+        className="px-2 h-7.5 flex items-center justify-center text-[13px] font-bold text-zinc-900 dark:text-zinc-100 hover:bg-zinc-200/80 dark:hover:bg-zinc-700 rounded transition-colors min-w-[32px]"
       >
         {currentSize}
       </button>
