@@ -15,7 +15,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ChevronLeft, ChevronDown, Save, Download, Clock, Send, Copy,
   AlertTriangle, CheckCircle, Wifi, WifiOff, Loader2,
-  History, FileText, Users, ShieldCheck
+  History, FileText, Users, ShieldCheck, ArrowLeft
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -541,35 +541,17 @@ export function StudentDocumentEditor() {
           <div className="flex items-center justify-between gap-4 px-3 sm:px-4 pt-3 pb-2 bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80 shrink-0 select-none">
             {/* Left: Big Blue Document Return Button + 2-Row Stack (Title on top, MenuBar below) */}
             <div className="flex items-center gap-2.5 min-w-0 flex-1">
-              {/* Google Docs Style Blue Document Return Button */}
+              {/* Document Return Button (Lucide Black & White) */}
               <button
                 type="button"
                 onClick={() => navigate('/student/documents')}
-                className="group relative flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all shrink-0 cursor-pointer"
+                className="group relative flex items-center justify-center w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/80 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 hover:text-zinc-950 dark:hover:text-white transition-all shrink-0 cursor-pointer shadow-xs"
                 title="Back to Documents"
                 aria-label="Back to Documents"
               >
-                <div className="relative w-6 h-8 sm:w-6.5 sm:h-8.5 transition-transform group-hover:scale-105">
-                  <svg viewBox="0 0 28 36" fill="none" className="w-full h-full drop-shadow-xs">
-                    {/* Document Page */}
-                    <path
-                      d="M3 2C1.89543 2 1 2.89543 1 4V32C1 33.1046 1.89543 34 3 34H25C26.1046 34 27 33.1046 27 32V11L18 2H3Z"
-                      fill="#4285F4"
-                    />
-                    {/* Dog-ear fold */}
-                    <path
-                      d="M18 2L27 11H20C18.8954 11 18 10.1046 18 9V2Z"
-                      fill="#A1C2FA"
-                    />
-                    {/* Text lines */}
-                    <rect x="6" y="16" width="16" height="2.5" rx="1.25" fill="white" />
-                    <rect x="6" y="21.5" width="16" height="2.5" rx="1.25" fill="white" />
-                    <rect x="6" y="27" width="10" height="2.5" rx="1.25" fill="white" />
-                  </svg>
-                  {/* Back arrow overlay on hover */}
-                  <div className="absolute inset-0 flex items-center justify-center bg-blue-600/95 rounded-[4px] opacity-0 group-hover:opacity-100 transition-opacity">
-                    <ChevronLeft className="w-4.5 h-4.5 text-white stroke-[2.5]" />
-                  </div>
+                <div className="relative flex items-center justify-center w-5 h-5 transition-transform group-hover:scale-105">
+                  <FileText className="w-5 h-5 text-zinc-800 dark:text-zinc-200 group-hover:opacity-0 transition-opacity" />
+                  <ArrowLeft className="w-4.5 h-4.5 text-zinc-900 dark:text-white absolute inset-0 m-auto opacity-0 group-hover:opacity-100 transition-opacity stroke-[2.2]" />
                 </div>
               </button>
 
@@ -665,9 +647,13 @@ export function StudentDocumentEditor() {
                 <button
                   onClick={() => void handleSubmit()}
                   disabled={submitting}
-                  className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-colors disabled:opacity-50 shadow-xs cursor-pointer"
+                  className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold bg-white hover:bg-zinc-100 active:bg-zinc-200 text-zinc-900 dark:text-zinc-900 border border-zinc-200/90 dark:border-zinc-700 shadow-sm transition-all disabled:opacity-50 cursor-pointer"
                 >
-                  {submitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                  {submitting ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-zinc-700" />
+                  ) : (
+                    <Send className="w-3.5 h-3.5 text-zinc-900 stroke-[2.2]" />
+                  )}
                   <span>Submit</span>
                 </button>
               )}
