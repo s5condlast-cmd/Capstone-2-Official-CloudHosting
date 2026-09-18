@@ -549,9 +549,9 @@ export function StudentDocumentEditor() {
                 title="Back to Documents"
                 aria-label="Back to Documents"
               >
-                <div className="relative flex items-center justify-center w-8 h-9.5 transition-transform group-hover:scale-105">
-                  <FileText className="w-7.5 h-9 text-zinc-800 dark:text-zinc-200 group-hover:opacity-0 transition-opacity" />
-                  <ArrowLeft className="w-5 h-5 text-zinc-900 dark:text-white absolute inset-0 m-auto opacity-0 group-hover:opacity-100 transition-opacity stroke-[2.2]" />
+                <div className="relative flex items-center justify-center w-9 h-11 transition-transform group-hover:scale-105">
+                  <FileText size={44} className="w-11 h-11 text-zinc-800 dark:text-zinc-200 group-hover:opacity-0 transition-opacity" />
+                  <ArrowLeft size={22} className="w-[22px] h-[22px] text-zinc-900 dark:text-white absolute inset-0 m-auto opacity-0 group-hover:opacity-100 transition-opacity stroke-[2.2]" />
                 </div>
               </button>
 
