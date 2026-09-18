@@ -538,115 +538,139 @@ export function StudentDocumentEditor() {
         key={`${draft?.id ?? 'new'}:${editorEpoch}`}
         ref={editorRef}
         topBar={({ menuBar }) => (
-          <div className="flex flex-col bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80 shrink-0">
-            {/* Row 1: Back + Title + Telemetry (left) and 3 Actions (right) */}
-            <div className="flex items-center justify-between gap-4 px-4 pt-2.5 pb-1 min-w-0">
-              {/* Left: Back button + Divider + Document Title + Telemetry */}
-              <div className="flex items-center gap-3 min-w-0 flex-1">
-                <button
-                  onClick={() => navigate('/student/documents')}
-                  className="flex items-center gap-1 text-sm font-medium text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors shrink-0 cursor-pointer"
-                  title="Back to Repository"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                  <span>Back</span>
-                </button>
+          <div className="flex items-center justify-between gap-4 px-3 sm:px-4 py-2 bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80 shrink-0 select-none">
+            {/* Left: Big Blue Document Return Button + 2-Row Stack (Title on top, MenuBar below) */}
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              {/* Google Docs Style Big Blue Document Return Button */}
+              <button
+                type="button"
+                onClick={() => navigate('/student/documents')}
+                className="group relative flex items-center justify-center w-10 h-10 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all shrink-0 cursor-pointer"
+                title="Back to Documents"
+                aria-label="Back to Documents"
+              >
+                <div className="relative w-7 h-9 transition-transform group-hover:scale-105">
+                  <svg viewBox="0 0 28 36" fill="none" className="w-full h-full drop-shadow-xs">
+                    {/* Document Page */}
+                    <path
+                      d="M3 2C1.89543 2 1 2.89543 1 4V32C1 33.1046 1.89543 34 3 34H25C26.1046 34 27 33.1046 27 32V11L18 2H3Z"
+                      fill="#4285F4"
+                    />
+                    {/* Dog-ear fold */}
+                    <path
+                      d="M18 2L27 11H20C18.8954 11 18 10.1046 18 9V2Z"
+                      fill="#A1C2FA"
+                    />
+                    {/* Text lines */}
+                    <rect x="6" y="16" width="16" height="2.5" rx="1.25" fill="white" />
+                    <rect x="6" y="21.5" width="16" height="2.5" rx="1.25" fill="white" />
+                    <rect x="6" y="27" width="10" height="2.5" rx="1.25" fill="white" />
+                  </svg>
+                  {/* Back arrow overlay on hover */}
+                  <div className="absolute inset-0 flex items-center justify-center bg-blue-600/95 rounded-[4px] opacity-0 group-hover:opacity-100 transition-opacity">
+                    <ChevronLeft className="w-5 h-5 text-white stroke-[2.5]" />
+                  </div>
+                </div>
+              </button>
 
-                <div className="h-5 w-px bg-zinc-200 dark:bg-zinc-800 shrink-0" />
-
-                {titleEditing ? (
-                  <input
-                    autoFocus
-                    value={title}
-                    onChange={e => handleTitleChange(e.target.value)}
-                    onBlur={() => setTitleEditing(false)}
-                    onKeyDown={e => { if (e.key === 'Enter') setTitleEditing(false); }}
-                    className="text-base sm:text-lg font-bold bg-transparent border-b-2 border-primary focus:outline-none text-zinc-900 dark:text-zinc-100 py-0.5 min-w-[200px] max-w-[480px] shrink-0"
-                    maxLength={120}
-                  />
-                ) : (
-                  <button
-                    onClick={() => !isLocked && setTitleEditing(true)}
-                    className={cn(
-                      'text-base sm:text-lg font-bold text-zinc-900 dark:text-zinc-100 text-left truncate min-w-[160px] max-w-[480px] shrink-0',
-                      !isLocked && 'hover:text-primary cursor-text hover:underline decoration-dashed underline-offset-4'
-                    )}
-                    title={isLocked ? undefined : 'Click to rename'}
-                  >
-                    {title || 'Untitled Document'}
-                  </button>
-                )}
-
-                <TelemetryStrip syncStatus={syncStatus} wordCount={wordCount} isLocked={isLocked} />
-              </div>
-
-              {/* Right: Actions (History, Export, Submit) */}
-              <div className="flex items-center gap-2 shrink-0 ml-4">
-                {!isLocked && (
-                  <button
-                    onClick={() => setShowHistory(true)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-                    title="Version history (Ctrl+Alt+H)"
-                  >
-                    <History className="w-3.5 h-3.5 text-zinc-500" />
-                    <span className="hidden sm:inline">History</span>
-                  </button>
-                )}
-
-                {/* Consolidated Export Dropdown */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
+              {/* Stacked 2-row block directly beside the blue document icon */}
+              <div className="flex flex-col justify-center min-w-0 flex-1">
+                {/* Row 1: Document Title + Telemetry */}
+                <div className="flex items-center gap-3 min-w-0">
+                  {titleEditing ? (
+                    <input
+                      autoFocus
+                      value={title}
+                      onChange={e => handleTitleChange(e.target.value)}
+                      onBlur={() => setTitleEditing(false)}
+                      onKeyDown={e => { if (e.key === 'Enter') setTitleEditing(false); }}
+                      className="text-base sm:text-lg font-bold bg-transparent border-b-2 border-primary focus:outline-none text-zinc-900 dark:text-zinc-100 py-0.5 min-w-[200px] max-w-[480px] shrink-0"
+                      maxLength={120}
+                    />
+                  ) : (
                     <button
-                      type="button"
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                      onClick={() => !isLocked && setTitleEditing(true)}
+                      className={cn(
+                        'text-base sm:text-lg font-bold text-zinc-900 dark:text-zinc-100 text-left truncate min-w-[160px] max-w-[480px] shrink-0',
+                        !isLocked && 'hover:text-primary cursor-text hover:underline decoration-dashed underline-offset-4'
+                      )}
+                      title={isLocked ? undefined : 'Click to rename'}
                     >
-                      <Download className="w-3.5 h-3.5 text-zinc-500" />
-                      <span>Export</span>
-                      <ChevronDown className="w-3 h-3 opacity-60" />
+                      {title || 'Untitled Document'}
                     </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56 shadow-lg z-50">
-                    <DropdownMenuItem onClick={handleExportDocx} className="cursor-pointer gap-2 py-2">
-                      <FileText className="w-4 h-4 text-blue-600" />
-                      <div className="flex flex-col">
-                        <span className="font-medium text-xs">Microsoft Word (.docx)</span>
-                        <span className="text-[10px] text-zinc-400">Download editable Word file</span>
-                      </div>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleExportPdf} className="cursor-pointer gap-2 py-2">
-                      <Download className="w-4 h-4 text-red-600" />
-                      <div className="flex flex-col">
-                        <span className="font-medium text-xs">PDF Document (.pdf)</span>
-                        <span className="text-[10px] text-zinc-400">Download printable PDF</span>
-                      </div>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                  )}
 
-                {isLocked ? (
-                  <button
-                    onClick={handleDuplicate}
-                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:opacity-90 transition-opacity shadow-xs cursor-pointer"
-                  >
-                    <Copy className="w-3.5 h-3.5" />
-                    <span>Duplicate as Draft</span>
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => void handleSubmit()}
-                    disabled={submitting}
-                    className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-colors disabled:opacity-50 shadow-xs cursor-pointer"
-                  >
-                    {submitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
-                    <span>Submit</span>
-                  </button>
-                )}
+                  <TelemetryStrip syncStatus={syncStatus} wordCount={wordCount} isLocked={isLocked} />
+                </div>
+
+                {/* Row 2: File Edit View Insert Format Tools sitting directly beneath Title */}
+                <div className="-ml-2.5 mt-0.5 flex items-center min-w-0">
+                  {menuBar}
+                </div>
               </div>
             </div>
 
-            {/* Row 2: File Edit View Insert Format Tools */}
-            <div className="px-3 pb-1 pt-0.5 flex items-center min-w-0">
-              {menuBar}
+            {/* Right: Actions (History, Export, Submit) */}
+            <div className="flex items-center gap-2 shrink-0 ml-4">
+              {!isLocked && (
+                <button
+                  onClick={() => setShowHistory(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                  title="Version history (Ctrl+Alt+H)"
+                >
+                  <History className="w-3.5 h-3.5 text-zinc-500" />
+                  <span className="hidden sm:inline">History</span>
+                </button>
+              )}
+
+              {/* Consolidated Export Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                  >
+                    <Download className="w-3.5 h-3.5 text-zinc-500" />
+                    <span>Export</span>
+                    <ChevronDown className="w-3 h-3 opacity-60" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 shadow-lg z-50">
+                  <DropdownMenuItem onClick={handleExportDocx} className="cursor-pointer gap-2 py-2">
+                    <FileText className="w-4 h-4 text-blue-600" />
+                    <div className="flex flex-col">
+                      <span className="font-medium text-xs">Microsoft Word (.docx)</span>
+                      <span className="text-[10px] text-zinc-400">Download editable Word file</span>
+                    </div>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleExportPdf} className="cursor-pointer gap-2 py-2">
+                    <Download className="w-4 h-4 text-red-600" />
+                    <div className="flex flex-col">
+                      <span className="font-medium text-xs">PDF Document (.pdf)</span>
+                      <span className="text-[10px] text-zinc-400">Download printable PDF</span>
+                    </div>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {isLocked ? (
+                <button
+                  onClick={handleDuplicate}
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:opacity-90 transition-opacity shadow-xs cursor-pointer"
+                >
+                  <Copy className="w-3.5 h-3.5" />
+                  <span>Duplicate as Draft</span>
+                </button>
+              ) : (
+                <button
+                  onClick={() => void handleSubmit()}
+                  disabled={submitting}
+                  className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-colors disabled:opacity-50 shadow-xs cursor-pointer"
+                >
+                  {submitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                  <span>Submit</span>
+                </button>
+              )}
             </div>
           </div>
         )}
