@@ -2716,13 +2716,9 @@ export function FixedToolbarButtons({
   const checkOverflow = React.useCallback(() => {
     const width = containerRef.current?.clientWidth || window.innerWidth;
     
-    // Breakpoints based on container width:
-    // >= 1480px: All groups fit on main bar.
-    // 1200px - 1479px: Group 5 is hidden from bar, shown in 3-dots dropview.
-    // 960px - 1199px: Group 5 and Group 4 are hidden from bar, shown in 3-dots dropview.
-    // < 960px: Group 5, Group 4, Group 3 are hidden from bar, shown in 3-dots dropview.
+    // Google Docs layout standard: Below 1480px, tools after Highlight Color (Paintbrush) collapse into ⋮
     const hide5 = width < 1480;
-    const hide4 = width < 1200;
+    const hide4 = width < 1480;
     const hide3 = width < 960;
 
     setHiddenGroups((prev) => {
@@ -2867,6 +2863,156 @@ export function FixedToolbarButtons({
             </ToolbarGroup>
           )}
 
+          {/* ─── Google Docs More Tools (⋮) Overflow Dropview: Right next to the painting ─── */}
+          {hasOverflow && (
+            <div ref={moreAnchorRef} className="flex items-center shrink-0">
+              <div className="mx-1 h-5 w-px bg-zinc-300/80 dark:bg-zinc-700/80 shrink-0" />
+              <ToolbarButton
+                active={moreOpen}
+                onClick={() => setMoreOpen((prev) => !prev)}
+                tooltip="More tools"
+                aria-label="More tools"
+                className={cn(
+                  'h-8 w-8 p-1.5 rounded-md transition-colors flex items-center justify-center',
+                  moreOpen
+                    ? 'bg-primary/15 text-primary font-semibold'
+                    : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200/70 dark:hover:bg-zinc-800'
+                )}
+              >
+                <MoreVertical className="w-4 h-4" />
+              </ToolbarButton>
+              <div className="mx-1 h-5 w-px bg-zinc-300/80 dark:bg-zinc-700/80 shrink-0" />
+
+              <PortalPopover
+                anchorRef={moreAnchorRef}
+                open={moreOpen}
+                onClose={() => setMoreOpen(false)}
+                align="start"
+                className="p-2.5 bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 shadow-2xl rounded-2xl flex flex-col gap-2 z-50 max-w-[calc(100vw-24px)] select-none"
+              >
+                {/* If Group 3 is hidden: render text formatting marks */}
+                {hiddenGroups.group3 && (
+                  <div className={cn('flex items-center gap-0.5 shrink-0 flex-wrap', isViewing && 'opacity-40 pointer-events-none')}>
+                    <ToolbarButton
+                      active={isBold}
+                      onClick={() => toggleMark(editor, 'bold')}
+                      tooltip="Bold (Ctrl+B)"
+                    >
+                      <Bold className="w-4 h-4" />
+                    </ToolbarButton>
+
+                    <ToolbarButton
+                      active={isItalic}
+                      onClick={() => toggleMark(editor, 'italic')}
+                      tooltip="Italic (Ctrl+I)"
+                    >
+                      <Italic className="w-4 h-4" />
+                    </ToolbarButton>
+
+                    <ToolbarButton
+                      active={isUnderline}
+                      onClick={() => toggleMark(editor, 'underline')}
+                      tooltip="Underline (Ctrl+U)"
+                    >
+                      <Underline className="w-4 h-4" />
+                    </ToolbarButton>
+
+                    <ToolbarButton
+                      active={isStrikethrough}
+                      onClick={() => toggleMark(editor, 'strikethrough')}
+                      tooltip="Strikethrough"
+                    >
+                      <Strikethrough className="w-4 h-4" />
+                    </ToolbarButton>
+
+                    <ColorPickerDropdown
+                      editor={editor}
+                      nodeType="color"
+                      icon={Baseline}
+                      tooltip="Text color"
+                    />
+
+                    <ColorPickerDropdown
+                      editor={editor}
+                      nodeType="backgroundColor"
+                      icon={Paintbrush}
+                      tooltip="Highlight color"
+                    />
+                  </div>
+                )}
+
+                {/* If Group 5 is hidden: render Row 1 and Row 2 matching media_1789690393499.png */}
+                {hiddenGroups.group5 && (
+                  <>
+                    {/* Row 1: Alignment & Line Spacing */}
+                    <div className={cn('flex items-center gap-0.5 shrink-0', isViewing && 'opacity-40 pointer-events-none')}>
+                      <AlignToolbarButton editor={editor} />
+                      <LineHeightToolbarButton editor={editor} />
+                      <div className="mx-1 h-5 w-px bg-zinc-300/80 dark:bg-zinc-700/80 shrink-0" />
+                    </div>
+
+                    {/* Row 2: Lists, Indent, Clear Formatting */}
+                    <div className={cn('flex items-center gap-0.5 shrink-0', isViewing && 'opacity-40 pointer-events-none')}>
+                      <ToolbarButton
+                        active={isTodo}
+                        onClick={() => {
+                          setBlockType(editor, isTodo ? 'p' : 'todo');
+                        }}
+                        tooltip="Checklist"
+                      >
+                        <ListTodo className="w-4 h-4" />
+                      </ToolbarButton>
+
+                      <BulletedListToolbarButton editor={editor} />
+                      <NumberedListToolbarButton editor={editor} />
+
+                      <ToolbarButton onClick={handleOutdent} tooltip="Decrease indent">
+                        <OutdentIcon className="w-4 h-4" />
+                      </ToolbarButton>
+
+                      <ToolbarButton onClick={handleIndent} tooltip="Increase indent">
+                        <IndentIcon className="w-4 h-4" />
+                      </ToolbarButton>
+
+                      <div className="mx-1 h-5 w-px bg-zinc-300/80 dark:bg-zinc-700/80 shrink-0" />
+
+                      <ToolbarButton
+                        onClick={() => {
+                          const marks = ['bold', 'italic', 'underline', 'strikethrough', 'code', 'color', 'backgroundColor', 'fontSize', 'fontFamily'];
+                          marks.forEach((m) => removeMark(editor, m));
+                          setBlockType(editor, 'p');
+                        }}
+                        tooltip="Clear formatting (Ctrl+\)"
+                      >
+                        <Eraser className="w-4 h-4" />
+                      </ToolbarButton>
+
+                      <div className="mx-1 h-5 w-px bg-zinc-300/80 dark:bg-zinc-700/80 shrink-0" />
+                    </div>
+                  </>
+                )}
+
+                {/* If Group 4 is hidden: render Row 3: Link, Comment, Image matching media_1789690393499.png */}
+                {hiddenGroups.group4 && (
+                  <div className={cn('flex items-center gap-0.5 shrink-0', isViewing && 'opacity-40 pointer-events-none')}>
+                    <ToolbarButton onClick={handleLink} tooltip="Insert link (Ctrl+K)">
+                      <Link2 className="w-4 h-4" />
+                    </ToolbarButton>
+
+                    <CommentToolbarButton
+                      editor={editor}
+                      comments={comments}
+                      onAddComment={onAddComment}
+                      onResolveComment={onResolveComment}
+                    />
+
+                    <MediaToolbarButton editor={editor} />
+                  </div>
+                )}
+              </PortalPopover>
+            </div>
+          )}
+
           {/* 4. Link, Add Comment, Image */}
           {!hiddenGroups.group4 && (
             <ToolbarGroup className={cn('items-center', isViewing && 'opacity-40 pointer-events-none')}>
@@ -2924,155 +3070,6 @@ export function FixedToolbarButtons({
           )}
         </div>
       </div>
-
-      {/* ─── Google Docs More Tools (⋮) Overflow Dropview ─── */}
-      {hasOverflow && (
-        <div ref={moreAnchorRef} className="flex items-center shrink-0">
-          <div className="mx-1 h-5 w-px bg-zinc-300/80 dark:bg-zinc-700/80 shrink-0" />
-          <ToolbarButton
-            active={moreOpen}
-            onClick={() => setMoreOpen((prev) => !prev)}
-            tooltip="More tools"
-            aria-label="More tools"
-            className={cn(
-              'h-8 w-8 p-1.5 rounded-md transition-colors flex items-center justify-center',
-              moreOpen
-                ? 'bg-primary/15 text-primary font-semibold'
-                : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200/70 dark:hover:bg-zinc-800'
-            )}
-          >
-            <MoreVertical className="w-4 h-4" />
-          </ToolbarButton>
-
-          <PortalPopover
-            anchorRef={moreAnchorRef}
-            open={moreOpen}
-            onClose={() => setMoreOpen(false)}
-            align="end"
-            className="p-2.5 bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 shadow-2xl rounded-2xl flex flex-col gap-2 z-50 max-w-[calc(100vw-24px)] select-none"
-          >
-            {/* If Group 3 is hidden: render text formatting marks */}
-            {hiddenGroups.group3 && (
-              <div className={cn('flex items-center gap-0.5 shrink-0 flex-wrap', isViewing && 'opacity-40 pointer-events-none')}>
-                <ToolbarButton
-                  active={isBold}
-                  onClick={() => toggleMark(editor, 'bold')}
-                  tooltip="Bold (Ctrl+B)"
-                >
-                  <Bold className="w-4 h-4" />
-                </ToolbarButton>
-
-                <ToolbarButton
-                  active={isItalic}
-                  onClick={() => toggleMark(editor, 'italic')}
-                  tooltip="Italic (Ctrl+I)"
-                >
-                  <Italic className="w-4 h-4" />
-                </ToolbarButton>
-
-                <ToolbarButton
-                  active={isUnderline}
-                  onClick={() => toggleMark(editor, 'underline')}
-                  tooltip="Underline (Ctrl+U)"
-                >
-                  <Underline className="w-4 h-4" />
-                </ToolbarButton>
-
-                <ToolbarButton
-                  active={isStrikethrough}
-                  onClick={() => toggleMark(editor, 'strikethrough')}
-                  tooltip="Strikethrough"
-                >
-                  <Strikethrough className="w-4 h-4" />
-                </ToolbarButton>
-
-                <ColorPickerDropdown
-                  editor={editor}
-                  nodeType="color"
-                  icon={Baseline}
-                  tooltip="Text color"
-                />
-
-                <ColorPickerDropdown
-                  editor={editor}
-                  nodeType="backgroundColor"
-                  icon={Paintbrush}
-                  tooltip="Highlight color"
-                />
-              </div>
-            )}
-
-            {/* If Group 5 is hidden: render Row 1 and Row 2 matching media_1789690393499.png */}
-            {hiddenGroups.group5 && (
-              <>
-                {/* Row 1: Alignment & Line Spacing */}
-                <div className={cn('flex items-center gap-0.5 shrink-0', isViewing && 'opacity-40 pointer-events-none')}>
-                  <AlignToolbarButton editor={editor} />
-                  <LineHeightToolbarButton editor={editor} />
-                  <div className="mx-1 h-5 w-px bg-zinc-300/80 dark:bg-zinc-700/80 shrink-0" />
-                </div>
-
-                {/* Row 2: Lists, Indent, Clear Formatting */}
-                <div className={cn('flex items-center gap-0.5 shrink-0', isViewing && 'opacity-40 pointer-events-none')}>
-                  <ToolbarButton
-                    active={isTodo}
-                    onClick={() => {
-                      setBlockType(editor, isTodo ? 'p' : 'todo');
-                    }}
-                    tooltip="Checklist"
-                  >
-                    <ListTodo className="w-4 h-4" />
-                  </ToolbarButton>
-
-                  <BulletedListToolbarButton editor={editor} />
-                  <NumberedListToolbarButton editor={editor} />
-
-                  <ToolbarButton onClick={handleOutdent} tooltip="Decrease indent">
-                    <OutdentIcon className="w-4 h-4" />
-                  </ToolbarButton>
-
-                  <ToolbarButton onClick={handleIndent} tooltip="Increase indent">
-                    <IndentIcon className="w-4 h-4" />
-                  </ToolbarButton>
-
-                  <div className="mx-1 h-5 w-px bg-zinc-300/80 dark:bg-zinc-700/80 shrink-0" />
-
-                  <ToolbarButton
-                    onClick={() => {
-                      const marks = ['bold', 'italic', 'underline', 'strikethrough', 'code', 'color', 'backgroundColor', 'fontSize', 'fontFamily'];
-                      marks.forEach((m) => removeMark(editor, m));
-                      setBlockType(editor, 'p');
-                    }}
-                    tooltip="Clear formatting (Ctrl+\)"
-                  >
-                    <Eraser className="w-4 h-4" />
-                  </ToolbarButton>
-
-                  <div className="mx-1 h-5 w-px bg-zinc-300/80 dark:bg-zinc-700/80 shrink-0" />
-                </div>
-              </>
-            )}
-
-            {/* If Group 4 is hidden: render Row 3: Link, Comment, Image matching media_1789690393499.png */}
-            {hiddenGroups.group4 && (
-              <div className={cn('flex items-center gap-0.5 shrink-0', isViewing && 'opacity-40 pointer-events-none')}>
-                <ToolbarButton onClick={handleLink} tooltip="Insert link (Ctrl+K)">
-                  <Link2 className="w-4 h-4" />
-                </ToolbarButton>
-
-                <CommentToolbarButton
-                  editor={editor}
-                  comments={comments}
-                  onAddComment={onAddComment}
-                  onResolveComment={onResolveComment}
-                />
-
-                <MediaToolbarButton editor={editor} />
-              </div>
-            )}
-          </PortalPopover>
-        </div>
-      )}
 
       {/* ─── Pinned Right-End Cluster: Mode dropdown + Separator + Fullscreen chevron ─── */}
       <div className="flex items-center gap-1 shrink-0 pl-2 ml-1 border-l border-zinc-200/80 dark:border-zinc-700/80">
