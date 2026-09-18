@@ -355,10 +355,10 @@ export function DocumentMenuBar({
                   className="cursor-pointer flex items-center justify-between"
                 >
                   <div className="flex items-center gap-2">
-                    <Pencil className="w-3.5 h-3.5 text-blue-500" />
+                    <Pencil className="w-3.5 h-3.5 text-primary" />
                     <span>Editing</span>
                   </div>
-                  {mode === 'editing' && <Check className="w-4 h-4 text-blue-500" />}
+                  {mode === 'editing' && <Check className="w-4 h-4 text-primary" />}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => onModeChange('viewing')}
@@ -368,7 +368,7 @@ export function DocumentMenuBar({
                     <Eye className="w-3.5 h-3.5 text-zinc-500" />
                     <span>Viewing</span>
                   </div>
-                  {mode === 'viewing' && <Check className="w-4 h-4 text-blue-500" />}
+                  {mode === 'viewing' && <Check className="w-4 h-4 text-primary" />}
                 </DropdownMenuItem>
               </DropdownMenuSubContent>
             </DropdownMenuSub>
@@ -386,7 +386,7 @@ export function DocumentMenuBar({
                     className="cursor-pointer flex items-center justify-between"
                   >
                     <span>{z}%</span>
-                    {zoomLevel === z && <Check className="w-4 h-4 text-blue-500" />}
+                    {zoomLevel === z && <Check className="w-4 h-4 text-primary" />}
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuSubContent>
@@ -399,7 +399,7 @@ export function DocumentMenuBar({
                 <PanelLeft className="w-4 h-4 text-zinc-500" />
                 <span>Show outline</span>
               </div>
-              {showOutline && <Check className="w-4 h-4 text-blue-500" />}
+              {showOutline && <Check className="w-4 h-4 text-primary" />}
             </DropdownMenuItem>
 
             <DropdownMenuItem onClick={onToggleComments} className="cursor-pointer flex items-center justify-between">
@@ -407,7 +407,7 @@ export function DocumentMenuBar({
                 <MessageSquare className="w-4 h-4 text-zinc-500" />
                 <span>Show comments</span>
               </div>
-              {showComments && <Check className="w-4 h-4 text-blue-500" />}
+              {showComments && <Check className="w-4 h-4 text-primary" />}
             </DropdownMenuItem>
 
             <DropdownMenuItem onClick={onToggleRuler} className="cursor-pointer flex items-center justify-between">
@@ -415,7 +415,7 @@ export function DocumentMenuBar({
                 <Ruler className="w-4 h-4 text-zinc-500" />
                 <span>Show ruler</span>
               </div>
-              {showRuler && <Check className="w-4 h-4 text-blue-500" />}
+              {showRuler && <Check className="w-4 h-4 text-primary" />}
             </DropdownMenuItem>
 
             <DropdownMenuSeparator />
@@ -423,7 +423,7 @@ export function DocumentMenuBar({
             <DropdownMenuItem onClick={onToggleFullscreen} className="cursor-pointer gap-2">
               {isFullscreen ? (
                 <>
-                  <Minimize2 className="w-4 h-4 text-blue-500" />
+                  <Minimize2 className="w-4 h-4 text-primary" />
                   <span className="flex-1">Exit fullscreen</span>
                   <span className="text-[11px] text-zinc-400">Esc</span>
                 </>

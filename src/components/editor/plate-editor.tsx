@@ -845,7 +845,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
             )}
 
             {/* Scrollable canvas containing the paper document sheet */}
-            <div ref={canvasRef} className="relative flex-1 flex flex-col min-h-0 overflow-hidden bg-[#f0f4f9] dark:bg-[#131417]">
+            <div ref={canvasRef} className="relative flex-1 flex flex-col min-h-0 overflow-hidden bg-[#f0f4f9] dark:bg-zinc-950">
               <EditorContainer
               variant={isFullscreen ? 'fullWidth' : 'demo'}
               className={cn(
@@ -879,7 +879,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                 <div
                   className={cn(
                     'plate-paper-sheet w-[816px] max-w-[816px] min-h-[1056px] bg-white text-zinc-900 border border-zinc-200/90 shadow-[0_1px_4px_rgba(0,0,0,0.12),0_8px_30px_rgba(0,0,0,0.15)] dark:shadow-[0_8px_36px_rgba(0,0,0,0.7)] rounded-[2px] px-[96px] pb-[96px] flex flex-col relative transition-all',
-                    activeHeaderFooter && 'ring-1 ring-blue-500/40 shadow-md'
+                    activeHeaderFooter && 'ring-1 ring-primary/40 shadow-md'
                   )}
                 >
                   {/* Hidden Header & Footer File Inputs */}
@@ -918,16 +918,16 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                       spellCheck
                       autoFocus={!isEffectivelyReadOnly}
                       onKeyDown={handleKeyDown}
-                      className="flex-1 w-full min-h-[650px] p-0 border-0 shadow-none rounded-none focus-visible:outline-none text-zinc-900 selection:bg-blue-100 selection:text-zinc-900 placeholder:text-zinc-400"
+                      className="flex-1 w-full min-h-[650px] p-0 border-0 shadow-none rounded-none focus-visible:outline-none text-zinc-900 selection:bg-primary/20 selection:text-zinc-900 placeholder:text-zinc-400"
                     />
                   </div>
 
                   {/* Footer boundary line when editing footer */}
                   {activeHeaderFooter === 'footer' && (
                     <div className="flex items-center gap-2 my-2 select-none">
-                      <div className="h-px bg-blue-300 dark:bg-blue-700/60 flex-1 border-b border-dashed" />
-                      <span className="text-[10px] uppercase font-bold tracking-wider text-blue-500/80">Footer Boundary</span>
-                      <div className="h-px bg-blue-300 dark:bg-blue-700/60 flex-1 border-b border-dashed" />
+                      <div className="h-px bg-primary/30 flex-1 border-b border-dashed" />
+                      <span className="text-[10px] uppercase font-bold tracking-wider text-primary">Footer Boundary</span>
+                      <div className="h-px bg-primary/30 flex-1 border-b border-dashed" />
                     </div>
                   )}
 
@@ -951,10 +951,10 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                           {/* Footer Control Ribbon */}
                           <div
                             data-footer-toolbar="true"
-                            className="header-footer-ribbon flex items-center justify-between px-3 py-1.5 rounded-lg bg-blue-50/80 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-900/60 shadow-xs"
+                            className="header-footer-ribbon flex items-center justify-between px-3 py-1.5 rounded-lg bg-primary/10 border border-primary/20 shadow-xs"
                           >
                             <div className="flex items-center gap-3">
-                              <span className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
+                              <span className="text-xs font-bold text-primary uppercase tracking-wider">
                                 Footer
                               </span>
                               <button
@@ -973,7 +973,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                                 className={cn(
                                   'inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md border shadow-xs transition-colors cursor-pointer',
                                   footerState.pageNumber
-                                    ? 'bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-700'
+                                    ? 'bg-primary/15 text-primary border-primary/30 font-semibold'
                                     : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700'
                                 )}
                               >
@@ -1045,7 +1045,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                                     className={cn(
                                       'p-1 rounded cursor-pointer transition-colors',
                                       (footerState.image.offsetPercent !== undefined ? footerState.image.offsetPercent <= 33 : footerState.image.align === 'left')
-                                        ? 'bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-400 font-bold'
+                                        ? 'bg-primary/15 text-primary font-bold'
                                         : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
                                     )}
                                   >
@@ -1063,7 +1063,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                                     className={cn(
                                       'p-1 rounded cursor-pointer transition-colors',
                                       (footerState.image.offsetPercent !== undefined ? (footerState.image.offsetPercent > 33 && footerState.image.offsetPercent < 67) : (footerState.image.align === 'center' || !footerState.image.align))
-                                        ? 'bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-400 font-bold'
+                                        ? 'bg-primary/15 text-primary font-bold'
                                         : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
                                     )}
                                   >
@@ -1081,7 +1081,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                                     className={cn(
                                       'p-1 rounded cursor-pointer transition-colors',
                                       (footerState.image.offsetPercent !== undefined ? footerState.image.offsetPercent >= 67 : footerState.image.align === 'right')
-                                        ? 'bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-400 font-bold'
+                                        ? 'bg-primary/15 text-primary font-bold'
                                         : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
                                     )}
                                   >
@@ -1101,7 +1101,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                                     className={cn(
                                       'inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium transition-colors cursor-pointer',
                                       isCroppingFooterImage
-                                        ? 'bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 font-semibold'
+                                        ? 'bg-primary/15 text-primary font-semibold'
                                         : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-700'
                                     )}
                                   >
@@ -1128,7 +1128,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                               {/* Interactive Draggable, Resizable & Croppable Footer Logo Track */}
                               <div
                                 ref={footerTrackRef}
-                                className="relative w-full min-h-[90px] py-2 px-1 border border-dashed border-blue-200/80 dark:border-blue-900/40 rounded-lg bg-blue-50/20 dark:bg-blue-950/20 select-none overflow-hidden"
+                                className="relative w-full min-h-[90px] py-2 px-1 border border-dashed border-primary/25 rounded-lg bg-primary/5 select-none overflow-hidden"
                               >
                                 <div
                                   data-footer-image="true"
@@ -1154,17 +1154,17 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                                     !isCroppingFooterImage && 'cursor-grab',
                                     isDraggingFooterImage && 'cursor-grabbing scale-[1.02] shadow-lg',
                                     isResizingFooterImage && 'shadow-lg',
-                                    (selectedFooterImage || isCroppingFooterImage) && 'ring-2 ring-blue-500 ring-offset-2 ring-offset-white dark:ring-offset-zinc-900 shadow-md'
+                                    (selectedFooterImage || isCroppingFooterImage) && 'ring-2 ring-primary ring-offset-2 ring-offset-white dark:ring-offset-zinc-900 shadow-md'
                                   )}
                                 >
                                   {/* Floating drag / resize badge */}
                                   {isResizingFooterImage && (
-                                    <div className="absolute -top-7 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-blue-600 text-white text-[10px] font-semibold shadow-md whitespace-nowrap pointer-events-none z-40">
+                                    <div className="absolute -top-7 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-primary text-primary-foreground text-[10px] font-semibold shadow-md whitespace-nowrap pointer-events-none z-40">
                                       Size: {footerState.image.width || 140}px
                                     </div>
                                   )}
                                   {isDraggingFooterImage && !isResizingFooterImage && (
-                                    <div className="absolute -top-7 left-1/2 -translate-x-1/2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-600 text-white text-[10px] font-semibold shadow-md whitespace-nowrap pointer-events-none z-40">
+                                    <div className="absolute -top-7 left-1/2 -translate-x-1/2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary text-primary-foreground text-[10px] font-semibold shadow-md whitespace-nowrap pointer-events-none z-40">
                                       <Move className="w-2.5 h-2.5" />
                                       <span>Drag to position ({footerState.image.offsetPercent ?? (footerState.image.align === 'left' ? 0 : footerState.image.align === 'right' ? 100 : 50)}%)</span>
                                     </div>
@@ -1260,34 +1260,34 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                                       <div
                                         onMouseDown={(e) => handleFooterResizeStart(e, 'nw')}
                                         onTouchStart={(e) => handleFooterResizeStart(e, 'nw')}
-                                        className="absolute -top-1.5 -left-1.5 w-3 h-3 bg-blue-600 border-2 border-white rounded-2xs shadow-xs cursor-nwse-resize z-30 hover:scale-125 transition-transform"
+                                        className="absolute -top-1.5 -left-1.5 w-3 h-3 bg-primary border-2 border-white rounded-2xs shadow-xs cursor-nwse-resize z-30 hover:scale-125 transition-transform"
                                       />
                                       <div
                                         onMouseDown={(e) => handleFooterResizeStart(e, 'ne')}
                                         onTouchStart={(e) => handleFooterResizeStart(e, 'ne')}
-                                        className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-blue-600 border-2 border-white rounded-2xs shadow-xs cursor-nesw-resize z-30 hover:scale-125 transition-transform"
+                                        className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-primary border-2 border-white rounded-2xs shadow-xs cursor-nesw-resize z-30 hover:scale-125 transition-transform"
                                       />
                                       <div
                                         onMouseDown={(e) => handleFooterResizeStart(e, 'sw')}
                                         onTouchStart={(e) => handleFooterResizeStart(e, 'sw')}
-                                        className="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-blue-600 border-2 border-white rounded-2xs shadow-xs cursor-nesw-resize z-30 hover:scale-125 transition-transform"
+                                        className="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-primary border-2 border-white rounded-2xs shadow-xs cursor-nesw-resize z-30 hover:scale-125 transition-transform"
                                       />
                                       <div
                                         onMouseDown={(e) => handleFooterResizeStart(e, 'se')}
                                         onTouchStart={(e) => handleFooterResizeStart(e, 'se')}
-                                        className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-blue-600 border-2 border-white rounded-2xs shadow-xs cursor-nwse-resize z-30 hover:scale-125 transition-transform"
+                                        className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-primary border-2 border-white rounded-2xs shadow-xs cursor-nwse-resize z-30 hover:scale-125 transition-transform"
                                       />
 
                                       {/* 2 Edges */}
                                       <div
                                         onMouseDown={(e) => handleFooterResizeStart(e, 'w')}
                                         onTouchStart={(e) => handleFooterResizeStart(e, 'w')}
-                                        className="absolute top-1/2 -left-1.5 -translate-y-1/2 w-3 h-3 bg-blue-600 border-2 border-white rounded-2xs shadow-xs cursor-ew-resize z-30 hover:scale-125 transition-transform"
+                                        className="absolute top-1/2 -left-1.5 -translate-y-1/2 w-3 h-3 bg-primary border-2 border-white rounded-2xs shadow-xs cursor-ew-resize z-30 hover:scale-125 transition-transform"
                                       />
                                       <div
                                         onMouseDown={(e) => handleFooterResizeStart(e, 'e')}
                                         onTouchStart={(e) => handleFooterResizeStart(e, 'e')}
-                                        className="absolute top-1/2 -right-1.5 -translate-y-1/2 w-3 h-3 bg-blue-600 border-2 border-white rounded-2xs shadow-xs cursor-ew-resize z-30 hover:scale-125 transition-transform"
+                                        className="absolute top-1/2 -right-1.5 -translate-y-1/2 w-3 h-3 bg-primary border-2 border-white rounded-2xs shadow-xs cursor-ew-resize z-30 hover:scale-125 transition-transform"
                                       />
                                     </>
                                   )}
@@ -1314,7 +1314,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                                 className={cn(
                                   'p-1 rounded cursor-pointer transition-colors',
                                   footerState.textAlign === 'left'
-                                    ? 'bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-400 font-bold'
+                                    ? 'bg-primary/15 text-primary font-bold'
                                     : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
                                 )}
                               >
@@ -1327,7 +1327,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                                 className={cn(
                                   'p-1 rounded cursor-pointer transition-colors',
                                   footerState.textAlign === 'center' || !footerState.textAlign
-                                    ? 'bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-400 font-bold'
+                                    ? 'bg-primary/15 text-primary font-bold'
                                     : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
                                 )}
                               >
@@ -1340,7 +1340,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                                 className={cn(
                                   'p-1 rounded cursor-pointer transition-colors',
                                   footerState.textAlign === 'right'
-                                    ? 'bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-400 font-bold'
+                                    ? 'bg-primary/15 text-primary font-bold'
                                     : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
                                 )}
                               >

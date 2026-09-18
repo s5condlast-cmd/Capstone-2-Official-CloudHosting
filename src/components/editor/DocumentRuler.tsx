@@ -62,11 +62,11 @@ export const DocumentRuler: React.FC<DocumentRulerProps> = ({
       }}
     >
       {/* Outer Ruler Bar Frame */}
-      <div className="relative w-full h-full flex bg-zinc-200 dark:bg-zinc-800 border-x border-t border-zinc-300 dark:border-zinc-700/80 rounded-t-xs overflow-hidden shadow-2xs">
+      <div className="relative w-full h-full flex bg-white border-x border-t border-zinc-200 dark:border-zinc-300/80 rounded-t-xs overflow-hidden shadow-2xs">
         {/* Left Margin Gutter (Shaded 1 inch / 96px) */}
         <div
           style={{ width: `${leftMargin}px` }}
-          className="h-full bg-zinc-300/85 dark:bg-zinc-800/95 border-r border-zinc-400/50 dark:border-zinc-700 relative shrink-0"
+          className="h-full bg-zinc-100/90 border-r border-zinc-200/80 relative shrink-0"
         />
 
         {/* Central Printable Area (White / Bright 6.5 inches / 624px) */}
@@ -78,7 +78,7 @@ export const DocumentRuler: React.FC<DocumentRulerProps> = ({
         {/* Right Margin Gutter (Shaded 1 inch / 96px) */}
         <div
           style={{ width: `${rightMargin}px` }}
-          className="h-full bg-zinc-300/85 dark:bg-zinc-800/95 border-l border-zinc-400/50 dark:border-zinc-700 relative shrink-0"
+          className="h-full bg-zinc-100/90 border-l border-zinc-200/80 relative shrink-0"
         />
 
         {/* Tick Marks & Numbers Overlay */}
@@ -92,9 +92,9 @@ export const DocumentRuler: React.FC<DocumentRulerProps> = ({
                 {/* Tick Mark Line */}
                 <div
                   className={cn(
-                    'absolute bottom-0 w-px bg-zinc-400',
+                    'absolute bottom-0 w-px bg-zinc-300',
                     isInch && 'h-2.5 bg-zinc-700',
-                    isHalfInch && 'h-2 bg-zinc-600',
+                    isHalfInch && 'h-2 bg-zinc-500',
                     isQuarterInch && 'h-1.5 bg-zinc-400',
                     !isInch && !isHalfInch && !isQuarterInch && 'h-1 bg-zinc-300'
                   )}
@@ -104,7 +104,7 @@ export const DocumentRuler: React.FC<DocumentRulerProps> = ({
                 {/* Inch Number Label */}
                 {showNumber && (
                   <span
-                    className="absolute top-0.5 text-[9px] font-mono font-medium text-zinc-700 -translate-x-1/2 select-none"
+                    className="absolute top-0.5 text-[9px] font-mono font-medium text-zinc-600 -translate-x-1/2 select-none"
                     style={{ left: `${px}px` }}
                   >
                     {inchNumber}
@@ -122,9 +122,9 @@ export const DocumentRuler: React.FC<DocumentRulerProps> = ({
           title="Left Indent (1.0 inch)"
         >
           {/* First Line Indent Rectangle */}
-          <div className="w-2.5 h-1 bg-blue-600 dark:bg-blue-500 rounded-2xs mb-0.5 shadow-2xs group-hover:scale-125 transition-transform" />
+          <div className="w-2.5 h-1 bg-[var(--theme-accent-on-paper)] rounded-2xs mb-0.5 shadow-2xs group-hover:scale-125 transition-transform" />
           {/* Hanging / Left Indent Down Triangle */}
-          <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[5px] border-t-blue-600 dark:border-t-blue-500 group-hover:scale-125 transition-transform" />
+          <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[5px] border-t-[var(--theme-accent-on-paper)] group-hover:scale-125 transition-transform" />
         </div>
 
         {/* Right Indent Marker (Down triangle at 7.5 inches / 720px) */}
@@ -133,7 +133,7 @@ export const DocumentRuler: React.FC<DocumentRulerProps> = ({
           style={{ left: `${width - rightMargin}px` }}
           title="Right Indent (7.5 inches)"
         >
-          <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[5px] border-t-blue-600 dark:border-t-blue-500 group-hover:scale-125 transition-transform" />
+          <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[5px] border-t-[var(--theme-accent-on-paper)] group-hover:scale-125 transition-transform" />
         </div>
       </div>
     </div>

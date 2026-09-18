@@ -229,10 +229,10 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
         <div className="flex flex-col gap-3 w-full">
           <div
             data-header-toolbar="true"
-            className="header-footer-ribbon flex items-center justify-between px-3.5 py-2 rounded-lg bg-blue-50/90 dark:bg-blue-950/60 border border-blue-200/90 dark:border-blue-900/80 shadow-xs"
+            className="header-footer-ribbon flex items-center justify-between px-3.5 py-2 rounded-lg bg-primary/10 border border-primary/20 shadow-xs"
           >
             <div className="flex items-center gap-3">
-              <span className="text-xs font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wider">
+              <span className="text-xs font-bold text-primary uppercase tracking-wider">
                 Header
               </span>
               <button
@@ -333,7 +333,7 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
                       className={cn(
                         'p-1 rounded cursor-pointer transition-colors',
                         headerState.image.align === 'left'
-                          ? 'bg-white dark:bg-zinc-700 text-blue-600 dark:text-blue-400 shadow-2xs'
+                          ? 'bg-white dark:bg-zinc-700 text-primary shadow-2xs'
                           : 'hover:bg-zinc-200 dark:hover:bg-zinc-700'
                       )}
                     >
@@ -351,7 +351,7 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
                       className={cn(
                         'p-1 rounded cursor-pointer transition-colors',
                         headerState.image.align === 'center'
-                          ? 'bg-white dark:bg-zinc-700 text-blue-600 dark:text-blue-400 shadow-2xs'
+                          ? 'bg-white dark:bg-zinc-700 text-primary shadow-2xs'
                           : 'hover:bg-zinc-200 dark:hover:bg-zinc-700'
                       )}
                     >
@@ -369,7 +369,7 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
                       className={cn(
                         'p-1 rounded cursor-pointer transition-colors',
                         headerState.image.align === 'right'
-                          ? 'bg-white dark:bg-zinc-700 text-blue-600 dark:text-blue-400 shadow-2xs'
+                          ? 'bg-white dark:bg-zinc-700 text-primary shadow-2xs'
                           : 'hover:bg-zinc-200 dark:hover:bg-zinc-700'
                       )}
                     >
@@ -385,7 +385,7 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
                     className={cn(
                       'inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs border cursor-pointer transition-colors',
                       isCroppingImage
-                        ? 'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-950 dark:text-blue-400'
+                        ? 'bg-primary/10 text-primary border-primary/20'
                         : 'border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800'
                     )}
                   >
@@ -427,7 +427,7 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
                   }}
                   className={cn(
                     'absolute top-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing select-none group/img transition-shadow',
-                    selectedImage && 'ring-2 ring-blue-500 rounded-xs'
+                    selectedImage && 'ring-2 ring-primary rounded-xs'
                   )}
                 >
                   <div className="relative w-full h-full overflow-hidden rounded-xs">
@@ -458,33 +458,33 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
                       <div
                         onMouseDown={(e) => handleResizeStart(e, 'nw')}
                         onTouchStart={(e) => handleResizeStart(e, 'nw')}
-                        className="absolute -top-1.5 -left-1.5 w-3 h-3 bg-blue-600 border-2 border-white rounded-2xs shadow-xs cursor-nwse-resize z-30 hover:scale-125 transition-transform"
+                        className="absolute -top-1.5 -left-1.5 w-3 h-3 bg-primary border-2 border-white rounded-2xs shadow-xs cursor-nwse-resize z-30 hover:scale-125 transition-transform"
                       />
                       <div
                         onMouseDown={(e) => handleResizeStart(e, 'ne')}
                         onTouchStart={(e) => handleResizeStart(e, 'ne')}
-                        className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-blue-600 border-2 border-white rounded-2xs shadow-xs cursor-nesw-resize z-30 hover:scale-125 transition-transform"
+                        className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-primary border-2 border-white rounded-2xs shadow-xs cursor-nesw-resize z-30 hover:scale-125 transition-transform"
                       />
                       <div
                         onMouseDown={(e) => handleResizeStart(e, 'sw')}
                         onTouchStart={(e) => handleResizeStart(e, 'sw')}
-                        className="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-blue-600 border-2 border-white rounded-2xs shadow-xs cursor-nesw-resize z-30 hover:scale-125 transition-transform"
+                        className="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-primary border-2 border-white rounded-2xs shadow-xs cursor-nesw-resize z-30 hover:scale-125 transition-transform"
                       />
                       <div
                         onMouseDown={(e) => handleResizeStart(e, 'se')}
                         onTouchStart={(e) => handleResizeStart(e, 'se')}
-                        className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-blue-600 border-2 border-white rounded-2xs shadow-xs cursor-nwse-resize z-30 hover:scale-125 transition-transform"
+                        className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-primary border-2 border-white rounded-2xs shadow-xs cursor-nwse-resize z-30 hover:scale-125 transition-transform"
                       />
                       {/* 2 Edges */}
                       <div
                         onMouseDown={(e) => handleResizeStart(e, 'w')}
                         onTouchStart={(e) => handleResizeStart(e, 'w')}
-                        className="absolute top-1/2 -left-1.5 -translate-y-1/2 w-3 h-3 bg-blue-600 border-2 border-white rounded-2xs shadow-xs cursor-ew-resize z-30 hover:scale-125 transition-transform"
+                        className="absolute top-1/2 -left-1.5 -translate-y-1/2 w-3 h-3 bg-primary border-2 border-white rounded-2xs shadow-xs cursor-ew-resize z-30 hover:scale-125 transition-transform"
                       />
                       <div
                         onMouseDown={(e) => handleResizeStart(e, 'e')}
                         onTouchStart={(e) => handleResizeStart(e, 'e')}
-                        className="absolute top-1/2 -right-1.5 -translate-y-1/2 w-3 h-3 bg-blue-600 border-2 border-white rounded-2xs shadow-xs cursor-ew-resize z-30 hover:scale-125 transition-transform"
+                        className="absolute top-1/2 -right-1.5 -translate-y-1/2 w-3 h-3 bg-primary border-2 border-white rounded-2xs shadow-xs cursor-ew-resize z-30 hover:scale-125 transition-transform"
                       />
                     </>
                   )}
@@ -536,7 +536,7 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
                       <button
                         type="button"
                         onClick={() => setIsCroppingImage(false)}
-                        className="ml-1 px-2.5 py-0.5 bg-blue-600 hover:bg-blue-500 rounded text-xs font-semibold cursor-pointer transition-colors"
+                        className="ml-1 px-2.5 py-0.5 bg-primary hover:bg-primary/90 text-primary-foreground rounded text-xs font-semibold cursor-pointer transition-colors"
                       >
                         Done
                       </button>
@@ -565,7 +565,7 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
                 className={cn(
                   'p-1 rounded cursor-pointer transition-colors',
                   headerState.textAlign === 'left'
-                    ? 'bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-400 font-bold'
+                    ? 'bg-primary/15 text-primary font-bold'
                     : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
                 )}
               >
@@ -578,7 +578,7 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
                 className={cn(
                   'p-1 rounded cursor-pointer transition-colors',
                   (!headerState.textAlign || headerState.textAlign === 'center')
-                    ? 'bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-400 font-bold'
+                    ? 'bg-primary/15 text-primary font-bold'
                     : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
                 )}
               >
@@ -591,7 +591,7 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
                 className={cn(
                   'p-1 rounded cursor-pointer transition-colors',
                   headerState.textAlign === 'right'
-                    ? 'bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-400 font-bold'
+                    ? 'bg-primary/15 text-primary font-bold'
                     : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
                 )}
               >
@@ -659,11 +659,11 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
       {/* Google Docs Header Boundary Line across full page */}
       {isActive && (
         <div className="flex items-center gap-2 my-2 select-none">
-          <div className="h-px bg-blue-400 dark:bg-blue-600 flex-1 border-b border-dashed" />
-          <span className="text-[10px] uppercase font-bold tracking-wider text-blue-600 dark:text-blue-400">
+          <div className="h-px bg-primary/40 flex-1 border-b border-dashed" />
+          <span className="text-[10px] uppercase font-bold tracking-wider text-primary">
             Header Boundary
           </span>
-          <div className="h-px bg-blue-400 dark:bg-blue-600 flex-1 border-b border-dashed" />
+          <div className="h-px bg-primary/40 flex-1 border-b border-dashed" />
         </div>
       )}
     </header>

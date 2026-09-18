@@ -134,7 +134,7 @@ export function DocumentOutline({
       {/* Active Document Title */}
       <div className="px-3 py-2 border-b border-zinc-100 dark:border-zinc-800/50">
         <div className="flex items-center gap-2 text-xs font-medium text-zinc-900 dark:text-zinc-100 truncate">
-          <FileText className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+          <FileText className="w-3.5 h-3.5 text-primary shrink-0" />
           <span className="truncate" title={documentTitle}>
             {documentTitle || 'Untitled Document'}
           </span>
@@ -161,7 +161,7 @@ export function DocumentOutline({
               )}
               title={item.text}
             >
-              <span className="truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+              <span className="truncate group-hover:text-primary transition-colors">
                 {item.text}
               </span>
             </button>

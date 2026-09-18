@@ -17,6 +17,7 @@
   --color-primary: var(--theme-primary);
   --color-primary-hover: var(--theme-primary-hover);
   --color-primary-fg: var(--theme-primary-fg);
+  --color-accent-on-paper: var(--theme-accent-on-paper);
 
   /* Deep Sky & Warm Amber Palette */
   --color-sky-blue: #3B82C4;
@@ -32,6 +33,7 @@
     --theme-primary: #09090b;
     --theme-primary-hover: #27272a;
     --theme-primary-fg: #ffffff;
+    --theme-accent-on-paper: var(--theme-primary);
   }
 
   .dark {
@@ -40,6 +42,7 @@
     --theme-primary: #f4f4f5;
     --theme-primary-hover: #e4e4e7;
     --theme-primary-fg: #09090b;
+    --theme-accent-on-paper: #18181b;
   }
 
   /* Shared Text Color for Colored Themes (always white foreground) */
@@ -54,6 +57,7 @@
   .dark.theme-cyan,
   .dark.theme-deep-sky {
     --theme-primary-fg: #ffffff;
+    --theme-accent-on-paper: var(--theme-primary);
   }
 
   /* Deep Sky Blue (Primary + Warm Amber Accent + Soft Slate) */

@@ -113,7 +113,7 @@ export function DocumentCommentsRail({
       {/* Header */}
       <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-zinc-200/80 dark:border-zinc-800/80">
         <div className="flex items-center gap-2 text-xs font-semibold text-zinc-700 dark:text-zinc-300">
-          <MessageSquare className="w-4 h-4 text-blue-500" />
+          <MessageSquare className="w-4 h-4 text-primary" />
           <span>Comments</span>
           <span className="text-[11px] font-normal text-zinc-400">
             ({activeComments.length})
@@ -137,7 +137,7 @@ export function DocumentCommentsRail({
           className={cn(
             'flex-1 py-1.5 text-xs font-medium rounded-t border-b-2 transition-colors',
             activeTab === 'active'
-              ? 'border-blue-500 text-blue-600 dark:text-blue-400 bg-white dark:bg-zinc-800'
+              ? 'border-primary text-primary bg-white dark:bg-zinc-800'
               : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
           )}
         >
@@ -149,7 +149,7 @@ export function DocumentCommentsRail({
           className={cn(
             'flex-1 py-1.5 text-xs font-medium rounded-t border-b-2 transition-colors',
             activeTab === 'resolved'
-              ? 'border-blue-500 text-blue-600 dark:text-blue-400 bg-white dark:bg-zinc-800'
+              ? 'border-primary text-primary bg-white dark:bg-zinc-800'
               : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
           )}
         >
@@ -159,7 +159,7 @@ export function DocumentCommentsRail({
 
       {/* New Comment Box (Active Tab Only) */}
       {activeTab === 'active' && (
-        <form onSubmit={handleSubmit} className="p-3 border-b border-zinc-200/60 dark:border-zinc-800/60 bg-blue-50/30 dark:bg-blue-950/10">
+        <form onSubmit={handleSubmit} className="p-3 border-b border-zinc-200/60 dark:border-zinc-800/60 bg-primary/5">
           {selectedText && (
             <div className="mb-2 p-2 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200/70 dark:border-amber-800/50 text-xs">
               <div className="flex items-center justify-between text-amber-700 dark:text-amber-400 font-medium mb-1">
@@ -190,7 +190,7 @@ export function DocumentCommentsRail({
               className={cn(
                 'w-full text-xs p-2 rounded-lg border border-zinc-200 dark:border-zinc-700',
                 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100',
-                'focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none pr-8'
+                'focus:outline-none focus:ring-1 focus:ring-primary resize-none pr-8'
               )}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
@@ -205,7 +205,7 @@ export function DocumentCommentsRail({
               className={cn(
                 'absolute right-2 bottom-2 p-1 rounded-md transition-colors',
                 newCommentText.trim()
-                  ? 'bg-blue-600 text-white hover:bg-blue-700'
+                  ? 'bg-primary text-primary-foreground hover:bg-primary/90'
                   : 'bg-zinc-100 dark:bg-zinc-700 text-zinc-400 cursor-not-allowed'
               )}
             >
@@ -237,7 +237,7 @@ export function DocumentCommentsRail({
                 {/* Author Info */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5 min-w-0">
-                    <div className="w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-[10px] shrink-0">
+                    <div className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-[10px] shrink-0">
                       {comment.author.charAt(0).toUpperCase()}
                     </div>
                     <span className="font-semibold text-zinc-900 dark:text-zinc-100 truncate">
@@ -277,7 +277,7 @@ export function DocumentCommentsRail({
                       <button
                         type="button"
                         onClick={() => onUnresolveComment(comment.id)}
-                        className="flex items-center gap-1 text-[11px] text-zinc-500 hover:text-blue-600 transition-colors"
+                        className="flex items-center gap-1 text-[11px] text-zinc-500 hover:text-primary transition-colors"
                       >
                         <RotateCcw className="w-3 h-3" /> Re-open
                       </button>

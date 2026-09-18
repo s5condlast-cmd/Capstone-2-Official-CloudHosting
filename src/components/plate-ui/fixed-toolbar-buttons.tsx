@@ -3083,7 +3083,7 @@ export function FixedToolbarButtons({
           className={cn(
             'p-1.5 h-8 w-8 rounded-full transition-colors flex items-center justify-center',
             isFullscreen
-              ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40'
+              ? 'text-primary bg-primary/10'
               : 'text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200/60 dark:hover:bg-zinc-700/60'
           )}
         >
