@@ -15,7 +15,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ChevronLeft, ChevronDown, Save, Download, Clock, Send, Copy,
   AlertTriangle, CheckCircle, Wifi, WifiOff, Loader2,
-  History, FileText, Users, ShieldCheck, ArrowLeft, Calendar
+  History, FileText, Users, ShieldCheck, ArrowLeft
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -28,7 +28,6 @@ import { toast } from 'sonner';
 import { supabase } from '@/src/lib/supabase';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { DocumentHistoryDrawer } from '@/src/components/editor/DocumentHistoryDrawer';
-import { DocumentCalendarModal } from '@/src/components/editor/DocumentCalendarModal';
 import { SidebarContext } from '@/components/ui/sidebar';
 import PlateEditor, { type PlateEditorRef } from '@/src/components/editor/plate-editor';
 import {
@@ -92,7 +91,6 @@ export function StudentDocumentEditor() {
 
   // ── UI state ─────────────────────────────────────────────────────────────
   const [showHistory, setShowHistory] = useState(false);
-  const [showCalendarModal, setShowCalendarModal] = useState(false);
   const [showConflictBanner, setShowConflictBanner] = useState(false);
   const [conflictLocal, setConflictLocal] = useState<DraftState | null>(null);
   const [conflictRemote, setConflictRemote] = useState<DraftState | null>(null);
@@ -111,15 +109,6 @@ export function StudentDocumentEditor() {
       case 'adviser': return '/adviser/review';
       case 'supervisor': return '/supervisor/interns';
       case 'student': default: return '/student/documents';
-    }
-  }, [user?.role]);
-
-  const getCalendarRoute = useCallback(() => {
-    switch (user?.role) {
-      case 'admin': return '/admin/calendar';
-      case 'adviser': return '/adviser/calendar';
-      case 'supervisor': return '/supervisor/calendar';
-      case 'student': default: return '/student/calendar';
     }
   }, [user?.role]);
 
@@ -638,18 +627,8 @@ export function StudentDocumentEditor() {
               </div>
             </div>
 
-            {/* Right: Actions (Calendar, History, Export, Submit) */}
+            {/* Right: Actions (History, Export, Submit) */}
             <div className="flex items-center gap-2 shrink-0 ml-4">
-              {/* Practicum Calendar Action */}
-              <button
-                type="button"
-                onClick={() => setShowCalendarModal(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-                title="Practicum Calendar & Deadlines"
-              >
-                <Calendar className="w-4 h-4 text-zinc-500" />
-                <span className="hidden sm:inline">Calendar</span>
-              </button>
 
               {!isLocked && (
                 <button
@@ -758,13 +737,6 @@ export function StudentDocumentEditor() {
           onRestoreComplete={handleRestoreComplete}
         />
       )}
-
-      {/* Practicum Calendar Modal */}
-      <DocumentCalendarModal
-        isOpen={showCalendarModal}
-        onClose={() => setShowCalendarModal(false)}
-        onOpenFullCalendar={() => void handleSafeNavigate(getCalendarRoute())}
-      />
     </div>
   );
 }
