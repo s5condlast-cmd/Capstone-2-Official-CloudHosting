@@ -115,6 +115,8 @@ export interface PlateEditorProps {
   onRename?: () => void;
   /** Top Document Identity / Action Bar slot (can accept a render function passing menuBar) */
   topBar?: React.ReactNode | ((props: { menuBar: React.ReactNode }) => React.ReactNode);
+  /** Whether to show the bottom telemetry status bar (default: false) */
+  showStatusBar?: boolean;
 }
 
 // ─── Default empty content ────────────────────────────────────────────────────
@@ -181,6 +183,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
       onDuplicate,
       onRename,
       topBar,
+      showStatusBar = false,
     },
     ref
   ) {
@@ -1421,16 +1424,18 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
               </div>
             </EditorContainer>
 
-            {/* ─── Google Docs Bottom Telemetry Status Bar ───────────────────── */}
-            <DocumentStatusBar
-              pageCount={Math.max(1, Math.ceil(currentWordCount / 350))}
-              currentPage={1}
-              wordCount={currentWordCount}
-              zoomLevel={zoomLevel}
-              onZoomChange={setZoomLevel}
-              syncStatus={syncStatus}
-              isReadOnly={isEffectivelyReadOnly}
-            />
+            {/* ─── Bottom Telemetry Status Bar (Optional, disabled by default) ── */}
+            {showStatusBar && (
+              <DocumentStatusBar
+                pageCount={Math.max(1, Math.ceil(currentWordCount / 350))}
+                currentPage={1}
+                wordCount={currentWordCount}
+                zoomLevel={zoomLevel}
+                onZoomChange={setZoomLevel}
+                syncStatus={syncStatus}
+                isReadOnly={isEffectivelyReadOnly}
+              />
+            )}
 
             {/* Floating subtle zoom indicator */}
             {showZoomIndicator && (
