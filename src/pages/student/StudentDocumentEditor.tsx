@@ -540,25 +540,25 @@ export function StudentDocumentEditor() {
         topBar={({ menuBar }) => (
           <div className="flex items-center justify-between gap-4 px-3 sm:px-4 pt-3 pb-2 bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80 shrink-0 select-none">
             {/* Left: Document Return Button + 2-Row Stack (Title on top, MenuBar below) */}
-            <div className="flex items-start gap-1.5 sm:gap-2 min-w-0 flex-1">
-              {/* Document Return Button (Lucide Black & White, No Shadow) */}
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              {/* Document Return Button (Lucide Black & White, No Shadow, Spans Both Lines) */}
               <button
                 type="button"
                 onClick={() => navigate('/student/documents')}
-                className="group relative flex items-center justify-center p-1 rounded-md text-zinc-800 dark:text-zinc-200 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-colors shrink-0 cursor-pointer shadow-none border-0 bg-transparent mt-0.5"
+                className="group relative flex items-center justify-center p-0.5 rounded-lg text-zinc-800 dark:text-zinc-200 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-colors shrink-0 cursor-pointer shadow-none border-0 bg-transparent"
                 title="Back to Documents"
                 aria-label="Back to Documents"
               >
-                <div className="relative flex items-center justify-center w-5 h-5 transition-transform group-hover:scale-105">
-                  <FileText className="w-5 h-5 text-zinc-800 dark:text-zinc-200 group-hover:opacity-0 transition-opacity" />
-                  <ArrowLeft className="w-4.5 h-4.5 text-zinc-900 dark:text-white absolute inset-0 m-auto opacity-0 group-hover:opacity-100 transition-opacity stroke-[2.2]" />
+                <div className="relative flex items-center justify-center w-8 h-9.5 transition-transform group-hover:scale-105">
+                  <FileText className="w-7.5 h-9 text-zinc-800 dark:text-zinc-200 group-hover:opacity-0 transition-opacity" />
+                  <ArrowLeft className="w-5 h-5 text-zinc-900 dark:text-white absolute inset-0 m-auto opacity-0 group-hover:opacity-100 transition-opacity stroke-[2.2]" />
                 </div>
               </button>
 
               {/* Stacked 2-row block directly beside the document icon */}
-              <div className="flex flex-col justify-start min-w-0 flex-1">
+              <div className="flex flex-col justify-center min-w-0 flex-1">
                 {/* Row 1: Document Title + Telemetry */}
-                <div className="flex items-center gap-2.5 min-w-0 h-6 sm:h-6.5">
+                <div className="flex items-center gap-2.5 min-w-0">
                   {titleEditing ? (
                     <input
                       autoFocus
