@@ -2946,7 +2946,28 @@ export function FixedToolbarButtons({
                   </>
                 )}
 
-                {/* Section 1: Alignment & Line Spacing */}
+                {/* Group 4: Link, Comment, Image (on the left, appearing first) */}
+                {hiddenGroups.group4 && (
+                  <div className={cn('flex items-center gap-0.5 shrink-0 flex-nowrap', isViewing && 'opacity-40 pointer-events-none')}>
+                    <ToolbarButton onClick={handleLink} tooltip="Insert link (Ctrl+K)">
+                      <Link2 className="w-4 h-4" />
+                    </ToolbarButton>
+
+                    <CommentToolbarButton
+                      editor={editor}
+                      comments={comments}
+                      onAddComment={onAddComment}
+                      onResolveComment={onResolveComment}
+                    />
+
+                    <MediaToolbarButton editor={editor} />
+                    {hiddenGroups.group5 && (
+                      <div className="mx-1 h-5 w-px bg-zinc-300/80 dark:bg-zinc-700/80 shrink-0" />
+                    )}
+                  </div>
+                )}
+
+                {/* Group 5 - Part A: Alignment & Line Spacing */}
                 {hiddenGroups.group5 && (
                   <div className={cn('flex items-center gap-0.5 shrink-0 flex-nowrap', isViewing && 'opacity-40 pointer-events-none')}>
                     <AlignToolbarButton editor={editor} />
@@ -2955,7 +2976,7 @@ export function FixedToolbarButtons({
                   </div>
                 )}
 
-                {/* Section 2: Lists, Indent, Clear Formatting */}
+                {/* Group 5 - Part B: Lists, Indent, Clear Formatting */}
                 {hiddenGroups.group5 && (
                   <div className={cn('flex items-center gap-0.5 shrink-0 flex-nowrap', isViewing && 'opacity-40 pointer-events-none')}>
                     <ToolbarButton
@@ -2991,28 +3012,6 @@ export function FixedToolbarButtons({
                     >
                       <Eraser className="w-4 h-4" />
                     </ToolbarButton>
-
-                    {hiddenGroups.group4 && (
-                      <div className="mx-1 h-5 w-px bg-zinc-300/80 dark:bg-zinc-700/80 shrink-0" />
-                    )}
-                  </div>
-                )}
-
-                {/* Section 3: Link, Comment, Image */}
-                {hiddenGroups.group4 && (
-                  <div className={cn('flex items-center gap-0.5 shrink-0 flex-nowrap', isViewing && 'opacity-40 pointer-events-none')}>
-                    <ToolbarButton onClick={handleLink} tooltip="Insert link (Ctrl+K)">
-                      <Link2 className="w-4 h-4" />
-                    </ToolbarButton>
-
-                    <CommentToolbarButton
-                      editor={editor}
-                      comments={comments}
-                      onAddComment={onAddComment}
-                      onResolveComment={onResolveComment}
-                    />
-
-                    <MediaToolbarButton editor={editor} />
                   </div>
                 )}
               </PortalPopover>
