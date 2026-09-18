@@ -538,7 +538,7 @@ export function StudentDocumentEditor() {
         key={`${draft?.id ?? 'new'}:${editorEpoch}`}
         ref={editorRef}
         topBar={({ menuBar }) => (
-          <div className="flex items-center justify-between gap-4 px-4 sm:px-6 py-2 sm:py-2.5 bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80 shrink-0 select-none">
+          <div className="flex items-center justify-between gap-4 px-3 py-2 sm:py-2.5 bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80 shrink-0 select-none">
             {/* Left: Document Return Button + 2-Row Stack (Title on top, MenuBar below) */}
             <div className="flex items-center gap-2.5 min-w-0 flex-1">
               {/* Document Return Button (Lucide Black & White, No Shadow, Spans Both Lines) */}
