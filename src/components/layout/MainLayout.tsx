@@ -6,6 +6,7 @@ import { SiteHeader } from '@/components/site-header';
 import { User } from '@/src/types';
 import { motion, AnimatePresence } from 'motion/react';
 import { CommandPalette } from '../ui/CommandPalette';
+import { cn } from '@/src/lib/utils';
 
 interface MainLayoutProps {
   user: User | null;
@@ -36,6 +37,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ user, onLogout }) => {
 
   if (!user) return <Navigate to="/login" replace />;
 
+  const isEditorPage = location.pathname.startsWith('/student/editor') || location.pathname.endsWith('/edit');
+
   return (
     <SidebarProvider defaultOpen={true}>
       <CommandPalette 
@@ -51,7 +54,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ user, onLogout }) => {
         onSearchClick={() => setIsCommandPaletteOpen(true)}
       />
 
-      <SidebarInset className="bg-background min-h-screen flex flex-col overflow-hidden transition-colors duration-200">
+      <SidebarInset className="bg-background h-screen max-h-screen flex flex-col overflow-hidden transition-colors duration-200">
         <SiteHeader
           user={user}
           theme={theme}
@@ -60,13 +63,19 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ user, onLogout }) => {
           onLogout={onLogout}
         />
 
-        <div className="flex-1 overflow-y-auto bg-background transition-colors duration-200">
+        <div className={cn(
+          "flex-1 bg-background transition-colors duration-200",
+          isEditorPage ? "overflow-hidden flex flex-col min-h-0" : "overflow-y-auto editor-scrollbar"
+        )}>
           <motion.div
             key={location.pathname}
             initial={{ opacity: 0.95 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.1, ease: 'easeOut' }}
-            className="px-4 md:px-6 py-5 md:py-6 w-full max-w-[1720px] mx-auto"
+            className={cn(
+              "px-4 md:px-6 py-5 md:py-6 w-full max-w-[1720px] mx-auto",
+              isEditorPage && "flex-1 flex flex-col min-h-0 h-full"
+            )}
           >
             <Outlet />
           </motion.div>

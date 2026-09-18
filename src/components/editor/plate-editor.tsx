@@ -716,7 +716,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
             'plate-editor-wrapper relative flex flex-col rounded-xl overflow-hidden shadow-xs transition-all border border-zinc-200/90 dark:border-zinc-800/90 bg-white dark:bg-zinc-900',
             isFullscreen
               ? '!fixed !inset-0 !z-[100] !w-full !h-full !max-w-none !max-h-none rounded-none bg-zinc-100 dark:bg-zinc-950 border-none m-0'
-              : 'h-[calc(100vh-7rem)] min-h-[600px]',
+              : 'flex-1 min-h-0 h-full max-h-full',
             className,
             isFullscreen && '!fixed !inset-0 !z-[100] !w-full !h-full !max-w-none !max-h-none'
           )}
