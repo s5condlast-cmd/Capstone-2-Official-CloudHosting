@@ -77,6 +77,7 @@ import {
   ChevronUp,
   Undo,
   Redo,
+  MoreVertical,
 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import {
@@ -2667,6 +2668,38 @@ export function FixedToolbarButtons({
   };
 
   const scrollRef = React.useRef<HTMLDivElement>(null);
+  const [hasOverflow, setHasOverflow] = React.useState(false);
+  const [moreOpen, setMoreOpen] = React.useState(false);
+  const moreAnchorRef = React.useRef<HTMLDivElement>(null);
+
+  const checkOverflow = React.useCallback(() => {
+    if (scrollRef.current) {
+      const isOverflowing = scrollRef.current.scrollWidth > scrollRef.current.clientWidth + 4;
+      setHasOverflow(isOverflowing);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    checkOverflow();
+    const timer = setTimeout(checkOverflow, 150);
+
+    if (typeof ResizeObserver !== 'undefined' && scrollRef.current) {
+      const ro = new ResizeObserver(() => {
+        checkOverflow();
+      });
+      ro.observe(scrollRef.current);
+      return () => {
+        clearTimeout(timer);
+        ro.disconnect();
+      };
+    }
+
+    window.addEventListener('resize', checkOverflow);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', checkOverflow);
+    };
+  }, [checkOverflow]);
 
   const handleHorizontalWheel = (e: React.WheelEvent<HTMLDivElement>) => {
     if (
@@ -2826,6 +2859,99 @@ export function FixedToolbarButtons({
           </ToolbarGroup>
         </div>
       </div>
+
+      {/* ─── Google Docs More Tools (⋮) Overflow Dropview ─── */}
+      {hasOverflow && (
+        <div ref={moreAnchorRef} className="flex items-center shrink-0">
+          <div className="mx-1 h-5 w-px bg-zinc-300/80 dark:bg-zinc-700/80 shrink-0" />
+          <ToolbarButton
+            active={moreOpen}
+            onClick={() => setMoreOpen((prev) => !prev)}
+            tooltip="More tools"
+            aria-label="More tools"
+            className={cn(
+              'h-8 w-8 p-1.5 rounded-md transition-colors flex items-center justify-center',
+              moreOpen
+                ? 'bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400'
+                : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200/70 dark:hover:bg-zinc-800'
+            )}
+          >
+            <MoreVertical className="w-4 h-4" />
+          </ToolbarButton>
+
+          <PortalPopover
+            anchorRef={moreAnchorRef}
+            open={moreOpen}
+            onClose={() => setMoreOpen(false)}
+            align="end"
+            className="p-1.5 bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-700/90 shadow-2xl rounded-xl flex items-center gap-1 flex-wrap max-w-[92vw] sm:max-w-lg z-50"
+          >
+            {/* Alignment & Line Spacing */}
+            <div className="flex items-center gap-0.5 shrink-0">
+              <AlignToolbarButton editor={editor} />
+              <LineHeightToolbarButton editor={editor} />
+            </div>
+
+            <div className="mx-1 h-5 w-px bg-zinc-200 dark:bg-zinc-700 shrink-0" />
+
+            {/* Lists & Indents */}
+            <div className="flex items-center gap-0.5 shrink-0">
+              <ToolbarButton
+                active={isTodo}
+                onClick={() => {
+                  setBlockType(editor, isTodo ? 'p' : 'todo');
+                }}
+                tooltip="Checklist"
+              >
+                <ListTodo className="w-4 h-4" />
+              </ToolbarButton>
+
+              <BulletedListToolbarButton editor={editor} />
+              <NumberedListToolbarButton editor={editor} />
+
+              <ToolbarButton onClick={handleOutdent} tooltip="Decrease indent">
+                <OutdentIcon className="w-4 h-4" />
+              </ToolbarButton>
+
+              <ToolbarButton onClick={handleIndent} tooltip="Increase indent">
+                <IndentIcon className="w-4 h-4" />
+              </ToolbarButton>
+            </div>
+
+            <div className="mx-1 h-5 w-px bg-zinc-200 dark:bg-zinc-700 shrink-0" />
+
+            {/* Clear formatting */}
+            <ToolbarButton
+              onClick={() => {
+                const marks = ['bold', 'italic', 'underline', 'strikethrough', 'code', 'color', 'backgroundColor', 'fontSize', 'fontFamily'];
+                marks.forEach((m) => removeMark(editor, m));
+                setBlockType(editor, 'p');
+              }}
+              tooltip="Clear formatting (Ctrl+\)"
+            >
+              <Eraser className="w-4 h-4" />
+            </ToolbarButton>
+
+            <div className="mx-1 h-5 w-px bg-zinc-200 dark:bg-zinc-700 shrink-0" />
+
+            {/* Link, Comment, Image */}
+            <div className="flex items-center gap-0.5 shrink-0">
+              <ToolbarButton onClick={handleLink} tooltip="Insert link (Ctrl+K)">
+                <Link2 className="w-4 h-4" />
+              </ToolbarButton>
+
+              <CommentToolbarButton
+                editor={editor}
+                comments={comments}
+                onAddComment={onAddComment}
+                onResolveComment={onResolveComment}
+              />
+
+              <MediaToolbarButton editor={editor} />
+            </div>
+          </PortalPopover>
+        </div>
+      )}
 
       {/* ─── Pinned Right-End Cluster: Mode dropdown + Separator + Fullscreen chevron ─── */}
       <div className="flex items-center gap-1 shrink-0 pl-2 ml-1 border-l border-zinc-200/80 dark:border-zinc-700/80">
