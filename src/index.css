@@ -269,6 +269,19 @@
   /* Fullscreen Sidebar Elevation & Backdrop */
   body[data-editor-fullscreen="true"] [data-slot="sidebar-container"] {
     z-index: 120 !important;
+    transition: left 0.2s ease-in-out, right 0.2s ease-in-out, width 0.2s ease-in-out !important;
+  }
+
+  body[data-editor-fullscreen="true"] .group[data-state="collapsed"] [data-slot="sidebar-container"] {
+    left: calc(var(--sidebar-width) * -1) !important;
+    pointer-events: none !important;
+    box-shadow: none !important;
+  }
+
+  body[data-editor-fullscreen="true"] .group[data-state="expanded"] [data-slot="sidebar-container"] {
+    left: 0 !important;
+    width: var(--sidebar-width) !important;
+    pointer-events: auto !important;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45) !important;
   }
 

@@ -105,6 +105,24 @@ export function StudentDocumentEditor() {
   const isFullscreenRef = useRef(false);
   const exitFullscreenRef = useRef<(() => void) | null>(null);
 
+  const getReturnRoute = useCallback(() => {
+    switch (user?.role) {
+      case 'admin': return '/admin/documents';
+      case 'adviser': return '/adviser/review';
+      case 'supervisor': return '/supervisor/interns';
+      case 'student': default: return '/student/documents';
+    }
+  }, [user?.role]);
+
+  const getCalendarRoute = useCallback(() => {
+    switch (user?.role) {
+      case 'admin': return '/admin/calendar';
+      case 'adviser': return '/adviser/calendar';
+      case 'supervisor': return '/supervisor/calendar';
+      case 'student': default: return '/student/calendar';
+    }
+  }, [user?.role]);
+
   const handleSafeNavigate = useCallback(
     async (to: string) => {
       try {
@@ -543,7 +561,7 @@ export function StudentDocumentEditor() {
         <AlertTriangle className="w-10 h-10 text-red-400" />
         <p className="text-zinc-600 dark:text-zinc-400">{loadError}</p>
         <button
-          onClick={() => void handleSafeNavigate('/student/documents')}
+          onClick={() => void handleSafeNavigate(getReturnRoute())}
           className="text-sm text-primary underline underline-offset-4"
         >
           Back to Repository
@@ -578,7 +596,7 @@ export function StudentDocumentEditor() {
                 {/* Document Return Button (Lucide Black & White, No Shadow, Spans Both Lines) */}
                 <button
                   type="button"
-                  onClick={() => void handleSafeNavigate('/student/documents')}
+                  onClick={() => void handleSafeNavigate(getReturnRoute())}
                   className="group relative flex items-center justify-center p-0.5 rounded-lg text-zinc-800 dark:text-zinc-200 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-colors shrink-0 cursor-pointer shadow-none border-0 bg-transparent"
                   title="Back to Documents"
                   aria-label="Back to Documents"
@@ -751,7 +769,7 @@ export function StudentDocumentEditor() {
       <DocumentCalendarModal
         isOpen={showCalendarModal}
         onClose={() => setShowCalendarModal(false)}
-        onOpenFullCalendar={() => void handleSafeNavigate('/student/calendar')}
+        onOpenFullCalendar={() => void handleSafeNavigate(getCalendarRoute())}
       />
     </div>
   );

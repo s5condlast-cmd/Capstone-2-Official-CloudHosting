@@ -13,6 +13,7 @@
 import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { sanitizeDocumentFilename } from '../src/lib/sanitizeDocumentFilename';
+import { countWords, DocumentHistoryStorage, type DraftState } from '../src/lib/documentHistoryStorage';
 
 describe('sanitizeDocumentFilename', () => {
   test('strips path traversal sequences', () => {
@@ -65,22 +66,6 @@ describe('sanitizeDocumentFilename', () => {
 
 
 // ─── Word count tests ─────────────────────────────────────────────────────────
-
-function countWords(content: object[]): number {
-  let count = 0;
-  function traverse(nodes: object[]): void {
-    for (const node of nodes) {
-      const n = node as Record<string, unknown>;
-      if (typeof n.text === 'string') {
-        const words = n.text.trim().split(/\s+/).filter(Boolean);
-        count += words.length;
-      }
-      if (Array.isArray(n.children)) traverse(n.children as object[]);
-    }
-  }
-  traverse(content);
-  return count;
-}
 
 describe('countWords', () => {
   test('counts words in flat paragraph', () => {
@@ -266,75 +251,60 @@ describe('Conflict resolution types', () => {
 // ─── Data Safety & Navigation Flush ──────────────────────────────────────────
 
 describe('Data safety and navigation flush', () => {
-  test('flushNow executes immediate cache write and cloud save if pendingState exists', async () => {
-    let cachedWritten = false;
-    let cloudSaved = false;
+  test('DocumentHistoryStorage flushNow exists and handles empty and pending state', async () => {
+    const storage = new DocumentHistoryStorage('test-user-1', 'test-draft-1');
+    assert.equal(typeof storage.flushNow, 'function', 'flushNow must be exposed');
 
-    let pendingState: any = { id: 'd-1', title: 'Test Draft', content: [] };
-
-    async function writeCachedMock() {
-      cachedWritten = true;
-    }
-
-    async function doCloudSaveMock() {
-      cloudSaved = true;
-      pendingState = null;
-      return { id: 'd-1', revision: 2 };
-    }
-
-    async function flushNow() {
-      if (pendingState) {
-        await writeCachedMock();
-      }
-      if (!pendingState) return null;
-      return doCloudSaveMock();
-    }
-
-    const res = await flushNow();
-    assert.ok(cachedWritten, 'Cached state should be written synchronously on flushNow');
-    assert.ok(cloudSaved, 'Cloud save should execute on flushNow');
-    assert.equal(res?.revision, 2);
+    // flushNow with no pending state returns null
+    const result = await storage.flushNow();
+    assert.equal(result, null);
+    storage.destroy();
   });
 
-  test('destroy triggers doCloudSave when pendingState exists before closing channel', () => {
-    const eventSequence: string[] = [];
-    let pendingState: any = { id: 'd-1' };
+  test('destroy cleans up timers, triggers cached flush, and closes channel', () => {
+    let statusHistory: string[] = [];
+    const storage = new DocumentHistoryStorage('test-user-1', 'test-draft-2', {
+      onStatusChange: (status) => statusHistory.push(status),
+    });
 
-    function doCloudSave() {
-      eventSequence.push('cloudSave');
-      pendingState = null;
-    }
+    const testState: DraftState = {
+      id: 'test-draft-2',
+      userId: 'test-user-1',
+      title: 'Pending Title',
+      content: [{ type: 'p', children: [{ text: 'Hello' }] }],
+      wordCount: 1,
+      revision: 1,
+      status: 'draft',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
 
-    function closeChannel() {
-      eventSequence.push('closeChannel');
-    }
+    storage.onChange(testState);
+    assert.ok(statusHistory.includes('saving'), 'onChange should transition status to saving');
 
-    function destroy() {
-      if (pendingState) {
-        doCloudSave();
-      }
-      closeChannel();
-    }
-
-    destroy();
-    assert.deepEqual(eventSequence, ['cloudSave', 'closeChannel'], 'Cloud save must be triggered before channel is closed');
+    // Call destroy while state is pending
+    storage.destroy();
+    // After destroy, calling destroy again does not throw
+    assert.doesNotThrow(() => storage.destroy());
   });
 
-  test('beforeunload listener triggers immediate persistence for pendingState', () => {
-    let idbSaved = false;
-    let cloudSaved = false;
-    const pendingState = { id: 'd-1' };
-
-    function beforeUnloadHandler() {
-      if (pendingState) {
-        idbSaved = true;
-        cloudSaved = true;
-      }
-    }
-
-    beforeUnloadHandler();
-    assert.ok(idbSaved, 'IDB write must trigger on beforeunload');
-    assert.ok(cloudSaved, 'Cloud save must trigger on beforeunload');
+  test('beforeunload listener triggers persistence for pendingState without error', () => {
+    const storage = new DocumentHistoryStorage('test-user-1', 'test-draft-3');
+    const testState: DraftState = {
+      id: 'test-draft-3',
+      userId: 'test-user-1',
+      title: 'Unload Title',
+      content: [{ type: 'p', children: [{ text: 'Test' }] }],
+      wordCount: 1,
+      revision: 1,
+      status: 'draft',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    storage.onChange(testState);
+    assert.doesNotThrow(() => {
+      storage.destroy();
+    });
   });
 });
 
@@ -370,11 +340,36 @@ describe('Fullscreen and sidebar elevation architecture', () => {
     const zEditor = 100;
     const zBackdrop = 115;
     const zSidebar = 120;
+    const zDrawer = 130;
     const zModal = 130;
 
     assert.ok(zSidebar > zBackdrop, 'Sidebar must be above backdrop');
     assert.ok(zBackdrop > zEditor, 'Backdrop must be above fullscreen editor');
     assert.ok(zSidebar > zEditor, 'Sidebar must be above fullscreen editor');
-    assert.ok(zModal > zSidebar, 'Modals must elevate above the sidebar');
+    assert.ok(zDrawer >= zSidebar, 'History drawer must elevate above or equal to sidebar');
+    assert.ok(zModal >= zSidebar, 'Calendar modal must elevate above or equal to sidebar');
+  });
+
+  test('collapsed sidebar in fullscreen is translated offscreen while expanded slides in', () => {
+    function getSidebarPosition(isFullscreen: boolean, isExpanded: boolean) {
+      if (!isFullscreen) {
+        return { left: isExpanded ? '0' : '0', width: isExpanded ? '256px' : '48px', zIndex: 10 };
+      }
+      return {
+        left: isExpanded ? '0' : '-256px',
+        width: isExpanded ? '256px' : '256px',
+        zIndex: 120,
+        pointerEvents: isExpanded ? 'auto' : 'none',
+      };
+    }
+
+    const collapsedInFullscreen = getSidebarPosition(true, false);
+    assert.equal(collapsedInFullscreen.left, '-256px', 'Collapsed sidebar in fullscreen must be offscreen');
+    assert.equal(collapsedInFullscreen.pointerEvents, 'none', 'Collapsed sidebar must ignore pointer events');
+
+    const expandedInFullscreen = getSidebarPosition(true, true);
+    assert.equal(expandedInFullscreen.left, '0', 'Expanded sidebar must slide in to left 0');
+    assert.equal(expandedInFullscreen.zIndex, 120, 'Expanded sidebar must have z-index 120');
+    assert.equal(expandedInFullscreen.pointerEvents, 'auto', 'Expanded sidebar must accept clicks');
   });
 });

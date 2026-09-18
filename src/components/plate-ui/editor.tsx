@@ -49,7 +49,7 @@ export const editorVariants = cva(
     'rounded-md ring-offset-background focus-visible:outline-none',
     'placeholder:text-zinc-400 dark:placeholder:text-zinc-500',
     'caret-zinc-900 dark:caret-zinc-100',
-    'font-sans text-[15px] sm:text-base leading-normal text-zinc-900 dark:text-zinc-100',
+    'text-[12pt] leading-[1.15] text-zinc-900 dark:text-zinc-100',
     '**:data-slate-placeholder:text-zinc-400 dark:**:data-slate-placeholder:text-zinc-500 **:data-slate-placeholder:opacity-100!',
     '**:data-slate-placeholder:!top-1/2 **:data-slate-placeholder:-translate-y-1/2',
     '[&_strong]:font-bold'
@@ -67,9 +67,9 @@ export const editorVariants = cva(
       },
       variant: {
         default:
-          'size-full max-w-[850px] bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 shadow-sm rounded-xl px-8 sm:px-12 py-6 sm:py-8',
+          'size-full max-w-[850px] bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 shadow-sm rounded-xl px-8 sm:px-12 py-6 sm:py-8 font-[Calibri,_Candara,_Segoe,_sans-serif]',
         demo:
-          'w-full max-w-[850px] min-h-[700px] bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 shadow-sm rounded-xl px-8 sm:px-12 py-6 sm:py-8',
+          'w-full max-w-[850px] min-h-[700px] bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 shadow-sm rounded-xl px-8 sm:px-12 py-6 sm:py-8 font-[Calibri,_Candara,_Segoe,_sans-serif]',
         fullWidth:
           'size-full max-w-none bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 shadow-sm rounded-xl px-8 py-6',
         none: '',

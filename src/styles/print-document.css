@@ -29,9 +29,9 @@
     box-sizing: border-box;
     background: white;
     color: black;
-    font-family: 'Times New Roman', Times, serif;
+    font-family: inherit;
     font-size: 12pt;
-    line-height: 1.5;
+    line-height: 1.15;
   }
 
   .plate-paper-sheet {
@@ -95,7 +95,7 @@
   /* Page setup */
   @page {
     size: letter;
-    margin: 1in;
+    margin: 0;
   }
 }
 

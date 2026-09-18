@@ -110,7 +110,17 @@ function cleanFontFamily(raw?: string): string | undefined {
   if (lower.includes('courier')) return 'Courier New';
   if (lower.includes('inter')) return 'Inter';
   if (lower.includes('geist')) return 'Geist';
-  const first = raw.split(',')[0].replace(/['"]/g, '').trim();
+  if (lower.includes('verdana')) return 'Verdana';
+  if (lower.includes('trebuchet')) return 'Trebuchet MS';
+  if (lower.includes('tahoma')) return 'Tahoma';
+  if (lower.includes('segoe')) return 'Segoe UI';
+  if (lower.includes('palatino')) return 'Palatino Linotype';
+  if (lower.includes('book antiqua')) return 'Book Antiqua';
+  if (lower.includes('garamond')) return 'Garamond';
+  if (lower.includes('century gothic')) return 'Century Gothic';
+  if (lower.includes('cambria')) return 'Cambria';
+  if (lower.includes('candara')) return 'Candara';
+  const first = raw.split(',')[0].replace(/['\"]/g, '').trim();
   return first || undefined;
 }
 
@@ -238,10 +248,10 @@ export function leafToRuns(node: PlateText): TextRun[] {
     shadingFill = 'FFF2A8';
   }
 
-  // Font family
+  // Font family — default to Calibri to match Word's standard and our editor canvas
   const font = (node.code || node.kbd)
     ? 'Courier New'
-    : cleanFontFamily(node.fontFamily as string | undefined);
+    : (cleanFontFamily(node.fontFamily as string | undefined) || 'Calibri');
 
   return [
     new TextRun({

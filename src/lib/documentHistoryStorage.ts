@@ -249,8 +249,11 @@ export class DocumentHistoryStorage {
       }
     }
 
-    if (this.cloudSavePromise) await this.cloudSavePromise;
-    if (!this.pendingState) return null;
+    let inFlightResult: DraftState | null = null;
+    if (this.cloudSavePromise) {
+      inFlightResult = await this.cloudSavePromise;
+    }
+    if (!this.pendingState) return inFlightResult;
 
     return this.doCloudSave();
   }
@@ -377,6 +380,7 @@ export class DocumentHistoryStorage {
       this.heartbeatTimer = null;
     }
     if (this.pendingState) {
+      void writeCached(this.pendingState).catch(() => {});
       void this.doCloudSave().catch(() => {});
     }
     this.channel?.postMessage({ type: 'DOC_CLOSE', tabId: this.tabId, draftId: this.draftId });

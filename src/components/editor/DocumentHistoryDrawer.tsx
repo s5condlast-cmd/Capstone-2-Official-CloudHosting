@@ -6,6 +6,7 @@
  * Allows selecting a version to preview and restoring it (with OCC check).
  */
 import React, { useEffect, useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { X, RotateCcw, Clock, Tag, AlertCircle, Loader2 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import { supabase } from '@/src/lib/supabase';
@@ -109,21 +110,43 @@ export function DocumentHistoryDrawer({
     [currentRevision, onBeforeRestore, onClose, onRestoreComplete, restoring]
   );
 
+  // Escape key handler (stops propagation so parent fullscreen is not exited)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
+  }, [onClose]);
+
   const selectedVersion = versions.find(v => v.version_id === selectedId) ?? null;
 
-  return (
-    <aside
-      className={cn(
-        'fixed inset-y-0 right-0 z-50',
-        'w-full max-w-sm',
-        'bg-white dark:bg-zinc-950',
-        'border-l border-zinc-200 dark:border-zinc-800',
-        'flex flex-col shadow-2xl'
-      )}
-      aria-label="Document version history"
-    >
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200 dark:border-zinc-800">
+  const drawerContent = (
+    <div className="fixed inset-0 z-[125] flex justify-end">
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 bg-black/40 backdrop-blur-xs animate-in fade-in duration-150"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+
+      <aside
+        className={cn(
+          'relative z-[130]',
+          'w-full max-w-sm h-full',
+          'bg-white dark:bg-zinc-950',
+          'border-l border-zinc-200 dark:border-zinc-800',
+          'flex flex-col shadow-2xl animate-in slide-in-from-right duration-200'
+        )}
+        aria-label="Document version history"
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200 dark:border-zinc-800">
         <div className="flex items-center gap-2">
           <Clock className="w-4 h-4 text-zinc-500" />
           <span className="font-semibold text-sm text-zinc-900 dark:text-zinc-100">Version History</span>
@@ -227,7 +250,10 @@ export function DocumentHistoryDrawer({
         </p>
       </div>
     </aside>
+  </div>
   );
+
+  return createPortal(drawerContent, document.body);
 }
 
 export default DocumentHistoryDrawer;

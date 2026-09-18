@@ -66,6 +66,7 @@ export const MARK_BG_COLOR = 'backgroundColor';
 export const MARK_SUBSCRIPT = 'subscript';
 export const MARK_SUPERSCRIPT = 'superscript';
 export const MARK_KBD = 'kbd';
+export const MARK_FONT_FAMILY = 'fontFamily';
 
 // ---------------------------------------------------------------------------
 // Render components
@@ -479,6 +480,17 @@ export const FontSizePlugin = createTSlatePlugin({
   },
 });
 
+export const FontFamilyPlugin = createTSlatePlugin({
+  key: MARK_FONT_FAMILY,
+  node: {
+    isLeaf: true,
+    type: MARK_FONT_FAMILY,
+    component: ({ leaf, style, ...props }: any) => (
+      <PlateLeaf style={{ fontFamily: leaf.fontFamily, ...style }} {...props} />
+    ),
+  },
+});
+
 export const FontColorPlugin = createTSlatePlugin({
   key: MARK_COLOR,
   node: {
@@ -612,6 +624,7 @@ export const editorPlugins = [
   CodePlugin,
   HighlightPlugin,
   FontSizePlugin,
+  FontFamilyPlugin,
   FontColorPlugin,
   BackgroundColorPlugin,
   SubscriptPlugin,
