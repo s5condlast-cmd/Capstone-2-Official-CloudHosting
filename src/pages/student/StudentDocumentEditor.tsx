@@ -545,13 +545,13 @@ export function StudentDocumentEditor() {
               <button
                 type="button"
                 onClick={() => navigate('/student/documents')}
-                className="group relative flex items-center justify-center p-1 rounded-lg text-zinc-800 dark:text-zinc-200 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-colors shrink-0 cursor-pointer shadow-none border-0 bg-transparent"
+                className="group relative flex items-center justify-center p-0.5 rounded-lg text-zinc-800 dark:text-zinc-200 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-colors shrink-0 cursor-pointer shadow-none border-0 bg-transparent"
                 title="Back to Documents"
                 aria-label="Back to Documents"
               >
-                <div className="relative flex items-center justify-center w-9 h-10 transition-transform group-hover:scale-105">
-                  <FileText size={40} className="w-10 h-10 text-zinc-800 dark:text-zinc-200 group-hover:opacity-0 transition-opacity" />
-                  <ArrowLeft size={20} className="w-5 h-5 text-zinc-900 dark:text-white absolute inset-0 m-auto opacity-0 group-hover:opacity-100 transition-opacity stroke-[2.2]" />
+                <div className="relative flex items-center justify-center w-10 h-[46px] transition-transform group-hover:scale-105">
+                  <FileText size={46} className="w-10 h-[46px] text-zinc-800 dark:text-zinc-200 group-hover:opacity-0 transition-opacity" />
+                  <ArrowLeft size={22} className="w-5.5 h-5.5 text-zinc-900 dark:text-white absolute inset-0 m-auto opacity-0 group-hover:opacity-100 transition-opacity stroke-[2.2]" />
                 </div>
               </button>
 
