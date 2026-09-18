@@ -162,19 +162,21 @@ export function AppSidebar({ user, onLogout, onSearchClick, ...props }: AppSideb
       <SidebarHeader className="p-2 border-b-0">
         <SidebarMenu>
           <SidebarMenuItem>
-            <NavLink to={getDashboardRoute()} className="block w-full">
-              <SidebarMenuButton size="lg" className="hover:bg-sidebar-accent cursor-pointer group/brand gap-2.5 px-2">
-                <img
-                  src="/images/Landing Page Icons/Logo.svg"
-                  alt="Web Practicum Logo"
-                  className="size-8 aspect-square object-contain shrink-0 transition-transform group-hover/brand:scale-105"
-                />
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-bold tracking-tight text-sidebar-foreground">Web Practicum</span>
-                  <span className="truncate text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">STI Marikina</span>
-                </div>
-              </SidebarMenuButton>
-            </NavLink>
+            <SidebarMenuButton
+              size="lg"
+              render={<NavLink to={getDashboardRoute()} />}
+              className="hover:bg-sidebar-accent cursor-pointer group/brand gap-2.5 px-2"
+            >
+              <img
+                src="/images/Landing Page Icons/Logo.svg"
+                alt="Web Practicum Logo"
+                className="size-8 aspect-square object-contain shrink-0 transition-transform group-hover/brand:scale-105"
+              />
+              <div className="grid flex-1 text-left text-sm leading-tight">
+                <span className="truncate font-bold tracking-tight text-sidebar-foreground">Web Practicum</span>
+                <span className="truncate text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">STI Marikina</span>
+              </div>
+            </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
