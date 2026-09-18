@@ -266,6 +266,28 @@
     overflow-y: hidden !important;
   }
 
+  /* Fullscreen Sidebar Elevation & Backdrop */
+  body[data-editor-fullscreen="true"] [data-slot="sidebar-container"] {
+    z-index: 120 !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45) !important;
+  }
+
+  body[data-editor-fullscreen="true"] [data-slot="sheet-overlay"] {
+    z-index: 115 !important;
+  }
+
+  body[data-editor-fullscreen="true"] [data-slot="sheet-content"] {
+    z-index: 120 !important;
+  }
+
+  [data-slot="sidebar-fullscreen-backdrop"] {
+    display: none;
+  }
+
+  body[data-editor-fullscreen="true"] [data-slot="sidebar-fullscreen-backdrop"].is-open {
+    display: block !important;
+  }
+
   .h-13 {
     height: 3.25rem;
   }

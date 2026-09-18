@@ -170,6 +170,7 @@ export class DocumentHistoryStorage {
   private tabId: string = Math.random().toString(36).slice(2);
   private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
   private onMultiTabConflict?: () => void;
+  private beforeUnloadHandler: ((e: BeforeUnloadEvent) => void) | null = null;
 
   /** Sync status change callback */
   private onStatusChange?: (status: SyncStatus) => void;
@@ -238,6 +239,14 @@ export class DocumentHistoryStorage {
     if (this.cloudSaveTimer) {
       clearTimeout(this.cloudSaveTimer);
       this.cloudSaveTimer = null;
+    }
+
+    if (this.pendingState) {
+      try {
+        await writeCached(this.pendingState);
+      } catch {
+        /* non-fatal */
+      }
     }
 
     if (this.cloudSavePromise) await this.cloudSavePromise;
@@ -355,8 +364,21 @@ export class DocumentHistoryStorage {
    * Clean up timers and BroadcastChannel. Call on unmount or logout.
    */
   destroy(): void {
-    if (this.cloudSaveTimer) clearTimeout(this.cloudSaveTimer);
-    if (this.heartbeatTimer) clearInterval(this.heartbeatTimer);
+    if (this.beforeUnloadHandler && typeof window !== 'undefined') {
+      window.removeEventListener('beforeunload', this.beforeUnloadHandler);
+      this.beforeUnloadHandler = null;
+    }
+    if (this.cloudSaveTimer) {
+      clearTimeout(this.cloudSaveTimer);
+      this.cloudSaveTimer = null;
+    }
+    if (this.heartbeatTimer) {
+      clearInterval(this.heartbeatTimer);
+      this.heartbeatTimer = null;
+    }
+    if (this.pendingState) {
+      void this.doCloudSave().catch(() => {});
+    }
     this.channel?.postMessage({ type: 'DOC_CLOSE', tabId: this.tabId, draftId: this.draftId });
     this.channel?.close();
     this.channel = null;
@@ -467,6 +489,16 @@ export class DocumentHistoryStorage {
   private presenceMap: Map<string, number> = new Map(); // tabId -> lastHeartbeat
 
   private initBroadcastChannel(): void {
+    if (typeof window !== 'undefined' && !this.beforeUnloadHandler) {
+      this.beforeUnloadHandler = () => {
+        if (this.pendingState) {
+          void writeCached(this.pendingState).catch(() => {});
+          void this.doCloudSave().catch(() => {});
+        }
+      };
+      window.addEventListener('beforeunload', this.beforeUnloadHandler);
+    }
+
     if (typeof BroadcastChannel === 'undefined') return;
     try {
       this.channel = new BroadcastChannel(BROADCAST_CHANNEL_NAME);

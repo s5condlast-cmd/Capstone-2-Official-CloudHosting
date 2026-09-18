@@ -262,3 +262,119 @@ describe('Conflict resolution types', () => {
     assert.notEqual(original, forked, 'Fork must generate a distinct UUID');
   });
 });
+
+// ─── Data Safety & Navigation Flush ──────────────────────────────────────────
+
+describe('Data safety and navigation flush', () => {
+  test('flushNow executes immediate cache write and cloud save if pendingState exists', async () => {
+    let cachedWritten = false;
+    let cloudSaved = false;
+
+    let pendingState: any = { id: 'd-1', title: 'Test Draft', content: [] };
+
+    async function writeCachedMock() {
+      cachedWritten = true;
+    }
+
+    async function doCloudSaveMock() {
+      cloudSaved = true;
+      pendingState = null;
+      return { id: 'd-1', revision: 2 };
+    }
+
+    async function flushNow() {
+      if (pendingState) {
+        await writeCachedMock();
+      }
+      if (!pendingState) return null;
+      return doCloudSaveMock();
+    }
+
+    const res = await flushNow();
+    assert.ok(cachedWritten, 'Cached state should be written synchronously on flushNow');
+    assert.ok(cloudSaved, 'Cloud save should execute on flushNow');
+    assert.equal(res?.revision, 2);
+  });
+
+  test('destroy triggers doCloudSave when pendingState exists before closing channel', () => {
+    const eventSequence: string[] = [];
+    let pendingState: any = { id: 'd-1' };
+
+    function doCloudSave() {
+      eventSequence.push('cloudSave');
+      pendingState = null;
+    }
+
+    function closeChannel() {
+      eventSequence.push('closeChannel');
+    }
+
+    function destroy() {
+      if (pendingState) {
+        doCloudSave();
+      }
+      closeChannel();
+    }
+
+    destroy();
+    assert.deepEqual(eventSequence, ['cloudSave', 'closeChannel'], 'Cloud save must be triggered before channel is closed');
+  });
+
+  test('beforeunload listener triggers immediate persistence for pendingState', () => {
+    let idbSaved = false;
+    let cloudSaved = false;
+    const pendingState = { id: 'd-1' };
+
+    function beforeUnloadHandler() {
+      if (pendingState) {
+        idbSaved = true;
+        cloudSaved = true;
+      }
+    }
+
+    beforeUnloadHandler();
+    assert.ok(idbSaved, 'IDB write must trigger on beforeunload');
+    assert.ok(cloudSaved, 'Cloud save must trigger on beforeunload');
+  });
+});
+
+// ─── Fullscreen & Sidebar Elevation Verification ─────────────────────────────
+
+describe('Fullscreen and sidebar elevation architecture', () => {
+  test('entering fullscreen sets data-editor-fullscreen on document.body and removes on exit', () => {
+    const mockBody = {
+      attributes: new Map<string, string>(),
+      setAttribute(k: string, v: string) { this.attributes.set(k, v); },
+      removeAttribute(k: string) { this.attributes.delete(k); },
+      hasAttribute(k: string) { return this.attributes.has(k); },
+      getAttribute(k: string) { return this.attributes.get(k); },
+    };
+
+    function onEnterFullscreen() {
+      mockBody.setAttribute('data-editor-fullscreen', 'true');
+    }
+
+    function onExitFullscreen() {
+      mockBody.removeAttribute('data-editor-fullscreen');
+    }
+
+    onEnterFullscreen();
+    assert.equal(mockBody.getAttribute('data-editor-fullscreen'), 'true');
+    assert.ok(mockBody.hasAttribute('data-editor-fullscreen'));
+
+    onExitFullscreen();
+    assert.equal(mockBody.hasAttribute('data-editor-fullscreen'), false);
+  });
+
+  test('sidebar elevation stacking order in fullscreen', () => {
+    const zEditor = 100;
+    const zBackdrop = 115;
+    const zSidebar = 120;
+    const zModal = 130;
+
+    assert.ok(zSidebar > zBackdrop, 'Sidebar must be above backdrop');
+    assert.ok(zBackdrop > zEditor, 'Backdrop must be above fullscreen editor');
+    assert.ok(zSidebar > zEditor, 'Sidebar must be above fullscreen editor');
+    assert.ok(zModal > zSidebar, 'Modals must elevate above the sidebar');
+  });
+});

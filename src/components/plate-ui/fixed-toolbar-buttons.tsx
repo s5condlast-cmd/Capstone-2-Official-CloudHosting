@@ -106,7 +106,12 @@ function addMark(editor: any, key: string, value: any) {
   try {
     if (editor?.tf?.addMarks) {
       editor.tf.addMarks({ [key]: value });
+    } else if (editor?.tf?.addMark) {
+      editor.tf.addMark(key, value);
+    } else if (editor?.addMark) {
+      editor.addMark(key, value);
     }
+    editor?.tf?.focus?.();
   } catch { /* non-fatal */ }
 }
 
@@ -583,12 +588,12 @@ function ZoomToolbarButton({
         onClick={() => setOpen(!open)}
         tooltip="Zoom"
         aria-label="Zoom"
-        className="px-2 h-7 min-w-[60px] justify-between gap-1"
+        className="px-2.5 h-8.5 font-medium min-w-[76px] justify-between gap-1.5 text-[13px]"
       >
-        <span className="font-medium text-zinc-800 dark:text-zinc-200">
+        <span className="font-semibold text-zinc-800 dark:text-zinc-200 text-[13px]">
           {zoomLevel}%
         </span>
-        <ChevronDown className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+        <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
       </ToolbarButton>
 
       <PortalPopover
@@ -658,9 +663,9 @@ function FontFamilyToolbarButton({ editor }: { editor: any }) {
         onClick={() => setOpen(!open)}
         tooltip="Font family"
         aria-label="Font family"
-        className="px-2 h-7 min-w-[90px] max-w-[120px] justify-between gap-1 truncate"
+        className="px-2.5 h-8.5 font-medium min-w-[115px] max-w-[145px] justify-between gap-1.5 text-[13px] truncate"
       >
-        <span className="truncate font-medium text-zinc-800 dark:text-zinc-200">
+        <span className="truncate font-medium text-zinc-800 dark:text-zinc-200 text-[13px]" style={{ fontFamily: activeOption.value }}>
           {activeOption.label}
         </span>
         <ChevronDown className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
@@ -752,12 +757,12 @@ function TurnIntoToolbarButton({ editor }: { editor: any }) {
         isDropdown
         onClick={() => setOpen(!open)}
         tooltip="Turn into"
-        className="px-2 h-7 min-w-[85px] justify-between gap-1"
+        className="px-2.5 h-8.5 font-medium min-w-[110px] justify-between gap-1.5 text-[13px]"
       >
-        <span className="font-medium text-zinc-800 dark:text-zinc-200">
+        <span className="text-[13px] font-semibold text-zinc-800 dark:text-zinc-200">
           {currentOption.label}
         </span>
-        <ChevronDown className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+        <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
       </ToolbarButton>
 
       <PortalPopover

@@ -15,7 +15,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ChevronLeft, ChevronDown, Save, Download, Clock, Send, Copy,
   AlertTriangle, CheckCircle, Wifi, WifiOff, Loader2,
-  History, FileText, Users, ShieldCheck, ArrowLeft
+  History, FileText, Users, ShieldCheck, ArrowLeft, Calendar
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -28,7 +28,8 @@ import { toast } from 'sonner';
 import { supabase } from '@/src/lib/supabase';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { DocumentHistoryDrawer } from '@/src/components/editor/DocumentHistoryDrawer';
-import { SidebarContext } from '@/components/ui/sidebar';
+import { DocumentCalendarModal } from '@/src/components/editor/DocumentCalendarModal';
+import { SidebarContext, SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 import PlateEditor, { type PlateEditorRef } from '@/src/components/editor/plate-editor';
 import {
   type EditorComment,
@@ -91,6 +92,7 @@ export function StudentDocumentEditor() {
 
   // ── UI state ─────────────────────────────────────────────────────────────
   const [showHistory, setShowHistory] = useState(false);
+  const [showCalendarModal, setShowCalendarModal] = useState(false);
   const [showConflictBanner, setShowConflictBanner] = useState(false);
   const [conflictLocal, setConflictLocal] = useState<DraftState | null>(null);
   const [conflictRemote, setConflictRemote] = useState<DraftState | null>(null);
@@ -98,6 +100,27 @@ export function StudentDocumentEditor() {
   const [submitting, setSubmitting] = useState(false);
   const [titleEditing, setTitleEditing] = useState(false);
   const [editorEpoch, setEditorEpoch] = useState(0);
+
+  // ── Fullscreen Tracking & Safe Navigation ────────────────────────────────
+  const isFullscreenRef = useRef(false);
+  const exitFullscreenRef = useRef<(() => void) | null>(null);
+
+  const handleSafeNavigate = useCallback(
+    async (to: string) => {
+      try {
+        if (storageRef.current) {
+          await storageRef.current.flushNow();
+        }
+      } catch (err) {
+        console.warn('Storage flush error during navigation:', err);
+      }
+      if (isFullscreenRef.current && exitFullscreenRef.current) {
+        exitFullscreenRef.current();
+      }
+      navigate(to);
+    },
+    [navigate]
+  );
 
   // ── Multi-Role Reviewer Detection & Mode ─────────────────────────────────
   const isReviewer = user?.role === 'adviser' || user?.role === 'supervisor' || user?.role === 'admin' || searchParams.get('mode') === 'review';
@@ -520,7 +543,7 @@ export function StudentDocumentEditor() {
         <AlertTriangle className="w-10 h-10 text-red-400" />
         <p className="text-zinc-600 dark:text-zinc-400">{loadError}</p>
         <button
-          onClick={() => navigate('/student/documents')}
+          onClick={() => void handleSafeNavigate('/student/documents')}
           className="text-sm text-primary underline underline-offset-4"
         >
           Back to Repository
@@ -538,18 +561,28 @@ export function StudentDocumentEditor() {
         key={`${draft?.id ?? 'new'}:${editorEpoch}`}
         ref={editorRef}
         className="flex-1 min-h-0 h-full"
-        topBar={({ menuBar }) => (
-          <div className="flex items-center justify-between gap-4 px-3 pt-3 sm:pt-3.5 pb-2 sm:pb-2.5 bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80 shrink-0 select-none">
-            {/* Left: Document Return Button + 2-Row Stack (Title on top, MenuBar below) */}
-            <div className="flex items-center gap-2.5 min-w-0 flex-1">
-              {/* Document Return Button (Lucide Black & White, No Shadow, Spans Both Lines) */}
-              <button
-                type="button"
-                onClick={() => navigate('/student/documents')}
-                className="group relative flex items-center justify-center p-0.5 rounded-lg text-zinc-800 dark:text-zinc-200 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-colors shrink-0 cursor-pointer shadow-none border-0 bg-transparent"
-                title="Back to Documents"
-                aria-label="Back to Documents"
-              >
+        topBar={({ menuBar, isFullscreen = false, onToggleFullscreen }) => {
+          isFullscreenRef.current = isFullscreen;
+          exitFullscreenRef.current = onToggleFullscreen ? () => { if (isFullscreen) onToggleFullscreen(); } : null;
+
+          return (
+            <div className="flex items-center justify-between gap-4 px-3 pt-3 sm:pt-3.5 pb-2 sm:pb-2.5 bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80 shrink-0 select-none">
+              {/* Left: Sidebar Trigger + Document Return Button + 2-Row Stack */}
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                {/* Sidebar Trigger (Opens / Collapses Portal Navigation in both Normal and Fullscreen mode) */}
+                <SidebarTrigger
+                  className="h-9 w-9 rounded-lg text-zinc-700 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-colors shrink-0 cursor-pointer border border-zinc-200/80 dark:border-zinc-700/80"
+                  title="Toggle Sidebar"
+                />
+
+                {/* Document Return Button (Lucide Black & White, No Shadow, Spans Both Lines) */}
+                <button
+                  type="button"
+                  onClick={() => void handleSafeNavigate('/student/documents')}
+                  className="group relative flex items-center justify-center p-0.5 rounded-lg text-zinc-800 dark:text-zinc-200 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-colors shrink-0 cursor-pointer shadow-none border-0 bg-transparent"
+                  title="Back to Documents"
+                  aria-label="Back to Documents"
+                >
                 <div className="relative flex items-center justify-center w-10 h-[46px] transition-transform group-hover:scale-105">
                   <FileText size={46} className="w-10 h-[46px] text-zinc-800 dark:text-zinc-200 group-hover:opacity-0 transition-opacity" />
                   <ArrowLeft size={22} className="w-5.5 h-5.5 text-zinc-900 dark:text-white absolute inset-0 m-auto opacity-0 group-hover:opacity-100 transition-opacity stroke-[2.2]" />
@@ -593,8 +626,19 @@ export function StudentDocumentEditor() {
               </div>
             </div>
 
-            {/* Right: Actions (History, Export, Submit) */}
+            {/* Right: Actions (Calendar, History, Export, Submit) */}
             <div className="flex items-center gap-2 shrink-0 ml-4">
+              {/* Practicum Calendar Action */}
+              <button
+                type="button"
+                onClick={() => setShowCalendarModal(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                title="Practicum Calendar & Deadlines"
+              >
+                <Calendar className="w-4 h-4 text-zinc-500" />
+                <span className="hidden sm:inline">Calendar</span>
+              </button>
+
               {!isLocked && (
                 <button
                   onClick={() => setShowHistory(true)}
@@ -660,7 +704,8 @@ export function StudentDocumentEditor() {
               )}
             </div>
           </div>
-        )}
+        );
+      }}
         initialContent={draft?.content ?? [{ type: 'p', children: [{ text: '' }] }]}
         headerFooter={draft?.headerFooter}
         onHeaderFooterChange={handleHeaderFooterChange}
@@ -701,6 +746,13 @@ export function StudentDocumentEditor() {
           onRestoreComplete={handleRestoreComplete}
         />
       )}
+
+      {/* Practicum Calendar Modal */}
+      <DocumentCalendarModal
+        isOpen={showCalendarModal}
+        onClose={() => setShowCalendarModal(false)}
+        onOpenFullCalendar={() => void handleSafeNavigate('/student/calendar')}
+      />
     </div>
   );
 }

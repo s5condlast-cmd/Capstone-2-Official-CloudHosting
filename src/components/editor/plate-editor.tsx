@@ -114,8 +114,14 @@ export interface PlateEditorProps {
   onExportPdf?: () => void;
   onDuplicate?: () => void;
   onRename?: () => void;
-  /** Top Document Identity / Action Bar slot (can accept a render function passing menuBar) */
-  topBar?: React.ReactNode | ((props: { menuBar: React.ReactNode }) => React.ReactNode);
+  /** Top Document Identity / Action Bar slot (can accept a render function passing menuBar, isFullscreen, onToggleFullscreen) */
+  topBar?:
+    | React.ReactNode
+    | ((props: {
+        menuBar: React.ReactNode;
+        isFullscreen?: boolean;
+        onToggleFullscreen?: () => void;
+      }) => React.ReactNode);
   /** Whether to show the bottom telemetry status bar (default: false) */
   showStatusBar?: boolean;
   /** Whether to show the horizontal document ruler (default: false) */
@@ -279,7 +285,13 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
 
     // ── Fullscreen Escape Listener & Ancestor Scroll Lock ───────────────────
     useEffect(() => {
-      if (!isFullscreen) return;
+      if (!isFullscreen) {
+        document.body.removeAttribute('data-editor-fullscreen');
+        return;
+      }
+
+      document.body.setAttribute('data-editor-fullscreen', 'true');
+
       const handleKeyDown = (e: KeyboardEvent) => {
         if (e.key === 'Escape') {
           setIsFullscreen(false);
@@ -306,6 +318,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
 
       return () => {
         window.removeEventListener('keydown', handleKeyDown);
+        document.body.removeAttribute('data-editor-fullscreen');
         document.body.style.overflow = prevBodyOverflow;
         document.documentElement.style.overflow = prevHtmlOverflow;
         scrollParents.forEach(({ el, overflowY }) => {
@@ -760,7 +773,11 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
             );
 
             if (typeof topBar === 'function') {
-              return topBar({ menuBar: menuBarElement });
+              return topBar({
+                menuBar: menuBarElement,
+                isFullscreen,
+                onToggleFullscreen: () => setIsFullscreen((prev) => !prev),
+              });
             }
 
             return (
