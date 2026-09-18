@@ -2889,7 +2889,7 @@ export function FixedToolbarButtons({
                 anchorRef={moreAnchorRef}
                 open={moreOpen}
                 onClose={() => setMoreOpen(false)}
-                align="start"
+                align="end"
                 className="p-1 sm:p-1.5 bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 shadow-2xl rounded-xl flex items-center gap-0.5 sm:gap-1 z-50 max-w-[calc(100vw-24px)] overflow-x-auto no-scrollbar select-none"
               >
                 {/* If Group 3 is hidden: render text formatting marks */}
