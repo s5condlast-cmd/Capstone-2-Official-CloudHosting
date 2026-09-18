@@ -336,40 +336,20 @@ describe('Fullscreen and sidebar elevation architecture', () => {
     assert.equal(mockBody.hasAttribute('data-editor-fullscreen'), false);
   });
 
-  test('sidebar elevation stacking order in fullscreen', () => {
-    const zEditor = 100;
-    const zBackdrop = 115;
-    const zSidebar = 120;
-    const zDrawer = 130;
-    const zModal = 130;
-
-    assert.ok(zSidebar > zBackdrop, 'Sidebar must be above backdrop');
-    assert.ok(zBackdrop > zEditor, 'Backdrop must be above fullscreen editor');
-    assert.ok(zSidebar > zEditor, 'Sidebar must be above fullscreen editor');
-    assert.ok(zDrawer >= zSidebar, 'History drawer must elevate above or equal to sidebar');
-    assert.ok(zModal >= zSidebar, 'Calendar modal must elevate above or equal to sidebar');
-  });
-
-  test('collapsed sidebar in fullscreen is translated offscreen while expanded slides in', () => {
-    function getSidebarPosition(isFullscreen: boolean, isExpanded: boolean) {
-      if (!isFullscreen) {
-        return { left: isExpanded ? '0' : '0', width: isExpanded ? '256px' : '48px', zIndex: 10 };
+  test('sidebar in fullscreen is completely hidden and ignored', () => {
+    function getSidebarDisplay(isFullscreen: boolean) {
+      if (isFullscreen) {
+        return { display: 'none', pointerEvents: 'none' };
       }
-      return {
-        left: isExpanded ? '0' : '-256px',
-        width: isExpanded ? '256px' : '256px',
-        zIndex: 120,
-        pointerEvents: isExpanded ? 'auto' : 'none',
-      };
+      return { display: 'flex', pointerEvents: 'auto' };
     }
 
-    const collapsedInFullscreen = getSidebarPosition(true, false);
-    assert.equal(collapsedInFullscreen.left, '-256px', 'Collapsed sidebar in fullscreen must be offscreen');
-    assert.equal(collapsedInFullscreen.pointerEvents, 'none', 'Collapsed sidebar must ignore pointer events');
+    const inFullscreen = getSidebarDisplay(true);
+    assert.equal(inFullscreen.display, 'none', 'Sidebar must be hidden (display: none) in fullscreen mode');
+    assert.equal(inFullscreen.pointerEvents, 'none', 'Sidebar must ignore pointer events in fullscreen mode');
 
-    const expandedInFullscreen = getSidebarPosition(true, true);
-    assert.equal(expandedInFullscreen.left, '0', 'Expanded sidebar must slide in to left 0');
-    assert.equal(expandedInFullscreen.zIndex, 120, 'Expanded sidebar must have z-index 120');
-    assert.equal(expandedInFullscreen.pointerEvents, 'auto', 'Expanded sidebar must accept clicks');
+    const inNormalMode = getSidebarDisplay(false);
+    assert.equal(inNormalMode.display, 'flex', 'Sidebar must be visible in normal mode');
+    assert.equal(inNormalMode.pointerEvents, 'auto', 'Sidebar must accept pointer events in normal mode');
   });
 });

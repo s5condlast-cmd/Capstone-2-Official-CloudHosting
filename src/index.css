@@ -266,39 +266,17 @@
     overflow-y: hidden !important;
   }
 
-  /* Fullscreen Sidebar Elevation & Backdrop */
-  body[data-editor-fullscreen="true"] [data-slot="sidebar-container"] {
-    z-index: 120 !important;
-    transition: left 0.2s ease-in-out, right 0.2s ease-in-out, width 0.2s ease-in-out !important;
-  }
-
-  body[data-editor-fullscreen="true"] .group[data-state="collapsed"] [data-slot="sidebar-container"] {
-    left: calc(var(--sidebar-width) * -1) !important;
+  /* Fullscreen Document Editor: Hide sidebar completely (never seen or open in fullscreen) */
+  body[data-editor-fullscreen="true"] [data-slot="sidebar"],
+  body[data-editor-fullscreen="true"] [data-slot="sidebar-gap"],
+  body[data-editor-fullscreen="true"] [data-slot="sidebar-container"],
+  body[data-editor-fullscreen="true"] [data-slot="sidebar-fullscreen-backdrop"],
+  body[data-editor-fullscreen="true"] [data-slot="sidebar-rail"],
+  body[data-editor-fullscreen="true"] [data-slot="sheet-overlay"],
+  body[data-editor-fullscreen="true"] [data-slot="sheet-content"],
+  body[data-editor-fullscreen="true"] header {
+    display: none !important;
     pointer-events: none !important;
-    box-shadow: none !important;
-  }
-
-  body[data-editor-fullscreen="true"] .group[data-state="expanded"] [data-slot="sidebar-container"] {
-    left: 0 !important;
-    width: var(--sidebar-width) !important;
-    pointer-events: auto !important;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45) !important;
-  }
-
-  body[data-editor-fullscreen="true"] [data-slot="sheet-overlay"] {
-    z-index: 115 !important;
-  }
-
-  body[data-editor-fullscreen="true"] [data-slot="sheet-content"] {
-    z-index: 120 !important;
-  }
-
-  [data-slot="sidebar-fullscreen-backdrop"] {
-    display: none;
-  }
-
-  body[data-editor-fullscreen="true"] [data-slot="sidebar-fullscreen-backdrop"].is-open {
-    display: block !important;
   }
 
   .h-13 {
