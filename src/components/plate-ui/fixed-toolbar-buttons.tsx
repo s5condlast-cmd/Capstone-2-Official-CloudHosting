@@ -2881,120 +2881,126 @@ export function FixedToolbarButtons({
               >
                 <MoreVertical className="w-4 h-4" />
               </ToolbarButton>
-              <div className="mx-1 h-5 w-px bg-zinc-300/80 dark:bg-zinc-700/80 shrink-0" />
+              {(!hiddenGroups.group4 || !hiddenGroups.group5) && (
+                <div className="mx-1 h-5 w-px bg-zinc-300/80 dark:bg-zinc-700/80 shrink-0" />
+              )}
 
               <PortalPopover
                 anchorRef={moreAnchorRef}
                 open={moreOpen}
                 onClose={() => setMoreOpen(false)}
                 align="start"
-                className="p-2.5 bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 shadow-2xl rounded-2xl flex flex-col gap-2 z-50 max-w-[calc(100vw-24px)] select-none"
+                className="p-1 sm:p-1.5 bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 shadow-2xl rounded-xl flex items-center gap-0.5 sm:gap-1 z-50 max-w-[calc(100vw-24px)] overflow-x-auto no-scrollbar select-none"
               >
                 {/* If Group 3 is hidden: render text formatting marks */}
                 {hiddenGroups.group3 && (
-                  <div className={cn('flex items-center gap-0.5 shrink-0 flex-wrap', isViewing && 'opacity-40 pointer-events-none')}>
-                    <ToolbarButton
-                      active={isBold}
-                      onClick={() => toggleMark(editor, 'bold')}
-                      tooltip="Bold (Ctrl+B)"
-                    >
-                      <Bold className="w-4 h-4" />
-                    </ToolbarButton>
-
-                    <ToolbarButton
-                      active={isItalic}
-                      onClick={() => toggleMark(editor, 'italic')}
-                      tooltip="Italic (Ctrl+I)"
-                    >
-                      <Italic className="w-4 h-4" />
-                    </ToolbarButton>
-
-                    <ToolbarButton
-                      active={isUnderline}
-                      onClick={() => toggleMark(editor, 'underline')}
-                      tooltip="Underline (Ctrl+U)"
-                    >
-                      <Underline className="w-4 h-4" />
-                    </ToolbarButton>
-
-                    <ToolbarButton
-                      active={isStrikethrough}
-                      onClick={() => toggleMark(editor, 'strikethrough')}
-                      tooltip="Strikethrough"
-                    >
-                      <Strikethrough className="w-4 h-4" />
-                    </ToolbarButton>
-
-                    <ColorPickerDropdown
-                      editor={editor}
-                      nodeType="color"
-                      icon={Baseline}
-                      tooltip="Text color"
-                    />
-
-                    <ColorPickerDropdown
-                      editor={editor}
-                      nodeType="backgroundColor"
-                      icon={Paintbrush}
-                      tooltip="Highlight color"
-                    />
-                  </div>
-                )}
-
-                {/* If Group 5 is hidden: render Row 1 and Row 2 matching media_1789690393499.png */}
-                {hiddenGroups.group5 && (
                   <>
-                    {/* Row 1: Alignment & Line Spacing */}
-                    <div className={cn('flex items-center gap-0.5 shrink-0', isViewing && 'opacity-40 pointer-events-none')}>
-                      <AlignToolbarButton editor={editor} />
-                      <LineHeightToolbarButton editor={editor} />
-                      <div className="mx-1 h-5 w-px bg-zinc-300/80 dark:bg-zinc-700/80 shrink-0" />
-                    </div>
-
-                    {/* Row 2: Lists, Indent, Clear Formatting */}
-                    <div className={cn('flex items-center gap-0.5 shrink-0', isViewing && 'opacity-40 pointer-events-none')}>
+                    <div className={cn('flex items-center gap-0.5 shrink-0 flex-nowrap', isViewing && 'opacity-40 pointer-events-none')}>
                       <ToolbarButton
-                        active={isTodo}
-                        onClick={() => {
-                          setBlockType(editor, isTodo ? 'p' : 'todo');
-                        }}
-                        tooltip="Checklist"
+                        active={isBold}
+                        onClick={() => toggleMark(editor, 'bold')}
+                        tooltip="Bold (Ctrl+B)"
                       >
-                        <ListTodo className="w-4 h-4" />
+                        <Bold className="w-4 h-4" />
                       </ToolbarButton>
-
-                      <BulletedListToolbarButton editor={editor} />
-                      <NumberedListToolbarButton editor={editor} />
-
-                      <ToolbarButton onClick={handleOutdent} tooltip="Decrease indent">
-                        <OutdentIcon className="w-4 h-4" />
-                      </ToolbarButton>
-
-                      <ToolbarButton onClick={handleIndent} tooltip="Increase indent">
-                        <IndentIcon className="w-4 h-4" />
-                      </ToolbarButton>
-
-                      <div className="mx-1 h-5 w-px bg-zinc-300/80 dark:bg-zinc-700/80 shrink-0" />
 
                       <ToolbarButton
-                        onClick={() => {
-                          const marks = ['bold', 'italic', 'underline', 'strikethrough', 'code', 'color', 'backgroundColor', 'fontSize', 'fontFamily'];
-                          marks.forEach((m) => removeMark(editor, m));
-                          setBlockType(editor, 'p');
-                        }}
-                        tooltip="Clear formatting (Ctrl+\)"
+                        active={isItalic}
+                        onClick={() => toggleMark(editor, 'italic')}
+                        tooltip="Italic (Ctrl+I)"
                       >
-                        <Eraser className="w-4 h-4" />
+                        <Italic className="w-4 h-4" />
                       </ToolbarButton>
 
-                      <div className="mx-1 h-5 w-px bg-zinc-300/80 dark:bg-zinc-700/80 shrink-0" />
+                      <ToolbarButton
+                        active={isUnderline}
+                        onClick={() => toggleMark(editor, 'underline')}
+                        tooltip="Underline (Ctrl+U)"
+                      >
+                        <Underline className="w-4 h-4" />
+                      </ToolbarButton>
+
+                      <ToolbarButton
+                        active={isStrikethrough}
+                        onClick={() => toggleMark(editor, 'strikethrough')}
+                        tooltip="Strikethrough"
+                      >
+                        <Strikethrough className="w-4 h-4" />
+                      </ToolbarButton>
+
+                      <ColorPickerDropdown
+                        editor={editor}
+                        nodeType="color"
+                        icon={Baseline}
+                        tooltip="Text color"
+                      />
+
+                      <ColorPickerDropdown
+                        editor={editor}
+                        nodeType="backgroundColor"
+                        icon={Paintbrush}
+                        tooltip="Highlight color"
+                      />
                     </div>
+                    <div className="mx-1 h-5 w-px bg-zinc-300/80 dark:bg-zinc-700/80 shrink-0" />
                   </>
                 )}
 
-                {/* If Group 4 is hidden: render Row 3: Link, Comment, Image matching media_1789690393499.png */}
+                {/* Section 1: Alignment & Line Spacing */}
+                {hiddenGroups.group5 && (
+                  <div className={cn('flex items-center gap-0.5 shrink-0 flex-nowrap', isViewing && 'opacity-40 pointer-events-none')}>
+                    <AlignToolbarButton editor={editor} />
+                    <LineHeightToolbarButton editor={editor} />
+                    <div className="mx-1 h-5 w-px bg-zinc-300/80 dark:bg-zinc-700/80 shrink-0" />
+                  </div>
+                )}
+
+                {/* Section 2: Lists, Indent, Clear Formatting */}
+                {hiddenGroups.group5 && (
+                  <div className={cn('flex items-center gap-0.5 shrink-0 flex-nowrap', isViewing && 'opacity-40 pointer-events-none')}>
+                    <ToolbarButton
+                      active={isTodo}
+                      onClick={() => {
+                        setBlockType(editor, isTodo ? 'p' : 'todo');
+                      }}
+                      tooltip="Checklist"
+                    >
+                      <ListTodo className="w-4 h-4" />
+                    </ToolbarButton>
+
+                    <BulletedListToolbarButton editor={editor} />
+                    <NumberedListToolbarButton editor={editor} />
+
+                    <ToolbarButton onClick={handleOutdent} tooltip="Decrease indent">
+                      <OutdentIcon className="w-4 h-4" />
+                    </ToolbarButton>
+
+                    <ToolbarButton onClick={handleIndent} tooltip="Increase indent">
+                      <IndentIcon className="w-4 h-4" />
+                    </ToolbarButton>
+
+                    <div className="mx-1 h-5 w-px bg-zinc-300/80 dark:bg-zinc-700/80 shrink-0" />
+
+                    <ToolbarButton
+                      onClick={() => {
+                        const marks = ['bold', 'italic', 'underline', 'strikethrough', 'code', 'color', 'backgroundColor', 'fontSize', 'fontFamily'];
+                        marks.forEach((m) => removeMark(editor, m));
+                        setBlockType(editor, 'p');
+                      }}
+                      tooltip="Clear formatting (Ctrl+\)"
+                    >
+                      <Eraser className="w-4 h-4" />
+                    </ToolbarButton>
+
+                    {hiddenGroups.group4 && (
+                      <div className="mx-1 h-5 w-px bg-zinc-300/80 dark:bg-zinc-700/80 shrink-0" />
+                    )}
+                  </div>
+                )}
+
+                {/* Section 3: Link, Comment, Image */}
                 {hiddenGroups.group4 && (
-                  <div className={cn('flex items-center gap-0.5 shrink-0', isViewing && 'opacity-40 pointer-events-none')}>
+                  <div className={cn('flex items-center gap-0.5 shrink-0 flex-nowrap', isViewing && 'opacity-40 pointer-events-none')}>
                     <ToolbarButton onClick={handleLink} tooltip="Insert link (Ctrl+K)">
                       <Link2 className="w-4 h-4" />
                     </ToolbarButton>
