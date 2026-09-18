@@ -539,13 +539,13 @@ export function StudentDocumentEditor() {
         ref={editorRef}
         topBar={({ menuBar }) => (
           <div className="flex items-center justify-between gap-4 px-3 sm:px-4 pt-3 pb-2 bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80 shrink-0 select-none">
-            {/* Left: Big Blue Document Return Button + 2-Row Stack (Title on top, MenuBar below) */}
-            <div className="flex items-center gap-2.5 min-w-0 flex-1">
-              {/* Document Return Button (Lucide Black & White) */}
+            {/* Left: Document Return Button + 2-Row Stack (Title on top, MenuBar below) */}
+            <div className="flex items-start gap-1.5 sm:gap-2 min-w-0 flex-1">
+              {/* Document Return Button (Lucide Black & White, No Shadow) */}
               <button
                 type="button"
                 onClick={() => navigate('/student/documents')}
-                className="group relative flex items-center justify-center w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/80 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 hover:text-zinc-950 dark:hover:text-white transition-all shrink-0 cursor-pointer shadow-xs"
+                className="group relative flex items-center justify-center p-1 rounded-md text-zinc-800 dark:text-zinc-200 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-colors shrink-0 cursor-pointer shadow-none border-0 bg-transparent mt-0.5"
                 title="Back to Documents"
                 aria-label="Back to Documents"
               >
@@ -555,10 +555,10 @@ export function StudentDocumentEditor() {
                 </div>
               </button>
 
-              {/* Stacked 2-row block directly beside the blue document icon */}
-              <div className="flex flex-col justify-center min-w-0 flex-1">
+              {/* Stacked 2-row block directly beside the document icon */}
+              <div className="flex flex-col justify-start min-w-0 flex-1">
                 {/* Row 1: Document Title + Telemetry */}
-                <div className="flex items-center gap-2.5 min-w-0">
+                <div className="flex items-center gap-2.5 min-w-0 h-6 sm:h-6.5">
                   {titleEditing ? (
                     <input
                       autoFocus
