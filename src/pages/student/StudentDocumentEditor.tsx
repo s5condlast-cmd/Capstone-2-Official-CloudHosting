@@ -29,7 +29,7 @@ import { supabase } from '@/src/lib/supabase';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { DocumentHistoryDrawer } from '@/src/components/editor/DocumentHistoryDrawer';
 import { DocumentCalendarModal } from '@/src/components/editor/DocumentCalendarModal';
-import { SidebarContext, SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
+import { SidebarContext } from '@/components/ui/sidebar';
 import PlateEditor, { type PlateEditorRef } from '@/src/components/editor/plate-editor';
 import {
   type EditorComment,
@@ -585,14 +585,8 @@ export function StudentDocumentEditor() {
 
           return (
             <div className="flex items-center justify-between gap-4 px-3 pt-3 sm:pt-3.5 pb-2 sm:pb-2.5 bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80 shrink-0 select-none">
-              {/* Left: Sidebar Trigger + Document Return Button + 2-Row Stack */}
-              <div className="flex items-center gap-2 min-w-0 flex-1">
-                {/* Sidebar Trigger (Opens / Collapses Portal Navigation in both Normal and Fullscreen mode) */}
-                <SidebarTrigger
-                  className="h-9 w-9 rounded-lg text-zinc-700 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-colors shrink-0 cursor-pointer border border-zinc-200/80 dark:border-zinc-700/80"
-                  title="Toggle Sidebar"
-                />
-
+              {/* Left: Document Return Button + 2-Row Stack (Title on top, MenuBar below) */}
+              <div className="flex items-center gap-2.5 min-w-0 flex-1">
                 {/* Document Return Button (Lucide Black & White, No Shadow, Spans Both Lines) */}
                 <button
                   type="button"
