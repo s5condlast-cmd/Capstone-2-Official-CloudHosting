@@ -62,23 +62,23 @@ export const DocumentRuler: React.FC<DocumentRulerProps> = ({
       }}
     >
       {/* Outer Ruler Bar Frame */}
-      <div className="relative w-full h-full flex bg-white border-x border-t border-zinc-200 dark:border-zinc-300/80 rounded-t-xs overflow-hidden shadow-2xs">
+      <div className="relative w-full h-full flex bg-white dark:bg-zinc-900 border-x border-t border-zinc-200 dark:border-zinc-800 rounded-t-xs overflow-hidden shadow-2xs">
         {/* Left Margin Gutter (Shaded 1 inch / 96px) */}
         <div
           style={{ width: `${leftMargin}px` }}
-          className="h-full bg-zinc-100/90 border-r border-zinc-200/80 relative shrink-0"
+          className="h-full bg-zinc-100/90 dark:bg-zinc-950/80 border-r border-zinc-200/80 dark:border-zinc-800/80 relative shrink-0"
         />
 
-        {/* Central Printable Area (White / Bright 6.5 inches / 624px) */}
+        {/* Central Printable Area (White in light, zinc-900 in dark) */}
         <div
           style={{ width: `${printableWidth}px` }}
-          className="h-full bg-white relative shrink-0"
+          className="h-full bg-white dark:bg-zinc-900 relative shrink-0"
         />
 
         {/* Right Margin Gutter (Shaded 1 inch / 96px) */}
         <div
           style={{ width: `${rightMargin}px` }}
-          className="h-full bg-zinc-100/90 border-l border-zinc-200/80 relative shrink-0"
+          className="h-full bg-zinc-100/90 dark:bg-zinc-950/80 border-l border-zinc-200/80 dark:border-zinc-800/80 relative shrink-0"
         />
 
         {/* Tick Marks & Numbers Overlay */}
@@ -92,11 +92,11 @@ export const DocumentRuler: React.FC<DocumentRulerProps> = ({
                 {/* Tick Mark Line */}
                 <div
                   className={cn(
-                    'absolute bottom-0 w-px bg-zinc-300',
-                    isInch && 'h-2.5 bg-zinc-700',
-                    isHalfInch && 'h-2 bg-zinc-500',
-                    isQuarterInch && 'h-1.5 bg-zinc-400',
-                    !isInch && !isHalfInch && !isQuarterInch && 'h-1 bg-zinc-300'
+                    'absolute bottom-0 w-px bg-zinc-300 dark:bg-zinc-700',
+                    isInch && 'h-2.5 bg-zinc-700 dark:bg-zinc-200',
+                    isHalfInch && 'h-2 bg-zinc-500 dark:bg-zinc-400',
+                    isQuarterInch && 'h-1.5 bg-zinc-400 dark:bg-zinc-500',
+                    !isInch && !isHalfInch && !isQuarterInch && 'h-1 bg-zinc-300 dark:bg-zinc-700'
                   )}
                   style={{ left: `${px}px` }}
                 />
@@ -104,7 +104,7 @@ export const DocumentRuler: React.FC<DocumentRulerProps> = ({
                 {/* Inch Number Label */}
                 {showNumber && (
                   <span
-                    className="absolute top-0.5 text-[9px] font-mono font-medium text-zinc-600 -translate-x-1/2 select-none"
+                    className="absolute top-0.5 text-[9px] font-mono font-medium text-zinc-600 dark:text-zinc-400 -translate-x-1/2 select-none"
                     style={{ left: `${px}px` }}
                   >
                     {inchNumber}

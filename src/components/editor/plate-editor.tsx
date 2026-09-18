@@ -881,7 +881,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                 {/* ─── Authentic 8.5" × 11" US Letter Paper Sheet ─────────────── */}
                 <div
                   className={cn(
-                    'plate-paper-sheet w-[816px] max-w-[816px] min-h-[1056px] bg-white text-zinc-900 border border-zinc-200/90 shadow-[0_1px_4px_rgba(0,0,0,0.12),0_8px_30px_rgba(0,0,0,0.15)] dark:shadow-[0_8px_36px_rgba(0,0,0,0.7)] rounded-[2px] px-[96px] pb-[96px] flex flex-col relative transition-all',
+                    'plate-paper-sheet w-[816px] max-w-[816px] min-h-[1056px] bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 border border-zinc-200/90 dark:border-zinc-800/90 shadow-[0_1px_4px_rgba(0,0,0,0.12),0_8px_30px_rgba(0,0,0,0.15)] dark:shadow-[0_8px_36px_rgba(0,0,0,0.7)] rounded-[2px] px-[96px] pb-[96px] flex flex-col relative transition-all print:bg-white print:text-black print:border-none print:shadow-none',
                     activeHeaderFooter && 'ring-1 ring-primary/40 shadow-md'
                   )}
                 >
@@ -921,7 +921,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                       spellCheck
                       autoFocus={!isEffectivelyReadOnly}
                       onKeyDown={handleKeyDown}
-                      className="flex-1 w-full min-h-[650px] p-0 border-0 shadow-none rounded-none focus-visible:outline-none text-zinc-900 selection:bg-primary/20 selection:text-zinc-900 placeholder:text-zinc-400"
+                      className="flex-1 w-full min-h-[650px] p-0 border-0 shadow-none rounded-none focus-visible:outline-none text-zinc-900 dark:text-zinc-100 selection:bg-primary/20 selection:text-zinc-900 dark:selection:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500"
                     />
                   </div>
 
