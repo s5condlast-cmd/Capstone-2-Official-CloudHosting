@@ -319,84 +319,96 @@ export function StudentDocumentEditor() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, draftIdParam]);
 
+  const draftRef = useRef<LocalDraft | null>(null);
+  draftRef.current = draft;
+  const titleRef = useRef(title);
+  titleRef.current = title;
+
   // ── Editor content change ────────────────────────────────────────────────
   const handleEditorChange = useCallback(
     (content: object[], wc: number) => {
-      if (!draft || !storageRef.current) return;
+      if (!draftRef.current || !storageRef.current || !user) return;
+      const currentDraft = draftRef.current;
       setWordCount(wc);
       const updatedState: DraftState = {
-        id: draft.id,
-        userId: user!.id,
-        title,
-        templateId: draft.templateId ?? undefined,
-        templateName: draft.templateName ?? undefined,
-        phase: draft.phase ?? undefined,
+        id: currentDraft.id,
+        userId: user.id,
+        title: titleRef.current,
+        templateId: currentDraft.templateId ?? undefined,
+        templateName: currentDraft.templateName ?? undefined,
+        phase: currentDraft.phase ?? undefined,
         content,
-        headerFooter: draft.headerFooter,
+        headerFooter: currentDraft.headerFooter,
         wordCount: wc,
-        revision: draft.revision,
-        status: draft.status,
-        submissionId: draft.submissionId,
-        createdAt: draft.createdAt,
+        revision: currentDraft.revision,
+        status: currentDraft.status,
+        submissionId: currentDraft.submissionId,
+        createdAt: currentDraft.createdAt,
         updatedAt: new Date().toISOString(),
       };
       storageRef.current.onChange(updatedState);
     },
-    [draft, title, user]
+    [user]
   );
 
   // ── Header/Footer change ──────────────────────────────────────────────────
   const handleHeaderFooterChange = useCallback(
     (hf: DocumentHeaderFooterOptions) => {
-      if (!draft || !storageRef.current) return;
-      const content = editorRef.current?.getContent() ?? draft.content;
+      if (!draftRef.current || !storageRef.current || !user) return;
+      const currentDraft = draftRef.current;
+      const content = editorRef.current?.getContent() ?? currentDraft.content;
       const updatedState: DraftState = {
-        id: draft.id,
-        userId: user!.id,
-        title,
-        templateId: draft.templateId ?? undefined,
-        templateName: draft.templateName ?? undefined,
-        phase: draft.phase ?? undefined,
+        id: currentDraft.id,
+        userId: user.id,
+        title: titleRef.current,
+        templateId: currentDraft.templateId ?? undefined,
+        templateName: currentDraft.templateName ?? undefined,
+        phase: currentDraft.phase ?? undefined,
         content,
         headerFooter: hf,
-        wordCount: editorRef.current?.getWordCount() ?? draft.wordCount,
-        revision: draft.revision,
-        status: draft.status,
-        submissionId: draft.submissionId,
-        createdAt: draft.createdAt,
+        wordCount: editorRef.current?.getWordCount() ?? currentDraft.wordCount,
+        revision: currentDraft.revision,
+        status: currentDraft.status,
+        submissionId: currentDraft.submissionId,
+        createdAt: currentDraft.createdAt,
         updatedAt: new Date().toISOString(),
       };
-      setDraft(prev => prev ? { ...prev, headerFooter: hf } : prev);
+      setDraft(prev => {
+        if (!prev) return prev;
+        if (JSON.stringify(prev.headerFooter) === JSON.stringify(hf)) return prev;
+        return { ...prev, headerFooter: hf };
+      });
       storageRef.current.onChange(updatedState);
     },
-    [draft, title, user]
+    [user]
   );
 
   // ── Title change ─────────────────────────────────────────────────────────
   const handleTitleChange = useCallback(
     (newTitle: string) => {
       setTitle(newTitle);
-      if (!draft || !storageRef.current || !editorRef.current) return;
+      if (!draftRef.current || !storageRef.current || !editorRef.current || !user) return;
+      const currentDraft = draftRef.current;
       const content = editorRef.current.getContent();
       const updatedState: DraftState = {
-        id: draft.id,
-        userId: user!.id,
+        id: currentDraft.id,
+        userId: user.id,
         title: newTitle,
-        templateId: draft.templateId ?? undefined,
-        templateName: draft.templateName ?? undefined,
-        phase: draft.phase ?? undefined,
+        templateId: currentDraft.templateId ?? undefined,
+        templateName: currentDraft.templateName ?? undefined,
+        phase: currentDraft.phase ?? undefined,
         content,
-        headerFooter: draft.headerFooter,
+        headerFooter: currentDraft.headerFooter,
         wordCount: editorRef.current.getWordCount(),
-        revision: draft.revision,
-        status: draft.status,
-        submissionId: draft.submissionId,
-        createdAt: draft.createdAt,
+        revision: currentDraft.revision,
+        status: currentDraft.status,
+        submissionId: currentDraft.submissionId,
+        createdAt: currentDraft.createdAt,
         updatedAt: new Date().toISOString(),
       };
       storageRef.current.onChange(updatedState);
     },
-    [draft, user]
+    [user]
   );
 
   // ── Save version ─────────────────────────────────────────────────────────

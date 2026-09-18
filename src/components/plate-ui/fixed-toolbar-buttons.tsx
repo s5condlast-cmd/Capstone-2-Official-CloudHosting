@@ -2715,18 +2715,15 @@ export function FixedToolbarButtons({
 
   const checkOverflow = React.useCallback(() => {
     const width = containerRef.current?.clientWidth || window.innerWidth;
-    const isScrollOverflowing = scrollRef.current
-      ? scrollRef.current.scrollWidth > scrollRef.current.clientWidth + 2
-      : false;
     
     // Breakpoints based on container width:
-    // >= 1540px (without scroll overflow): All groups fit on main bar.
-    // 1220px - 1539px (or whenever track overflows): Group 5 is hidden from bar, shown in 3-dots dropview.
-    // 980px - 1219px: Group 5 and Group 4 are hidden from bar, shown in 3-dots dropview.
-    // < 980px: Group 5, Group 4, Group 3 are hidden from bar, shown in 3-dots dropview.
-    const hide5 = width < 1540 || isScrollOverflowing;
-    const hide4 = width < 1220;
-    const hide3 = width < 980;
+    // >= 1480px: All groups fit on main bar.
+    // 1200px - 1479px: Group 5 is hidden from bar, shown in 3-dots dropview.
+    // 960px - 1199px: Group 5 and Group 4 are hidden from bar, shown in 3-dots dropview.
+    // < 960px: Group 5, Group 4, Group 3 are hidden from bar, shown in 3-dots dropview.
+    const hide5 = width < 1480;
+    const hide4 = width < 1200;
+    const hide3 = width < 960;
 
     setHiddenGroups((prev) => {
       if (prev.group5 === hide5 && prev.group4 === hide4 && prev.group3 === hide3) {
@@ -2738,28 +2735,19 @@ export function FixedToolbarButtons({
 
   React.useEffect(() => {
     checkOverflow();
-    const timer = setTimeout(checkOverflow, 100);
-    const timer2 = setTimeout(checkOverflow, 300);
 
     if (typeof ResizeObserver !== 'undefined' && containerRef.current) {
       const ro = new ResizeObserver(() => {
         checkOverflow();
       });
       ro.observe(containerRef.current);
-      if (scrollRef.current) {
-        ro.observe(scrollRef.current);
-      }
       return () => {
-        clearTimeout(timer);
-        clearTimeout(timer2);
         ro.disconnect();
       };
     }
 
     window.addEventListener('resize', checkOverflow);
     return () => {
-      clearTimeout(timer);
-      clearTimeout(timer2);
       window.removeEventListener('resize', checkOverflow);
     };
   }, [checkOverflow]);

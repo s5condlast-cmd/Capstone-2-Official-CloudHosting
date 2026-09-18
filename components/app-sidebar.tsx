@@ -125,6 +125,7 @@ export function AppSidebar({ user, onLogout, onSearchClick, ...props }: AppSideb
               { title: 'Dashboard', url: '/student', icon: LayoutDashboardIcon },
               { title: 'Document Repository', url: '/student/documents', icon: FileTextIcon },
               { title: 'Document Editor', url: '/student/editor', icon: FilePlus2Icon },
+              { title: 'Practicum Calendar', url: '/student/calendar', icon: CalendarIcon },
             ],
           },
         ]

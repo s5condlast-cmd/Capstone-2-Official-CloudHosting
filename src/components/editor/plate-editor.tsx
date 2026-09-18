@@ -242,10 +242,20 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
       footer: footerState,
     });
 
+    const onHeaderFooterChangeRef = useRef(onHeaderFooterChange);
+    useEffect(() => {
+      onHeaderFooterChangeRef.current = onHeaderFooterChange;
+    }, [onHeaderFooterChange]);
+
+    const isFirstMountRef = useRef(true);
     useEffect(() => {
       headerFooterRef.current = { header: headerState, footer: footerState };
-      onHeaderFooterChange?.({ header: headerState, footer: footerState });
-    }, [headerState, footerState, onHeaderFooterChange]);
+      if (isFirstMountRef.current) {
+        isFirstMountRef.current = false;
+        return;
+      }
+      onHeaderFooterChangeRef.current?.({ header: headerState, footer: footerState });
+    }, [headerState, footerState]);
 
     useEffect(() => {
       if (footerState.image?.cropZoom) {
