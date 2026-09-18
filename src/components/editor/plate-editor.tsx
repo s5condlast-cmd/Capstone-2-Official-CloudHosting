@@ -684,8 +684,10 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
       <PlateComp editor={editor} onValueChange={handleChange} readOnly={isEffectivelyReadOnly}>
         <div
           className={cn(
-            'plate-editor-wrapper relative flex flex-col rounded-xl overflow-hidden shadow-xs transition-all',
-            isFullscreen && 'fixed inset-0 z-[100] w-screen h-screen rounded-none bg-zinc-100 dark:bg-zinc-950',
+            'plate-editor-wrapper relative flex flex-col rounded-xl overflow-hidden shadow-xs transition-all border border-zinc-200/90 dark:border-zinc-800/90 bg-white dark:bg-zinc-900',
+            isFullscreen
+              ? 'fixed inset-0 z-[100] w-screen h-screen rounded-none bg-zinc-100 dark:bg-zinc-950 border-none'
+              : 'h-[calc(100vh-7rem)] min-h-[600px]',
             className
           )}
         >
@@ -850,12 +852,12 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
             {/* Scrollable canvas containing the paper document sheet */}
             <div ref={canvasRef} className="relative flex-1 flex flex-col min-h-0 overflow-hidden bg-[#f0f4f9] dark:bg-zinc-950">
               <EditorContainer
-              variant={isFullscreen ? 'fullWidth' : 'demo'}
-              className={cn(
-                'flex-1 overflow-y-auto p-4 md:p-8',
-                zoomLevel > 100 && 'overflow-x-auto'
-              )}
-            >
+                variant={isFullscreen ? 'fullWidth' : 'default'}
+                className={cn(
+                  'flex-1 min-h-0 overflow-y-auto editor-scrollbar bg-[#f0f4f9] dark:bg-zinc-950 p-4 md:p-8',
+                  zoomLevel > 100 && 'overflow-x-auto'
+                )}
+              >
               <div
                 style={{
                   transform: zoomLevel !== 100 ? `scale(${zoomLevel / 100})` : undefined,
