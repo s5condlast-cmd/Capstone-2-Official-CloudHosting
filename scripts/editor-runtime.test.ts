@@ -474,6 +474,63 @@ describe('Plate editor runtime wiring', () => {
     assert.ok(!toolbarSrc.includes('<TableToolbarButton editor={editor} />'), 'TableToolbarButton must not be rendered in primary row');
     assert.ok(!toolbarSrc.includes('<SpeechToTextToolbarButton editor={editor}'), 'SpeechToText must not be rendered in letter template toolbar');
   });
+
+  it('enforces edge-to-edge divider line, borderless 750px resizable images, and rich text formatting', async () => {
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+    const headerSrc = fs.readFileSync(path.resolve('src/components/editor/DocumentHeaderZone.tsx'), 'utf8');
+    const footerSrc = fs.readFileSync(path.resolve('src/components/editor/DocumentFooterZone.tsx'), 'utf8');
+    const toolbarSrc = fs.readFileSync(path.resolve('src/components/plate-ui/fixed-toolbar-buttons.tsx'), 'utf8');
+
+    // 1. Edge-to-edge full-width divider line (spans the full 816px paper sheet across 96px padding)
+    assert.ok(headerSrc.includes('-mx-[96px] w-[calc(100%+192px)]'), 'Header must span edge-to-edge across paper margins');
+    assert.ok(footerSrc.includes('-mx-[96px] w-[calc(100%+192px)]'), 'Footer must span edge-to-edge across paper margins');
+
+    // 2. Borderless free image sizing up to 750px without container dashed box or h-20 constraint
+    assert.ok(!headerSrc.includes('border border-dashed border-zinc-300'), 'Header image must NOT have dashed container box');
+    assert.ok(!footerSrc.includes('border border-dashed border-zinc-300'), 'Footer image must NOT have dashed container box');
+    assert.ok(!headerSrc.includes('max-h-18'), 'Header logo must NOT be trapped in max-h-18');
+    assert.ok(headerSrc.includes('Math.min(750'), 'Header logo must allow resizing up to 750px');
+    assert.ok(footerSrc.includes('Math.min(750'), 'Footer logo must allow resizing up to 750px');
+
+    // 3. Clean typing area (no placeholder="Header" or placeholder="Footer" text)
+    assert.ok(!headerSrc.includes('placeholder="Header'), 'Header text input must be clean without placeholder="Header"');
+    assert.ok(!footerSrc.includes('placeholder="Footer'), 'Footer text input must be clean without placeholder="Footer"');
+
+    // 4. Toolbar activeHeaderFooter integration
+    assert.ok(toolbarSrc.includes('activeHeaderFooter'), 'FixedToolbarButtons must support activeHeaderFooter');
+    assert.ok(toolbarSrc.includes('onFormatHeaderFooter'), 'FixedToolbarButtons must support onFormatHeaderFooter');
+
+    // 5. DOCX serializer rich header/footer text formatting
+    const tinyPng = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+    const blob = await serializeToDocx(
+      [{ type: 'p', children: [{ text: 'Body text' }] }] as any,
+      'Rich Header Footer Test',
+      {
+        header: {
+          image: { url: tinyPng, width: 250 },
+          text: 'Formatted Header',
+          bold: true,
+          italic: true,
+          underline: true,
+          color: '#003366',
+          fontSize: 14,
+          fontFamily: 'Georgia, serif',
+          textAlign: 'center',
+        },
+        footer: {
+          text: 'Formatted Footer',
+          pageNumber: true,
+          bold: true,
+          color: '#555555',
+          fontSize: 10,
+          fontFamily: 'Arial, sans-serif',
+          textAlign: 'right',
+        },
+      }
+    );
+    assert.ok(blob.size > 2_000, 'Serialized DOCX with rich formatted header and footer should be valid');
+  });
 });
 
 

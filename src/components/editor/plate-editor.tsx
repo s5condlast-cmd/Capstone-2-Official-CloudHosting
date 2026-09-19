@@ -230,6 +230,14 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
       scope: externalHeaderFooter?.footer?.scope || 'every_page',
     }));
 
+    const handleFormatHeaderFooter = useCallback((format: Partial<HeaderFooterItem>) => {
+      if (activeHeaderFooter === 'header') {
+        setHeaderState((prev) => ({ ...prev, ...format }));
+      } else if (activeHeaderFooter === 'footer') {
+        setFooterState((prev) => ({ ...prev, ...format }));
+      }
+    }, [activeHeaderFooter]);
+
     // ── Google Docs Header / Footer Escape Key Listener ─────────────────────
     useEffect(() => {
       if (!activeHeaderFooter) return;
@@ -701,6 +709,8 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                 }}
                 documentTitle={documentTitle}
                 headerFooter={{ header: headerState, footer: footerState }}
+                activeHeaderFooter={activeHeaderFooter}
+                onFormatHeaderFooter={handleFormatHeaderFooter}
               />
             </FixedToolbar>
           </div>

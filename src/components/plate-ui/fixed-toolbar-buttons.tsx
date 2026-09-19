@@ -650,11 +650,19 @@ const FONT_OPTIONS = [
   { label: 'Verdana', value: 'Verdana, sans-serif' },
 ];
 
-function FontFamilyToolbarButton({ editor }: { editor: any }) {
+function FontFamilyToolbarButton({
+  editor,
+  targetFont,
+  onSelectFont,
+}: {
+  editor: any;
+  targetFont?: string;
+  onSelectFont?: (font: string) => void;
+}) {
   const [open, setOpen] = React.useState(false);
   const anchorRef = React.useRef<HTMLDivElement>(null);
 
-  const rawFont = getMarkValue(editor, 'fontFamily');
+  const rawFont = targetFont !== undefined ? targetFont : getMarkValue(editor, 'fontFamily');
   const activeOption = FONT_OPTIONS.find((f) => f.value === rawFont || f.label === rawFont || f.label.toLowerCase() === (rawFont || '').toLowerCase()) || FONT_OPTIONS[0];
 
   return (
@@ -687,7 +695,11 @@ function FontFamilyToolbarButton({ editor }: { editor: any }) {
             type="button"
             onMouseDown={(e) => {
               e.preventDefault();
-              addMark(editor, 'fontFamily', f.value);
+              if (onSelectFont) {
+                onSelectFont(f.value);
+              } else {
+                addMark(editor, 'fontFamily', f.value);
+              }
               setOpen(false);
             }}
             className="w-full text-left px-2.5 py-1.5 rounded-md text-[13px] hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center justify-between"
@@ -810,11 +822,19 @@ function TurnIntoToolbarButton({ editor }: { editor: any }) {
 
 // ─── 3. Font Size Toolbar Button ([- | 12 | +]) ────────────────────────────────
 
-function FontSizeToolbarButton({ editor }: { editor: any }) {
+function FontSizeToolbarButton({
+  editor,
+  targetSize,
+  onSelectSize,
+}: {
+  editor: any;
+  targetSize?: number;
+  onSelectSize?: (size: number) => void;
+}) {
   const [open, setOpen] = React.useState(false);
   const containerRef = React.useRef<HTMLDivElement>(null);
 
-  const markVal = getMarkValue(editor, 'fontSize');
+  const markVal = targetSize !== undefined ? targetSize : getMarkValue(editor, 'fontSize');
   let currentSize = 12;
   if (typeof markVal === 'string') {
     const num = parseInt(markVal, 10);
@@ -824,8 +844,12 @@ function FontSizeToolbarButton({ editor }: { editor: any }) {
   }
 
   const applySize = (size: number) => {
-    addMark(editor, 'fontSize', `${size}pt`);
-    editor?.tf?.focus?.();
+    if (onSelectSize) {
+      onSelectSize(size);
+    } else {
+      addMark(editor, 'fontSize', `${size}pt`);
+      editor?.tf?.focus?.();
+    }
   };
 
   const handleStep = (delta: number) => {
@@ -911,22 +935,39 @@ interface ColorPickerDropdownProps {
   nodeType: 'color' | 'backgroundColor';
   tooltip: string;
   icon: React.ComponentType<{ className?: string }>;
+  targetColor?: string;
+  onSelectColor?: (color: string) => void;
 }
 
-function ColorPickerDropdown({ editor, nodeType, tooltip, icon: Icon }: ColorPickerDropdownProps) {
+function ColorPickerDropdown({
+  editor,
+  nodeType,
+  tooltip,
+  icon: Icon,
+  targetColor,
+  onSelectColor,
+}: ColorPickerDropdownProps) {
   const [open, setOpen] = React.useState(false);
   const anchorRef = React.useRef<HTMLDivElement>(null);
 
-  const activeColor = getMarkValue(editor, nodeType);
+  const activeColor = targetColor !== undefined ? targetColor : getMarkValue(editor, nodeType);
 
   const applyColor = (hex: string) => {
-    addMark(editor, nodeType, hex);
+    if (onSelectColor) {
+      onSelectColor(hex);
+    } else {
+      addMark(editor, nodeType, hex);
+    }
     setOpen(false);
     editor?.tf?.focus?.();
   };
 
   const clearColor = () => {
-    removeMark(editor, nodeType);
+    if (onSelectColor) {
+      onSelectColor('');
+    } else {
+      removeMark(editor, nodeType);
+    }
     setOpen(false);
     editor?.tf?.focus?.();
   };
@@ -1032,12 +1073,20 @@ const ALIGN_OPTIONS = [
   { id: 'justify', label: 'Justify', icon: AlignJustify },
 ];
 
-function AlignToolbarButton({ editor }: { editor: any }) {
+function AlignToolbarButton({
+  editor,
+  targetAlign,
+  onSelectAlign,
+}: {
+  editor: any;
+  targetAlign?: 'left' | 'center' | 'right' | 'justify';
+  onSelectAlign?: (align: 'left' | 'center' | 'right' | 'justify') => void;
+}) {
   const [open, setOpen] = React.useState(false);
   const anchorRef = React.useRef<HTMLDivElement>(null);
 
   const block = getActiveBlock(editor);
-  const currentAlign = block?.align || 'left';
+  const currentAlign = targetAlign !== undefined ? targetAlign : (block?.align || 'left');
   const currentOption = ALIGN_OPTIONS.find((o) => o.id === currentAlign) || ALIGN_OPTIONS[0];
   const CurrentIcon = currentOption.icon;
 
@@ -1068,7 +1117,11 @@ function AlignToolbarButton({ editor }: { editor: any }) {
               type="button"
               onMouseDown={(e) => {
                 e.preventDefault();
-                setBlockProperty(editor, 'align', opt.id);
+                if (onSelectAlign) {
+                  onSelectAlign(opt.id as any);
+                } else {
+                  setBlockProperty(editor, 'align', opt.id);
+                }
                 setOpen(false);
                 editor?.tf?.focus?.();
               }}
@@ -2637,6 +2690,8 @@ export interface FixedToolbarButtonsProps {
   onResolveComment?: (id: string) => void;
   documentTitle?: string;
   headerFooter?: any;
+  activeHeaderFooter?: 'header' | 'footer' | null;
+  onFormatHeaderFooter?: (format: any) => void;
 }
 
 export function FixedToolbarButtons({
@@ -2653,6 +2708,8 @@ export function FixedToolbarButtons({
   onResolveComment,
   documentTitle,
   headerFooter,
+  activeHeaderFooter,
+  onFormatHeaderFooter,
 }: FixedToolbarButtonsProps) {
   const [, forceUpdate] = React.useReducer((x) => x + 1, 0);
 
@@ -2667,11 +2724,17 @@ export function FixedToolbarButtons({
 
   const isViewing = mode === 'viewing';
 
+  const targetHeaderFooter = activeHeaderFooter === 'header'
+    ? headerFooter?.header
+    : activeHeaderFooter === 'footer'
+      ? headerFooter?.footer
+      : null;
+
   // Marks state
-  const isBold = isMarkActive(editor, 'bold');
-  const isItalic = isMarkActive(editor, 'italic');
-  const isUnderline = isMarkActive(editor, 'underline');
-  const isStrikethrough = isMarkActive(editor, 'strikethrough');
+  const isBold = activeHeaderFooter ? !!targetHeaderFooter?.bold : isMarkActive(editor, 'bold');
+  const isItalic = activeHeaderFooter ? !!targetHeaderFooter?.italic : isMarkActive(editor, 'italic');
+  const isUnderline = activeHeaderFooter ? !!targetHeaderFooter?.underline : isMarkActive(editor, 'underline');
+  const isStrikethrough = activeHeaderFooter ? false : isMarkActive(editor, 'strikethrough');
 
   // Block state
   const activeType = getActiveBlockType(editor);
@@ -2809,8 +2872,16 @@ export function FixedToolbarButtons({
           <ToolbarGroup className={cn('items-center', isViewing && 'opacity-60')}>
             <ZoomToolbarButton zoomLevel={zoomLevel} onZoomChange={onZoomChange} />
             <TurnIntoToolbarButton editor={editor} />
-            <FontFamilyToolbarButton editor={editor} />
-            <FontSizeToolbarButton editor={editor} />
+            <FontFamilyToolbarButton
+              editor={editor}
+              targetFont={activeHeaderFooter ? targetHeaderFooter?.fontFamily : undefined}
+              onSelectFont={activeHeaderFooter && onFormatHeaderFooter ? (font) => onFormatHeaderFooter({ fontFamily: font }) : undefined}
+            />
+            <FontSizeToolbarButton
+              editor={editor}
+              targetSize={activeHeaderFooter ? targetHeaderFooter?.fontSize : undefined}
+              onSelectSize={activeHeaderFooter && onFormatHeaderFooter ? (size) => onFormatHeaderFooter({ fontSize: size }) : undefined}
+            />
           </ToolbarGroup>
 
           {/* 3. Text Formatting Marks: Bold, Italic, Underline, Strikethrough, Text Color, Highlight Color */}
@@ -2818,7 +2889,13 @@ export function FixedToolbarButtons({
             <ToolbarGroup className={cn('items-center', isViewing && 'opacity-40 pointer-events-none')}>
               <ToolbarButton
                 active={isBold}
-                onClick={() => toggleMark(editor, 'bold')}
+                onClick={() => {
+                  if (activeHeaderFooter && onFormatHeaderFooter) {
+                    onFormatHeaderFooter({ bold: !isBold });
+                  } else {
+                    toggleMark(editor, 'bold');
+                  }
+                }}
                 tooltip="Bold (Ctrl+B)"
               >
                 <Bold className="w-4 h-4" />
@@ -2826,7 +2903,13 @@ export function FixedToolbarButtons({
 
               <ToolbarButton
                 active={isItalic}
-                onClick={() => toggleMark(editor, 'italic')}
+                onClick={() => {
+                  if (activeHeaderFooter && onFormatHeaderFooter) {
+                    onFormatHeaderFooter({ italic: !isItalic });
+                  } else {
+                    toggleMark(editor, 'italic');
+                  }
+                }}
                 tooltip="Italic (Ctrl+I)"
               >
                 <Italic className="w-4 h-4" />
@@ -2834,7 +2917,13 @@ export function FixedToolbarButtons({
 
               <ToolbarButton
                 active={isUnderline}
-                onClick={() => toggleMark(editor, 'underline')}
+                onClick={() => {
+                  if (activeHeaderFooter && onFormatHeaderFooter) {
+                    onFormatHeaderFooter({ underline: !isUnderline });
+                  } else {
+                    toggleMark(editor, 'underline');
+                  }
+                }}
                 tooltip="Underline (Ctrl+U)"
               >
                 <Underline className="w-4 h-4" />
@@ -2844,6 +2933,7 @@ export function FixedToolbarButtons({
                 active={isStrikethrough}
                 onClick={() => toggleMark(editor, 'strikethrough')}
                 tooltip="Strikethrough"
+                disabled={Boolean(activeHeaderFooter)}
               >
                 <Strikethrough className="w-4 h-4" />
               </ToolbarButton>
@@ -2853,6 +2943,8 @@ export function FixedToolbarButtons({
                 nodeType="color"
                 icon={Baseline}
                 tooltip="Text color"
+                targetColor={activeHeaderFooter ? targetHeaderFooter?.color : undefined}
+                onSelectColor={activeHeaderFooter && onFormatHeaderFooter ? (color) => onFormatHeaderFooter({ color }) : undefined}
               />
 
               <ColorPickerDropdown
@@ -2899,7 +2991,13 @@ export function FixedToolbarButtons({
                     <div className={cn('flex items-center gap-0.5 shrink-0 flex-nowrap', isViewing && 'opacity-40 pointer-events-none')}>
                       <ToolbarButton
                         active={isBold}
-                        onClick={() => toggleMark(editor, 'bold')}
+                        onClick={() => {
+                          if (activeHeaderFooter && onFormatHeaderFooter) {
+                            onFormatHeaderFooter({ bold: !isBold });
+                          } else {
+                            toggleMark(editor, 'bold');
+                          }
+                        }}
                         tooltip="Bold (Ctrl+B)"
                       >
                         <Bold className="w-4 h-4" />
@@ -2907,7 +3005,13 @@ export function FixedToolbarButtons({
 
                       <ToolbarButton
                         active={isItalic}
-                        onClick={() => toggleMark(editor, 'italic')}
+                        onClick={() => {
+                          if (activeHeaderFooter && onFormatHeaderFooter) {
+                            onFormatHeaderFooter({ italic: !isItalic });
+                          } else {
+                            toggleMark(editor, 'italic');
+                          }
+                        }}
                         tooltip="Italic (Ctrl+I)"
                       >
                         <Italic className="w-4 h-4" />
@@ -2915,7 +3019,13 @@ export function FixedToolbarButtons({
 
                       <ToolbarButton
                         active={isUnderline}
-                        onClick={() => toggleMark(editor, 'underline')}
+                        onClick={() => {
+                          if (activeHeaderFooter && onFormatHeaderFooter) {
+                            onFormatHeaderFooter({ underline: !isUnderline });
+                          } else {
+                            toggleMark(editor, 'underline');
+                          }
+                        }}
                         tooltip="Underline (Ctrl+U)"
                       >
                         <Underline className="w-4 h-4" />
@@ -2925,6 +3035,7 @@ export function FixedToolbarButtons({
                         active={isStrikethrough}
                         onClick={() => toggleMark(editor, 'strikethrough')}
                         tooltip="Strikethrough"
+                        disabled={Boolean(activeHeaderFooter)}
                       >
                         <Strikethrough className="w-4 h-4" />
                       </ToolbarButton>
@@ -2934,6 +3045,8 @@ export function FixedToolbarButtons({
                         nodeType="color"
                         icon={Baseline}
                         tooltip="Text color"
+                        targetColor={activeHeaderFooter ? targetHeaderFooter?.color : undefined}
+                        onSelectColor={activeHeaderFooter && onFormatHeaderFooter ? (color) => onFormatHeaderFooter({ color }) : undefined}
                       />
 
                       <ColorPickerDropdown
@@ -2971,7 +3084,11 @@ export function FixedToolbarButtons({
                 {/* Group 5 - Part A: Alignment & Line Spacing */}
                 {hiddenGroups.group5 && (
                   <div className={cn('flex items-center gap-0.5 shrink-0 flex-nowrap', isViewing && 'opacity-40 pointer-events-none')}>
-                    <AlignToolbarButton editor={editor} />
+                    <AlignToolbarButton
+                      editor={editor}
+                      targetAlign={activeHeaderFooter ? (targetHeaderFooter?.textAlign || 'center') : undefined}
+                      onSelectAlign={activeHeaderFooter && onFormatHeaderFooter ? (align) => onFormatHeaderFooter({ textAlign: align }) : undefined}
+                    />
                     <LineHeightToolbarButton editor={editor} />
                     <div className="mx-1 h-5 w-px bg-zinc-300/80 dark:bg-zinc-700/80 shrink-0" />
                   </div>
@@ -3005,9 +3122,20 @@ export function FixedToolbarButtons({
 
                     <ToolbarButton
                       onClick={() => {
-                        const marks = ['bold', 'italic', 'underline', 'strikethrough', 'code', 'color', 'backgroundColor', 'fontSize', 'fontFamily'];
-                        marks.forEach((m) => removeMark(editor, m));
-                        setBlockType(editor, 'p');
+                        if (activeHeaderFooter && onFormatHeaderFooter) {
+                          onFormatHeaderFooter({
+                            bold: false,
+                            italic: false,
+                            underline: false,
+                            color: '#000000',
+                            fontSize: 12,
+                            fontFamily: 'Arial, sans-serif',
+                          });
+                        } else {
+                          const marks = ['bold', 'italic', 'underline', 'strikethrough', 'code', 'color', 'backgroundColor', 'fontSize', 'fontFamily'];
+                          marks.forEach((m) => removeMark(editor, m));
+                          setBlockType(editor, 'p');
+                        }
                       }}
                       tooltip="Clear formatting (Ctrl+\)"
                     >
@@ -3040,7 +3168,11 @@ export function FixedToolbarButtons({
           {/* 5. Alignment, Line Spacing, Lists, Indent, Clear Formatting */}
           {!hiddenGroups.group5 && (
             <ToolbarGroup className={cn('items-center', isViewing && 'opacity-40 pointer-events-none')}>
-              <AlignToolbarButton editor={editor} />
+              <AlignToolbarButton
+                editor={editor}
+                targetAlign={activeHeaderFooter ? (targetHeaderFooter?.textAlign || 'center') : undefined}
+                onSelectAlign={activeHeaderFooter && onFormatHeaderFooter ? (align) => onFormatHeaderFooter({ textAlign: align }) : undefined}
+              />
               <LineHeightToolbarButton editor={editor} />
 
               <ToolbarButton
@@ -3064,9 +3196,20 @@ export function FixedToolbarButtons({
 
               <ToolbarButton
                 onClick={() => {
-                  const marks = ['bold', 'italic', 'underline', 'strikethrough', 'code', 'color', 'backgroundColor', 'fontSize', 'fontFamily'];
-                  marks.forEach((m) => removeMark(editor, m));
-                  setBlockType(editor, 'p');
+                  if (activeHeaderFooter && onFormatHeaderFooter) {
+                    onFormatHeaderFooter({
+                      bold: false,
+                      italic: false,
+                      underline: false,
+                      color: '#000000',
+                      fontSize: 12,
+                      fontFamily: 'Arial, sans-serif',
+                    });
+                  } else {
+                    const marks = ['bold', 'italic', 'underline', 'strikethrough', 'code', 'color', 'backgroundColor', 'fontSize', 'fontFamily'];
+                    marks.forEach((m) => removeMark(editor, m));
+                    setBlockType(editor, 'p');
+                  }
                 }}
                 tooltip="Clear formatting (Ctrl+\)"
               >

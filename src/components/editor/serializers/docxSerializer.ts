@@ -43,9 +43,15 @@ export interface HeaderFooterItem {
     cropZoom?: number;
   } | null;
   text?: string;
-  textAlign?: 'left' | 'center' | 'right';
+  textAlign?: 'left' | 'center' | 'right' | 'justify';
   pageNumber?: boolean;
   scope?: 'every_page' | 'first_page_only';
+  bold?: boolean;
+  italic?: boolean;
+  underline?: boolean;
+  color?: string;
+  fontSize?: number;
+  fontFamily?: string;
 }
 
 export interface DocumentHeaderFooterOptions {
@@ -633,8 +639,12 @@ export async function serializeToDocx(
         children: [
           new TextRun({
             text: headerFooter.header.text.trim(),
-            size: 18, // 9pt
-            color: '666666',
+            bold: headerFooter.header.bold,
+            italics: headerFooter.header.italic,
+            underline: headerFooter.header.underline ? { type: UnderlineType.SINGLE } : undefined,
+            color: headerFooter.header.color ? headerFooter.header.color.replace('#', '') : '666666',
+            size: headerFooter.header.fontSize ? headerFooter.header.fontSize * 2 : 18,
+            font: headerFooter.header.fontFamily,
           }),
         ],
         spacing: { after: 120 },
@@ -679,8 +689,12 @@ export async function serializeToDocx(
     footerRuns.push(
       new TextRun({
         text: headerFooter.footer.text.trim() + (headerFooter.footer.pageNumber ? '   ' : ''),
-        size: 18,
-        color: '666666',
+        bold: headerFooter.footer.bold,
+        italics: headerFooter.footer.italic,
+        underline: headerFooter.footer.underline ? { type: UnderlineType.SINGLE } : undefined,
+        color: headerFooter.footer.color ? headerFooter.footer.color.replace('#', '') : '666666',
+        size: headerFooter.footer.fontSize ? headerFooter.footer.fontSize * 2 : 18,
+        font: headerFooter.footer.fontFamily,
       })
     );
   }

@@ -8,6 +8,9 @@ import {
   AlignLeft,
   AlignCenter,
   AlignRight,
+  Bold,
+  Italic,
+  Underline,
 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import {
@@ -30,9 +33,15 @@ export interface HeaderFooterImage {
 export interface HeaderFooterItem {
   image?: HeaderFooterImage | null;
   text?: string;
-  textAlign?: 'left' | 'center' | 'right';
+  textAlign?: 'left' | 'center' | 'right' | 'justify';
   scope?: 'every_page' | 'first_page_only';
   pageNumber?: boolean;
+  bold?: boolean;
+  italic?: boolean;
+  underline?: boolean;
+  color?: string;
+  fontSize?: number;
+  fontFamily?: string;
 }
 
 export interface DocumentHeaderZoneProps {
@@ -47,11 +56,11 @@ export interface DocumentHeaderZoneProps {
 
 /**
  * Authentic Google Docs Header Zone.
- * - Top text editing area with direct typing.
- * - Clean horizontal divider line.
- * - Sub-bar with "Header" on left, "[ ] Different first page" checkbox and "Options ▾" dropdown on right.
- * - Draggable/resizable/croppable logo support when an image exists.
- * - Minimum height of 48px to maintain authentic 1-inch page margins.
+ * - Borderless direct text typing without placeholder clutter.
+ * - Rich formatting support (bold, italic, underline, color, font size, align).
+ * - Full page width (edge-to-edge) horizontal divider line.
+ * - Sub-bar with "Header" on left, "[ ] Different first page" checkbox and "Options ▾" on right.
+ * - Free-form borderless image positioning and resizing (no dashed container box).
  */
 export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
   headerState,
@@ -193,7 +202,8 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
           newWidth = initialWidth - deltaX;
         }
 
-        const clamped = Math.max(50, Math.min(624, Math.round(newWidth)));
+        // Clamp between 40px and 750px (allows stretching big or shrinking small)
+        const clamped = Math.max(40, Math.min(750, Math.round(newWidth)));
         setResizeLiveWidth(clamped);
 
         setHeaderState((prev) => ({
@@ -240,12 +250,12 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
       {/* ── Active State: Authentic Google Docs Header ── */}
       {isActive ? (
         <div className="w-full flex flex-col">
-          {/* Logo Track (when image exists) */}
+          {/* Borderless Free Logo Track (when image exists - no box, no dashed border) */}
           {headerState.image?.url && (
             <div className="w-full mb-2">
               <div
                 ref={headerTrackRef}
-                className="relative w-full h-20 bg-zinc-50/70 dark:bg-zinc-950/40 rounded border border-dashed border-zinc-300 dark:border-zinc-700 flex items-center overflow-hidden"
+                className="relative w-full py-1 min-h-[44px] flex items-center select-none"
               >
                 <div
                   data-header-image-container="true"
@@ -265,20 +275,22 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
                     setIsCroppingImage(true);
                   }}
                   className={cn(
-                    'absolute top-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing select-none group/img transition-shadow',
+                    'relative cursor-grab active:cursor-grabbing select-none transition-shadow',
                     selectedImage && 'ring-2 ring-blue-500 rounded-xs'
                   )}
                 >
-                  <div className="relative w-full h-full overflow-hidden rounded-xs">
+                  <div className="relative w-full overflow-hidden rounded-xs">
                     <img
                       src={headerState.image.url}
                       alt="Header Logo"
                       draggable={false}
                       style={{
+                        width: '100%',
+                        height: 'auto',
                         transform: cropZoom !== 100 ? `scale(${cropZoom / 100})` : undefined,
                         transformOrigin: 'center center',
                       }}
-                      className="w-full max-h-18 object-contain pointer-events-none"
+                      className="w-full object-contain pointer-events-none select-none block"
                     />
                   </div>
 
@@ -286,11 +298,11 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
                   {selectedImage && !isDraggingImage && !isResizingImage && !isCroppingImage && (
                     <div className="absolute -top-7 left-1/2 -translate-x-1/2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-zinc-800/90 text-zinc-100 text-[10px] font-medium shadow-md whitespace-nowrap pointer-events-none z-40 backdrop-blur-xs">
                       <Move className="w-2.5 h-2.5" />
-                      <span>Drag to move · Handles to resize · Double-click to crop</span>
+                      <span>Drag to move · Pull handles to stretch/resize · Double-click to crop</span>
                     </div>
                   )}
 
-                  {/* Resize Handles */}
+                  {/* Resize Handles (Corners and Sides) */}
                   {selectedImage && !isCroppingImage && (
                     <>
                       <div
@@ -312,6 +324,16 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
                         onMouseDown={(e) => handleResizeStart(e, 'se')}
                         onTouchStart={(e) => handleResizeStart(e, 'se')}
                         className="absolute -bottom-1.5 -right-1.5 w-2.5 h-2.5 bg-blue-500 border border-white rounded-2xs shadow-xs cursor-nwse-resize z-30"
+                      />
+                      <div
+                        onMouseDown={(e) => handleResizeStart(e, 'w')}
+                        onTouchStart={(e) => handleResizeStart(e, 'w')}
+                        className="absolute top-1/2 -left-1.5 -translate-y-1/2 w-2.5 h-2.5 bg-blue-500 border border-white rounded-2xs shadow-xs cursor-ew-resize z-30"
+                      />
+                      <div
+                        onMouseDown={(e) => handleResizeStart(e, 'e')}
+                        onTouchStart={(e) => handleResizeStart(e, 'e')}
+                        className="absolute top-1/2 -right-1.5 -translate-y-1/2 w-2.5 h-2.5 bg-blue-500 border border-white rounded-2xs shadow-xs cursor-ew-resize z-30"
                       />
                     </>
                   )}
@@ -372,7 +394,7 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
             </div>
           )}
 
-          {/* Direct Inline Header Text Input */}
+          {/* Direct Inline Header Text Input (No placeholder text - clean typing area) */}
           <div className="w-full">
             <input
               ref={textInputRef}
@@ -382,18 +404,34 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
               onKeyDown={(e) => {
                 if (e.key === 'Escape') {
                   onToggleActive(false);
+                } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
+                  e.preventDefault();
+                  setHeaderState((prev) => ({ ...prev, bold: !prev.bold }));
+                } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'i') {
+                  e.preventDefault();
+                  setHeaderState((prev) => ({ ...prev, italic: !prev.italic }));
+                } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'u') {
+                  e.preventDefault();
+                  setHeaderState((prev) => ({ ...prev, underline: !prev.underline }));
                 }
               }}
-              placeholder="Header"
-              style={{ textAlign }}
-              className="w-full bg-transparent px-0 py-0.5 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 outline-none border-none font-normal"
+              style={{
+                textAlign: headerState.textAlign || 'left',
+                fontWeight: headerState.bold ? 'bold' : 'normal',
+                fontStyle: headerState.italic ? 'italic' : 'normal',
+                textDecoration: headerState.underline ? 'underline' : 'none',
+                color: headerState.color || undefined,
+                fontSize: headerState.fontSize ? `${headerState.fontSize}px` : undefined,
+                fontFamily: headerState.fontFamily || undefined,
+              }}
+              className="w-full bg-transparent px-0 py-0.5 text-sm text-zinc-900 dark:text-zinc-100 outline-none border-none font-normal"
             />
           </div>
 
-          {/* Google Docs Horizontal Divider Line */}
-          <div className="w-full border-b border-zinc-300 dark:border-zinc-700 my-1" />
+          {/* Google Docs Horizontal Divider Line - Full Page Width (Edge-to-Edge) */}
+          <div className="-mx-[96px] w-[calc(100%+192px)] border-b border-zinc-300 dark:border-zinc-700 my-1.5" />
 
-          {/* Google Docs Header Sub-Bar */}
+          {/* Google Docs Header Sub-Bar (Inside margins) */}
           <div className="w-full flex items-center justify-between py-1 text-xs select-none">
             <span className="text-zinc-500 dark:text-zinc-400 font-normal">
               Header
@@ -469,6 +507,42 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
 
                   <DropdownMenuSeparator />
 
+                  <div className="px-2.5 py-1 text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">
+                    Text Formatting
+                  </div>
+                  <DropdownMenuItem
+                    onClick={() => setHeaderState((prev) => ({ ...prev, bold: !prev.bold }))}
+                    className="flex items-center justify-between text-xs px-2.5 py-1.5 cursor-pointer rounded-md"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Bold className="w-3.5 h-3.5 text-zinc-500" />
+                      <span>Bold</span>
+                    </div>
+                    {headerState.bold && <Check className="w-3.5 h-3.5 text-blue-600" />}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setHeaderState((prev) => ({ ...prev, italic: !prev.italic }))}
+                    className="flex items-center justify-between text-xs px-2.5 py-1.5 cursor-pointer rounded-md"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Italic className="w-3.5 h-3.5 text-zinc-500" />
+                      <span>Italic</span>
+                    </div>
+                    {headerState.italic && <Check className="w-3.5 h-3.5 text-blue-600" />}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setHeaderState((prev) => ({ ...prev, underline: !prev.underline }))}
+                    className="flex items-center justify-between text-xs px-2.5 py-1.5 cursor-pointer rounded-md"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Underline className="w-3.5 h-3.5 text-zinc-500" />
+                      <span>Underline</span>
+                    </div>
+                    {headerState.underline && <Check className="w-3.5 h-3.5 text-blue-600" />}
+                  </DropdownMenuItem>
+
+                  <DropdownMenuSeparator />
+
                   <DropdownMenuItem
                     onClick={() => headerInputRef.current?.click()}
                     className="flex items-center gap-2 text-xs px-2.5 py-1.5 cursor-pointer rounded-md"
@@ -495,6 +569,9 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
                         text: '',
                         textAlign: 'left',
                         scope: 'every_page',
+                        bold: false,
+                        italic: false,
+                        underline: false,
                       });
                       onToggleActive(false);
                     }}
@@ -513,7 +590,7 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
         <div className="flex flex-col gap-1 w-full justify-end">
           {/* Header Logo preview if present */}
           {headerState.image?.url && (
-            <div className="relative w-full h-16 flex items-center overflow-hidden">
+            <div className="relative w-full py-1 flex items-center overflow-hidden">
               <div
                 style={{
                   left: `${headerState.image.offsetPercent ?? (headerState.image.align === 'left' ? 0 : headerState.image.align === 'right' ? 100 : 50)}%`,
@@ -522,30 +599,41 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
                 }}
                 className="absolute top-1/2 -translate-y-1/2 select-none"
               >
-                <div className="relative w-full h-full overflow-hidden">
+                <div className="relative w-full overflow-hidden">
                   <img
                     src={headerState.image.url}
                     alt="Header Logo"
                     draggable={false}
                     style={{
+                      width: '100%',
+                      height: 'auto',
                       transform:
                         headerState.image.cropZoom && headerState.image.cropZoom !== 100
                           ? `scale(${headerState.image.cropZoom / 100})`
                           : undefined,
                       transformOrigin: 'center center',
                     }}
-                    className="w-full max-h-16 object-contain opacity-90 group-hover/header:opacity-100 transition-opacity"
+                    className="w-full object-contain opacity-90 group-hover/header:opacity-100 transition-opacity block"
                   />
                 </div>
               </div>
             </div>
           )}
 
-          {/* Header Text preview if present */}
+          {/* Header Text preview if present with rich styles */}
           {headerState.text?.trim() && (
             <div
+              style={{
+                textAlign: headerState.textAlign || 'left',
+                fontWeight: headerState.bold ? 'bold' : 'normal',
+                fontStyle: headerState.italic ? 'italic' : 'normal',
+                textDecoration: headerState.underline ? 'underline' : 'none',
+                color: headerState.color || undefined,
+                fontSize: headerState.fontSize ? `${headerState.fontSize}px` : undefined,
+                fontFamily: headerState.fontFamily || undefined,
+              }}
               className={cn(
-                'text-xs text-zinc-600 dark:text-zinc-400 font-normal tracking-wide',
+                'text-xs text-zinc-700 dark:text-zinc-300 tracking-wide',
                 textAlign === 'left' && 'text-left',
                 textAlign === 'center' && 'text-center',
                 textAlign === 'right' && 'text-right'

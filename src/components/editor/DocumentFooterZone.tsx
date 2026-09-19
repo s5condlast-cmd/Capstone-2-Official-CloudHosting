@@ -9,6 +9,9 @@ import {
   AlignCenter,
   AlignRight,
   Hash,
+  Bold,
+  Italic,
+  Underline,
 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import {
@@ -33,10 +36,10 @@ export interface DocumentFooterZoneProps {
 /**
  * Authentic Google Docs Footer Zone.
  * - Sub-bar with "Footer" on left, "[ ] Different first page" checkbox and "Options ▾" dropdown on right.
- * - Clean horizontal divider line.
- * - Direct inline text typing area below the divider line with page number indicator "#".
- * - Draggable/resizable/croppable logo support when an image exists.
- * - Minimum height of 48px to maintain authentic 1-inch page margins.
+ * - Full page width (edge-to-edge) horizontal divider line.
+ * - Direct inline text typing area below the divider line with page number indicator "#" and no placeholder clutter.
+ * - Free-form borderless image positioning and resizing (no dashed container box).
+ * - Rich formatting support (bold, italic, underline, color, font size, align).
  */
 export const DocumentFooterZone: React.FC<DocumentFooterZoneProps> = ({
   footerState,
@@ -178,7 +181,8 @@ export const DocumentFooterZone: React.FC<DocumentFooterZoneProps> = ({
           newWidth = initialWidth - deltaX;
         }
 
-        const clamped = Math.max(50, Math.min(624, Math.round(newWidth)));
+        // Clamp between 40px and 750px (allows stretching big or shrinking small)
+        const clamped = Math.max(40, Math.min(750, Math.round(newWidth)));
         setResizeLiveWidth(clamped);
 
         setFooterState((prev) => ({
@@ -301,6 +305,42 @@ export const DocumentFooterZone: React.FC<DocumentFooterZoneProps> = ({
 
                   <DropdownMenuSeparator />
 
+                  <div className="px-2.5 py-1 text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">
+                    Text Formatting
+                  </div>
+                  <DropdownMenuItem
+                    onClick={() => setFooterState((prev) => ({ ...prev, bold: !prev.bold }))}
+                    className="flex items-center justify-between text-xs px-2.5 py-1.5 cursor-pointer rounded-md"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Bold className="w-3.5 h-3.5 text-zinc-500" />
+                      <span>Bold</span>
+                    </div>
+                    {footerState.bold && <Check className="w-3.5 h-3.5 text-blue-600" />}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setFooterState((prev) => ({ ...prev, italic: !prev.italic }))}
+                    className="flex items-center justify-between text-xs px-2.5 py-1.5 cursor-pointer rounded-md"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Italic className="w-3.5 h-3.5 text-zinc-500" />
+                      <span>Italic</span>
+                    </div>
+                    {footerState.italic && <Check className="w-3.5 h-3.5 text-blue-600" />}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setFooterState((prev) => ({ ...prev, underline: !prev.underline }))}
+                    className="flex items-center justify-between text-xs px-2.5 py-1.5 cursor-pointer rounded-md"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Underline className="w-3.5 h-3.5 text-zinc-500" />
+                      <span>Underline</span>
+                    </div>
+                    {footerState.underline && <Check className="w-3.5 h-3.5 text-blue-600" />}
+                  </DropdownMenuItem>
+
+                  <DropdownMenuSeparator />
+
                   <DropdownMenuItem
                     onClick={() =>
                       setFooterState((prev) => ({ ...prev, pageNumber: !prev.pageNumber }))
@@ -343,6 +383,9 @@ export const DocumentFooterZone: React.FC<DocumentFooterZoneProps> = ({
                         pageNumber: false,
                         textAlign: 'left',
                         scope: 'every_page',
+                        bold: false,
+                        italic: false,
+                        underline: false,
                       });
                       onToggleActive(false);
                     }}
@@ -356,10 +399,10 @@ export const DocumentFooterZone: React.FC<DocumentFooterZoneProps> = ({
             </div>
           </div>
 
-          {/* Google Docs Horizontal Divider Line */}
-          <div className="w-full border-b border-zinc-300 dark:border-zinc-700 my-1" />
+          {/* Google Docs Horizontal Divider Line - Full Page Width (Edge-to-Edge) */}
+          <div className="-mx-[96px] w-[calc(100%+192px)] border-b border-zinc-300 dark:border-zinc-700 my-1.5" />
 
-          {/* Direct Inline Footer Text & Page Number Input */}
+          {/* Direct Inline Footer Text & Page Number Input (No placeholder - clean typing area) */}
           <div className="w-full flex items-center gap-2 pt-0.5">
             <input
               ref={textInputRef}
@@ -369,11 +412,27 @@ export const DocumentFooterZone: React.FC<DocumentFooterZoneProps> = ({
               onKeyDown={(e) => {
                 if (e.key === 'Escape') {
                   onToggleActive(false);
+                } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
+                  e.preventDefault();
+                  setFooterState((prev) => ({ ...prev, bold: !prev.bold }));
+                } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'i') {
+                  e.preventDefault();
+                  setFooterState((prev) => ({ ...prev, italic: !prev.italic }));
+                } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'u') {
+                  e.preventDefault();
+                  setFooterState((prev) => ({ ...prev, underline: !prev.underline }));
                 }
               }}
-              placeholder="Footer"
-              style={{ textAlign }}
-              className="flex-1 bg-transparent px-0 py-0.5 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 outline-none border-none font-normal"
+              style={{
+                textAlign: footerState.textAlign || 'left',
+                fontWeight: footerState.bold ? 'bold' : 'normal',
+                fontStyle: footerState.italic ? 'italic' : 'normal',
+                textDecoration: footerState.underline ? 'underline' : 'none',
+                color: footerState.color || undefined,
+                fontSize: footerState.fontSize ? `${footerState.fontSize}px` : undefined,
+                fontFamily: footerState.fontFamily || undefined,
+              }}
+              className="flex-1 bg-transparent px-0 py-0.5 text-sm text-zinc-900 dark:text-zinc-100 outline-none border-none font-normal"
             />
             {footerState.pageNumber && (
               <span
@@ -385,12 +444,12 @@ export const DocumentFooterZone: React.FC<DocumentFooterZoneProps> = ({
             )}
           </div>
 
-          {/* Logo Track (when image exists) */}
+          {/* Borderless Free Logo Track (when image exists - no box, no dashed border) */}
           {footerState.image?.url && (
             <div className="w-full mt-2">
               <div
                 ref={footerTrackRef}
-                className="relative w-full h-20 bg-zinc-50/70 dark:bg-zinc-950/40 rounded border border-dashed border-zinc-300 dark:border-zinc-700 flex items-center overflow-hidden"
+                className="relative w-full py-1 min-h-[44px] flex items-center select-none"
               >
                 <div
                   data-footer-image-container="true"
@@ -410,20 +469,22 @@ export const DocumentFooterZone: React.FC<DocumentFooterZoneProps> = ({
                     setIsCroppingImage(true);
                   }}
                   className={cn(
-                    'absolute top-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing select-none group/img transition-shadow',
+                    'relative cursor-grab active:cursor-grabbing select-none transition-shadow',
                     selectedImage && 'ring-2 ring-blue-500 rounded-xs'
                   )}
                 >
-                  <div className="relative w-full h-full overflow-hidden rounded-xs">
+                  <div className="relative w-full overflow-hidden rounded-xs">
                     <img
                       src={footerState.image.url}
                       alt="Footer Logo"
                       draggable={false}
                       style={{
+                        width: '100%',
+                        height: 'auto',
                         transform: cropZoom !== 100 ? `scale(${cropZoom / 100})` : undefined,
                         transformOrigin: 'center center',
                       }}
-                      className="w-full max-h-18 object-contain pointer-events-none"
+                      className="w-full object-contain pointer-events-none select-none block"
                     />
                   </div>
 
@@ -431,7 +492,7 @@ export const DocumentFooterZone: React.FC<DocumentFooterZoneProps> = ({
                   {selectedImage && !isDraggingImage && !isResizingImage && !isCroppingImage && (
                     <div className="absolute -top-7 left-1/2 -translate-x-1/2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-zinc-800/90 text-zinc-100 text-[10px] font-medium shadow-md whitespace-nowrap pointer-events-none z-40 backdrop-blur-xs">
                       <Move className="w-2.5 h-2.5" />
-                      <span>Drag to move · Handles to resize · Double-click to crop</span>
+                      <span>Drag to move · Pull handles to stretch/resize · Double-click to crop</span>
                     </div>
                   )}
 
@@ -457,6 +518,16 @@ export const DocumentFooterZone: React.FC<DocumentFooterZoneProps> = ({
                         onMouseDown={(e) => handleResizeStart(e, 'se')}
                         onTouchStart={(e) => handleResizeStart(e, 'se')}
                         className="absolute -bottom-1.5 -right-1.5 w-2.5 h-2.5 bg-blue-500 border border-white rounded-2xs shadow-xs cursor-nwse-resize z-30"
+                      />
+                      <div
+                        onMouseDown={(e) => handleResizeStart(e, 'w')}
+                        onTouchStart={(e) => handleResizeStart(e, 'w')}
+                        className="absolute top-1/2 -left-1.5 -translate-y-1/2 w-2.5 h-2.5 bg-blue-500 border border-white rounded-2xs shadow-xs cursor-ew-resize z-30"
+                      />
+                      <div
+                        onMouseDown={(e) => handleResizeStart(e, 'e')}
+                        onTouchStart={(e) => handleResizeStart(e, 'e')}
+                        className="absolute top-1/2 -right-1.5 -translate-y-1/2 w-2.5 h-2.5 bg-blue-500 border border-white rounded-2xs shadow-xs cursor-ew-resize z-30"
                       />
                     </>
                   )}
@@ -532,11 +603,20 @@ export const DocumentFooterZone: React.FC<DocumentFooterZoneProps> = ({
             </div>
           )}
 
-          {/* Footer Text and Page Number preview if present */}
+          {/* Footer Text and Page Number preview if present with rich styles */}
           {(footerState.text?.trim() || footerState.pageNumber) && (
             <div
+              style={{
+                textAlign: footerState.textAlign || 'left',
+                fontWeight: footerState.bold ? 'bold' : 'normal',
+                fontStyle: footerState.italic ? 'italic' : 'normal',
+                textDecoration: footerState.underline ? 'underline' : 'none',
+                color: footerState.color || undefined,
+                fontSize: footerState.fontSize ? `${footerState.fontSize}px` : undefined,
+                fontFamily: footerState.fontFamily || undefined,
+              }}
               className={cn(
-                'text-xs text-zinc-600 dark:text-zinc-400 font-normal tracking-wide flex items-center gap-2',
+                'text-xs text-zinc-700 dark:text-zinc-300 tracking-wide flex items-center gap-2',
                 textAlign === 'left' && 'justify-start text-left',
                 textAlign === 'center' && 'justify-center text-center',
                 textAlign === 'right' && 'justify-end text-right'
@@ -551,7 +631,7 @@ export const DocumentFooterZone: React.FC<DocumentFooterZoneProps> = ({
 
           {/* Footer Logo preview if present */}
           {footerState.image?.url && (
-            <div className="relative w-full h-16 flex items-center overflow-hidden mt-0.5">
+            <div className="relative w-full py-1 flex items-center overflow-hidden mt-0.5">
               <div
                 style={{
                   left: `${footerState.image.offsetPercent ?? (footerState.image.align === 'left' ? 0 : footerState.image.align === 'right' ? 100 : 50)}%`,
@@ -560,19 +640,21 @@ export const DocumentFooterZone: React.FC<DocumentFooterZoneProps> = ({
                 }}
                 className="absolute top-1/2 -translate-y-1/2 select-none"
               >
-                <div className="relative w-full h-full overflow-hidden">
+                <div className="relative w-full overflow-hidden">
                   <img
                     src={footerState.image.url}
                     alt="Footer Logo"
                     draggable={false}
                     style={{
+                      width: '100%',
+                      height: 'auto',
                       transform:
                         footerState.image.cropZoom && footerState.image.cropZoom !== 100
                           ? `scale(${footerState.image.cropZoom / 100})`
                           : undefined,
                       transformOrigin: 'center center',
                     }}
-                    className="w-full max-h-16 object-contain opacity-90 group-hover/footer:opacity-100 transition-opacity"
+                    className="w-full object-contain opacity-90 group-hover/footer:opacity-100 transition-opacity block"
                   />
                 </div>
               </div>
@@ -583,4 +665,3 @@ export const DocumentFooterZone: React.FC<DocumentFooterZoneProps> = ({
     </footer>
   );
 };
-
