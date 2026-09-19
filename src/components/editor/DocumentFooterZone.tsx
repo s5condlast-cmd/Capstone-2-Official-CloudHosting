@@ -207,7 +207,7 @@ export const DocumentFooterZone: React.FC<DocumentFooterZoneProps> = ({
         }
       }}
       className={cn(
-        'w-[calc(100%+192px)] -mx-[96px] px-[96px] min-h-[96px] select-none relative transition-all flex flex-col justify-start group/footer',
+        'w-[calc(100%+192px)] -mx-[96px] px-[96px] h-[96px] min-h-[96px] shrink-0 select-none relative transition-all flex flex-col justify-start group/footer',
         isActive
           ? 'pt-1 pb-8 mt-2 bg-transparent'
           : 'pt-1 pb-[48px] cursor-pointer hover:bg-zinc-50/60 dark:hover:bg-zinc-800/30 rounded-b-[2px]',
@@ -512,7 +512,7 @@ export const DocumentFooterZone: React.FC<DocumentFooterZoneProps> = ({
         </div>
       ) : (
         /* ── Idle State: Permanent 1-inch physical margin & Google Docs Hover Line ── */
-        <div className="flex flex-col gap-1 w-full justify-start">
+        <div className="flex flex-col gap-1 w-full justify-start h-full">
           {/* Google Docs Hover Guide Cue (hidden when printing) */}
           {!isReadOnly && (
             <div className="opacity-0 group-hover/footer:opacity-100 transition-opacity border-t border-dashed border-zinc-300 dark:border-zinc-700 pt-1 text-[11px] text-zinc-400 flex items-center justify-between select-none print:hidden">

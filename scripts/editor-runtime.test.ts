@@ -564,12 +564,12 @@ describe('Plate editor runtime wiring', () => {
     const fixedToolbarSrc = fs.readFileSync(path.resolve('src/components/plate-ui/fixed-toolbar-buttons.tsx'), 'utf8');
 
     // 1. Full-margin box containers for Header & Footer (span the entire 816px paper sheet width and 96px margins)
-    assert.ok(headerSrc.includes('w-[calc(100%+192px)] -mx-[96px] px-[96px] min-h-[96px]'), 'Header container must span entire top 96px margin box');
-    assert.ok(footerSrc.includes('w-[calc(100%+192px)] -mx-[96px] px-[96px] min-h-[96px]'), 'Footer container must span entire bottom 96px margin box');
+    assert.ok(headerSrc.includes('w-[calc(100%+192px)] -mx-[96px] px-[96px] h-[96px] min-h-[96px] shrink-0'), 'Header container must span entire top 96px margin box with locked height');
+    assert.ok(footerSrc.includes('w-[calc(100%+192px)] -mx-[96px] px-[96px] h-[96px] min-h-[96px] shrink-0'), 'Footer container must span entire bottom 96px margin box with locked height');
     assert.ok(editorSrc.includes('plate-paper-sheet w-[816px] max-w-[816px] min-h-[1056px]') && editorSrc.includes('pt-0 pb-0'), 'Paper sheet must have pt-0 pb-0 so header and footer occupy the margin areas');
 
-    // 2. Default Fullscreen state
-    assert.ok(editorSrc.includes('const [isFullscreen, setIsFullscreen] = useState(true);'), 'Editor must initialize in fullscreen by default');
+    // 2. Default Fullscreen state (must NOT be fullscreen already when user enters editor)
+    assert.ok(editorSrc.includes('const [isFullscreen, setIsFullscreen] = useState(false);'), 'Editor must NOT initialize in fullscreen already');
 
     // 3. Escape key preserves fullscreen when header/footer is actively being edited
     assert.ok(editorSrc.includes('if (activeHeaderFooter)'), 'Escape handler must check activeHeaderFooter before toggling fullscreen');

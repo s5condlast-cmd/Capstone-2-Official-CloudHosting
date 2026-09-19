@@ -689,7 +689,7 @@ export function StudentDocumentEditor() {
                       <ChevronDown className="w-3.5 h-3.5 opacity-60" />
                     </button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56 shadow-lg z-50">
+                  <DropdownMenuContent align="end" className="w-56 shadow-lg z-[150]">
                     <DropdownMenuItem onClick={handleExportDocx} className="cursor-pointer gap-2 py-2">
                       <FileText className="w-4 h-4 text-blue-600" />
                       <div className="flex flex-col">

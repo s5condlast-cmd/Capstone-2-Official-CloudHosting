@@ -204,7 +204,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
 
     // View mode, fullscreen, zoom, outline, ruler, and comments state
     const [internalMode, setInternalMode] = useState<EditorMode>('editing');
-    const [isFullscreen, setIsFullscreen] = useState(true);
+    const [isFullscreen, setIsFullscreen] = useState(false);
     const [zoomLevel, setZoomLevel] = useState(100);
     const [internalComments, setInternalComments] = useState<EditorComment[]>([]);
     const [showZoomIndicator, setShowZoomIndicator] = useState(false);
