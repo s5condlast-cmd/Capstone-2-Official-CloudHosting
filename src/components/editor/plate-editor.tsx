@@ -50,6 +50,7 @@ import { DocumentCommentsRail } from './DocumentCommentsRail';
 import { CommentsDrawer } from './CommentsDrawer';
 import { DocumentRuler } from './DocumentRuler';
 import { DocumentHeaderZone } from './DocumentHeaderZone';
+import { DocumentFooterZone } from './DocumentFooterZone';
 import { DocumentStatusBar } from './DocumentStatusBar';
 import {
   type DocumentHeaderFooterOptions,
@@ -229,13 +230,17 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
       scope: externalHeaderFooter?.footer?.scope || 'every_page',
     }));
 
-    const [selectedFooterImage, setSelectedFooterImage] = useState(false);
-    const [isDraggingFooterImage, setIsDraggingFooterImage] = useState(false);
-    const [isResizingFooterImage, setIsResizingFooterImage] = useState(false);
-    const [isCroppingFooterImage, setIsCroppingFooterImage] = useState(false);
-    const [footerCropZoom, setFooterCropZoom] = useState<number>(footerState.image?.cropZoom || 100);
-    const footerTrackRef = useRef<HTMLDivElement | null>(null);
-    const isResizingFooterRef = useRef(false);
+    // ── Google Docs Header / Footer Escape Key Listener ─────────────────────
+    useEffect(() => {
+      if (!activeHeaderFooter) return;
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          setActiveHeaderFooter(null);
+        }
+      };
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [activeHeaderFooter]);
 
     const headerFooterRef = useRef<DocumentHeaderFooterOptions>({
       header: headerState,
@@ -256,32 +261,6 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
       }
       onHeaderFooterChangeRef.current?.({ header: headerState, footer: footerState });
     }, [headerState, footerState]);
-
-    useEffect(() => {
-      if (footerState.image?.cropZoom) {
-        setFooterCropZoom(footerState.image.cropZoom);
-      }
-    }, [footerState.image?.cropZoom]);
-
-    // Click outside to deselect footer image or exit cropping
-    useEffect(() => {
-      if (!selectedFooterImage && !isCroppingFooterImage) return;
-      const handleMouseDown = (e: MouseEvent) => {
-        if (isResizingFooterRef.current) return;
-        const target = e.target as HTMLElement | null;
-        if (!target) return;
-        if (
-          !target.closest('[data-footer-image]') &&
-          !target.closest('[data-footer-toolbar]') &&
-          !target.closest('[data-footer-crop]')
-        ) {
-          setSelectedFooterImage(false);
-          setIsCroppingFooterImage(false);
-        }
-      };
-      document.addEventListener('mousedown', handleMouseDown);
-      return () => document.removeEventListener('mousedown', handleMouseDown);
-    }, [selectedFooterImage, isCroppingFooterImage]);
 
     const activeMode: EditorMode = readOnly ? 'viewing' : (mode ?? internalMode);
     const isEffectivelyReadOnly = readOnly || activeMode === 'viewing';
@@ -594,121 +573,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
       []
     );
 
-    // ── Interactive Drag-to-Resize handler for Footer logo ─────────────────
 
-    const handleFooterResizeStart = useCallback(
-      (e: React.MouseEvent | React.TouchEvent, direction: 'e' | 'w' | 'se' | 'sw' | 'ne' | 'nw') => {
-        e.preventDefault();
-        e.stopPropagation();
-        isResizingFooterRef.current = true;
-        setIsResizingFooterImage(true);
-        const startX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-        const startWidth = footerState.image?.width || 140;
-
-        const onMove = (clientX: number) => {
-          if (!isResizingFooterRef.current) return;
-          const deltaX = clientX - startX;
-          let newW = startWidth;
-          if (direction === 'e' || direction === 'se' || direction === 'ne') {
-            newW = Math.max(50, Math.min(650, startWidth + deltaX));
-          } else {
-            newW = Math.max(50, Math.min(650, startWidth - deltaX));
-          }
-          setFooterState((prev) => ({
-            ...prev,
-            image: prev.image ? { ...prev.image, width: Math.round(newW) } : null,
-          }));
-        };
-
-        const onMouseMove = (moveEvent: MouseEvent) => {
-          onMove(moveEvent.clientX);
-        };
-
-        const onTouchMove = (touchEvent: TouchEvent) => {
-          if (touchEvent.touches[0]) {
-            onMove(touchEvent.touches[0].clientX);
-          }
-        };
-
-        const onEnd = () => {
-          isResizingFooterRef.current = false;
-          setIsResizingFooterImage(false);
-          window.removeEventListener('mousemove', onMouseMove);
-          window.removeEventListener('mouseup', onEnd);
-          window.removeEventListener('touchmove', onTouchMove);
-          window.removeEventListener('touchend', onEnd);
-        };
-
-        window.addEventListener('mousemove', onMouseMove);
-        window.addEventListener('mouseup', onEnd);
-        window.addEventListener('touchmove', onTouchMove, { passive: true });
-        window.addEventListener('touchend', onEnd);
-      },
-      [footerState.image?.width]
-    );
-
-    // ── Draggable positioning handler for Footer logo ──────────────────────
-
-    const handleFooterDragStart = useCallback(
-      (e: React.MouseEvent | React.TouchEvent) => {
-        if (isResizingFooterRef.current || isCroppingFooterImage) return;
-        e.preventDefault();
-        e.stopPropagation();
-        setSelectedFooterImage(true);
-        setIsDraggingFooterImage(true);
-
-        const updatePosition = (clientX: number) => {
-          const track = footerTrackRef.current;
-          if (!track) return;
-          const rect = track.getBoundingClientRect();
-          const imgWidth = footerState.image?.width || 140;
-          const availableTrack = Math.max(1, rect.width - imgWidth);
-          const mouseX = clientX - rect.left - imgWidth / 2;
-          const rawPercent = (mouseX / availableTrack) * 100;
-          const clamped = Math.max(0, Math.min(100, Math.round(rawPercent)));
-          const newAlign: 'left' | 'center' | 'right' =
-            clamped <= 33 ? 'left' : clamped >= 67 ? 'right' : 'center';
-
-          setFooterState((prev) => ({
-            ...prev,
-            image: prev.image
-              ? {
-                  ...prev.image,
-                  offsetPercent: clamped,
-                  align: newAlign,
-                }
-              : null,
-          }));
-        };
-
-        const initialClientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-        updatePosition(initialClientX);
-
-        const onMouseMove = (moveEvent: MouseEvent) => {
-          updatePosition(moveEvent.clientX);
-        };
-
-        const onTouchMove = (touchEvent: TouchEvent) => {
-          if (touchEvent.touches[0]) {
-            updatePosition(touchEvent.touches[0].clientX);
-          }
-        };
-
-        const onEnd = () => {
-          setIsDraggingFooterImage(false);
-          window.removeEventListener('mousemove', onMouseMove);
-          window.removeEventListener('mouseup', onEnd);
-          window.removeEventListener('touchmove', onTouchMove);
-          window.removeEventListener('touchend', onEnd);
-        };
-
-        window.addEventListener('mousemove', onMouseMove);
-        window.addEventListener('mouseup', onEnd);
-        window.addEventListener('touchmove', onTouchMove, { passive: true });
-        window.addEventListener('touchend', onEnd);
-      },
-      [footerState.image?.width, isCroppingFooterImage]
-    );
 
     // ── Fallback while loading ──────────────────────────────────────────────
     if (!plateReady || !PlateComp || !editor) {
@@ -938,7 +803,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                 {/* ─── Authentic 8.5" × 11" US Letter Paper Sheet ─────────────── */}
                 <div
                   className={cn(
-                    'plate-paper-sheet w-[816px] max-w-[816px] min-h-[1056px] bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 border border-zinc-200/90 dark:border-zinc-800/90 shadow-[0_1px_4px_rgba(0,0,0,0.12),0_8px_30px_rgba(0,0,0,0.15)] dark:shadow-[0_8px_36px_rgba(0,0,0,0.7)] rounded-[2px] px-[96px] pb-[96px] flex flex-col relative transition-all print:bg-white print:text-black print:border-none print:shadow-none',
+                    'plate-paper-sheet w-[816px] max-w-[816px] min-h-[1056px] bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 border border-zinc-200/90 dark:border-zinc-800/90 shadow-[0_1px_4px_rgba(0,0,0,0.12),0_8px_30px_rgba(0,0,0,0.15)] dark:shadow-[0_8px_36px_rgba(0,0,0,0.7)] rounded-[2px] px-[96px] pt-[48px] pb-[48px] flex flex-col relative transition-all print:bg-white print:text-black print:border-none print:shadow-none',
                     activeHeaderFooter && 'ring-1 ring-primary/40 shadow-md'
                   )}
                 >
@@ -969,7 +834,17 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                   />
 
                   {/* ─── Slate Document Body (Seamlessly Inside Paper Sheet) ──────── */}
-                  <div className={cn('flex-1 flex flex-col', activeHeaderFooter === 'header' && 'opacity-40 pointer-events-none transition-opacity')}>
+                  <div
+                    onClick={() => {
+                      if (activeHeaderFooter) {
+                        setActiveHeaderFooter(null);
+                      }
+                    }}
+                    className={cn(
+                      'flex-1 flex flex-col',
+                      activeHeaderFooter && 'opacity-60 transition-opacity cursor-pointer'
+                    )}
+                  >
                     <Editor
                       ref={editorRef}
                       variant="none"
@@ -978,508 +853,19 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                       spellCheck
                       autoFocus={!isEffectivelyReadOnly}
                       onKeyDown={handleKeyDown}
-                      className="flex-1 w-full min-h-[650px] p-0 border-0 shadow-none rounded-none focus-visible:outline-none text-zinc-900 dark:text-zinc-100 selection:bg-primary/20 selection:text-zinc-900 dark:selection:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500"
+                      className="flex-1 w-full min-h-[768px] p-0 border-0 shadow-none rounded-none focus-visible:outline-none text-zinc-900 dark:text-zinc-100 selection:bg-primary/20 selection:text-zinc-900 dark:selection:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500"
                     />
                   </div>
 
-                  {/* Footer boundary line when editing footer */}
-                  {activeHeaderFooter === 'footer' && (
-                    <div className="flex items-center gap-2 my-2 select-none">
-                      <div className="h-px bg-primary/30 flex-1 border-b border-dashed" />
-                      <span className="text-[10px] uppercase font-bold tracking-wider text-primary">Footer Boundary</span>
-                      <div className="h-px bg-primary/30 flex-1 border-b border-dashed" />
-                    </div>
-                  )}
-
-                  {/* ─── Embedded Footer Zone (Inside Paper Sheet) ───────────────── */}
-                  {(!isEffectivelyReadOnly || footerState.image?.url || footerState.text?.trim() || footerState.pageNumber) && (
-                    <div
-                      onDoubleClick={() => {
-                        if (!isEffectivelyReadOnly) {
-                          setActiveHeaderFooter((prev) => (prev === 'footer' ? null : 'footer'));
-                        }
-                      }}
-                      className={cn(
-                        'w-full transition-all select-none print:mt-2 print:border-none',
-                        activeHeaderFooter === 'footer'
-                          ? 'mt-2 pt-2'
-                          : 'mt-2 pt-1.5 pb-1 border-t border-transparent hover:border-dashed hover:border-zinc-300 dark:hover:border-zinc-700 cursor-pointer group/footer'
-                      )}
-                    >
-                      {activeHeaderFooter === 'footer' ? (
-                        <div className="flex flex-col gap-2.5 w-full">
-                          {/* Footer Control Ribbon */}
-                          <div
-                            data-footer-toolbar="true"
-                            className="header-footer-ribbon flex items-center justify-between px-3 py-1.5 rounded-lg bg-primary/10 border border-primary/20 shadow-xs"
-                          >
-                            <div className="flex items-center gap-3">
-                              <span className="text-xs font-bold text-primary uppercase tracking-wider">
-                                Footer
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => footerInputRef.current?.click()}
-                                className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold text-primary bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 rounded-md border border-zinc-200 dark:border-zinc-700 shadow-xs transition-colors cursor-pointer"
-                              >
-                                <ImageIcon className="w-3.5 h-3.5 text-primary" />
-                                <span>{footerState.image?.url ? 'Replace Logo' : '+ Add Logo / Image'}</span>
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setFooterState((prev) => ({ ...prev, pageNumber: !prev.pageNumber }))
-                                }
-                                className={cn(
-                                  'inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md border shadow-xs transition-colors cursor-pointer',
-                                  footerState.pageNumber
-                                    ? 'bg-primary/15 text-primary border-primary/30 font-semibold'
-                                    : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700'
-                                )}
-                              >
-                                <Hash className="w-3.5 h-3.5" />
-                                <span>{footerState.pageNumber ? '✓ Page Number Active' : '+ Insert Page Number'}</span>
-                              </button>
-                            </div>
-
-                            <div className="flex items-center gap-2">
-                              {/* Scope Dropview: This page only vs Every page */}
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <button
-                                    type="button"
-                                    className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium text-zinc-700 dark:text-zinc-200 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700 shadow-xs cursor-pointer"
-                                  >
-                                    <span>{footerState.scope === 'every_page' ? 'Every page' : 'This page only'}</span>
-                                    <ChevronDown className="w-3.5 h-3.5 text-zinc-500" />
-                                  </button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-56 p-1 shadow-lg border border-zinc-200 dark:border-zinc-800">
-                                  <DropdownMenuItem
-                                    onClick={() => setFooterState((prev) => ({ ...prev, scope: 'every_page' }))}
-                                    className="flex items-center justify-between text-xs px-2.5 py-1.5 cursor-pointer rounded-md"
-                                  >
-                                    <span>Every page</span>
-                                    {footerState.scope === 'every_page' && <Check className="w-3.5 h-3.5 text-primary" />}
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={() => setFooterState((prev) => ({ ...prev, scope: 'first_page_only' }))}
-                                    className="flex items-center justify-between text-xs px-2.5 py-1.5 cursor-pointer rounded-md"
-                                  >
-                                    <span>This page only (Different first page)</span>
-                                    {footerState.scope === 'first_page_only' && <Check className="w-3.5 h-3.5 text-primary" />}
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-
-                              <button
-                                type="button"
-                                onClick={() => setActiveHeaderFooter(null)}
-                                className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-zinc-700 dark:text-zinc-200 hover:text-zinc-950 dark:hover:text-white bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 border border-zinc-200 dark:border-zinc-700 rounded transition-colors cursor-pointer shadow-xs"
-                              >
-                                <X className="w-3.5 h-3.5" />
-                                <span>Done</span>
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* Moveable & Draggable Logo Toolbar & Track (if image exists) */}
-                          {footerState.image?.url && (
-                            <div className="flex flex-col gap-1.5 p-2 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xs">
-                              {/* Moveable Image Action Bar */}
-                              <div
-                                data-footer-toolbar="true"
-                                className="flex items-center justify-between gap-2 pb-1.5 border-b border-zinc-100 dark:border-zinc-800 text-xs"
-                              >
-                                <div className="flex items-center gap-1">
-                                  <span className="text-[11px] text-zinc-500 mr-1 font-medium">Position:</span>
-                                  <button
-                                    type="button"
-                                    title="Align Left (0%)"
-                                    onClick={() =>
-                                      setFooterState((prev) => ({
-                                        ...prev,
-                                        image: prev.image ? { ...prev.image, align: 'left', offsetPercent: 0 } : null,
-                                      }))
-                                    }
-                                    className={cn(
-                                      'p-1 rounded cursor-pointer transition-colors',
-                                      (footerState.image.offsetPercent !== undefined ? footerState.image.offsetPercent <= 33 : footerState.image.align === 'left')
-                                        ? 'bg-primary/15 text-primary font-bold'
-                                        : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-                                    )}
-                                  >
-                                    <AlignLeft className="w-3.5 h-3.5" />
-                                  </button>
-                                  <button
-                                    type="button"
-                                    title="Align Center (50%)"
-                                    onClick={() =>
-                                      setFooterState((prev) => ({
-                                        ...prev,
-                                        image: prev.image ? { ...prev.image, align: 'center', offsetPercent: 50 } : null,
-                                      }))
-                                    }
-                                    className={cn(
-                                      'p-1 rounded cursor-pointer transition-colors',
-                                      (footerState.image.offsetPercent !== undefined ? (footerState.image.offsetPercent > 33 && footerState.image.offsetPercent < 67) : (footerState.image.align === 'center' || !footerState.image.align))
-                                        ? 'bg-primary/15 text-primary font-bold'
-                                        : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-                                    )}
-                                  >
-                                    <AlignCenter className="w-3.5 h-3.5" />
-                                  </button>
-                                  <button
-                                    type="button"
-                                    title="Align Right (100%)"
-                                    onClick={() =>
-                                      setFooterState((prev) => ({
-                                        ...prev,
-                                        image: prev.image ? { ...prev.image, align: 'right', offsetPercent: 100 } : null,
-                                      }))
-                                    }
-                                    className={cn(
-                                      'p-1 rounded cursor-pointer transition-colors',
-                                      (footerState.image.offsetPercent !== undefined ? footerState.image.offsetPercent >= 67 : footerState.image.align === 'right')
-                                        ? 'bg-primary/15 text-primary font-bold'
-                                        : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-                                    )}
-                                  >
-                                    <AlignRight className="w-3.5 h-3.5" />
-                                  </button>
-                                </div>
-
-                                {/* Crop & Remove Action Buttons */}
-                                <div className="flex items-center gap-2">
-                                  <button
-                                    type="button"
-                                    title="Crop and zoom logo"
-                                    onClick={() => {
-                                      setSelectedFooterImage(true);
-                                      setIsCroppingFooterImage((prev) => !prev);
-                                    }}
-                                    className={cn(
-                                      'inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium transition-colors cursor-pointer',
-                                      isCroppingFooterImage
-                                        ? 'bg-primary/15 text-primary font-semibold'
-                                        : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-700'
-                                    )}
-                                  >
-                                    <Crop className="w-3.5 h-3.5" />
-                                    <span>{isCroppingFooterImage ? 'Cropping…' : 'Crop'}</span>
-                                  </button>
-
-                                  <button
-                                    type="button"
-                                    title="Remove Logo"
-                                    onClick={() => {
-                                      setFooterState((prev) => ({ ...prev, image: null }));
-                                      setSelectedFooterImage(false);
-                                      setIsCroppingFooterImage(false);
-                                    }}
-                                    className="inline-flex items-center gap-1 px-2 py-1 rounded text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 text-[11px] font-medium transition-colors cursor-pointer"
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                    <span>Remove</span>
-                                  </button>
-                                </div>
-                              </div>
-
-                              {/* Interactive Draggable, Resizable & Croppable Footer Logo Track */}
-                              <div
-                                ref={footerTrackRef}
-                                className="relative w-full min-h-[90px] py-2 px-1 border border-dashed border-primary/25 rounded-lg bg-primary/5 select-none overflow-hidden"
-                              >
-                                <div
-                                  data-footer-image="true"
-                                  onMouseDown={handleFooterDragStart}
-                                  onTouchStart={handleFooterDragStart}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setSelectedFooterImage(true);
-                                  }}
-                                  onDoubleClick={(e) => {
-                                    e.stopPropagation();
-                                    setSelectedFooterImage(true);
-                                    setIsCroppingFooterImage(true);
-                                  }}
-                                  style={{
-                                    position: 'relative',
-                                    marginLeft: `${footerState.image.offsetPercent ?? (footerState.image.align === 'left' ? 0 : footerState.image.align === 'right' ? 100 : 50)}%`,
-                                    transform: `translateX(-${footerState.image.offsetPercent ?? (footerState.image.align === 'left' ? 0 : footerState.image.align === 'right' ? 100 : 50)}%)`,
-                                    width: `${footerState.image.width || 140}px`,
-                                  }}
-                                  className={cn(
-                                    'relative select-none rounded-md transition-shadow',
-                                    !isCroppingFooterImage && 'cursor-grab',
-                                    isDraggingFooterImage && 'cursor-grabbing scale-[1.02] shadow-lg',
-                                    isResizingFooterImage && 'shadow-lg',
-                                    (selectedFooterImage || isCroppingFooterImage) && 'ring-2 ring-primary ring-offset-2 ring-offset-white dark:ring-offset-zinc-900 shadow-md'
-                                  )}
-                                >
-                                  {/* Floating drag / resize badge */}
-                                  {isResizingFooterImage && (
-                                    <div className="absolute -top-7 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-primary text-primary-foreground text-[10px] font-semibold shadow-md whitespace-nowrap pointer-events-none z-40">
-                                      Size: {footerState.image.width || 140}px
-                                    </div>
-                                  )}
-                                  {isDraggingFooterImage && !isResizingFooterImage && (
-                                    <div className="absolute -top-7 left-1/2 -translate-x-1/2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary text-primary-foreground text-[10px] font-semibold shadow-md whitespace-nowrap pointer-events-none z-40">
-                                      <Move className="w-2.5 h-2.5" />
-                                      <span>Drag to position ({footerState.image.offsetPercent ?? (footerState.image.align === 'left' ? 0 : footerState.image.align === 'right' ? 100 : 50)}%)</span>
-                                    </div>
-                                  )}
-                                  {selectedFooterImage && !isDraggingFooterImage && !isResizingFooterImage && !isCroppingFooterImage && (
-                                    <div className="absolute -top-7 left-1/2 -translate-x-1/2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-zinc-800/90 text-zinc-100 text-[10px] font-medium shadow-md whitespace-nowrap pointer-events-none z-40 backdrop-blur-xs">
-                                      <Move className="w-2.5 h-2.5" />
-                                      <span>Drag to move · Pull handles to resize · Double-click to crop</span>
-                                    </div>
-                                  )}
-
-                                  {/* Interactive Crop Framing Controls */}
-                                  {isCroppingFooterImage && (
-                                    <div
-                                      data-footer-crop="true"
-                                      onClick={(e) => e.stopPropagation()}
-                                      onMouseDown={(e) => e.stopPropagation()}
-                                      className="absolute -bottom-11 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-3 py-1.5 bg-zinc-900/95 text-white rounded-lg shadow-xl text-xs backdrop-blur-xs whitespace-nowrap"
-                                    >
-                                      <span className="font-semibold text-zinc-300">Crop Zoom:</span>
-                                      <button
-                                        type="button"
-                                        title="Zoom out"
-                                        onClick={() => {
-                                          setFooterCropZoom((z) => {
-                                            const next = Math.max(100, z - 10);
-                                            setFooterState((prev) => ({
-                                              ...prev,
-                                              image: prev.image ? { ...prev.image, cropZoom: next } : null,
-                                            }));
-                                            return next;
-                                          });
-                                        }}
-                                        className="px-2 py-0.5 bg-zinc-800 hover:bg-zinc-700 rounded font-bold cursor-pointer transition-colors"
-                                      >
-                                        -
-                                      </button>
-                                      <span className="w-10 text-center font-mono font-semibold">{footerCropZoom}%</span>
-                                      <button
-                                        type="button"
-                                        title="Zoom in"
-                                        onClick={() => {
-                                          setFooterCropZoom((z) => {
-                                            const next = Math.min(300, z + 10);
-                                            setFooterState((prev) => ({
-                                              ...prev,
-                                              image: prev.image ? { ...prev.image, cropZoom: next } : null,
-                                            }));
-                                            return next;
-                                          });
-                                        }}
-                                        className="px-2 py-0.5 bg-zinc-800 hover:bg-zinc-700 rounded font-bold cursor-pointer transition-colors"
-                                      >
-                                        +
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          setIsCroppingFooterImage(false);
-                                          setFooterState((prev) => ({
-                                            ...prev,
-                                            image: prev.image ? { ...prev.image, cropZoom: footerCropZoom } : null,
-                                          }));
-                                        }}
-                                        className="ml-1 px-2.5 py-1 bg-primary text-primary-foreground font-semibold rounded hover:opacity-90 cursor-pointer text-xs transition-opacity"
-                                      >
-                                        Done
-                                      </button>
-                                    </div>
-                                  )}
-
-                                  {/* Cropped Image Frame */}
-                                  <div className="overflow-hidden rounded border border-zinc-200 dark:border-zinc-700 p-1 bg-white shadow-2xs">
-                                    <img
-                                      src={footerState.image.url}
-                                      alt="Footer Logo"
-                                      draggable={false}
-                                      style={{
-                                        transform: (footerState.image.cropZoom || footerCropZoom) !== 100
-                                          ? `scale(${(footerState.image.cropZoom || footerCropZoom) / 100})`
-                                          : undefined,
-                                        transformOrigin: 'center center',
-                                        transition: 'transform 0.1s ease-out',
-                                      }}
-                                      className="w-full max-h-24 object-contain pointer-events-none select-none"
-                                    />
-                                  </div>
-
-                                  {/* Interactive Resize Handles (when selected and not cropping) */}
-                                  {selectedFooterImage && !isCroppingFooterImage && (
-                                    <>
-                                      {/* 4 Corners */}
-                                      <div
-                                        onMouseDown={(e) => handleFooterResizeStart(e, 'nw')}
-                                        onTouchStart={(e) => handleFooterResizeStart(e, 'nw')}
-                                        className="absolute -top-1.5 -left-1.5 w-3 h-3 bg-primary border-2 border-white rounded-2xs shadow-xs cursor-nwse-resize z-30 hover:scale-125 transition-transform"
-                                      />
-                                      <div
-                                        onMouseDown={(e) => handleFooterResizeStart(e, 'ne')}
-                                        onTouchStart={(e) => handleFooterResizeStart(e, 'ne')}
-                                        className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-primary border-2 border-white rounded-2xs shadow-xs cursor-nesw-resize z-30 hover:scale-125 transition-transform"
-                                      />
-                                      <div
-                                        onMouseDown={(e) => handleFooterResizeStart(e, 'sw')}
-                                        onTouchStart={(e) => handleFooterResizeStart(e, 'sw')}
-                                        className="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-primary border-2 border-white rounded-2xs shadow-xs cursor-nesw-resize z-30 hover:scale-125 transition-transform"
-                                      />
-                                      <div
-                                        onMouseDown={(e) => handleFooterResizeStart(e, 'se')}
-                                        onTouchStart={(e) => handleFooterResizeStart(e, 'se')}
-                                        className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-primary border-2 border-white rounded-2xs shadow-xs cursor-nwse-resize z-30 hover:scale-125 transition-transform"
-                                      />
-
-                                      {/* 2 Edges */}
-                                      <div
-                                        onMouseDown={(e) => handleFooterResizeStart(e, 'w')}
-                                        onTouchStart={(e) => handleFooterResizeStart(e, 'w')}
-                                        className="absolute top-1/2 -left-1.5 -translate-y-1/2 w-3 h-3 bg-primary border-2 border-white rounded-2xs shadow-xs cursor-ew-resize z-30 hover:scale-125 transition-transform"
-                                      />
-                                      <div
-                                        onMouseDown={(e) => handleFooterResizeStart(e, 'e')}
-                                        onTouchStart={(e) => handleFooterResizeStart(e, 'e')}
-                                        className="absolute top-1/2 -right-1.5 -translate-y-1/2 w-3 h-3 bg-primary border-2 border-white rounded-2xs shadow-xs cursor-ew-resize z-30 hover:scale-125 transition-transform"
-                                      />
-                                    </>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Footer Text Input Line & Alignment */}
-                          <div className="flex items-center gap-2 p-1.5 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xs">
-                            <input
-                              type="text"
-                              value={footerState.text || ''}
-                              onChange={(e) => setFooterState((prev) => ({ ...prev, text: e.target.value }))}
-                              placeholder="Type footer text (e.g. Confidential • STI College Marikina)..."
-                              className="flex-1 bg-transparent px-2 py-1 text-xs text-zinc-800 dark:text-zinc-200 outline-hidden font-medium placeholder:text-zinc-400"
-                              style={{ textAlign: footerState.textAlign || 'center' }}
-                            />
-                            <div className="flex items-center gap-1 border-l border-zinc-200 dark:border-zinc-700 pl-2 shrink-0">
-                              <button
-                                type="button"
-                                title="Align Left"
-                                onClick={() => setFooterState((prev) => ({ ...prev, textAlign: 'left' }))}
-                                className={cn(
-                                  'p-1 rounded cursor-pointer transition-colors',
-                                  footerState.textAlign === 'left'
-                                    ? 'bg-primary/15 text-primary font-bold'
-                                    : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-                                )}
-                              >
-                                <AlignLeft className="w-3.5 h-3.5" />
-                              </button>
-                              <button
-                                type="button"
-                                title="Align Center"
-                                onClick={() => setFooterState((prev) => ({ ...prev, textAlign: 'center' }))}
-                                className={cn(
-                                  'p-1 rounded cursor-pointer transition-colors',
-                                  footerState.textAlign === 'center' || !footerState.textAlign
-                                    ? 'bg-primary/15 text-primary font-bold'
-                                    : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-                                )}
-                              >
-                                <AlignCenter className="w-3.5 h-3.5" />
-                              </button>
-                              <button
-                                type="button"
-                                title="Align Right"
-                                onClick={() => setFooterState((prev) => ({ ...prev, textAlign: 'right' }))}
-                                className={cn(
-                                  'p-1 rounded cursor-pointer transition-colors',
-                                  footerState.textAlign === 'right'
-                                    ? 'bg-primary/15 text-primary font-bold'
-                                    : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-                                )}
-                              >
-                                <AlignRight className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* Footer Page Number Preview (if active) */}
-                          {footerState.pageNumber && (
-                            <div
-                              className={cn(
-                                'text-xs text-zinc-400 font-mono py-0.5 px-2 bg-zinc-50 dark:bg-zinc-800/60 rounded border border-zinc-200/60 dark:border-zinc-700/60',
-                                footerState.textAlign === 'left' && 'text-left',
-                                (!footerState.textAlign || footerState.textAlign === 'center') && 'text-center',
-                                footerState.textAlign === 'right' && 'text-right'
-                              )}
-                            >
-                              Page 1 of 1
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        /* Idle State (Faint Google Docs Style Footer Preview) */
-                        <div className="w-full flex flex-col gap-1.5 document-footer-preview">
-                          {footerState.image?.url && (
-                            <div className="w-full py-1 overflow-hidden select-none">
-                              <div
-                                style={{
-                                  position: 'relative',
-                                  marginLeft: `${footerState.image.offsetPercent ?? (footerState.image.align === 'left' ? 0 : footerState.image.align === 'right' ? 100 : 50)}%`,
-                                  transform: `translateX(-${footerState.image.offsetPercent ?? (footerState.image.align === 'left' ? 0 : footerState.image.align === 'right' ? 100 : 50)}%)`,
-                                  width: `${footerState.image.width || 140}px`,
-                                }}
-                              >
-                                <div className="overflow-hidden rounded p-0.5">
-                                  <img
-                                    src={footerState.image.url}
-                                    alt="Footer Logo"
-                                    draggable={false}
-                                    style={{
-                                      transform: footerState.image.cropZoom && footerState.image.cropZoom !== 100
-                                        ? `scale(${footerState.image.cropZoom / 100})`
-                                        : undefined,
-                                      transformOrigin: 'center center',
-                                    }}
-                                    className="w-full max-h-20 object-contain opacity-85 group-hover/footer:opacity-100 transition-opacity"
-                                  />
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                          {(footerState.text?.trim() || footerState.pageNumber) && (
-                            <div
-                              className={cn(
-                                'flex items-center gap-2 text-xs text-zinc-500 font-medium',
-                                footerState.textAlign === 'left' && 'justify-start text-left',
-                                (!footerState.textAlign || footerState.textAlign === 'center') && 'justify-center text-center',
-                                footerState.textAlign === 'right' && 'justify-end text-right'
-                              )}
-                            >
-                              {footerState.text?.trim() && <span>{footerState.text}</span>}
-                              {footerState.pageNumber && (
-                                <span className="font-mono text-zinc-400">
-                                  {footerState.text?.trim() ? ' • ' : ''}Page 1 of 1
-                                </span>
-                              )}
-                            </div>
-                          )}
-                          {!isEffectivelyReadOnly && (
-                            <div className="header-footer-prompt flex items-center justify-between text-[11px] text-zinc-400 opacity-0 group-hover/footer:opacity-100 transition-opacity pt-1 border-t border-dashed border-zinc-300 dark:border-zinc-700">
-                              <span>Double-click to edit Footer</span>
-                              <span>{footerState.scope === 'every_page' ? 'Every page' : 'This page only'}</span>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  )}
+                  {/* ─── Google Docs Permanent 1-inch Footer Zone ────────────── */}
+                  <DocumentFooterZone
+                    footerState={footerState}
+                    setFooterState={setFooterState}
+                    isActive={activeHeaderFooter === 'footer'}
+                    onToggleActive={(active) => setActiveHeaderFooter(active ? 'footer' : null)}
+                    isReadOnly={isEffectivelyReadOnly}
+                    footerInputRef={footerInputRef}
+                  />
                 </div>
               </div>
             </EditorContainer>

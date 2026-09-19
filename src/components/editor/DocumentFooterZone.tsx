@@ -8,6 +8,7 @@ import {
   AlignLeft,
   AlignCenter,
   AlignRight,
+  Hash,
 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import {
@@ -17,49 +18,33 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { type HeaderFooterItem } from './DocumentHeaderZone';
 
-export interface HeaderFooterImage {
-  url: string;
-  name?: string;
-  width?: number;
-  align?: 'left' | 'center' | 'right';
-  offsetPercent?: number;
-  cropZoom?: number;
-}
-
-export interface HeaderFooterItem {
-  image?: HeaderFooterImage | null;
-  text?: string;
-  textAlign?: 'left' | 'center' | 'right';
-  scope?: 'every_page' | 'first_page_only';
-  pageNumber?: boolean;
-}
-
-export interface DocumentHeaderZoneProps {
-  headerState: HeaderFooterItem;
-  setHeaderState: React.Dispatch<React.SetStateAction<HeaderFooterItem>>;
+export interface DocumentFooterZoneProps {
+  footerState: HeaderFooterItem;
+  setFooterState: React.Dispatch<React.SetStateAction<HeaderFooterItem>>;
   isActive: boolean;
   onToggleActive: (active: boolean) => void;
   isReadOnly?: boolean;
-  headerInputRef: React.RefObject<HTMLInputElement | null>;
+  footerInputRef: React.RefObject<HTMLInputElement | null>;
   className?: string;
 }
 
 /**
- * Authentic Google Docs Header Zone.
- * - Top text editing area with direct typing.
+ * Authentic Google Docs Footer Zone.
+ * - Sub-bar with "Footer" on left, "[ ] Different first page" checkbox and "Options ▾" dropdown on right.
  * - Clean horizontal divider line.
- * - Sub-bar with "Header" on left, "[ ] Different first page" checkbox and "Options ▾" dropdown on right.
+ * - Direct inline text typing area below the divider line with page number indicator "#".
  * - Draggable/resizable/croppable logo support when an image exists.
  * - Minimum height of 48px to maintain authentic 1-inch page margins.
  */
-export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
-  headerState,
-  setHeaderState,
+export const DocumentFooterZone: React.FC<DocumentFooterZoneProps> = ({
+  footerState,
+  setFooterState,
   isActive,
   onToggleActive,
   isReadOnly = false,
-  headerInputRef,
+  footerInputRef,
   className,
 }) => {
   const [selectedImage, setSelectedImage] = useState(false);
@@ -68,20 +53,20 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
   const [resizeHandleType, setResizeHandleType] = useState<string | null>(null);
   const [resizeLiveWidth, setResizeLiveWidth] = useState<number | null>(null);
   const [isCroppingImage, setIsCroppingImage] = useState(false);
-  const [cropZoom, setCropZoom] = useState(headerState.image?.cropZoom ?? 100);
+  const [cropZoom, setCropZoom] = useState(footerState.image?.cropZoom ?? 100);
 
-  const headerTrackRef = useRef<HTMLDivElement | null>(null);
+  const footerTrackRef = useRef<HTMLDivElement | null>(null);
   const isResizingRef = useRef(false);
   const textInputRef = useRef<HTMLInputElement | null>(null);
 
   // Sync crop zoom
   useEffect(() => {
-    if (headerState.image?.cropZoom !== undefined) {
-      setCropZoom(headerState.image.cropZoom);
+    if (footerState.image?.cropZoom !== undefined) {
+      setCropZoom(footerState.image.cropZoom);
     }
-  }, [headerState.image?.cropZoom]);
+  }, [footerState.image?.cropZoom]);
 
-  // Focus input when header activates
+  // Focus input when footer activates
   useEffect(() => {
     if (isActive) {
       setTimeout(() => {
@@ -95,8 +80,8 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as HTMLElement | null;
       if (
-        !target?.closest('[data-header-image-container="true"]') &&
-        !target?.closest('[data-header-crop="true"]')
+        !target?.closest('[data-footer-image-container="true"]') &&
+        !target?.closest('[data-footer-crop="true"]')
       ) {
         setSelectedImage(false);
         if (isCroppingImage) {
@@ -118,10 +103,10 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
       setIsDraggingImage(true);
 
       const updatePosition = (clientX: number) => {
-        const track = headerTrackRef.current;
+        const track = footerTrackRef.current;
         if (!track) return;
         const rect = track.getBoundingClientRect();
-        const imgWidth = headerState.image?.width || 180;
+        const imgWidth = footerState.image?.width || 140;
         const availableTrack = Math.max(1, rect.width - imgWidth);
         const mouseX = clientX - rect.left - imgWidth / 2;
         const rawPercent = (mouseX / availableTrack) * 100;
@@ -129,7 +114,7 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
         const newAlign: 'left' | 'center' | 'right' =
           clamped <= 33 ? 'left' : clamped >= 67 ? 'right' : 'center';
 
-        setHeaderState((prev) => ({
+        setFooterState((prev) => ({
           ...prev,
           image: prev.image
             ? {
@@ -165,7 +150,7 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
       window.addEventListener('touchmove', onTouchMove, { passive: true });
       window.addEventListener('touchend', onEnd);
     },
-    [headerState.image?.width, isCroppingImage, setHeaderState]
+    [footerState.image?.width, isCroppingImage, setFooterState]
   );
 
   // ── Resize logo handler ──
@@ -178,7 +163,7 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
       setResizeHandleType(handle);
 
       const startX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-      const initialWidth = headerState.image?.width || 180;
+      const initialWidth = footerState.image?.width || 140;
       setResizeLiveWidth(initialWidth);
 
       const onMove = (moveEvent: MouseEvent | TouchEvent) => {
@@ -196,7 +181,7 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
         const clamped = Math.max(50, Math.min(624, Math.round(newWidth)));
         setResizeLiveWidth(clamped);
 
-        setHeaderState((prev) => ({
+        setFooterState((prev) => ({
           ...prev,
           image: prev.image ? { ...prev.image, width: clamped } : null,
         }));
@@ -218,41 +203,201 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
       window.addEventListener('touchmove', onMove, { passive: true });
       window.addEventListener('touchend', onEnd);
     },
-    [headerState.image?.width, setHeaderState]
+    [footerState.image?.width, setFooterState]
   );
 
-  const textAlign = headerState.textAlign || 'left';
+  const textAlign = footerState.textAlign || 'left';
 
   return (
-    <header
-      data-document-header="true"
+    <footer
+      data-document-footer="true"
       onDoubleClick={() => {
         if (!isReadOnly) {
           onToggleActive(true);
         }
       }}
       className={cn(
-        'w-full min-h-[48px] select-none relative transition-all flex flex-col justify-end group/header',
-        isActive ? 'mb-2' : 'cursor-pointer hover:bg-zinc-50/40 dark:hover:bg-zinc-800/20 rounded-xs',
+        'w-full min-h-[48px] select-none relative transition-all flex flex-col justify-start group/footer',
+        isActive ? 'mt-2' : 'cursor-pointer hover:bg-zinc-50/40 dark:hover:bg-zinc-800/20 rounded-xs',
         className
       )}
     >
-      {/* ── Active State: Authentic Google Docs Header ── */}
+      {/* ── Active State: Authentic Google Docs Footer ── */}
       {isActive ? (
         <div className="w-full flex flex-col">
+          {/* Google Docs Footer Sub-Bar (on top, bordering the body) */}
+          <div className="w-full flex items-center justify-between py-1 text-xs select-none">
+            <span className="text-zinc-500 dark:text-zinc-400 font-normal">
+              Footer
+            </span>
+
+            <div className="flex items-center gap-4">
+              {/* Different first page checkbox */}
+              <label className="flex items-center gap-1.5 cursor-pointer text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 select-none">
+                <input
+                  type="checkbox"
+                  checked={footerState.scope === 'first_page_only'}
+                  onChange={(e) =>
+                    setFooterState((prev) => ({
+                      ...prev,
+                      scope: e.target.checked ? 'first_page_only' : 'every_page',
+                    }))
+                  }
+                  className="w-3.5 h-3.5 rounded border-zinc-300 dark:border-zinc-600 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                />
+                <span className="text-xs">Different first page</span>
+              </label>
+
+              {/* Options Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium inline-flex items-center gap-1 cursor-pointer select-none text-xs"
+                  >
+                    <span>Options</span>
+                    <svg className="w-2.5 h-2.5 fill-current" viewBox="0 0 10 6">
+                      <path d="M0 0l5 5 5-5z" />
+                    </svg>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="end"
+                  className="w-56 p-1 shadow-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900"
+                >
+                  <div className="px-2.5 py-1 text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">
+                    Alignment
+                  </div>
+                  <DropdownMenuItem
+                    onClick={() => setFooterState((prev) => ({ ...prev, textAlign: 'left' }))}
+                    className="flex items-center justify-between text-xs px-2.5 py-1.5 cursor-pointer rounded-md"
+                  >
+                    <div className="flex items-center gap-2">
+                      <AlignLeft className="w-3.5 h-3.5 text-zinc-500" />
+                      <span>Align left</span>
+                    </div>
+                    {textAlign === 'left' && <Check className="w-3.5 h-3.5 text-blue-600" />}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setFooterState((prev) => ({ ...prev, textAlign: 'center' }))}
+                    className="flex items-center justify-between text-xs px-2.5 py-1.5 cursor-pointer rounded-md"
+                  >
+                    <div className="flex items-center gap-2">
+                      <AlignCenter className="w-3.5 h-3.5 text-zinc-500" />
+                      <span>Align center</span>
+                    </div>
+                    {textAlign === 'center' && <Check className="w-3.5 h-3.5 text-blue-600" />}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setFooterState((prev) => ({ ...prev, textAlign: 'right' }))}
+                    className="flex items-center justify-between text-xs px-2.5 py-1.5 cursor-pointer rounded-md"
+                  >
+                    <div className="flex items-center gap-2">
+                      <AlignRight className="w-3.5 h-3.5 text-zinc-500" />
+                      <span>Align right</span>
+                    </div>
+                    {textAlign === 'right' && <Check className="w-3.5 h-3.5 text-blue-600" />}
+                  </DropdownMenuItem>
+
+                  <DropdownMenuSeparator />
+
+                  <DropdownMenuItem
+                    onClick={() =>
+                      setFooterState((prev) => ({ ...prev, pageNumber: !prev.pageNumber }))
+                    }
+                    className="flex items-center justify-between text-xs px-2.5 py-1.5 cursor-pointer rounded-md"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Hash className="w-3.5 h-3.5 text-zinc-500" />
+                      <span>Page numbers</span>
+                    </div>
+                    {footerState.pageNumber && <Check className="w-3.5 h-3.5 text-blue-600" />}
+                  </DropdownMenuItem>
+
+                  <DropdownMenuSeparator />
+
+                  <DropdownMenuItem
+                    onClick={() => footerInputRef.current?.click()}
+                    className="flex items-center gap-2 text-xs px-2.5 py-1.5 cursor-pointer rounded-md"
+                  >
+                    <ImageIcon className="w-3.5 h-3.5 text-zinc-500" />
+                    <span>{footerState.image?.url ? 'Replace Logo' : 'Upload Logo'}</span>
+                  </DropdownMenuItem>
+                  {footerState.image?.url && (
+                    <DropdownMenuItem
+                      onClick={() => setFooterState((prev) => ({ ...prev, image: null }))}
+                      className="flex items-center gap-2 text-xs px-2.5 py-1.5 text-red-600 dark:text-red-400 cursor-pointer rounded-md hover:bg-red-50 dark:hover:bg-red-950/40"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Remove Logo</span>
+                    </DropdownMenuItem>
+                  )}
+
+                  <DropdownMenuSeparator />
+
+                  <DropdownMenuItem
+                    onClick={() => {
+                      setFooterState({
+                        image: null,
+                        text: '',
+                        pageNumber: false,
+                        textAlign: 'left',
+                        scope: 'every_page',
+                      });
+                      onToggleActive(false);
+                    }}
+                    className="flex items-center gap-2 text-xs px-2.5 py-1.5 text-red-600 dark:text-red-400 cursor-pointer rounded-md hover:bg-red-50 dark:hover:bg-red-950/40"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Remove Footer</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+
+          {/* Google Docs Horizontal Divider Line */}
+          <div className="w-full border-b border-zinc-300 dark:border-zinc-700 my-1" />
+
+          {/* Direct Inline Footer Text & Page Number Input */}
+          <div className="w-full flex items-center gap-2 pt-0.5">
+            <input
+              ref={textInputRef}
+              type="text"
+              value={footerState.text || ''}
+              onChange={(e) => setFooterState((prev) => ({ ...prev, text: e.target.value }))}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') {
+                  onToggleActive(false);
+                }
+              }}
+              placeholder="Footer"
+              style={{ textAlign }}
+              className="flex-1 bg-transparent px-0 py-0.5 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 outline-none border-none font-normal"
+            />
+            {footerState.pageNumber && (
+              <span
+                className="text-xs font-mono px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700 select-none cursor-default shrink-0"
+                title="Page number active"
+              >
+                #
+              </span>
+            )}
+          </div>
+
           {/* Logo Track (when image exists) */}
-          {headerState.image?.url && (
-            <div className="w-full mb-2">
+          {footerState.image?.url && (
+            <div className="w-full mt-2">
               <div
-                ref={headerTrackRef}
+                ref={footerTrackRef}
                 className="relative w-full h-20 bg-zinc-50/70 dark:bg-zinc-950/40 rounded border border-dashed border-zinc-300 dark:border-zinc-700 flex items-center overflow-hidden"
               >
                 <div
-                  data-header-image-container="true"
+                  data-footer-image-container="true"
                   style={{
-                    left: `${headerState.image.offsetPercent ?? (headerState.image.align === 'left' ? 0 : headerState.image.align === 'right' ? 100 : 50)}%`,
+                    left: `${footerState.image.offsetPercent ?? (footerState.image.align === 'left' ? 0 : footerState.image.align === 'right' ? 100 : 50)}%`,
                     transform: 'translateX(-50%)',
-                    width: `${headerState.image.width || 180}px`,
+                    width: `${footerState.image.width || 140}px`,
                   }}
                   onMouseDown={handleDragStart}
                   onTouchStart={handleDragStart}
@@ -271,8 +416,8 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
                 >
                   <div className="relative w-full h-full overflow-hidden rounded-xs">
                     <img
-                      src={headerState.image.url}
-                      alt="Header Logo"
+                      src={footerState.image.url}
+                      alt="Footer Logo"
                       draggable={false}
                       style={{
                         transform: cropZoom !== 100 ? `scale(${cropZoom / 100})` : undefined,
@@ -319,7 +464,7 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
                   {/* Interactive Crop Zoom Controls */}
                   {isCroppingImage && (
                     <div
-                      data-header-crop="true"
+                      data-footer-crop="true"
                       onClick={(e) => e.stopPropagation()}
                       onMouseDown={(e) => e.stopPropagation()}
                       className="absolute -bottom-10 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-3 py-1 bg-zinc-900/95 text-white rounded-md shadow-xl text-xs backdrop-blur-xs whitespace-nowrap"
@@ -330,7 +475,7 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
                         onClick={() => {
                           setCropZoom((z) => {
                             const next = Math.max(100, z - 10);
-                            setHeaderState((prev) => ({
+                            setFooterState((prev) => ({
                               ...prev,
                               image: prev.image ? { ...prev.image, cropZoom: next } : null,
                             }));
@@ -347,7 +492,7 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
                         onClick={() => {
                           setCropZoom((z) => {
                             const next = Math.min(300, z + 10);
-                            setHeaderState((prev) => ({
+                            setFooterState((prev) => ({
                               ...prev,
                               image: prev.image ? { ...prev.image, cropZoom: next } : null,
                             }));
@@ -371,203 +516,71 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
               </div>
             </div>
           )}
-
-          {/* Direct Inline Header Text Input */}
-          <div className="w-full">
-            <input
-              ref={textInputRef}
-              type="text"
-              value={headerState.text || ''}
-              onChange={(e) => setHeaderState((prev) => ({ ...prev, text: e.target.value }))}
-              onKeyDown={(e) => {
-                if (e.key === 'Escape') {
-                  onToggleActive(false);
-                }
-              }}
-              placeholder="Header"
-              style={{ textAlign }}
-              className="w-full bg-transparent px-0 py-0.5 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 outline-none border-none font-normal"
-            />
-          </div>
-
-          {/* Google Docs Horizontal Divider Line */}
-          <div className="w-full border-b border-zinc-300 dark:border-zinc-700 my-1" />
-
-          {/* Google Docs Header Sub-Bar */}
-          <div className="w-full flex items-center justify-between py-1 text-xs select-none">
-            <span className="text-zinc-500 dark:text-zinc-400 font-normal">
-              Header
-            </span>
-
-            <div className="flex items-center gap-4">
-              {/* Different first page checkbox */}
-              <label className="flex items-center gap-1.5 cursor-pointer text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 select-none">
-                <input
-                  type="checkbox"
-                  checked={headerState.scope === 'first_page_only'}
-                  onChange={(e) =>
-                    setHeaderState((prev) => ({
-                      ...prev,
-                      scope: e.target.checked ? 'first_page_only' : 'every_page',
-                    }))
-                  }
-                  className="w-3.5 h-3.5 rounded border-zinc-300 dark:border-zinc-600 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                />
-                <span className="text-xs">Different first page</span>
-              </label>
-
-              {/* Options Dropdown */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button
-                    type="button"
-                    className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium inline-flex items-center gap-1 cursor-pointer select-none text-xs"
-                  >
-                    <span>Options</span>
-                    <svg className="w-2.5 h-2.5 fill-current" viewBox="0 0 10 6">
-                      <path d="M0 0l5 5 5-5z" />
-                    </svg>
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  align="end"
-                  className="w-56 p-1 shadow-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900"
-                >
-                  <div className="px-2.5 py-1 text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">
-                    Alignment
-                  </div>
-                  <DropdownMenuItem
-                    onClick={() => setHeaderState((prev) => ({ ...prev, textAlign: 'left' }))}
-                    className="flex items-center justify-between text-xs px-2.5 py-1.5 cursor-pointer rounded-md"
-                  >
-                    <div className="flex items-center gap-2">
-                      <AlignLeft className="w-3.5 h-3.5 text-zinc-500" />
-                      <span>Align left</span>
-                    </div>
-                    {textAlign === 'left' && <Check className="w-3.5 h-3.5 text-blue-600" />}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => setHeaderState((prev) => ({ ...prev, textAlign: 'center' }))}
-                    className="flex items-center justify-between text-xs px-2.5 py-1.5 cursor-pointer rounded-md"
-                  >
-                    <div className="flex items-center gap-2">
-                      <AlignCenter className="w-3.5 h-3.5 text-zinc-500" />
-                      <span>Align center</span>
-                    </div>
-                    {textAlign === 'center' && <Check className="w-3.5 h-3.5 text-blue-600" />}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => setHeaderState((prev) => ({ ...prev, textAlign: 'right' }))}
-                    className="flex items-center justify-between text-xs px-2.5 py-1.5 cursor-pointer rounded-md"
-                  >
-                    <div className="flex items-center gap-2">
-                      <AlignRight className="w-3.5 h-3.5 text-zinc-500" />
-                      <span>Align right</span>
-                    </div>
-                    {textAlign === 'right' && <Check className="w-3.5 h-3.5 text-blue-600" />}
-                  </DropdownMenuItem>
-
-                  <DropdownMenuSeparator />
-
-                  <DropdownMenuItem
-                    onClick={() => headerInputRef.current?.click()}
-                    className="flex items-center gap-2 text-xs px-2.5 py-1.5 cursor-pointer rounded-md"
-                  >
-                    <ImageIcon className="w-3.5 h-3.5 text-zinc-500" />
-                    <span>{headerState.image?.url ? 'Replace Logo' : 'Upload Logo'}</span>
-                  </DropdownMenuItem>
-                  {headerState.image?.url && (
-                    <DropdownMenuItem
-                      onClick={() => setHeaderState((prev) => ({ ...prev, image: null }))}
-                      className="flex items-center gap-2 text-xs px-2.5 py-1.5 text-red-600 dark:text-red-400 cursor-pointer rounded-md hover:bg-red-50 dark:hover:bg-red-950/40"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      <span>Remove Logo</span>
-                    </DropdownMenuItem>
-                  )}
-
-                  <DropdownMenuSeparator />
-
-                  <DropdownMenuItem
-                    onClick={() => {
-                      setHeaderState({
-                        image: null,
-                        text: '',
-                        textAlign: 'left',
-                        scope: 'every_page',
-                      });
-                      onToggleActive(false);
-                    }}
-                    className="flex items-center gap-2 text-xs px-2.5 py-1.5 text-red-600 dark:text-red-400 cursor-pointer rounded-md hover:bg-red-50 dark:hover:bg-red-950/40"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    <span>Remove Header</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
         </div>
       ) : (
         /* ── Idle State: Permanent 1-inch physical margin & Google Docs Hover Line ── */
-        <div className="flex flex-col gap-1 w-full justify-end">
-          {/* Header Logo preview if present */}
-          {headerState.image?.url && (
-            <div className="relative w-full h-16 flex items-center overflow-hidden">
-              <div
-                style={{
-                  left: `${headerState.image.offsetPercent ?? (headerState.image.align === 'left' ? 0 : headerState.image.align === 'right' ? 100 : 50)}%`,
-                  transform: 'translateX(-50%)',
-                  width: `${headerState.image.width || 180}px`,
-                }}
-                className="absolute top-1/2 -translate-y-1/2 select-none"
-              >
-                <div className="relative w-full h-full overflow-hidden">
-                  <img
-                    src={headerState.image.url}
-                    alt="Header Logo"
-                    draggable={false}
-                    style={{
-                      transform:
-                        headerState.image.cropZoom && headerState.image.cropZoom !== 100
-                          ? `scale(${headerState.image.cropZoom / 100})`
-                          : undefined,
-                      transformOrigin: 'center center',
-                    }}
-                    className="w-full max-h-16 object-contain opacity-90 group-hover/header:opacity-100 transition-opacity"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Header Text preview if present */}
-          {headerState.text?.trim() && (
-            <div
-              className={cn(
-                'text-xs text-zinc-600 dark:text-zinc-400 font-normal tracking-wide',
-                textAlign === 'left' && 'text-left',
-                textAlign === 'center' && 'text-center',
-                textAlign === 'right' && 'text-right'
-              )}
-            >
-              {headerState.text}
-            </div>
-          )}
-
+        <div className="flex flex-col gap-1 w-full justify-start">
           {/* Google Docs Hover Guide Cue (hidden when printing) */}
           {!isReadOnly && (
-            <div className="opacity-0 group-hover/header:opacity-100 transition-opacity border-b border-dashed border-zinc-300 dark:border-zinc-700 pb-1 text-[11px] text-zinc-400 flex items-center justify-between select-none print:hidden">
-              <span>Header · Double-click to edit</span>
-              {headerState.scope === 'first_page_only' && (
+            <div className="opacity-0 group-hover/footer:opacity-100 transition-opacity border-t border-dashed border-zinc-300 dark:border-zinc-700 pt-1 text-[11px] text-zinc-400 flex items-center justify-between select-none print:hidden">
+              <span>Footer · Double-click to edit</span>
+              {footerState.scope === 'first_page_only' && (
                 <span className="text-[10px] bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded">
                   Different first page
                 </span>
               )}
             </div>
           )}
+
+          {/* Footer Text and Page Number preview if present */}
+          {(footerState.text?.trim() || footerState.pageNumber) && (
+            <div
+              className={cn(
+                'text-xs text-zinc-600 dark:text-zinc-400 font-normal tracking-wide flex items-center gap-2',
+                textAlign === 'left' && 'justify-start text-left',
+                textAlign === 'center' && 'justify-center text-center',
+                textAlign === 'right' && 'justify-end text-right'
+              )}
+            >
+              {footerState.text?.trim() && <span>{footerState.text}</span>}
+              {footerState.pageNumber && (
+                <span className="font-mono text-zinc-500">1</span>
+              )}
+            </div>
+          )}
+
+          {/* Footer Logo preview if present */}
+          {footerState.image?.url && (
+            <div className="relative w-full h-16 flex items-center overflow-hidden mt-0.5">
+              <div
+                style={{
+                  left: `${footerState.image.offsetPercent ?? (footerState.image.align === 'left' ? 0 : footerState.image.align === 'right' ? 100 : 50)}%`,
+                  transform: 'translateX(-50%)',
+                  width: `${footerState.image.width || 140}px`,
+                }}
+                className="absolute top-1/2 -translate-y-1/2 select-none"
+              >
+                <div className="relative w-full h-full overflow-hidden">
+                  <img
+                    src={footerState.image.url}
+                    alt="Footer Logo"
+                    draggable={false}
+                    style={{
+                      transform:
+                        footerState.image.cropZoom && footerState.image.cropZoom !== 100
+                          ? `scale(${footerState.image.cropZoom / 100})`
+                          : undefined,
+                      transformOrigin: 'center center',
+                    }}
+                    className="w-full max-h-16 object-contain opacity-90 group-hover/footer:opacity-100 transition-opacity"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
-    </header>
+    </footer>
   );
 };
+
