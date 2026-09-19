@@ -207,8 +207,10 @@ export const DocumentFooterZone: React.FC<DocumentFooterZoneProps> = ({
         }
       }}
       className={cn(
-        'w-full min-h-[48px] select-none relative transition-all flex flex-col justify-start group/footer',
-        isActive ? 'mt-2' : 'cursor-pointer hover:bg-zinc-50/40 dark:hover:bg-zinc-800/20 rounded-xs',
+        'w-[calc(100%+192px)] -mx-[96px] px-[96px] min-h-[96px] select-none relative transition-all flex flex-col justify-start group/footer',
+        isActive
+          ? 'pt-1 pb-8 mt-2 bg-transparent'
+          : 'pt-1 pb-[48px] cursor-pointer hover:bg-zinc-50/60 dark:hover:bg-zinc-800/30 rounded-b-[2px]',
         className
       )}
     >

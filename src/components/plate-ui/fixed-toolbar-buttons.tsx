@@ -601,7 +601,7 @@ function ZoomToolbarButton({
         anchorRef={anchorRef}
         open={open}
         onClose={() => setOpen(false)}
-        className="w-36 p-1 z-50 shadow-lg"
+        className="w-36 p-1 shadow-lg"
       >
         <button
           type="button"
@@ -684,7 +684,7 @@ function FontFamilyToolbarButton({
         anchorRef={anchorRef}
         open={open}
         onClose={() => setOpen(false)}
-        className="w-48 max-h-72 overflow-y-auto p-1.5 z-50 shadow-lg"
+        className="w-48 max-h-72 overflow-y-auto p-1.5 shadow-lg"
       >
         <div className="px-2.5 py-1 text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
           Fonts
@@ -2984,7 +2984,7 @@ export function FixedToolbarButtons({
                 open={moreOpen}
                 onClose={() => setMoreOpen(false)}
                 align="end"
-                className="p-1 sm:p-1.5 bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 shadow-2xl rounded-xl flex items-center gap-0.5 sm:gap-1 z-50 max-w-[calc(100vw-24px)] overflow-x-auto no-scrollbar select-none"
+                className="p-1 sm:p-1.5 bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 shadow-2xl rounded-xl flex items-center gap-0.5 sm:gap-1 max-w-[calc(100vw-24px)] overflow-x-auto no-scrollbar select-none"
               >
                 {/* If Group 3 is hidden: render text formatting marks */}
                 {hiddenGroups.group3 && (

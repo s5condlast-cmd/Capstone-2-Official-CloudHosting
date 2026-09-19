@@ -87,7 +87,7 @@ export function FloatingToolbar({ editor, onAddComment }: FloatingToolbarProps) 
         transform: 'translateX(-50%)',
       }}
       className={cn(
-        'fixed z-50 flex items-center gap-0.5 rounded-lg border border-zinc-200 dark:border-zinc-800',
+        'fixed z-[120] flex items-center gap-0.5 rounded-lg border border-zinc-200 dark:border-zinc-800',
         'bg-white/95 dark:bg-zinc-900/95 p-1 shadow-lg backdrop-blur-sm',
         'animate-in fade-in-50 zoom-in-95 duration-100 print:hidden'
       )}

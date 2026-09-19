@@ -228,8 +228,10 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
         }
       }}
       className={cn(
-        'w-full min-h-[48px] select-none relative transition-all flex flex-col justify-end group/header',
-        isActive ? 'mb-2' : 'cursor-pointer hover:bg-zinc-50/40 dark:hover:bg-zinc-800/20 rounded-xs',
+        'w-[calc(100%+192px)] -mx-[96px] px-[96px] min-h-[96px] select-none relative transition-all flex flex-col justify-end group/header',
+        isActive
+          ? 'pt-8 pb-1 mb-2 bg-transparent'
+          : 'pt-[48px] pb-1 cursor-pointer hover:bg-zinc-50/60 dark:hover:bg-zinc-800/30 rounded-t-[2px]',
         className
       )}
     >

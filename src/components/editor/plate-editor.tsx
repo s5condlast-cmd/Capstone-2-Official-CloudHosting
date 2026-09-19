@@ -204,7 +204,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
 
     // View mode, fullscreen, zoom, outline, ruler, and comments state
     const [internalMode, setInternalMode] = useState<EditorMode>('editing');
-    const [isFullscreen, setIsFullscreen] = useState(false);
+    const [isFullscreen, setIsFullscreen] = useState(true);
     const [zoomLevel, setZoomLevel] = useState(100);
     const [internalComments, setInternalComments] = useState<EditorComment[]>([]);
     const [showZoomIndicator, setShowZoomIndicator] = useState(false);
@@ -291,6 +291,10 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
 
       const handleKeyDown = (e: KeyboardEvent) => {
         if (e.key === 'Escape') {
+          if (activeHeaderFooter) {
+            // Handled by header/footer escape listener, preserve fullscreen
+            return;
+          }
           setIsFullscreen(false);
         }
       };
@@ -813,7 +817,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                 {/* ─── Authentic 8.5" × 11" US Letter Paper Sheet ─────────────── */}
                 <div
                   className={cn(
-                    'plate-paper-sheet w-[816px] max-w-[816px] min-h-[1056px] bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 border border-zinc-200/90 dark:border-zinc-800/90 shadow-[0_1px_4px_rgba(0,0,0,0.12),0_8px_30px_rgba(0,0,0,0.15)] dark:shadow-[0_8px_36px_rgba(0,0,0,0.7)] rounded-[2px] px-[96px] pt-[48px] pb-[48px] flex flex-col relative transition-all print:bg-white print:text-black print:border-none print:shadow-none',
+                    'plate-paper-sheet w-[816px] max-w-[816px] min-h-[1056px] bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 border border-zinc-200/90 dark:border-zinc-800/90 shadow-[0_1px_4px_rgba(0,0,0,0.12),0_8px_30px_rgba(0,0,0,0.15)] dark:shadow-[0_8px_36px_rgba(0,0,0,0.7)] rounded-[2px] px-[96px] pt-0 pb-0 flex flex-col relative transition-all print:bg-white print:text-black print:border-none print:shadow-none',
                     activeHeaderFooter && 'ring-1 ring-primary/40 shadow-md'
                   )}
                 >

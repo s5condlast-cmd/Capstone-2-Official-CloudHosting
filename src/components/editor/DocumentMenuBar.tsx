@@ -211,7 +211,7 @@ export function DocumentMenuBar({
               File
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-56 shadow-lg z-50">
+          <DropdownMenuContent align="start" className="w-56 shadow-lg z-[150]">
             {onRename && !isLocked && (
               <DropdownMenuItem onClick={onRename} className="cursor-pointer gap-2">
                 <Pencil className="w-4 h-4 text-zinc-500" />
@@ -275,7 +275,7 @@ export function DocumentMenuBar({
               Edit
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-56 shadow-lg z-50">
+          <DropdownMenuContent align="start" className="w-56 shadow-lg z-[150]">
             <DropdownMenuItem
               onClick={() => editor?.undo?.()}
               disabled={isViewing || isLocked}
@@ -342,7 +342,7 @@ export function DocumentMenuBar({
               View
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-56 shadow-lg z-50">
+          <DropdownMenuContent align="start" className="w-56 shadow-lg z-[150]">
             <DropdownMenuSub>
               <DropdownMenuSubTrigger className="cursor-pointer gap-2">
                 <Eye className="w-4 h-4 text-zinc-500" />
@@ -447,7 +447,7 @@ export function DocumentMenuBar({
               Insert
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-56 shadow-lg z-50">
+          <DropdownMenuContent align="start" className="w-56 shadow-lg z-[150]">
             <DropdownMenuItem
               onClick={() => onOpenImagePicker?.()}
               disabled={isViewing || isLocked}
@@ -539,7 +539,7 @@ export function DocumentMenuBar({
               Format
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-56 shadow-lg z-50">
+          <DropdownMenuContent align="start" className="w-56 shadow-lg z-[150]">
             <DropdownMenuSub>
               <DropdownMenuSubTrigger className="cursor-pointer gap-2">
                 <Bold className="w-4 h-4 text-zinc-500" />
@@ -704,7 +704,7 @@ export function DocumentMenuBar({
               Tools
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-56 shadow-lg z-50">
+          <DropdownMenuContent align="start" className="w-56 shadow-lg z-[150]">
             <DropdownMenuItem onClick={() => setShowWordCountModal(true)} className="cursor-pointer gap-2">
               <FileText className="w-4 h-4 text-zinc-500" />
               <span className="flex-1">Word count</span>

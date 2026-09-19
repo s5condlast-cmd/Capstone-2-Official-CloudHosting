@@ -107,7 +107,7 @@ export function CommentsDrawer({
 
   return (
     <div
-      className="fixed inset-y-0 right-0 z-50 w-full sm:w-96 bg-white dark:bg-zinc-900 border-l border-zinc-200 dark:border-zinc-800 shadow-2xl flex flex-col animate-in slide-in-from-right duration-200"
+      className="fixed inset-y-0 right-0 z-[130] w-full sm:w-96 bg-white dark:bg-zinc-900 border-l border-zinc-200 dark:border-zinc-800 shadow-2xl flex flex-col animate-in slide-in-from-right duration-200"
       role="dialog"
       aria-label="Document comments"
     >

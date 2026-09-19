@@ -550,6 +550,41 @@ describe('Plate editor runtime wiring', () => {
     );
     assert.ok(blob.size > 2_000, 'Serialized DOCX with rich formatted header and footer should be valid');
   });
+
+  it('enforces full-margin header/footer box containers, default fullscreen, and elevated z-index popovers/menus', async () => {
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+    const editorSrc = fs.readFileSync(path.resolve('src/components/editor/plate-editor.tsx'), 'utf8');
+    const headerSrc = fs.readFileSync(path.resolve('src/components/editor/DocumentHeaderZone.tsx'), 'utf8');
+    const footerSrc = fs.readFileSync(path.resolve('src/components/editor/DocumentFooterZone.tsx'), 'utf8');
+    const dropdownSrc = fs.readFileSync(path.resolve('components/ui/dropdown-menu.tsx'), 'utf8');
+    const dialogSrc = fs.readFileSync(path.resolve('components/ui/dialog.tsx'), 'utf8');
+    const drawerSrc = fs.readFileSync(path.resolve('src/components/editor/CommentsDrawer.tsx'), 'utf8');
+    const floatingToolbarSrc = fs.readFileSync(path.resolve('src/components/plate-ui/floating-toolbar.tsx'), 'utf8');
+    const fixedToolbarSrc = fs.readFileSync(path.resolve('src/components/plate-ui/fixed-toolbar-buttons.tsx'), 'utf8');
+
+    // 1. Full-margin box containers for Header & Footer (span the entire 816px paper sheet width and 96px margins)
+    assert.ok(headerSrc.includes('w-[calc(100%+192px)] -mx-[96px] px-[96px] min-h-[96px]'), 'Header container must span entire top 96px margin box');
+    assert.ok(footerSrc.includes('w-[calc(100%+192px)] -mx-[96px] px-[96px] min-h-[96px]'), 'Footer container must span entire bottom 96px margin box');
+    assert.ok(editorSrc.includes('plate-paper-sheet w-[816px] max-w-[816px] min-h-[1056px]') && editorSrc.includes('pt-0 pb-0'), 'Paper sheet must have pt-0 pb-0 so header and footer occupy the margin areas');
+
+    // 2. Default Fullscreen state
+    assert.ok(editorSrc.includes('const [isFullscreen, setIsFullscreen] = useState(true);'), 'Editor must initialize in fullscreen by default');
+
+    // 3. Escape key preserves fullscreen when header/footer is actively being edited
+    assert.ok(editorSrc.includes('if (activeHeaderFooter)'), 'Escape handler must check activeHeaderFooter before toggling fullscreen');
+
+    // 4. Elevated dropdowns, dialogs, drawers, and floating toolbars for fullscreen z-index compatibility
+    assert.ok(dropdownSrc.includes('z-[150]'), 'DropdownMenu positioner must use z-[150] to render above fullscreen container');
+    assert.ok(dialogSrc.includes('z-[150]'), 'Dialog overlay and content must use z-[150] to render above fullscreen container');
+    assert.ok(drawerSrc.includes('z-[130]'), 'Comments drawer must use z-[130] to render above fullscreen container');
+    assert.ok(floatingToolbarSrc.includes('z-[120]'), 'Floating toolbar must use z-[120] to render above fullscreen container');
+
+    // 5. Dedicated Fullscreen toggle button on fixed toolbar with aria-label
+    assert.ok(fixedToolbarSrc.includes('Maximize2'), 'Fixed toolbar must have Maximize2 icon for entering fullscreen');
+    assert.ok(fixedToolbarSrc.includes('Minimize2'), 'Fixed toolbar must have Minimize2 icon for exiting fullscreen');
+    assert.ok(fixedToolbarSrc.includes('tooltip={isFullscreen ? \'Exit full screen (Esc)\' : \'Enter full screen\'}'), 'Toolbar button must have fullscreen tooltip');
+  });
 });
 
 
