@@ -324,6 +324,38 @@ export function StudentDocumentEditor() {
   const titleRef = useRef(title);
   titleRef.current = title;
 
+  // ── Conflict resolution handler ──────────────────────────────────────────
+  const handleConflictResolved = useCallback(
+    (type: 'keep_local' | 'accept_cloud' | 'fork_local', newDraftId?: string) => {
+      if (type === 'accept_cloud' && conflictRemote) {
+        setDraft(prev => prev ? {
+          ...prev,
+          content: conflictRemote.content,
+          headerFooter: conflictRemote.headerFooter ?? prev.headerFooter,
+          revision: conflictRemote.revision,
+          title: conflictRemote.title,
+          wordCount: conflictRemote.wordCount,
+        } : prev);
+        setTitle(conflictRemote.title);
+        setWordCount(conflictRemote.wordCount);
+        setEditorEpoch(v => v + 1);
+      } else if (type === 'keep_local' && conflictRemote) {
+        setDraft(prev => prev ? {
+          ...prev,
+          revision: conflictRemote.revision + 1,
+        } : prev);
+      } else if (type === 'fork_local' && newDraftId) {
+        navigate(`/student/editor?draft=${newDraftId}`);
+      }
+
+      setShowConflictBanner(false);
+      setConflictLocal(null);
+      setConflictRemote(null);
+      setSyncStatus('saved');
+    },
+    [conflictRemote, navigate]
+  );
+
   // ── Editor content change ────────────────────────────────────────────────
   const handleEditorChange = useCallback(
     (content: object[], wc: number) => {
@@ -576,129 +608,162 @@ export function StudentDocumentEditor() {
           exitFullscreenRef.current = onToggleFullscreen ? () => { if (isFullscreen) onToggleFullscreen(); } : null;
 
           return (
-            <div className="flex items-center justify-between gap-4 px-3 pt-3 sm:pt-3.5 pb-2 sm:pb-2.5 bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80 shrink-0 select-none">
-              {/* Left: Document Return Button + 2-Row Stack (Title on top, MenuBar below) */}
-              <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                {/* Document Return Button (Lucide Black & White, No Shadow, Spans Both Lines) */}
-                <button
-                  type="button"
-                  onClick={() => void handleSafeNavigate(getReturnRoute())}
-                  className="group relative flex items-center justify-center p-0.5 rounded-lg text-zinc-800 dark:text-zinc-200 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-colors shrink-0 cursor-pointer shadow-none border-0 bg-transparent"
-                  title={draft?.templateName ? `Back to ${draft.templateName} in Repository` : "Back to Documents"}
-                  aria-label={draft?.templateName ? `Back to ${draft.templateName} in Repository` : "Back to Documents"}
-                >
-                <div className="relative flex items-center justify-center w-10 h-[46px] transition-transform group-hover:scale-105">
-                  <FileText size={46} className="w-10 h-[46px] text-zinc-800 dark:text-zinc-200 group-hover:opacity-0 transition-opacity" />
-                  <ArrowLeft size={22} className="w-5.5 h-5.5 text-zinc-900 dark:text-white absolute inset-0 m-auto opacity-0 group-hover:opacity-100 transition-opacity stroke-[2.2]" />
-                </div>
-              </button>
+            <div className="flex flex-col shrink-0 select-none">
+              <div className="flex items-center justify-between gap-4 px-3 pt-3 sm:pt-3.5 pb-2 sm:pb-2.5 bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80 shrink-0">
+                {/* Left: Document Return Button + 2-Row Stack (Title on top, MenuBar below) */}
+                <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                  {/* Document Return Button (Lucide Black & White, No Shadow, Spans Both Lines) */}
+                  <button
+                    type="button"
+                    onClick={() => void handleSafeNavigate(getReturnRoute())}
+                    className="group relative flex items-center justify-center p-0.5 rounded-lg text-zinc-800 dark:text-zinc-200 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-colors shrink-0 cursor-pointer shadow-none border-0 bg-transparent"
+                    title={draft?.templateName ? `Back to ${draft.templateName} in Repository` : "Back to Documents"}
+                    aria-label={draft?.templateName ? `Back to ${draft.templateName} in Repository` : "Back to Documents"}
+                  >
+                  <div className="relative flex items-center justify-center w-10 h-[46px] transition-transform group-hover:scale-105">
+                    <FileText size={46} className="w-10 h-[46px] text-zinc-800 dark:text-zinc-200 group-hover:opacity-0 transition-opacity" />
+                    <ArrowLeft size={22} className="w-5.5 h-5.5 text-zinc-900 dark:text-white absolute inset-0 m-auto opacity-0 group-hover:opacity-100 transition-opacity stroke-[2.2]" />
+                  </div>
+                </button>
 
-              {/* Stacked 2-row block directly beside the document icon */}
-              <div className="flex flex-col justify-center min-w-0 flex-1">
-                {/* Row 1: Document Title + Telemetry */}
-                <div className="flex items-center gap-2.5 min-w-0">
-                  {titleEditing ? (
-                    <input
-                      autoFocus
-                      value={title}
-                      onChange={e => handleTitleChange(e.target.value)}
-                      onBlur={() => setTitleEditing(false)}
-                      onKeyDown={e => { if (e.key === 'Enter') setTitleEditing(false); }}
-                      className="text-base font-medium leading-tight bg-transparent border-b border-zinc-400 dark:border-zinc-500 focus:outline-none text-zinc-600 dark:text-zinc-300 py-0.5 px-0.5 min-w-[180px] max-w-[480px] shrink-0"
-                      maxLength={120}
-                    />
-                  ) : (
+                {/* Stacked 2-row block directly beside the document icon */}
+                <div className="flex flex-col justify-center min-w-0 flex-1">
+                  {/* Row 1: Document Title + Telemetry */}
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    {titleEditing ? (
+                      <input
+                        autoFocus
+                        value={title}
+                        onChange={e => handleTitleChange(e.target.value)}
+                        onBlur={() => setTitleEditing(false)}
+                        onKeyDown={e => { if (e.key === 'Enter') setTitleEditing(false); }}
+                        className="text-base font-medium leading-tight bg-transparent border-b border-zinc-400 dark:border-zinc-500 focus:outline-none text-zinc-600 dark:text-zinc-300 py-0.5 px-0.5 min-w-[180px] max-w-[480px] shrink-0"
+                        maxLength={120}
+                      />
+                    ) : (
+                      <button
+                        onClick={() => !isLocked && setTitleEditing(true)}
+                        className={cn(
+                          'text-base font-medium leading-tight text-zinc-500 dark:text-zinc-400 text-left truncate min-w-[140px] max-w-[480px] shrink-0 transition-colors',
+                          !isLocked && 'hover:text-zinc-800 dark:hover:text-zinc-200 cursor-text hover:underline decoration-dashed underline-offset-4'
+                        )}
+                        title={isLocked ? undefined : 'Click to rename'}
+                      >
+                        {title || 'Untitled Document'}
+                      </button>
+                    )}
+
+                    <TelemetryStrip syncStatus={syncStatus} wordCount={wordCount} isLocked={isLocked} />
+                  </div>
+
+                  {/* Row 2: File Edit View Insert Format Tools sitting directly beneath Title */}
+                  <div className="-ml-2 mt-0.5 flex items-center min-w-0">
+                    {menuBar}
+                  </div>
+                </div>
+              </div>
+
+              {/* Right: Actions (History, Export, Submit) */}
+              <div className="flex items-center gap-2 shrink-0 ml-4">
+
+                {!isLocked && (
+                  <button
+                    onClick={() => setShowHistory(true)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                    title="Version history (Ctrl+Alt+H)"
+                  >
+                    <History className="w-4 h-4 text-zinc-500" />
+                    <span className="hidden sm:inline">History</span>
+                  </button>
+                )}
+
+                {/* Consolidated Export Dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
                     <button
-                      onClick={() => !isLocked && setTitleEditing(true)}
-                      className={cn(
-                        'text-base font-medium leading-tight text-zinc-500 dark:text-zinc-400 text-left truncate min-w-[140px] max-w-[480px] shrink-0 transition-colors',
-                        !isLocked && 'hover:text-zinc-800 dark:hover:text-zinc-200 cursor-text hover:underline decoration-dashed underline-offset-4'
-                      )}
-                      title={isLocked ? undefined : 'Click to rename'}
+                      type="button"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
                     >
-                      {title || 'Untitled Document'}
+                      <Download className="w-4 h-4 text-zinc-500" />
+                      <span>Export</span>
+                      <ChevronDown className="w-3.5 h-3.5 opacity-60" />
                     </button>
-                  )}
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56 shadow-lg z-50">
+                    <DropdownMenuItem onClick={handleExportDocx} className="cursor-pointer gap-2 py-2">
+                      <FileText className="w-4 h-4 text-blue-600" />
+                      <div className="flex flex-col">
+                        <span className="font-medium text-xs">Microsoft Word (.docx)</span>
+                        <span className="text-[10px] text-zinc-400">Download editable Word file</span>
+                      </div>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleExportPdf} className="cursor-pointer gap-2 py-2">
+                      <Download className="w-4 h-4 text-red-600" />
+                      <div className="flex flex-col">
+                        <span className="font-medium text-xs">PDF Document (.pdf)</span>
+                        <span className="text-[10px] text-zinc-400">Download printable PDF</span>
+                      </div>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
-                  <TelemetryStrip syncStatus={syncStatus} wordCount={wordCount} isLocked={isLocked} />
-                </div>
-
-                {/* Row 2: File Edit View Insert Format Tools sitting directly beneath Title */}
-                <div className="-ml-2 mt-0.5 flex items-center min-w-0">
-                  {menuBar}
-                </div>
+                {isLocked ? (
+                  <button
+                    onClick={handleDuplicate}
+                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-sm font-medium bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:opacity-90 transition-opacity shadow-xs cursor-pointer"
+                  >
+                    <Copy className="w-4 h-4" />
+                    <span>Duplicate as Draft</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => void handleSubmit()}
+                    disabled={submitting}
+                    className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-semibold bg-white hover:bg-zinc-100 active:bg-zinc-200 text-zinc-900 dark:text-zinc-900 border border-zinc-200/90 dark:border-zinc-700 shadow-sm transition-all disabled:opacity-50 cursor-pointer"
+                  >
+                    {submitting ? (
+                      <Loader2 className="w-4 h-4 animate-spin text-zinc-700" />
+                    ) : (
+                      <Send className="w-4 h-4 text-zinc-900 stroke-[2.2]" />
+                    )}
+                    <span>Submit</span>
+                  </button>
+                )}
               </div>
             </div>
 
-            {/* Right: Actions (History, Export, Submit) */}
-            <div className="flex items-center gap-2 shrink-0 ml-4">
+            {/* Conflict resolution banner */}
+            {showConflictBanner && conflictLocal && conflictRemote && (
+              <div className="px-4 py-2.5 bg-red-50/95 dark:bg-red-950/50 border-b border-red-200 dark:border-red-900 z-30 shrink-0">
+                <ConflictBanner
+                  local={conflictLocal}
+                  remote={conflictRemote}
+                  storage={storageRef.current}
+                  draftId={draft?.id ?? ''}
+                  onResolved={handleConflictResolved}
+                />
+              </div>
+            )}
 
-              {!isLocked && (
+            {/* Multi-tab conflict warning */}
+            {showMultiTabWarning && (
+              <div className="flex items-center justify-between gap-3 px-4 py-2 bg-amber-50 dark:bg-amber-950/40 border-b border-amber-200 dark:border-amber-900 text-amber-800 dark:text-amber-300 text-xs z-30 shrink-0">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                  <span>This document is currently open in another browser tab. Simultaneous editing in multiple tabs may cause conflicting revisions.</span>
+                </div>
                 <button
-                  onClick={() => setShowHistory(true)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-                  title="Version history (Ctrl+Alt+H)"
+                  type="button"
+                  onClick={() => setShowMultiTabWarning(false)}
+                  className="px-2.5 py-1 rounded-md text-xs font-medium bg-amber-100 hover:bg-amber-200 dark:bg-amber-900/60 dark:hover:bg-amber-800/80 transition-colors cursor-pointer"
                 >
-                  <History className="w-4 h-4 text-zinc-500" />
-                  <span className="hidden sm:inline">History</span>
+                  Dismiss
                 </button>
-              )}
-
-              {/* Consolidated Export Dropdown */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button
-                    type="button"
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-                  >
-                    <Download className="w-4 h-4 text-zinc-500" />
-                    <span>Export</span>
-                    <ChevronDown className="w-3.5 h-3.5 opacity-60" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 shadow-lg z-50">
-                  <DropdownMenuItem onClick={handleExportDocx} className="cursor-pointer gap-2 py-2">
-                    <FileText className="w-4 h-4 text-blue-600" />
-                    <div className="flex flex-col">
-                      <span className="font-medium text-xs">Microsoft Word (.docx)</span>
-                      <span className="text-[10px] text-zinc-400">Download editable Word file</span>
-                    </div>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleExportPdf} className="cursor-pointer gap-2 py-2">
-                    <Download className="w-4 h-4 text-red-600" />
-                    <div className="flex flex-col">
-                      <span className="font-medium text-xs">PDF Document (.pdf)</span>
-                      <span className="text-[10px] text-zinc-400">Download printable PDF</span>
-                    </div>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              {isLocked ? (
-                <button
-                  onClick={handleDuplicate}
-                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-sm font-medium bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:opacity-90 transition-opacity shadow-xs cursor-pointer"
-                >
-                  <Copy className="w-4 h-4" />
-                  <span>Duplicate as Draft</span>
-                </button>
-              ) : (
-                <button
-                  onClick={() => void handleSubmit()}
-                  disabled={submitting}
-                  className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-semibold bg-white hover:bg-zinc-100 active:bg-zinc-200 text-zinc-900 dark:text-zinc-900 border border-zinc-200/90 dark:border-zinc-700 shadow-sm transition-all disabled:opacity-50 cursor-pointer"
-                >
-                  {submitting ? (
-                    <Loader2 className="w-4 h-4 animate-spin text-zinc-700" />
-                  ) : (
-                    <Send className="w-4 h-4 text-zinc-900 stroke-[2.2]" />
-                  )}
-                  <span>Submit</span>
-                </button>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         );
+
       }}
         initialContent={draft?.content ?? [{ type: 'p', children: [{ text: '' }] }]}
         headerFooter={draft?.headerFooter}
@@ -802,7 +867,7 @@ function ConflictBanner({
   local: DraftState;
   remote: DraftState;
   storage: DocumentHistoryStorage | null;
-  onResolved: () => void;
+  onResolved: (type: 'keep_local' | 'accept_cloud' | 'fork_local', newDraftId?: string) => void;
   draftId: string;
 }) {
   const [resolving, setResolving] = useState(false);
@@ -827,7 +892,7 @@ function ConflictBanner({
           type === 'accept_cloud' ? 'Cloud version accepted.' :
           'Forked as a new offline copy.'
         );
-        onResolved();
+        onResolved(type, newId);
       } catch (e) {
         toast.error(e instanceof Error ? e.message : 'Resolution failed.');
       } finally {
