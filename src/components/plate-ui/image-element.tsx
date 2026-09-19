@@ -21,7 +21,7 @@ export function ImageElement({
   const [isCropping, setIsCropping] = React.useState(false);
 
   const align = (element as any)?.align || 'center';
-  const wrap: ImageWrapMode = (element as any)?.wrap || 'break';
+  const wrap: ImageWrapMode = (element as any)?.wrap || 'inline';
   const nodeWidth = Number((element as any)?.width) || 420;
   const cropZoom = Number((element as any)?.cropZoom) || 100;
 
@@ -131,9 +131,9 @@ export function ImageElement({
       const deltaX = moveEvent.clientX - startX;
       let newW = startWidth;
       if (direction === 'e' || direction === 'se') {
-        newW = Math.max(120, Math.min(800, startWidth + deltaX));
+        newW = Math.max(120, Math.min(624, startWidth + deltaX));
       } else {
-        newW = Math.max(120, Math.min(800, startWidth - deltaX));
+        newW = Math.max(120, Math.min(624, startWidth - deltaX));
       }
       setWidth(Math.round(newW));
     };
@@ -174,10 +174,13 @@ export function ImageElement({
         as="div"
         element={element}
         className={cn(
-          'relative my-4 w-full flex',
-          align === 'left' && 'justify-start',
-          align === 'center' && 'justify-center',
-          align === 'right' && 'justify-end',
+          'relative my-4',
+          wrap === 'inline'
+            ? 'inline-flex align-baseline mr-3 mb-1 w-auto max-w-full'
+            : 'w-full flex',
+          wrap !== 'inline' && align === 'left' && 'justify-start',
+          wrap !== 'inline' && align === 'center' && 'justify-center',
+          wrap !== 'inline' && align === 'right' && 'justify-end',
           wrap === 'wrap' && align === 'left' && 'float-left mr-4 clear-none',
           wrap === 'wrap' && align === 'right' && 'float-right ml-4 clear-none',
           wrap === 'behind' && 'absolute opacity-75 pointer-events-auto',
@@ -191,7 +194,7 @@ export function ImageElement({
           contentEditable={false}
           onClick={handleClick}
           onDoubleClick={handleDoubleClick}
-          style={{ width: `${width}px` }}
+          style={{ width: `${Math.min(624, width)}px`, maxWidth: '100%' }}
           className={cn(
             'relative group/image inline-block select-none cursor-pointer rounded-lg transition-shadow',
             isFocused && 'ring-2 ring-blue-500'

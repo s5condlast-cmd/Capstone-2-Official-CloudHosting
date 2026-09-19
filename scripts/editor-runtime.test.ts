@@ -475,33 +475,46 @@ describe('Plate editor runtime wiring', () => {
     assert.ok(!toolbarSrc.includes('<SpeechToTextToolbarButton editor={editor}'), 'SpeechToText must not be rendered in letter template toolbar');
   });
 
-  it('enforces edge-to-edge divider line, borderless 750px resizable images, and rich text formatting', async () => {
+  it('enforces edge-to-edge dual divider lines, 624px printable bounded resizable images, and single-click side-by-side layout', async () => {
     const fs = await import('node:fs');
     const path = await import('node:path');
     const headerSrc = fs.readFileSync(path.resolve('src/components/editor/DocumentHeaderZone.tsx'), 'utf8');
     const footerSrc = fs.readFileSync(path.resolve('src/components/editor/DocumentFooterZone.tsx'), 'utf8');
+    const imageElSrc = fs.readFileSync(path.resolve('src/components/plate-ui/image-element.tsx'), 'utf8');
     const toolbarSrc = fs.readFileSync(path.resolve('src/components/plate-ui/fixed-toolbar-buttons.tsx'), 'utf8');
 
-    // 1. Edge-to-edge full-width divider line (spans the full 816px paper sheet across 96px padding)
-    assert.ok(headerSrc.includes('-mx-[96px] w-[calc(100%+192px)]'), 'Header must span edge-to-edge across paper margins');
-    assert.ok(footerSrc.includes('-mx-[96px] w-[calc(100%+192px)]'), 'Footer must span edge-to-edge across paper margins');
+    // 1. Dual edge-to-edge full-width divider lines (spans the full 816px paper sheet across 96px padding)
+    const headerLinesCount = (headerSrc.match(/-mx-\[96px\] w-\[calc\(100%\+192px\)\]/g) || []).length;
+    const footerLinesCount = (footerSrc.match(/-mx-\[96px\] w-\[calc\(100%\+192px\)\]/g) || []).length;
+    assert.ok(headerLinesCount >= 2, 'Header must have dual divider lines framing the sub-bar');
+    assert.ok(footerLinesCount >= 2, 'Footer must have dual divider lines framing the sub-bar');
 
-    // 2. Borderless free image sizing up to 750px without container dashed box or h-20 constraint
+    // 2. Single-click activation on header and footer
+    assert.ok(headerSrc.includes('onToggleActive(true)'), 'Header must activate on single click');
+    assert.ok(footerSrc.includes('onToggleActive(true)'), 'Footer must activate on single click');
+
+    // 3. Strict 624px printable bounding without container dashed box
     assert.ok(!headerSrc.includes('border border-dashed border-zinc-300'), 'Header image must NOT have dashed container box');
     assert.ok(!footerSrc.includes('border border-dashed border-zinc-300'), 'Footer image must NOT have dashed container box');
     assert.ok(!headerSrc.includes('max-h-18'), 'Header logo must NOT be trapped in max-h-18');
-    assert.ok(headerSrc.includes('Math.min(750'), 'Header logo must allow resizing up to 750px');
-    assert.ok(footerSrc.includes('Math.min(750'), 'Footer logo must allow resizing up to 750px');
+    assert.ok(headerSrc.includes('Math.min(624'), 'Header logo must be bounded to 624px printable page track');
+    assert.ok(footerSrc.includes('Math.min(624'), 'Footer logo must be bounded to 624px printable page track');
+    assert.ok(imageElSrc.includes('Math.min(624'), 'Body image must be bounded to 624px printable page track');
 
-    // 3. Clean typing area (no placeholder="Header" or placeholder="Footer" text)
+    // 4. Side-by-side text & image layout (cursor right next to image)
+    assert.ok(headerSrc.includes('flex items-center gap-3 relative py-0.5 min-h-[36px]'), 'Header must have side-by-side inline row');
+    assert.ok(footerSrc.includes('flex items-center gap-3 relative py-0.5 min-h-[36px]'), 'Footer must have side-by-side inline row');
+    assert.ok(imageElSrc.includes("wrap === 'inline'"), 'Body image must support inline wrap next to text');
+
+    // 5. Clean typing area (no placeholder="Header" or placeholder="Footer" text)
     assert.ok(!headerSrc.includes('placeholder="Header'), 'Header text input must be clean without placeholder="Header"');
     assert.ok(!footerSrc.includes('placeholder="Footer'), 'Footer text input must be clean without placeholder="Footer"');
 
-    // 4. Toolbar activeHeaderFooter integration
+    // 6. Toolbar activeHeaderFooter integration
     assert.ok(toolbarSrc.includes('activeHeaderFooter'), 'FixedToolbarButtons must support activeHeaderFooter');
     assert.ok(toolbarSrc.includes('onFormatHeaderFooter'), 'FixedToolbarButtons must support onFormatHeaderFooter');
 
-    // 5. DOCX serializer rich header/footer text formatting
+    // 7. DOCX serializer rich header/footer text formatting
     const tinyPng = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
     const blob = await serializeToDocx(
       [{ type: 'p', children: [{ text: 'Body text' }] }] as any,

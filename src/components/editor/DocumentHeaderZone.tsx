@@ -202,8 +202,8 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
           newWidth = initialWidth - deltaX;
         }
 
-        // Clamp between 40px and 750px (allows stretching big or shrinking small)
-        const clamped = Math.max(40, Math.min(750, Math.round(newWidth)));
+        // Clamp between 40px and 624px (strictly bounded within 1-inch printable margins)
+        const clamped = Math.max(40, Math.min(624, Math.round(newWidth)));
         setResizeLiveWidth(clamped);
 
         setHeaderState((prev) => ({
@@ -236,8 +236,8 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
   return (
     <header
       data-document-header="true"
-      onDoubleClick={() => {
-        if (!isReadOnly) {
+      onClick={() => {
+        if (!isReadOnly && !isActive) {
           onToggleActive(true);
         }
       }}
@@ -250,152 +250,141 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
       {/* ── Active State: Authentic Google Docs Header ── */}
       {isActive ? (
         <div className="w-full flex flex-col">
-          {/* Borderless Free Logo Track (when image exists - no box, no dashed border) */}
-          {headerState.image?.url && (
-            <div className="w-full mb-2">
+          {/* Side-by-Side Image and Header Text Input (Inline with typing cursor right next to image) */}
+          <div className="w-full flex items-center gap-3 relative py-0.5 min-h-[36px]">
+            {headerState.image?.url && (
               <div
-                ref={headerTrackRef}
-                className="relative w-full py-1 min-h-[44px] flex items-center select-none"
+                data-header-image-container="true"
+                style={{
+                  width: `${Math.min(headerState.image.width || 140, 624)}px`,
+                }}
+                className={cn(
+                  'relative shrink-0 select-none transition-shadow',
+                  selectedImage && 'ring-2 ring-blue-500 rounded-xs'
+                )}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedImage(true);
+                }}
+                onDoubleClick={(e) => {
+                  e.stopPropagation();
+                  setIsCroppingImage(true);
+                }}
               >
-                <div
-                  data-header-image-container="true"
-                  style={{
-                    left: `${headerState.image.offsetPercent ?? (headerState.image.align === 'left' ? 0 : headerState.image.align === 'right' ? 100 : 50)}%`,
-                    transform: 'translateX(-50%)',
-                    width: `${headerState.image.width || 180}px`,
-                  }}
-                  onMouseDown={handleDragStart}
-                  onTouchStart={handleDragStart}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedImage(true);
-                  }}
-                  onDoubleClick={(e) => {
-                    e.stopPropagation();
-                    setIsCroppingImage(true);
-                  }}
-                  className={cn(
-                    'relative cursor-grab active:cursor-grabbing select-none transition-shadow',
-                    selectedImage && 'ring-2 ring-blue-500 rounded-xs'
-                  )}
-                >
-                  <div className="relative w-full overflow-hidden rounded-xs">
-                    <img
-                      src={headerState.image.url}
-                      alt="Header Logo"
-                      draggable={false}
-                      style={{
-                        width: '100%',
-                        height: 'auto',
-                        transform: cropZoom !== 100 ? `scale(${cropZoom / 100})` : undefined,
-                        transformOrigin: 'center center',
-                      }}
-                      className="w-full object-contain pointer-events-none select-none block"
-                    />
-                  </div>
-
-                  {/* Resize & Move Tooltip */}
-                  {selectedImage && !isDraggingImage && !isResizingImage && !isCroppingImage && (
-                    <div className="absolute -top-7 left-1/2 -translate-x-1/2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-zinc-800/90 text-zinc-100 text-[10px] font-medium shadow-md whitespace-nowrap pointer-events-none z-40 backdrop-blur-xs">
-                      <Move className="w-2.5 h-2.5" />
-                      <span>Drag to move · Pull handles to stretch/resize · Double-click to crop</span>
-                    </div>
-                  )}
-
-                  {/* Resize Handles (Corners and Sides) */}
-                  {selectedImage && !isCroppingImage && (
-                    <>
-                      <div
-                        onMouseDown={(e) => handleResizeStart(e, 'nw')}
-                        onTouchStart={(e) => handleResizeStart(e, 'nw')}
-                        className="absolute -top-1.5 -left-1.5 w-2.5 h-2.5 bg-blue-500 border border-white rounded-2xs shadow-xs cursor-nwse-resize z-30"
-                      />
-                      <div
-                        onMouseDown={(e) => handleResizeStart(e, 'ne')}
-                        onTouchStart={(e) => handleResizeStart(e, 'ne')}
-                        className="absolute -top-1.5 -right-1.5 w-2.5 h-2.5 bg-blue-500 border border-white rounded-2xs shadow-xs cursor-nesw-resize z-30"
-                      />
-                      <div
-                        onMouseDown={(e) => handleResizeStart(e, 'sw')}
-                        onTouchStart={(e) => handleResizeStart(e, 'sw')}
-                        className="absolute -bottom-1.5 -left-1.5 w-2.5 h-2.5 bg-blue-500 border border-white rounded-2xs shadow-xs cursor-nesw-resize z-30"
-                      />
-                      <div
-                        onMouseDown={(e) => handleResizeStart(e, 'se')}
-                        onTouchStart={(e) => handleResizeStart(e, 'se')}
-                        className="absolute -bottom-1.5 -right-1.5 w-2.5 h-2.5 bg-blue-500 border border-white rounded-2xs shadow-xs cursor-nwse-resize z-30"
-                      />
-                      <div
-                        onMouseDown={(e) => handleResizeStart(e, 'w')}
-                        onTouchStart={(e) => handleResizeStart(e, 'w')}
-                        className="absolute top-1/2 -left-1.5 -translate-y-1/2 w-2.5 h-2.5 bg-blue-500 border border-white rounded-2xs shadow-xs cursor-ew-resize z-30"
-                      />
-                      <div
-                        onMouseDown={(e) => handleResizeStart(e, 'e')}
-                        onTouchStart={(e) => handleResizeStart(e, 'e')}
-                        className="absolute top-1/2 -right-1.5 -translate-y-1/2 w-2.5 h-2.5 bg-blue-500 border border-white rounded-2xs shadow-xs cursor-ew-resize z-30"
-                      />
-                    </>
-                  )}
-
-                  {/* Interactive Crop Zoom Controls */}
-                  {isCroppingImage && (
-                    <div
-                      data-header-crop="true"
-                      onClick={(e) => e.stopPropagation()}
-                      onMouseDown={(e) => e.stopPropagation()}
-                      className="absolute -bottom-10 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-3 py-1 bg-zinc-900/95 text-white rounded-md shadow-xl text-xs backdrop-blur-xs whitespace-nowrap"
-                    >
-                      <span className="font-semibold text-zinc-300 text-[11px]">Crop Zoom:</span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setCropZoom((z) => {
-                            const next = Math.max(100, z - 10);
-                            setHeaderState((prev) => ({
-                              ...prev,
-                              image: prev.image ? { ...prev.image, cropZoom: next } : null,
-                            }));
-                            return next;
-                          });
-                        }}
-                        className="px-1.5 py-0.5 bg-zinc-800 hover:bg-zinc-700 rounded font-bold cursor-pointer transition-colors"
-                      >
-                        -
-                      </button>
-                      <span className="w-8 text-center font-mono text-[11px] font-semibold">{cropZoom}%</span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setCropZoom((z) => {
-                            const next = Math.min(300, z + 10);
-                            setHeaderState((prev) => ({
-                              ...prev,
-                              image: prev.image ? { ...prev.image, cropZoom: next } : null,
-                            }));
-                            return next;
-                          });
-                        }}
-                        className="px-1.5 py-0.5 bg-zinc-800 hover:bg-zinc-700 rounded font-bold cursor-pointer transition-colors"
-                      >
-                        +
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setIsCroppingImage(false)}
-                        className="ml-1 px-2 py-0.5 bg-blue-600 hover:bg-blue-500 text-white rounded text-[11px] font-semibold cursor-pointer transition-colors"
-                      >
-                        Done
-                      </button>
-                    </div>
-                  )}
+                <div className="relative w-full overflow-hidden rounded-xs">
+                  <img
+                    src={headerState.image.url}
+                    alt="Header Logo"
+                    draggable={false}
+                    style={{
+                      width: '100%',
+                      height: 'auto',
+                      transform: cropZoom !== 100 ? `scale(${cropZoom / 100})` : undefined,
+                      transformOrigin: 'center center',
+                    }}
+                    className="w-full object-contain pointer-events-none select-none block"
+                  />
                 </div>
-              </div>
-            </div>
-          )}
 
-          {/* Direct Inline Header Text Input (No placeholder text - clean typing area) */}
-          <div className="w-full">
+                {/* Resize & Move Tooltip */}
+                {selectedImage && !isDraggingImage && !isResizingImage && !isCroppingImage && (
+                  <div className="absolute -top-7 left-1/2 -translate-x-1/2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-zinc-800/90 text-zinc-100 text-[10px] font-medium shadow-md whitespace-nowrap pointer-events-none z-40 backdrop-blur-xs">
+                    <Move className="w-2.5 h-2.5" />
+                    <span>Pull handles to resize · Double-click to crop</span>
+                  </div>
+                )}
+
+                {/* Resize Handles (Corners and Sides) */}
+                {selectedImage && !isCroppingImage && (
+                  <>
+                    <div
+                      onMouseDown={(e) => handleResizeStart(e, 'nw')}
+                      onTouchStart={(e) => handleResizeStart(e, 'nw')}
+                      className="absolute -top-1.5 -left-1.5 w-2.5 h-2.5 bg-blue-500 border border-white rounded-2xs shadow-xs cursor-nwse-resize z-30"
+                    />
+                    <div
+                      onMouseDown={(e) => handleResizeStart(e, 'ne')}
+                      onTouchStart={(e) => handleResizeStart(e, 'ne')}
+                      className="absolute -top-1.5 -right-1.5 w-2.5 h-2.5 bg-blue-500 border border-white rounded-2xs shadow-xs cursor-nesw-resize z-30"
+                    />
+                    <div
+                      onMouseDown={(e) => handleResizeStart(e, 'sw')}
+                      onTouchStart={(e) => handleResizeStart(e, 'sw')}
+                      className="absolute -bottom-1.5 -left-1.5 w-2.5 h-2.5 bg-blue-500 border border-white rounded-2xs shadow-xs cursor-nesw-resize z-30"
+                    />
+                    <div
+                      onMouseDown={(e) => handleResizeStart(e, 'se')}
+                      onTouchStart={(e) => handleResizeStart(e, 'se')}
+                      className="absolute -bottom-1.5 -right-1.5 w-2.5 h-2.5 bg-blue-500 border border-white rounded-2xs shadow-xs cursor-nwse-resize z-30"
+                    />
+                    <div
+                      onMouseDown={(e) => handleResizeStart(e, 'w')}
+                      onTouchStart={(e) => handleResizeStart(e, 'w')}
+                      className="absolute top-1/2 -left-1.5 -translate-y-1/2 w-2.5 h-2.5 bg-blue-500 border border-white rounded-2xs shadow-xs cursor-ew-resize z-30"
+                    />
+                    <div
+                      onMouseDown={(e) => handleResizeStart(e, 'e')}
+                      onTouchStart={(e) => handleResizeStart(e, 'e')}
+                      className="absolute top-1/2 -right-1.5 -translate-y-1/2 w-2.5 h-2.5 bg-blue-500 border border-white rounded-2xs shadow-xs cursor-ew-resize z-30"
+                    />
+                  </>
+                )}
+
+                {/* Interactive Crop Zoom Controls */}
+                {isCroppingImage && (
+                  <div
+                    data-header-crop="true"
+                    onClick={(e) => e.stopPropagation()}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    className="absolute -bottom-10 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-3 py-1 bg-zinc-900/95 text-white rounded-md shadow-xl text-xs backdrop-blur-xs whitespace-nowrap"
+                  >
+                    <span className="font-semibold text-zinc-300 text-[11px]">Crop Zoom:</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCropZoom((z) => {
+                          const next = Math.max(100, z - 10);
+                          setHeaderState((prev) => ({
+                            ...prev,
+                            image: prev.image ? { ...prev.image, cropZoom: next } : null,
+                          }));
+                          return next;
+                        });
+                      }}
+                      className="px-1.5 py-0.5 bg-zinc-800 hover:bg-zinc-700 rounded font-bold cursor-pointer transition-colors"
+                    >
+                      -
+                    </button>
+                    <span className="w-8 text-center font-mono text-[11px] font-semibold">{cropZoom}%</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCropZoom((z) => {
+                          const next = Math.min(300, z + 10);
+                          setHeaderState((prev) => ({
+                            ...prev,
+                            image: prev.image ? { ...prev.image, cropZoom: next } : null,
+                          }));
+                          return next;
+                        });
+                      }}
+                      className="px-1.5 py-0.5 bg-zinc-800 hover:bg-zinc-700 rounded font-bold cursor-pointer transition-colors"
+                    >
+                      +
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setIsCroppingImage(false)}
+                      className="ml-1 px-2 py-0.5 bg-blue-600 hover:bg-blue-500 text-white rounded text-[11px] font-semibold cursor-pointer transition-colors"
+                    >
+                      Done
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Direct Inline Header Text Input (Sits right next to the image on the same line) */}
             <input
               ref={textInputRef}
               type="text"
@@ -424,12 +413,12 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
                 fontSize: headerState.fontSize ? `${headerState.fontSize}px` : undefined,
                 fontFamily: headerState.fontFamily || undefined,
               }}
-              className="w-full bg-transparent px-0 py-0.5 text-sm text-zinc-900 dark:text-zinc-100 outline-none border-none font-normal"
+              className="flex-1 min-w-[60px] bg-transparent px-0 py-0.5 text-sm text-zinc-900 dark:text-zinc-100 outline-none border-none font-normal"
             />
           </div>
 
-          {/* Google Docs Horizontal Divider Line - Full Page Width (Edge-to-Edge) */}
-          <div className="-mx-[96px] w-[calc(100%+192px)] border-b border-zinc-300 dark:border-zinc-700 my-1.5" />
+          {/* Google Docs Horizontal Divider Line 1 (Above Sub-Bar) */}
+          <div className="-mx-[96px] w-[calc(100%+192px)] border-b border-zinc-300 dark:border-zinc-700 my-1" />
 
           {/* Google Docs Header Sub-Bar (Inside margins) */}
           <div className="w-full flex items-center justify-between py-1 text-xs select-none">
@@ -584,69 +573,67 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
               </DropdownMenu>
             </div>
           </div>
+
+          {/* Google Docs Horizontal Divider Line 2 (Below Sub-Bar, separating from body) */}
+          <div className="-mx-[96px] w-[calc(100%+192px)] border-b border-zinc-300 dark:border-zinc-700 my-1" />
         </div>
       ) : (
         /* ── Idle State: Permanent 1-inch physical margin & Google Docs Hover Line ── */
         <div className="flex flex-col gap-1 w-full justify-end">
-          {/* Header Logo preview if present */}
-          {headerState.image?.url && (
-            <div className="relative w-full py-1 flex items-center overflow-hidden">
+          {/* Side-by-side image & text preview */}
+          <div className="w-full flex items-center gap-3 select-none">
+            {headerState.image?.url && (
               <div
                 style={{
-                  left: `${headerState.image.offsetPercent ?? (headerState.image.align === 'left' ? 0 : headerState.image.align === 'right' ? 100 : 50)}%`,
-                  transform: 'translateX(-50%)',
-                  width: `${headerState.image.width || 180}px`,
+                  width: `${Math.min(headerState.image.width || 140, 624)}px`,
                 }}
-                className="absolute top-1/2 -translate-y-1/2 select-none"
+                className="relative shrink-0 select-none overflow-hidden"
               >
-                <div className="relative w-full overflow-hidden">
-                  <img
-                    src={headerState.image.url}
-                    alt="Header Logo"
-                    draggable={false}
-                    style={{
-                      width: '100%',
-                      height: 'auto',
-                      transform:
-                        headerState.image.cropZoom && headerState.image.cropZoom !== 100
-                          ? `scale(${headerState.image.cropZoom / 100})`
-                          : undefined,
-                      transformOrigin: 'center center',
-                    }}
-                    className="w-full object-contain opacity-90 group-hover/header:opacity-100 transition-opacity block"
-                  />
-                </div>
+                <img
+                  src={headerState.image.url}
+                  alt="Header Logo"
+                  draggable={false}
+                  style={{
+                    width: '100%',
+                    height: 'auto',
+                    transform:
+                      headerState.image.cropZoom && headerState.image.cropZoom !== 100
+                        ? `scale(${headerState.image.cropZoom / 100})`
+                        : undefined,
+                    transformOrigin: 'center center',
+                  }}
+                  className="w-full object-contain opacity-90 group-hover/header:opacity-100 transition-opacity block"
+                />
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Header Text preview if present with rich styles */}
-          {headerState.text?.trim() && (
-            <div
-              style={{
-                textAlign: headerState.textAlign || 'left',
-                fontWeight: headerState.bold ? 'bold' : 'normal',
-                fontStyle: headerState.italic ? 'italic' : 'normal',
-                textDecoration: headerState.underline ? 'underline' : 'none',
-                color: headerState.color || undefined,
-                fontSize: headerState.fontSize ? `${headerState.fontSize}px` : undefined,
-                fontFamily: headerState.fontFamily || undefined,
-              }}
-              className={cn(
-                'text-xs text-zinc-700 dark:text-zinc-300 tracking-wide',
-                textAlign === 'left' && 'text-left',
-                textAlign === 'center' && 'text-center',
-                textAlign === 'right' && 'text-right'
-              )}
-            >
-              {headerState.text}
-            </div>
-          )}
+            {headerState.text?.trim() && (
+              <div
+                style={{
+                  textAlign: headerState.textAlign || 'left',
+                  fontWeight: headerState.bold ? 'bold' : 'normal',
+                  fontStyle: headerState.italic ? 'italic' : 'normal',
+                  textDecoration: headerState.underline ? 'underline' : 'none',
+                  color: headerState.color || undefined,
+                  fontSize: headerState.fontSize ? `${headerState.fontSize}px` : undefined,
+                  fontFamily: headerState.fontFamily || undefined,
+                }}
+                className={cn(
+                  'flex-1 text-sm text-zinc-700 dark:text-zinc-300 tracking-wide',
+                  textAlign === 'left' && 'text-left',
+                  textAlign === 'center' && 'text-center',
+                  textAlign === 'right' && 'text-right'
+                )}
+              >
+                {headerState.text}
+              </div>
+            )}
+          </div>
 
           {/* Google Docs Hover Guide Cue (hidden when printing) */}
           {!isReadOnly && (
             <div className="opacity-0 group-hover/header:opacity-100 transition-opacity border-b border-dashed border-zinc-300 dark:border-zinc-700 pb-1 text-[11px] text-zinc-400 flex items-center justify-between select-none print:hidden">
-              <span>Header · Double-click to edit</span>
+              <span>Header · Click to edit</span>
               {headerState.scope === 'first_page_only' && (
                 <span className="text-[10px] bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded">
                   Different first page

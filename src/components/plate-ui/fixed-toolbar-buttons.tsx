@@ -1819,6 +1819,7 @@ function MediaToolbarButton({ editor }: { editor: any }) {
         type,
         url,
         name: name || url.split('/').pop() || type,
+        wrap: 'inline',
         children: [{ text: '' }],
       },
     ]);

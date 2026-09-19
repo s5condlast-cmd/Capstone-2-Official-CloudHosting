@@ -181,8 +181,8 @@ export const DocumentFooterZone: React.FC<DocumentFooterZoneProps> = ({
           newWidth = initialWidth - deltaX;
         }
 
-        // Clamp between 40px and 750px (allows stretching big or shrinking small)
-        const clamped = Math.max(40, Math.min(750, Math.round(newWidth)));
+        // Clamp between 40px and 624px (strictly bounded within 1-inch printable margins)
+        const clamped = Math.max(40, Math.min(624, Math.round(newWidth)));
         setResizeLiveWidth(clamped);
 
         setFooterState((prev) => ({
@@ -215,8 +215,8 @@ export const DocumentFooterZone: React.FC<DocumentFooterZoneProps> = ({
   return (
     <footer
       data-document-footer="true"
-      onDoubleClick={() => {
-        if (!isReadOnly) {
+      onClick={() => {
+        if (!isReadOnly && !isActive) {
           onToggleActive(true);
         }
       }}
@@ -229,6 +229,8 @@ export const DocumentFooterZone: React.FC<DocumentFooterZoneProps> = ({
       {/* ── Active State: Authentic Google Docs Footer ── */}
       {isActive ? (
         <div className="w-full flex flex-col">
+          {/* Google Docs Horizontal Divider Line 1 (Above Sub-Bar, bordering body) */}
+          <div className="-mx-[96px] w-[calc(100%+192px)] border-b border-zinc-300 dark:border-zinc-700 my-1" />
           {/* Google Docs Footer Sub-Bar (on top, bordering the body) */}
           <div className="w-full flex items-center justify-between py-1 text-xs select-none">
             <span className="text-zinc-500 dark:text-zinc-400 font-normal">
@@ -399,11 +401,144 @@ export const DocumentFooterZone: React.FC<DocumentFooterZoneProps> = ({
             </div>
           </div>
 
-          {/* Google Docs Horizontal Divider Line - Full Page Width (Edge-to-Edge) */}
-          <div className="-mx-[96px] w-[calc(100%+192px)] border-b border-zinc-300 dark:border-zinc-700 my-1.5" />
+          {/* Google Docs Horizontal Divider Line 2 (Below Sub-Bar, separating from footer typing area) */}
+          <div className="-mx-[96px] w-[calc(100%+192px)] border-b border-zinc-300 dark:border-zinc-700 my-1" />
 
-          {/* Direct Inline Footer Text & Page Number Input (No placeholder - clean typing area) */}
-          <div className="w-full flex items-center gap-2 pt-0.5">
+          {/* Side-by-Side Image, Text, and Page Number (Inline with typing cursor right next to image) */}
+          <div className="w-full flex items-center gap-3 relative py-0.5 min-h-[36px]">
+            {footerState.image?.url && (
+              <div
+                data-footer-image-container="true"
+                style={{
+                  width: `${Math.min(footerState.image.width || 140, 624)}px`,
+                }}
+                className={cn(
+                  'relative shrink-0 select-none transition-shadow',
+                  selectedImage && 'ring-2 ring-blue-500 rounded-xs'
+                )}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedImage(true);
+                }}
+                onDoubleClick={(e) => {
+                  e.stopPropagation();
+                  setIsCroppingImage(true);
+                }}
+              >
+                <div className="relative w-full overflow-hidden rounded-xs">
+                  <img
+                    src={footerState.image.url}
+                    alt="Footer Logo"
+                    draggable={false}
+                    style={{
+                      width: '100%',
+                      height: 'auto',
+                      transform: cropZoom !== 100 ? `scale(${cropZoom / 100})` : undefined,
+                      transformOrigin: 'center center',
+                    }}
+                    className="w-full object-contain pointer-events-none select-none block"
+                  />
+                </div>
+
+                {/* Resize & Move Tooltip */}
+                {selectedImage && !isDraggingImage && !isResizingImage && !isCroppingImage && (
+                  <div className="absolute -top-7 left-1/2 -translate-x-1/2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-zinc-800/90 text-zinc-100 text-[10px] font-medium shadow-md whitespace-nowrap pointer-events-none z-40 backdrop-blur-xs">
+                    <Move className="w-2.5 h-2.5" />
+                    <span>Pull handles to resize · Double-click to crop</span>
+                  </div>
+                )}
+
+                {/* Resize Handles */}
+                {selectedImage && !isCroppingImage && (
+                  <>
+                    <div
+                      onMouseDown={(e) => handleResizeStart(e, 'nw')}
+                      onTouchStart={(e) => handleResizeStart(e, 'nw')}
+                      className="absolute -top-1.5 -left-1.5 w-2.5 h-2.5 bg-blue-500 border border-white rounded-2xs shadow-xs cursor-nwse-resize z-30"
+                    />
+                    <div
+                      onMouseDown={(e) => handleResizeStart(e, 'ne')}
+                      onTouchStart={(e) => handleResizeStart(e, 'ne')}
+                      className="absolute -top-1.5 -right-1.5 w-2.5 h-2.5 bg-blue-500 border border-white rounded-2xs shadow-xs cursor-nesw-resize z-30"
+                    />
+                    <div
+                      onMouseDown={(e) => handleResizeStart(e, 'sw')}
+                      onTouchStart={(e) => handleResizeStart(e, 'sw')}
+                      className="absolute -bottom-1.5 -left-1.5 w-2.5 h-2.5 bg-blue-500 border border-white rounded-2xs shadow-xs cursor-nesw-resize z-30"
+                    />
+                    <div
+                      onMouseDown={(e) => handleResizeStart(e, 'se')}
+                      onTouchStart={(e) => handleResizeStart(e, 'se')}
+                      className="absolute -bottom-1.5 -right-1.5 w-2.5 h-2.5 bg-blue-500 border border-white rounded-2xs shadow-xs cursor-nwse-resize z-30"
+                    />
+                    <div
+                      onMouseDown={(e) => handleResizeStart(e, 'w')}
+                      onTouchStart={(e) => handleResizeStart(e, 'w')}
+                      className="absolute top-1/2 -left-1.5 -translate-y-1/2 w-2.5 h-2.5 bg-blue-500 border border-white rounded-2xs shadow-xs cursor-ew-resize z-30"
+                    />
+                    <div
+                      onMouseDown={(e) => handleResizeStart(e, 'e')}
+                      onTouchStart={(e) => handleResizeStart(e, 'e')}
+                      className="absolute top-1/2 -right-1.5 -translate-y-1/2 w-2.5 h-2.5 bg-blue-500 border border-white rounded-2xs shadow-xs cursor-ew-resize z-30"
+                    />
+                  </>
+                )}
+
+                {/* Interactive Crop Zoom Controls */}
+                {isCroppingImage && (
+                  <div
+                    data-footer-crop="true"
+                    onClick={(e) => e.stopPropagation()}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    className="absolute -bottom-10 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-3 py-1 bg-zinc-900/95 text-white rounded-md shadow-xl text-xs backdrop-blur-xs whitespace-nowrap"
+                  >
+                    <span className="font-semibold text-zinc-300 text-[11px]">Crop Zoom:</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCropZoom((z) => {
+                          const next = Math.max(100, z - 10);
+                          setFooterState((prev) => ({
+                            ...prev,
+                            image: prev.image ? { ...prev.image, cropZoom: next } : null,
+                          }));
+                          return next;
+                        });
+                      }}
+                      className="px-1.5 py-0.5 bg-zinc-800 hover:bg-zinc-700 rounded font-bold cursor-pointer transition-colors"
+                    >
+                      -
+                    </button>
+                    <span className="w-8 text-center font-mono text-[11px] font-semibold">{cropZoom}%</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCropZoom((z) => {
+                          const next = Math.min(300, z + 10);
+                          setFooterState((prev) => ({
+                            ...prev,
+                            image: prev.image ? { ...prev.image, cropZoom: next } : null,
+                          }));
+                          return next;
+                        });
+                      }}
+                      className="px-1.5 py-0.5 bg-zinc-800 hover:bg-zinc-700 rounded font-bold cursor-pointer transition-colors"
+                    >
+                      +
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setIsCroppingImage(false)}
+                      className="ml-1 px-2 py-0.5 bg-blue-600 hover:bg-blue-500 text-white rounded text-[11px] font-semibold cursor-pointer transition-colors"
+                    >
+                      Done
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Direct Inline Footer Text Input (Sits right next to the image on the same line) */}
             <input
               ref={textInputRef}
               type="text"
@@ -432,8 +567,9 @@ export const DocumentFooterZone: React.FC<DocumentFooterZoneProps> = ({
                 fontSize: footerState.fontSize ? `${footerState.fontSize}px` : undefined,
                 fontFamily: footerState.fontFamily || undefined,
               }}
-              className="flex-1 bg-transparent px-0 py-0.5 text-sm text-zinc-900 dark:text-zinc-100 outline-none border-none font-normal"
+              className="flex-1 min-w-[60px] bg-transparent px-0 py-0.5 text-sm text-zinc-900 dark:text-zinc-100 outline-none border-none font-normal"
             />
+
             {footerState.pageNumber && (
               <span
                 className="text-xs font-mono px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700 select-none cursor-default shrink-0"
@@ -443,150 +579,6 @@ export const DocumentFooterZone: React.FC<DocumentFooterZoneProps> = ({
               </span>
             )}
           </div>
-
-          {/* Borderless Free Logo Track (when image exists - no box, no dashed border) */}
-          {footerState.image?.url && (
-            <div className="w-full mt-2">
-              <div
-                ref={footerTrackRef}
-                className="relative w-full py-1 min-h-[44px] flex items-center select-none"
-              >
-                <div
-                  data-footer-image-container="true"
-                  style={{
-                    left: `${footerState.image.offsetPercent ?? (footerState.image.align === 'left' ? 0 : footerState.image.align === 'right' ? 100 : 50)}%`,
-                    transform: 'translateX(-50%)',
-                    width: `${footerState.image.width || 140}px`,
-                  }}
-                  onMouseDown={handleDragStart}
-                  onTouchStart={handleDragStart}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedImage(true);
-                  }}
-                  onDoubleClick={(e) => {
-                    e.stopPropagation();
-                    setIsCroppingImage(true);
-                  }}
-                  className={cn(
-                    'relative cursor-grab active:cursor-grabbing select-none transition-shadow',
-                    selectedImage && 'ring-2 ring-blue-500 rounded-xs'
-                  )}
-                >
-                  <div className="relative w-full overflow-hidden rounded-xs">
-                    <img
-                      src={footerState.image.url}
-                      alt="Footer Logo"
-                      draggable={false}
-                      style={{
-                        width: '100%',
-                        height: 'auto',
-                        transform: cropZoom !== 100 ? `scale(${cropZoom / 100})` : undefined,
-                        transformOrigin: 'center center',
-                      }}
-                      className="w-full object-contain pointer-events-none select-none block"
-                    />
-                  </div>
-
-                  {/* Resize & Move Tooltip */}
-                  {selectedImage && !isDraggingImage && !isResizingImage && !isCroppingImage && (
-                    <div className="absolute -top-7 left-1/2 -translate-x-1/2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-zinc-800/90 text-zinc-100 text-[10px] font-medium shadow-md whitespace-nowrap pointer-events-none z-40 backdrop-blur-xs">
-                      <Move className="w-2.5 h-2.5" />
-                      <span>Drag to move · Pull handles to stretch/resize · Double-click to crop</span>
-                    </div>
-                  )}
-
-                  {/* Resize Handles */}
-                  {selectedImage && !isCroppingImage && (
-                    <>
-                      <div
-                        onMouseDown={(e) => handleResizeStart(e, 'nw')}
-                        onTouchStart={(e) => handleResizeStart(e, 'nw')}
-                        className="absolute -top-1.5 -left-1.5 w-2.5 h-2.5 bg-blue-500 border border-white rounded-2xs shadow-xs cursor-nwse-resize z-30"
-                      />
-                      <div
-                        onMouseDown={(e) => handleResizeStart(e, 'ne')}
-                        onTouchStart={(e) => handleResizeStart(e, 'ne')}
-                        className="absolute -top-1.5 -right-1.5 w-2.5 h-2.5 bg-blue-500 border border-white rounded-2xs shadow-xs cursor-nesw-resize z-30"
-                      />
-                      <div
-                        onMouseDown={(e) => handleResizeStart(e, 'sw')}
-                        onTouchStart={(e) => handleResizeStart(e, 'sw')}
-                        className="absolute -bottom-1.5 -left-1.5 w-2.5 h-2.5 bg-blue-500 border border-white rounded-2xs shadow-xs cursor-nesw-resize z-30"
-                      />
-                      <div
-                        onMouseDown={(e) => handleResizeStart(e, 'se')}
-                        onTouchStart={(e) => handleResizeStart(e, 'se')}
-                        className="absolute -bottom-1.5 -right-1.5 w-2.5 h-2.5 bg-blue-500 border border-white rounded-2xs shadow-xs cursor-nwse-resize z-30"
-                      />
-                      <div
-                        onMouseDown={(e) => handleResizeStart(e, 'w')}
-                        onTouchStart={(e) => handleResizeStart(e, 'w')}
-                        className="absolute top-1/2 -left-1.5 -translate-y-1/2 w-2.5 h-2.5 bg-blue-500 border border-white rounded-2xs shadow-xs cursor-ew-resize z-30"
-                      />
-                      <div
-                        onMouseDown={(e) => handleResizeStart(e, 'e')}
-                        onTouchStart={(e) => handleResizeStart(e, 'e')}
-                        className="absolute top-1/2 -right-1.5 -translate-y-1/2 w-2.5 h-2.5 bg-blue-500 border border-white rounded-2xs shadow-xs cursor-ew-resize z-30"
-                      />
-                    </>
-                  )}
-
-                  {/* Interactive Crop Zoom Controls */}
-                  {isCroppingImage && (
-                    <div
-                      data-footer-crop="true"
-                      onClick={(e) => e.stopPropagation()}
-                      onMouseDown={(e) => e.stopPropagation()}
-                      className="absolute -bottom-10 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-3 py-1 bg-zinc-900/95 text-white rounded-md shadow-xl text-xs backdrop-blur-xs whitespace-nowrap"
-                    >
-                      <span className="font-semibold text-zinc-300 text-[11px]">Crop Zoom:</span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setCropZoom((z) => {
-                            const next = Math.max(100, z - 10);
-                            setFooterState((prev) => ({
-                              ...prev,
-                              image: prev.image ? { ...prev.image, cropZoom: next } : null,
-                            }));
-                            return next;
-                          });
-                        }}
-                        className="px-1.5 py-0.5 bg-zinc-800 hover:bg-zinc-700 rounded font-bold cursor-pointer transition-colors"
-                      >
-                        -
-                      </button>
-                      <span className="w-8 text-center font-mono text-[11px] font-semibold">{cropZoom}%</span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setCropZoom((z) => {
-                            const next = Math.min(300, z + 10);
-                            setFooterState((prev) => ({
-                              ...prev,
-                              image: prev.image ? { ...prev.image, cropZoom: next } : null,
-                            }));
-                            return next;
-                          });
-                        }}
-                        className="px-1.5 py-0.5 bg-zinc-800 hover:bg-zinc-700 rounded font-bold cursor-pointer transition-colors"
-                      >
-                        +
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setIsCroppingImage(false)}
-                        className="ml-1 px-2 py-0.5 bg-blue-600 hover:bg-blue-500 text-white rounded text-[11px] font-semibold cursor-pointer transition-colors"
-                      >
-                        Done
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       ) : (
         /* ── Idle State: Permanent 1-inch physical margin & Google Docs Hover Line ── */
@@ -594,7 +586,7 @@ export const DocumentFooterZone: React.FC<DocumentFooterZoneProps> = ({
           {/* Google Docs Hover Guide Cue (hidden when printing) */}
           {!isReadOnly && (
             <div className="opacity-0 group-hover/footer:opacity-100 transition-opacity border-t border-dashed border-zinc-300 dark:border-zinc-700 pt-1 text-[11px] text-zinc-400 flex items-center justify-between select-none print:hidden">
-              <span>Footer · Double-click to edit</span>
+              <span>Footer · Click to edit</span>
               {footerState.scope === 'first_page_only' && (
                 <span className="text-[10px] bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded">
                   Different first page
@@ -603,44 +595,16 @@ export const DocumentFooterZone: React.FC<DocumentFooterZoneProps> = ({
             </div>
           )}
 
-          {/* Footer Text and Page Number preview if present with rich styles */}
-          {(footerState.text?.trim() || footerState.pageNumber) && (
-            <div
-              style={{
-                textAlign: footerState.textAlign || 'left',
-                fontWeight: footerState.bold ? 'bold' : 'normal',
-                fontStyle: footerState.italic ? 'italic' : 'normal',
-                textDecoration: footerState.underline ? 'underline' : 'none',
-                color: footerState.color || undefined,
-                fontSize: footerState.fontSize ? `${footerState.fontSize}px` : undefined,
-                fontFamily: footerState.fontFamily || undefined,
-              }}
-              className={cn(
-                'text-xs text-zinc-700 dark:text-zinc-300 tracking-wide flex items-center gap-2',
-                textAlign === 'left' && 'justify-start text-left',
-                textAlign === 'center' && 'justify-center text-center',
-                textAlign === 'right' && 'justify-end text-right'
-              )}
-            >
-              {footerState.text?.trim() && <span>{footerState.text}</span>}
-              {footerState.pageNumber && (
-                <span className="font-mono text-zinc-500">1</span>
-              )}
-            </div>
-          )}
-
-          {/* Footer Logo preview if present */}
-          {footerState.image?.url && (
-            <div className="relative w-full py-1 flex items-center overflow-hidden mt-0.5">
-              <div
-                style={{
-                  left: `${footerState.image.offsetPercent ?? (footerState.image.align === 'left' ? 0 : footerState.image.align === 'right' ? 100 : 50)}%`,
-                  transform: 'translateX(-50%)',
-                  width: `${footerState.image.width || 140}px`,
-                }}
-                className="absolute top-1/2 -translate-y-1/2 select-none"
-              >
-                <div className="relative w-full overflow-hidden">
+          {/* Side-by-side Footer preview if text, page number, or image is present */}
+          {(footerState.text?.trim() || footerState.pageNumber || footerState.image?.url) && (
+            <div className="w-full flex items-center gap-3 select-none mt-0.5">
+              {footerState.image?.url && (
+                <div
+                  style={{
+                    width: `${Math.min(footerState.image.width || 140, 624)}px`,
+                  }}
+                  className="relative shrink-0 select-none overflow-hidden"
+                >
                   <img
                     src={footerState.image.url}
                     alt="Footer Logo"
@@ -657,7 +621,33 @@ export const DocumentFooterZone: React.FC<DocumentFooterZoneProps> = ({
                     className="w-full object-contain opacity-90 group-hover/footer:opacity-100 transition-opacity block"
                   />
                 </div>
-              </div>
+              )}
+
+              {footerState.text?.trim() && (
+                <div
+                  style={{
+                    textAlign: footerState.textAlign || 'left',
+                    fontWeight: footerState.bold ? 'bold' : 'normal',
+                    fontStyle: footerState.italic ? 'italic' : 'normal',
+                    textDecoration: footerState.underline ? 'underline' : 'none',
+                    color: footerState.color || undefined,
+                    fontSize: footerState.fontSize ? `${footerState.fontSize}px` : undefined,
+                    fontFamily: footerState.fontFamily || undefined,
+                  }}
+                  className={cn(
+                    'flex-1 text-xs text-zinc-700 dark:text-zinc-300 tracking-wide',
+                    textAlign === 'left' && 'text-left',
+                    textAlign === 'center' && 'text-center',
+                    textAlign === 'right' && 'text-right'
+                  )}
+                >
+                  {footerState.text}
+                </div>
+              )}
+
+              {footerState.pageNumber && (
+                <span className="text-xs font-mono text-zinc-500 shrink-0">1</span>
+              )}
             </div>
           )}
         </div>

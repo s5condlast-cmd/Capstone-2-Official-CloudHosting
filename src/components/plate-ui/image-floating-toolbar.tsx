@@ -44,7 +44,7 @@ export interface ImageFloatingToolbarProps {
 
 export function ImageFloatingToolbar({
   align = 'center',
-  wrap = 'break',
+  wrap = 'inline',
   isCropping = false,
   onAlignChange,
   onWrapChange,
@@ -52,7 +52,7 @@ export function ImageFloatingToolbar({
   onRemove,
 }: ImageFloatingToolbarProps) {
   const [wrapOpen, setWrapOpen] = React.useState(false);
-  const currentWrap = WRAP_OPTIONS.find((o) => o.id === wrap) || WRAP_OPTIONS[2];
+  const currentWrap = WRAP_OPTIONS.find((o) => o.id === wrap) || WRAP_OPTIONS[0];
   const WrapIcon = currentWrap.icon;
 
   return (
