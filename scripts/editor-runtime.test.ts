@@ -585,6 +585,28 @@ describe('Plate editor runtime wiring', () => {
     assert.ok(fixedToolbarSrc.includes('Minimize2'), 'Fixed toolbar must have Minimize2 icon for exiting fullscreen');
     assert.ok(fixedToolbarSrc.includes('tooltip={isFullscreen ? \'Exit full screen (Esc)\' : \'Enter full screen\'}'), 'Toolbar button must have fullscreen tooltip');
   });
+
+  it('enforces Microsoft Word and Google Docs typography and spacing (11pt font, 1.15 line height, 8pt paragraph spacing, Word heading point sizes)', async () => {
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+    const editorUiSrc = fs.readFileSync(path.resolve('src/components/plate-ui/editor.tsx'), 'utf8');
+    const paragraphSrc = fs.readFileSync(path.resolve('src/components/plate-ui/paragraph-element.tsx'), 'utf8');
+    const headingSrc = fs.readFileSync(path.resolve('src/components/plate-ui/heading-element.tsx'), 'utf8');
+
+    // 1. Editor base typography: 11pt, 1.15 line height, standard Word document fonts
+    assert.ok(editorUiSrc.includes('text-[11pt]'), 'Editor must have default 11pt font size');
+    assert.ok(editorUiSrc.includes('leading-[1.15]'), 'Editor must have standard 1.15 line height');
+    assert.ok(editorUiSrc.includes('font-[Calibri,_Candara,_Segoe,_sans-serif]'), 'Editor must have standard Calibri typography');
+
+    // 2. Paragraph spacing: 8pt margin-bottom (matching Word standard) and no overriding leading-relaxed
+    assert.ok(paragraphSrc.includes('mb-[8pt]'), 'ParagraphElement must have 8pt bottom spacing');
+    assert.ok(!paragraphSrc.includes('leading-relaxed'), 'ParagraphElement must not override editor 1.15 line height with leading-relaxed');
+
+    // 3. Heading point sizes matching Word styles
+    assert.ok(headingSrc.includes('text-[16pt]'), 'H1 must be 16pt');
+    assert.ok(headingSrc.includes('text-[13pt]'), 'H2 must be 13pt');
+    assert.ok(headingSrc.includes('text-[12pt]'), 'H3 must be 12pt');
+  });
 });
 
 

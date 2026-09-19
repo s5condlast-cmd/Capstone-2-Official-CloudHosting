@@ -56,7 +56,7 @@ export function TableCellElement({
       as="td"
       element={element}
       className={cn(
-        'relative min-w-24 border border-zinc-200 dark:border-zinc-700/80 px-3.5 py-2.5 align-top text-sm text-zinc-800 dark:text-zinc-200',
+        'relative min-w-24 border border-zinc-200 dark:border-zinc-700/80 px-3.5 py-2.5 align-top dark:text-zinc-200',
         className
       )}
     >
@@ -77,7 +77,7 @@ export function TableCellHeaderElement({
       as="th"
       element={element}
       className={cn(
-        'relative min-w-24 border border-zinc-200 dark:border-zinc-700/80 bg-zinc-50 dark:bg-zinc-800/60 px-3.5 py-2.5 text-left font-semibold text-sm text-zinc-900 dark:text-zinc-100 align-top',
+        'relative min-w-24 border border-zinc-200 dark:border-zinc-700/80 bg-zinc-50 dark:bg-zinc-800/60 px-3.5 py-2.5 text-left font-semibold dark:text-zinc-100 align-top',
         className
       )}
     >

@@ -26,7 +26,7 @@ export function ParagraphElement({
       <PlateElement
         element={element}
         style={elementStyle}
-        className={cn('relative m-0 px-0 py-1 leading-relaxed text-zinc-800 dark:text-zinc-200', className)}
+        className={cn('relative m-0 px-0 py-0 mb-[8pt]', className)}
         {...props}
       >
         {children}
