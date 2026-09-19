@@ -607,6 +607,34 @@ describe('Plate editor runtime wiring', () => {
     assert.ok(headingSrc.includes('text-[13pt]'), 'H2 must be 13pt');
     assert.ok(headingSrc.includes('text-[12pt]'), 'H3 must be 12pt');
   });
+
+  it('preserves document header in fullscreen, reserves generous bottom scrolling space, and removes star button', async () => {
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+    const indexCss = fs.readFileSync(path.resolve('src/index.css'), 'utf8');
+    const editorSrc = fs.readFileSync(path.resolve('src/components/editor/plate-editor.tsx'), 'utf8');
+    const appSrc = fs.readFileSync(path.resolve('src/App.tsx'), 'utf8');
+
+    // 1. Document header must NOT be hidden in fullscreen
+    assert.ok(
+      indexCss.includes('body[data-editor-fullscreen="true"] header:not([data-document-header="true"])'),
+      'Fullscreen CSS must specifically exempt document header from being hidden'
+    );
+    assert.ok(
+      indexCss.includes('body[data-editor-fullscreen="true"] header[data-document-header="true"]'),
+      'Fullscreen CSS must enforce flex display for document header'
+    );
+
+    // 2. EditorContainer must include generous bottom scrolling padding
+    assert.ok(
+      editorSrc.includes('pb-28 md:pb-36'),
+      'EditorContainer must include generous bottom scrolling padding to prevent bottom edge collision'
+    );
+
+    // 3. App.tsx must not mount Agentation (removes floating star icon button)
+    assert.ok(!appSrc.includes('agentation'), 'App.tsx must not import or mount agentation');
+    assert.ok(!appSrc.includes('<Agentation'), 'App.tsx must not render Agentation star button');
+  });
 });
 
 

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { Agentation } from 'agentation';
 import { Toaster } from 'sonner';
 import { LandingPage } from './pages/public/LandingPage';
 import { ForgotPassword } from './pages/public/ForgotPassword';
@@ -61,7 +60,6 @@ function AppRoutes() {
   const { user, loading, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const isEditorRoute = location.pathname.startsWith('/student/editor') || location.pathname.endsWith('/edit');
 
   useEffect(() => {
     // Initialize Theme - Default to Monochrome (Black & White)
@@ -216,10 +214,6 @@ function AppRoutes() {
 
         <Route path="*" element={<Navigate to={user ? `/${user.role}` : "/"} replace />} />
       </Routes>
-      {/* @ts-ignore */}
-      {/* Agentation captures page clicks while feedback mode is active. Keep it
-          unmounted in document editors so it cannot block portal navigation. */}
-      {import.meta.env.DEV && !isEditorRoute && <Agentation />}
     </>
   );
 }

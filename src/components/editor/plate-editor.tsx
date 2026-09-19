@@ -788,7 +788,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
               <EditorContainer
                 variant="default"
                 className={cn(
-                  'flex-1 min-h-0 overflow-y-auto editor-scrollbar bg-[#f0f4f9] dark:bg-zinc-950 p-4 md:p-8',
+                  'flex-1 min-h-0 overflow-y-auto editor-scrollbar bg-[#f0f4f9] dark:bg-zinc-950 p-4 md:p-8 pb-28 md:pb-36',
                   zoomLevel > 100 && 'overflow-x-auto'
                 )}
               >

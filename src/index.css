@@ -274,9 +274,13 @@
   body[data-editor-fullscreen="true"] [data-slot="sidebar-rail"],
   body[data-editor-fullscreen="true"] [data-slot="sheet-overlay"],
   body[data-editor-fullscreen="true"] [data-slot="sheet-content"],
-  body[data-editor-fullscreen="true"] header {
+  body[data-editor-fullscreen="true"] header:not([data-document-header="true"]) {
     display: none !important;
     pointer-events: none !important;
+  }
+
+  body[data-editor-fullscreen="true"] header[data-document-header="true"] {
+    display: flex !important;
   }
 
   .h-13 {
