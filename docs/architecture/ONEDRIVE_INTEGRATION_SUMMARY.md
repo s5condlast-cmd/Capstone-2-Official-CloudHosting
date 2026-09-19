@@ -1,6 +1,7 @@
 # Microsoft OneDrive Cloud Storage Integration Summary
 
-[← Back to Documentation Hub](../README.md) | [Features Hub](../features/README.md) | [Auth & OneDrive Feature Guide](../features/08_AUTH_AND_ONEDRIVE_SYNC.md) | [Cloudinary Integration](CLOUDINARY_INTEGRATION_SUMMARY.md) | [Backend Architecture](BACKEND_AND_DATABASE.md)
+[← Back to Documentation Hub](../README.md) | [Architecture Hub](README.md) | [Features Hub](../features/README.md) | [Auth & Security Guide](../features/08_AUTHENTICATION_AND_SECURITY.md) | [Backend Architecture](BACKEND_AND_DATABASE.md)
+
 
 **Date:** September 2026  
 **Project:** STI College Marikina — Web-Based Practicum Management System with AI  

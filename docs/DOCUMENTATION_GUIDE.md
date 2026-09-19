@@ -8,13 +8,14 @@ These rules keep the documentation readable in GitHub, editors, and Obsidian wit
 
 | Content | Location |
 | --- | --- |
+| Central hub, vault rules, and panelist defense manual | `docs/` root |
 | System design, database, integrations, deployment | `architecture/` |
 | A complete user-facing workflow | `features/` |
 | Coding, UI, review, or academic standards | `guidelines/` |
-| Current work, completed work, or session history | `tasks/` |
-| A cross-cutting implementation handoff, plan, or dated audit | `docs/` root |
+| Current work, roadmaps, specifications, or session history | `tasks/` |
 
-Do not create another general-purpose documentation index. Add the document to its section index and, when important, to `docs/README.md`.
+Do not create loose files in `docs/` root unless they serve system-wide or academic defense purposes. Add feature and task documents to their respective section indexes and link them from `docs/README.md`.
+
 
 ## Recommended document shape
 

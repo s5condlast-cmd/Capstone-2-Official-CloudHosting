@@ -244,7 +244,7 @@ Consistency in naming is one of the clearest signs of professional software engi
 
 | Asset Type | Convention | Examples from Codebase | Rationale |
 | :--- | :--- | :--- | :--- |
-| **React Page Components** | `PascalCase.tsx` | [`StudentDocumentPage.tsx`](../src/components/compose/StudentDocumentPage.tsx), [`ProposalLetterToTheIndustry.tsx`](../src/pages/student/ProposalLetterToTheIndustry.tsx) | Standard React convention; strictly descriptive names matching the 13 official templates. Generic names like `DocumentSubmission.tsx` or `Proposal.tsx` are forbidden. |
+| **React Page Components** | `PascalCase.tsx` | [`StudentDocumentPage.tsx`](../src/components/compose/StudentDocumentPage.tsx), [`StudentDocumentRepository.tsx`](../src/pages/student/StudentDocumentRepository.tsx) | Standard React convention; strictly descriptive names matching portal features and official templates. |
 | **Shared UI Primitives** | `PascalCase.tsx` | [`Button.tsx`](../src/components/ui/Button.tsx), [`Badge.tsx`](../src/components/ui/Badge.tsx), [`EmptyState.tsx`](../src/components/ui/EmptyState.tsx) | Reusable design system tokens compatible with Radix/Shadcn primitives. |
 | **Custom Hooks** | `useCamelCase.ts` | [`useDocumentStatus.ts`](../src/hooks/useDocumentStatus.ts), [`useSpeechToText.ts`](../src/hooks/useSpeechToText.ts), [`usePhaseLock.ts`](../src/hooks/usePhaseLock.ts) | React Rules of Hooks convention enabling ESLint hook linting. |
 | **Backend Route Modules** | `camelCase.ts` | [`analyze.ts`](../backend/routes/analyze.ts), [`onedrive.ts`](../backend/routes/onedrive.ts), [`cloudinary.ts`](../backend/routes/cloudinary.ts) | Express RESTful route grouping. |
