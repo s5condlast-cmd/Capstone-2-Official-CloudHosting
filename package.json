@@ -10,7 +10,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "clean": "node -e \"fs.rmSync('dist', { recursive: true, force: true })\"",
-    "lint": "tsc --noEmit && tsc --noEmit -p tsconfig.server.json",
+    "lint": "tsc --noEmit && tsc --noEmit -p tsconfig.server.json && node --import tsx --test scripts/editor-runtime.test.ts",
     "test:auth": "node --import tsx --test scripts/auth-security.test.ts scripts/auth-database.test.ts scripts/auth-render.test.ts",
     "test:editor": "node --import tsx --test scripts/editor-storage.test.ts scripts/editor-runtime.test.ts scripts/editor-database.test.ts"
   },

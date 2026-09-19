@@ -448,6 +448,32 @@ describe('Plate editor runtime wiring', () => {
 
     assert.ok(blob.size > 2_000, 'Serialized DOCX with first_page_only header should be valid and >2KB');
   });
+
+  it('enforces single-row Google Docs track, More tools anchor next to highlight, and horizontal popover with RemoveFormatting', async () => {
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+    const toolbarSrc = fs.readFileSync(path.resolve('src/components/plate-ui/fixed-toolbar-buttons.tsx'), 'utf8');
+
+    // 1. Single row layout: must have scroll track with flex-nowrap and overflow-x-auto
+    assert.ok(toolbarSrc.includes('flex-nowrap min-w-max'), 'Toolbar must have non-wrapping min-w-max track');
+    assert.ok(toolbarSrc.includes('overflow-x-auto no-scrollbar'), 'Toolbar must have horizontal overflow scrolling');
+
+    // 2. More tools button (⋮) positioned next to Highlight Color
+    assert.ok(toolbarSrc.includes('moreAnchorRef'), 'More tools anchor must exist');
+    assert.ok(toolbarSrc.includes('tooltip="More tools"'), 'More tools button must be present');
+    assert.ok(toolbarSrc.includes('MoreVertical'), 'More tools must use MoreVertical icon');
+
+    // 3. Popover alignment to left (align="end")
+    assert.ok(toolbarSrc.includes('align="end"'), 'PortalPopover for More tools must use align="end"');
+
+    // 4. RemoveFormatting icon used for clear format
+    assert.ok(toolbarSrc.includes('RemoveFormatting'), 'Clear format must use RemoveFormatting icon');
+
+    // 5. Obsolete legacy buttons must NOT be rendered in primary toolbar track
+    assert.ok(!toolbarSrc.includes('<InsertToolbarButton editor={editor} />'), 'InsertToolbarButton must not be rendered in primary row');
+    assert.ok(!toolbarSrc.includes('<TableToolbarButton editor={editor} />'), 'TableToolbarButton must not be rendered in primary row');
+    assert.ok(!toolbarSrc.includes('<SpeechToTextToolbarButton editor={editor}'), 'SpeechToText must not be rendered in letter template toolbar');
+  });
 });
 
 
