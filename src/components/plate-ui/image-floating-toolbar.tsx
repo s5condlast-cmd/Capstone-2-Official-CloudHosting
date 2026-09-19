@@ -5,7 +5,6 @@ import {
   AlignLeft,
   AlignCenter,
   AlignRight,
-  Crop,
   Trash2,
   WrapText,
   Check,
@@ -35,20 +34,16 @@ const WRAP_OPTIONS: { id: ImageWrapMode; label: string; icon: any }[] = [
 export interface ImageFloatingToolbarProps {
   align?: 'left' | 'center' | 'right';
   wrap?: ImageWrapMode;
-  isCropping?: boolean;
   onAlignChange: (align: 'left' | 'center' | 'right') => void;
   onWrapChange: (wrap: ImageWrapMode) => void;
-  onToggleCrop: () => void;
   onRemove: () => void;
 }
 
 export function ImageFloatingToolbar({
   align = 'center',
   wrap = 'inline',
-  isCropping = false,
   onAlignChange,
   onWrapChange,
-  onToggleCrop,
   onRemove,
 }: ImageFloatingToolbarProps) {
   const [wrapOpen, setWrapOpen] = React.useState(false);
@@ -163,27 +158,7 @@ export function ImageFloatingToolbar({
 
       <div className="h-4 w-px bg-zinc-200 dark:border-zinc-800 mx-0.5" />
 
-      {/* 3. Crop Tool Button */}
-      <button
-        type="button"
-        title={isCropping ? 'Exit Crop Mode' : 'Crop Image'}
-        aria-label="Crop Image"
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          onToggleCrop();
-        }}
-        className={cn(
-          'p-1.5 rounded text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer transition-colors',
-          isCropping && 'bg-primary/20 text-primary font-bold ring-1 ring-primary'
-        )}
-      >
-        <Crop className="w-3.5 h-3.5" />
-      </button>
-
-      <div className="h-4 w-px bg-zinc-200 dark:border-zinc-800 mx-0.5" />
-
-      {/* 4. Delete Button */}
+      {/* 3. Delete Button */}
       <button
         type="button"
         title="Delete Image"

@@ -76,19 +76,10 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
   const [isResizingImage, setIsResizingImage] = useState(false);
   const [resizeHandleType, setResizeHandleType] = useState<string | null>(null);
   const [resizeLiveWidth, setResizeLiveWidth] = useState<number | null>(null);
-  const [isCroppingImage, setIsCroppingImage] = useState(false);
-  const [cropZoom, setCropZoom] = useState(headerState.image?.cropZoom ?? 100);
 
   const headerTrackRef = useRef<HTMLDivElement | null>(null);
   const isResizingRef = useRef(false);
   const textInputRef = useRef<HTMLInputElement | null>(null);
-
-  // Sync crop zoom
-  useEffect(() => {
-    if (headerState.image?.cropZoom !== undefined) {
-      setCropZoom(headerState.image.cropZoom);
-    }
-  }, [headerState.image?.cropZoom]);
 
   // Focus input when header activates
   useEffect(() => {
@@ -103,24 +94,18 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as HTMLElement | null;
-      if (
-        !target?.closest('[data-header-image-container="true"]') &&
-        !target?.closest('[data-header-crop="true"]')
-      ) {
+      if (!target?.closest('[data-header-image-container="true"]')) {
         setSelectedImage(false);
-        if (isCroppingImage) {
-          setIsCroppingImage(false);
-        }
       }
     };
     window.addEventListener('mousedown', handleClickOutside);
     return () => window.removeEventListener('mousedown', handleClickOutside);
-  }, [isCroppingImage]);
+  }, []);
 
   // ── Drag logo handler ──
   const handleDragStart = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
-      if (isResizingRef.current || isCroppingImage) return;
+      if (isResizingRef.current) return;
       e.preventDefault();
       e.stopPropagation();
       setSelectedImage(true);
@@ -174,7 +159,7 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
       window.addEventListener('touchmove', onTouchMove, { passive: true });
       window.addEventListener('touchend', onEnd);
     },
-    [headerState.image?.width, isCroppingImage, setHeaderState]
+    [headerState.image?.width, setHeaderState]
   );
 
   // ── Resize logo handler ──
@@ -202,8 +187,9 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
           newWidth = initialWidth - deltaX;
         }
 
-        // Clamp between 40px and 624px (strictly bounded within 1-inch printable margins)
-        const clamped = Math.max(40, Math.min(624, Math.round(newWidth)));
+        // Auto-bound image width: if text exists, leave space so text + gap doesn't push past right margin
+        const maxAllowedWidth = headerState.text?.trim() ? 544 : 624;
+        const clamped = Math.max(40, Math.min(maxAllowedWidth, Math.round(newWidth)));
         setResizeLiveWidth(clamped);
 
         setHeaderState((prev) => ({
@@ -228,7 +214,7 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
       window.addEventListener('touchmove', onMove, { passive: true });
       window.addEventListener('touchend', onEnd);
     },
-    [headerState.image?.width, setHeaderState]
+    [headerState.image?.width, headerState.text, setHeaderState]
   );
 
   const textAlign = headerState.textAlign || 'left';
@@ -251,24 +237,21 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
       {isActive ? (
         <div className="w-full flex flex-col">
           {/* Side-by-Side Image and Header Text Input (Inline with typing cursor right next to image) */}
-          <div className="w-full flex items-center gap-3 relative py-0.5 min-h-[36px]">
+          <div className="w-full max-w-full overflow-hidden flex items-center gap-3 relative py-0.5 min-h-[36px]">
             {headerState.image?.url && (
               <div
                 data-header-image-container="true"
                 style={{
-                  width: `${Math.min(headerState.image.width || 140, 624)}px`,
+                  width: `${Math.min(headerState.image.width || 140, headerState.text?.trim() ? 544 : 624)}px`,
+                  maxWidth: '100%',
                 }}
                 className={cn(
-                  'relative shrink-0 select-none transition-shadow',
+                  'relative shrink-0 select-none max-w-full transition-shadow',
                   selectedImage && 'ring-2 ring-blue-500 rounded-xs'
                 )}
                 onClick={(e) => {
                   e.stopPropagation();
                   setSelectedImage(true);
-                }}
-                onDoubleClick={(e) => {
-                  e.stopPropagation();
-                  setIsCroppingImage(true);
                 }}
               >
                 <div className="relative w-full overflow-hidden rounded-xs">
@@ -276,26 +259,20 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
                     src={headerState.image.url}
                     alt="Header Logo"
                     draggable={false}
-                    style={{
-                      width: '100%',
-                      height: 'auto',
-                      transform: cropZoom !== 100 ? `scale(${cropZoom / 100})` : undefined,
-                      transformOrigin: 'center center',
-                    }}
-                    className="w-full object-contain pointer-events-none select-none block"
+                    className="w-full h-auto object-contain pointer-events-none select-none block"
                   />
                 </div>
 
                 {/* Resize & Move Tooltip */}
-                {selectedImage && !isDraggingImage && !isResizingImage && !isCroppingImage && (
+                {selectedImage && !isDraggingImage && !isResizingImage && (
                   <div className="absolute -top-7 left-1/2 -translate-x-1/2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-zinc-800/90 text-zinc-100 text-[10px] font-medium shadow-md whitespace-nowrap pointer-events-none z-40 backdrop-blur-xs">
                     <Move className="w-2.5 h-2.5" />
-                    <span>Pull handles to resize · Double-click to crop</span>
+                    <span>Pull handles to resize</span>
                   </div>
                 )}
 
                 {/* Resize Handles (Corners and Sides) */}
-                {selectedImage && !isCroppingImage && (
+                {selectedImage && (
                   <>
                     <div
                       onMouseDown={(e) => handleResizeStart(e, 'nw')}
@@ -328,58 +305,6 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
                       className="absolute top-1/2 -right-1.5 -translate-y-1/2 w-2.5 h-2.5 bg-blue-500 border border-white rounded-2xs shadow-xs cursor-ew-resize z-30"
                     />
                   </>
-                )}
-
-                {/* Interactive Crop Zoom Controls */}
-                {isCroppingImage && (
-                  <div
-                    data-header-crop="true"
-                    onClick={(e) => e.stopPropagation()}
-                    onMouseDown={(e) => e.stopPropagation()}
-                    className="absolute -bottom-10 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-3 py-1 bg-zinc-900/95 text-white rounded-md shadow-xl text-xs backdrop-blur-xs whitespace-nowrap"
-                  >
-                    <span className="font-semibold text-zinc-300 text-[11px]">Crop Zoom:</span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setCropZoom((z) => {
-                          const next = Math.max(100, z - 10);
-                          setHeaderState((prev) => ({
-                            ...prev,
-                            image: prev.image ? { ...prev.image, cropZoom: next } : null,
-                          }));
-                          return next;
-                        });
-                      }}
-                      className="px-1.5 py-0.5 bg-zinc-800 hover:bg-zinc-700 rounded font-bold cursor-pointer transition-colors"
-                    >
-                      -
-                    </button>
-                    <span className="w-8 text-center font-mono text-[11px] font-semibold">{cropZoom}%</span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setCropZoom((z) => {
-                          const next = Math.min(300, z + 10);
-                          setHeaderState((prev) => ({
-                            ...prev,
-                            image: prev.image ? { ...prev.image, cropZoom: next } : null,
-                          }));
-                          return next;
-                        });
-                      }}
-                      className="px-1.5 py-0.5 bg-zinc-800 hover:bg-zinc-700 rounded font-bold cursor-pointer transition-colors"
-                    >
-                      +
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setIsCroppingImage(false)}
-                      className="ml-1 px-2 py-0.5 bg-blue-600 hover:bg-blue-500 text-white rounded text-[11px] font-semibold cursor-pointer transition-colors"
-                    >
-                      Done
-                    </button>
-                  </div>
                 )}
               </div>
             )}
@@ -581,28 +506,20 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
         /* ── Idle State: Permanent 1-inch physical margin & Google Docs Hover Line ── */
         <div className="flex flex-col gap-1 w-full justify-end">
           {/* Side-by-side image & text preview */}
-          <div className="w-full flex items-center gap-3 select-none">
+          <div className="w-full max-w-full overflow-hidden flex items-center gap-3 select-none">
             {headerState.image?.url && (
               <div
                 style={{
-                  width: `${Math.min(headerState.image.width || 140, 624)}px`,
+                  width: `${Math.min(headerState.image.width || 140, headerState.text?.trim() ? 544 : 624)}px`,
+                  maxWidth: '100%',
                 }}
-                className="relative shrink-0 select-none overflow-hidden"
+                className="relative shrink-0 select-none max-w-full overflow-hidden"
               >
                 <img
                   src={headerState.image.url}
                   alt="Header Logo"
                   draggable={false}
-                  style={{
-                    width: '100%',
-                    height: 'auto',
-                    transform:
-                      headerState.image.cropZoom && headerState.image.cropZoom !== 100
-                        ? `scale(${headerState.image.cropZoom / 100})`
-                        : undefined,
-                    transformOrigin: 'center center',
-                  }}
-                  className="w-full object-contain opacity-90 group-hover/header:opacity-100 transition-opacity block"
+                  className="w-full h-auto object-contain opacity-90 group-hover/header:opacity-100 transition-opacity block"
                 />
               </div>
             )}

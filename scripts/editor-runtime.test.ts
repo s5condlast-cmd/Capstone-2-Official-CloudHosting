@@ -497,20 +497,26 @@ describe('Plate editor runtime wiring', () => {
     assert.ok(!headerSrc.includes('border border-dashed border-zinc-300'), 'Header image must NOT have dashed container box');
     assert.ok(!footerSrc.includes('border border-dashed border-zinc-300'), 'Footer image must NOT have dashed container box');
     assert.ok(!headerSrc.includes('max-h-18'), 'Header logo must NOT be trapped in max-h-18');
-    assert.ok(headerSrc.includes('Math.min(624'), 'Header logo must be bounded to 624px printable page track');
-    assert.ok(footerSrc.includes('Math.min(624'), 'Footer logo must be bounded to 624px printable page track');
+    assert.ok(headerSrc.includes('624'), 'Header logo must be bounded to 624px printable page track');
+    assert.ok(footerSrc.includes('624'), 'Footer logo must be bounded to 624px printable page track');
     assert.ok(imageElSrc.includes('Math.min(624'), 'Body image must be bounded to 624px printable page track');
 
     // 4. Side-by-side text & image layout (cursor right next to image)
-    assert.ok(headerSrc.includes('flex items-center gap-3 relative py-0.5 min-h-[36px]'), 'Header must have side-by-side inline row');
-    assert.ok(footerSrc.includes('flex items-center gap-3 relative py-0.5 min-h-[36px]'), 'Footer must have side-by-side inline row');
+    assert.ok(headerSrc.includes('overflow-hidden flex items-center gap-3 relative py-0.5 min-h-[36px]'), 'Header must have side-by-side inline row with overflow containment');
+    assert.ok(footerSrc.includes('overflow-hidden flex items-center gap-3 relative py-0.5 min-h-[36px]'), 'Footer must have side-by-side inline row with overflow containment');
     assert.ok(imageElSrc.includes("wrap === 'inline'"), 'Body image must support inline wrap next to text');
 
-    // 5. Clean typing area (no placeholder="Header" or placeholder="Footer" text)
+    // 5. Crop Zoom buttons and popup completely removed
+    assert.ok(!headerSrc.includes('data-header-crop'), 'Header must not contain crop zoom popup');
+    assert.ok(!footerSrc.includes('data-footer-crop'), 'Footer must not contain crop zoom popup');
+    assert.ok(!imageElSrc.includes('Crop Zoom:'), 'Body image element must not contain crop zoom controls');
+    assert.ok(!imageElSrc.includes('handleApplyCrop'), 'Body image element must not contain handleApplyCrop');
+
+    // 6. Clean typing area (no placeholder="Header" or placeholder="Footer" text)
     assert.ok(!headerSrc.includes('placeholder="Header'), 'Header text input must be clean without placeholder="Header"');
     assert.ok(!footerSrc.includes('placeholder="Footer'), 'Footer text input must be clean without placeholder="Footer"');
 
-    // 6. Toolbar activeHeaderFooter integration
+    // 7. Toolbar activeHeaderFooter integration
     assert.ok(toolbarSrc.includes('activeHeaderFooter'), 'FixedToolbarButtons must support activeHeaderFooter');
     assert.ok(toolbarSrc.includes('onFormatHeaderFooter'), 'FixedToolbarButtons must support onFormatHeaderFooter');
 
