@@ -463,6 +463,11 @@ export const DocumentFooterZone: React.FC<DocumentFooterZoneProps> = ({
     <footer
       data-document-footer="true"
       onClick={() => {
+        if (!isActive && !isReadOnly && Boolean(footerState.image?.url || footerState.text?.trim() || footerState.pageNumber)) {
+          onToggleActive(true);
+        }
+      }}
+      onDoubleClick={() => {
         if (!isReadOnly && !isActive) {
           onToggleActive(true);
         }
@@ -472,7 +477,9 @@ export const DocumentFooterZone: React.FC<DocumentFooterZoneProps> = ({
         'w-[calc(100%+192px)] -mx-[96px] px-[96px] min-h-[96px] shrink-0 select-none relative transition-all flex flex-col justify-start group/footer',
         isActive
           ? 'pt-1 pb-8 mt-2 bg-transparent'
-          : 'pt-1 pb-[48px] cursor-pointer hover:bg-zinc-50/60 dark:hover:bg-zinc-800/30 rounded-b-[2px]',
+          : Boolean(footerState.image?.url || footerState.text?.trim() || footerState.pageNumber)
+            ? 'pt-1 pb-4 cursor-pointer'
+            : 'h-[96px] p-0 cursor-text',
         className
       )}
     >
@@ -826,20 +833,8 @@ export const DocumentFooterZone: React.FC<DocumentFooterZoneProps> = ({
           </div>
         </div>
       ) : (
-        /* ── Idle State: Permanent 1-inch physical margin & Google Docs Hover Line ── */
+        /* ── Idle State: Permanent 1-inch physical margin matching Google Docs ── */
         <div className="flex flex-col gap-1 w-full justify-start h-full">
-          {/* Google Docs Hover Guide Cue (hidden when printing) */}
-          {!isReadOnly && (
-            <div className="opacity-0 group-hover/footer:opacity-100 transition-opacity border-t border-dashed border-zinc-300 dark:border-zinc-700 pt-1 text-[11px] text-zinc-400 flex items-center justify-between select-none print:hidden">
-              <span>Footer · Click to edit</span>
-              {footerState.scope === 'first_page_only' && (
-                <span className="text-[10px] bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded">
-                  Different first page
-                </span>
-              )}
-            </div>
-          )}
-
           {/* Side-by-side Footer preview if text, page number, or image is present */}
           {(footerState.text?.trim() || footerState.pageNumber || footerState.image?.url) && (
             <div className="w-full max-w-full overflow-hidden flex items-center gap-3 select-none mt-0.5">

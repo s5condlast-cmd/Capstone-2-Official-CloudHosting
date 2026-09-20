@@ -492,6 +492,11 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
     <header
       data-document-header="true"
       onClick={() => {
+        if (!isActive && !isReadOnly && Boolean(headerState.image?.url || headerState.text?.trim() || headerState.pageNumber)) {
+          onToggleActive(true);
+        }
+      }}
+      onDoubleClick={() => {
         if (!isReadOnly && !isActive) {
           onToggleActive(true);
         }
@@ -501,7 +506,9 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
         'w-[calc(100%+192px)] -mx-[96px] px-[96px] min-h-[96px] shrink-0 select-none relative transition-all flex flex-col justify-end group/header',
         isActive
           ? 'pt-[20px] pb-0 bg-transparent'
-          : 'pt-[20px] pb-1 cursor-pointer hover:bg-zinc-50/60 dark:hover:bg-zinc-800/30 rounded-t-[2px]',
+          : Boolean(headerState.image?.url || headerState.text?.trim() || headerState.pageNumber)
+            ? 'pt-[16px] pb-1 cursor-pointer'
+            : 'h-[96px] p-0 cursor-text',
         className
       )}
     >
@@ -904,18 +911,6 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
               {headerState.pageNumber && (
                 <span className="text-xs font-mono text-zinc-500 shrink-0">
                   {headerState.pageNumberStartAt || 1}
-                </span>
-              )}
-            </div>
-          )}
-
-          {/* Google Docs Hover Guide Cue (hidden when printing) */}
-          {!isReadOnly && (
-            <div className="opacity-0 group-hover/header:opacity-100 transition-opacity border-b border-dashed border-zinc-300 dark:border-zinc-700 pb-1 text-[11px] text-zinc-400 flex items-center justify-between select-none print:hidden">
-              <span>Header · Click to edit</span>
-              {headerState.scope === 'first_page_only' && (
-                <span className="text-[10px] bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded">
-                  Different first page
                 </span>
               )}
             </div>

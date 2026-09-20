@@ -774,6 +774,27 @@ describe('Plate editor runtime wiring', () => {
     assert.ok(footerSrc.includes('<ImageFloatingToolbar'), 'DocumentFooterZone must mount ImageFloatingToolbar');
     assert.ok(imageElementSrc.includes('<ImageFloatingToolbar'), 'ImageElement must mount ImageFloatingToolbar');
   });
+
+  it('enforces clean 1-inch (96px) paper sheet top and bottom margins with double-click header/footer activation and no idle dashed lines', async () => {
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+    const headerSrc = fs.readFileSync(path.resolve('src/components/editor/DocumentHeaderZone.tsx'), 'utf8');
+    const footerSrc = fs.readFileSync(path.resolve('src/components/editor/DocumentFooterZone.tsx'), 'utf8');
+
+    // 1. Exact 96px idle height when empty
+    assert.ok(headerSrc.includes("h-[96px] p-0 cursor-text"), 'Header idle empty state must be h-[96px] p-0');
+    assert.ok(footerSrc.includes("h-[96px] p-0 cursor-text"), 'Footer idle empty state must be h-[96px] p-0');
+
+    // 2. Double-click activation for header and footer
+    assert.ok(headerSrc.includes('onDoubleClick='), 'Header zone must wire onDoubleClick activation');
+    assert.ok(footerSrc.includes('onDoubleClick='), 'Footer zone must wire onDoubleClick activation');
+
+    // 3. Zero hover dashed lines and zero "Click to edit" cues in idle state
+    assert.ok(!headerSrc.includes('Header · Click to edit'), 'Header idle state must NOT show "Header · Click to edit" cue');
+    assert.ok(!footerSrc.includes('Footer · Click to edit'), 'Footer idle state must NOT show "Footer · Click to edit" cue');
+    assert.ok(!headerSrc.includes('border-dashed'), 'Header idle state must NOT contain dashed hover borders');
+    assert.ok(!footerSrc.includes('border-dashed'), 'Footer idle state must NOT contain dashed hover borders');
+  });
 });
 
 
