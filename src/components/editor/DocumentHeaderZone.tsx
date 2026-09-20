@@ -63,6 +63,7 @@ export interface DocumentHeaderZoneProps {
   onToggleActive: (active: boolean) => void;
   isReadOnly?: boolean;
   headerInputRef: React.RefObject<HTMLInputElement | null>;
+  onSelectImage?: (selected: boolean) => void;
   className?: string;
 }
 
@@ -94,6 +95,7 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
   onToggleActive,
   isReadOnly = false,
   headerInputRef,
+  onSelectImage,
   className,
 }) => {
   const [selectedImage, setSelectedImage] = useState(false);
@@ -139,6 +141,7 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
       const target = e.target as HTMLElement | null;
       if (!target?.closest('[data-header-image-container="true"]')) {
         setSelectedImage(false);
+        onSelectImage?.(false);
         if (isCropping) {
           setIsCropping(false);
         }
@@ -146,7 +149,7 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
     };
     window.addEventListener('mousedown', handleClickOutside);
     return () => window.removeEventListener('mousedown', handleClickOutside);
-  }, [isCropping]);
+  }, [isCropping, onSelectImage]);
 
   // ── Drag logo handler ──
   const handleDragStart = useCallback(
@@ -155,6 +158,7 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
       e.preventDefault();
       e.stopPropagation();
       setSelectedImage(true);
+      onSelectImage?.(true);
       setIsDraggingImage(true);
 
       const updatePosition = (clientX: number) => {
@@ -515,8 +519,17 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
       {/* ── Active State: Authentic Google Docs Header ── */}
       {isActive ? (
         <div className="w-full flex flex-col">
-          {/* Side-by-Side Image and Header Text Input (Inline with typing cursor right next to image) */}
-          <div className="w-full max-w-full min-h-[48px] overflow-visible flex items-center gap-3 relative py-0.5">
+          {/* Side-by-Side Image and Header Text Input */}
+          <div
+            className={cn(
+              'w-full max-w-full min-h-[48px] overflow-visible flex items-center gap-3 relative py-0.5',
+              headerState.image?.align === 'center' && !headerState.text?.trim()
+                ? 'justify-center'
+                : headerState.image?.align === 'right'
+                  ? 'flex-row-reverse justify-between'
+                  : 'justify-start'
+            )}
+          >
             {headerState.image?.url && (
               <div
                 data-header-image-container="true"
@@ -533,6 +546,7 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
                 onClick={(e) => {
                   e.stopPropagation();
                   setSelectedImage(true);
+                  onSelectImage?.(true);
                 }}
               >
                 {!isCropping ? (
@@ -541,7 +555,14 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
                       src={headerState.image.url}
                       alt="Header Logo"
                       draggable={false}
-                      className="w-full h-full object-contain object-left pointer-events-none select-none block"
+                      className={cn(
+                        'w-full h-full object-contain pointer-events-none select-none block',
+                        headerState.image.align === 'center'
+                          ? 'object-center'
+                          : headerState.image.align === 'right'
+                            ? 'object-right'
+                            : 'object-left'
+                      )}
                     />
                   </div>
                 ) : (
@@ -672,6 +693,19 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
                 {/* Authentic Google Docs Selected Image Floating Toolbar (media_1789889872645.png) */}
                 {selectedImage && !isCropping && !isDraggingImage && !isResizingImage && (
                   <ImageFloatingToolbar
+                    align={headerState.image.align || 'left'}
+                    onAlignChange={(newAlign) => {
+                      setHeaderState((prev) => ({
+                        ...prev,
+                        image: prev.image
+                          ? {
+                              ...prev.image,
+                              align: newAlign,
+                              offsetPercent: newAlign === 'left' ? 0 : newAlign === 'center' ? 50 : 100,
+                            }
+                          : null,
+                      }));
+                    }}
                     wrap={headerState.image.wrap || 'inline'}
                     onWrapChange={(newWrap) => {
                       setHeaderState((prev) => ({
@@ -683,6 +717,7 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
                     onRemove={() => {
                       setHeaderState((prev) => ({ ...prev, image: null }));
                       setSelectedImage(false);
+                      onSelectImage?.(false);
                     }}
                     side="bottom"
                   />
@@ -743,6 +778,10 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
             <input
               ref={textInputRef}
               type="text"
+              onFocus={() => {
+                setSelectedImage(false);
+                onSelectImage?.(false);
+              }}
               value={headerState.text || ''}
               onChange={(e) => setHeaderState((prev) => ({ ...prev, text: e.target.value }))}
               onKeyDown={(e) => {
@@ -867,7 +906,16 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
         <div className="flex flex-col gap-1 w-full justify-end h-full">
           {/* Side-by-side image & text preview */}
           {Boolean(headerState.image?.url || headerState.text?.trim() || headerState.pageNumber) && (
-            <div className="w-full max-w-full min-h-[48px] flex items-center gap-3 select-none">
+            <div
+              className={cn(
+                'w-full max-w-full min-h-[48px] flex items-center gap-3 select-none',
+                headerState.image?.align === 'center' && !headerState.text?.trim()
+                  ? 'justify-center'
+                  : headerState.image?.align === 'right'
+                    ? 'flex-row-reverse justify-between'
+                    : 'justify-start'
+              )}
+            >
               {headerState.image?.url && (
                 <div
                   style={{
@@ -881,7 +929,14 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
                     src={headerState.image.url}
                     alt="Header Logo"
                     draggable={false}
-                    className="w-full h-full object-contain object-left opacity-90 group-hover/header:opacity-100 transition-opacity block"
+                    className={cn(
+                      'w-full h-full object-contain opacity-90 group-hover/header:opacity-100 transition-opacity block',
+                      headerState.image.align === 'center'
+                        ? 'object-center'
+                        : headerState.image.align === 'right'
+                          ? 'object-right'
+                          : 'object-left'
+                    )}
                   />
                 </div>
               )}

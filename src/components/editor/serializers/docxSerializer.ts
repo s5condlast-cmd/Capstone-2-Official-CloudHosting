@@ -375,6 +375,10 @@ export function elementToParagraph(el: PlateElement): Paragraph {
   const indent = Math.max(0, Number(el.indent) || 0);
   const headingLayout = HEADING_LAYOUT[el.type];
   const lineHeight = Number(el.lineHeight) || headingLayout?.lineHeight || DEFAULT_LINE_HEIGHT;
+  const spaceBefore = el.spaceBefore !== undefined ? Number(el.spaceBefore) : undefined;
+  const customBeforeTwips = spaceBefore !== undefined ? Math.round(spaceBefore * 20) : undefined;
+  const spaceAfter = el.spaceAfter !== undefined ? Number(el.spaceAfter) : undefined;
+  const customAfterTwips = spaceAfter !== undefined ? Math.round(spaceAfter * 20) : undefined;
 
   return new Paragraph({
     heading,
@@ -382,8 +386,8 @@ export function elementToParagraph(el: PlateElement): Paragraph {
     children: runs as any,
     indent: indent ? { left: indent * 720 } : undefined,
     spacing: {
-      before: headingLayout?.before ?? 0,
-      after: headingLayout?.after ?? DEFAULT_PARAGRAPH_AFTER_TWIPS,
+      before: customBeforeTwips ?? (headingLayout?.before ?? 0),
+      after: customAfterTwips ?? (headingLayout?.after ?? DEFAULT_PARAGRAPH_AFTER_TWIPS),
       line: Math.round(lineHeight * 240),
     },
   });

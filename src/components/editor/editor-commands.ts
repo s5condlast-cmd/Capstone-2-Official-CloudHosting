@@ -85,6 +85,22 @@ export function toggleList(editor: any, type: ListType, listStyleType?: string):
   if (!editor?.tf?.setNodes || !editor?.tf?.wrapNodes) return;
 
   const sameListIsActive = isListActive(editor, type);
+
+  const currentListEntry = editor.api?.above?.({ match: (n: any) => n.type === type });
+  const currentListStyleType = currentListEntry?.[0]?.listStyleType;
+  if (sameListIsActive && listStyleType && currentListStyleType !== listStyleType) {
+    // If the same list is already active with a different style, update listStyleType
+    try {
+      editor.tf.setNodes(
+        { listStyleType },
+        { match: (node: any) => node.type === type }
+      );
+      return;
+    } catch {
+      // fallback to unwrap and re-wrap
+    }
+  }
+
   if (isListActive(editor)) unwrapList(editor);
 
   editor.tf.setNodes(

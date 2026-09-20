@@ -820,6 +820,61 @@ describe('Plate editor runtime wiring', () => {
     assert.ok(toolbarSrc.includes('isCurrentlyTodo'), 'ChecklistToolbarButton must query fresh isCurrentlyTodo on click');
     assert.ok(plateEditorSrc.includes("ed.tf.setNodes({ checked: false }, { match: (n: any) => n.type === 'todo' })"), 'Enter key on todo must create unchecked new item');
   });
+
+  it('enforces Google Docs Custom Spacing Dialog, 3x2 list preview grids, 2-card checklist, and image-text alignment synchronization', async () => {
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+    const customSpacingSrc = fs.readFileSync(path.resolve('src/components/editor/CustomSpacingDialog.tsx'), 'utf8');
+    const lineHeightSrc = fs.readFileSync(path.resolve('src/components/plate-ui/line-height-toolbar-button.tsx'), 'utf8');
+    const listToolbarSrc = fs.readFileSync(path.resolve('src/components/plate-ui/list-toolbar-button.tsx'), 'utf8');
+    const fixedToolbarSrc = fs.readFileSync(path.resolve('src/components/plate-ui/fixed-toolbar-buttons.tsx'), 'utf8');
+    const docxSerializerSrc = fs.readFileSync(path.resolve('src/components/editor/serializers/docxSerializer.ts'), 'utf8');
+    const headerZoneSrc = fs.readFileSync(path.resolve('src/components/editor/DocumentHeaderZone.tsx'), 'utf8');
+    const footerZoneSrc = fs.readFileSync(path.resolve('src/components/editor/DocumentFooterZone.tsx'), 'utf8');
+    const plateEditorSrc = fs.readFileSync(path.resolve('src/components/editor/plate-editor.tsx'), 'utf8');
+
+    // 1. Custom Spacing Dialog (media_1789892399567.png)
+    assert.ok(customSpacingSrc.includes('Custom spacing'), 'CustomSpacingDialog must have "Custom spacing" title');
+    assert.ok(customSpacingSrc.includes('Line spacing'), 'CustomSpacingDialog must include Line spacing input');
+    assert.ok(customSpacingSrc.includes('Paragraph spacing (pts)'), 'CustomSpacingDialog must include Paragraph spacing (pts)');
+    assert.ok(customSpacingSrc.includes('Before'), 'CustomSpacingDialog must include Before input');
+    assert.ok(customSpacingSrc.includes('After'), 'CustomSpacingDialog must include After input');
+    assert.ok(lineHeightSrc.includes('Custom spacing'), 'LineHeightToolbarButton must include Custom spacing trigger');
+    assert.ok(lineHeightSrc.includes('<CustomSpacingDialog'), 'LineHeightToolbarButton must mount CustomSpacingDialog');
+
+    // 2. DOCX twips spacing conversion parity
+    assert.ok(docxSerializerSrc.includes('spaceBefore * 20'), 'docxSerializer must convert spaceBefore pt to Word twips (* 20)');
+    assert.ok(docxSerializerSrc.includes('spaceAfter * 20'), 'docxSerializer must convert spaceAfter pt to Word twips (* 20)');
+
+    // 3. Numbered List 3x2 Preview Card Grid (media_1789892207830.png)
+    assert.ok(listToolbarSrc.includes('NUMBERED_STYLES'), 'list-toolbar-button must define NUMBERED_STYLES');
+    assert.ok(listToolbarSrc.includes('grid grid-cols-3 gap-2'), 'Numbered list must render a 3-column grid');
+    assert.ok(listToolbarSrc.includes('decimal-paren'), 'Numbered list must support decimal-paren style');
+    assert.ok(listToolbarSrc.includes('legal'), 'Numbered list must support legal 1. 1.1 style');
+    assert.ok(listToolbarSrc.includes('upper-alpha'), 'Numbered list must support upper-alpha style');
+    assert.ok(listToolbarSrc.includes('decimal-leading-zero'), 'Numbered list must support decimal-leading-zero style');
+
+    // 4. Bulleted List 3x2 Preview Card Grid (media_1789892247168.png)
+    assert.ok(listToolbarSrc.includes('BULLETED_STYLES'), 'list-toolbar-button must define BULLETED_STYLES');
+    assert.ok(listToolbarSrc.includes('disc'), 'Bulleted list must support default disc set');
+    assert.ok(listToolbarSrc.includes('diamond'), 'Bulleted list must support diamond set');
+    assert.ok(listToolbarSrc.includes('shadow-square'), 'Bulleted list must support shadow-square set');
+    assert.ok(listToolbarSrc.includes('arrow'), 'Bulleted list must support arrow set');
+    assert.ok(listToolbarSrc.includes('star'), 'Bulleted list must support star set');
+
+    // 5. Checklist 2-card Dropdown Layout (media_1789892280220.png)
+    assert.ok(fixedToolbarSrc.includes('Checklist with strikethrough'), 'FixedToolbar must include strikethrough card');
+    assert.ok(fixedToolbarSrc.includes('Checklist without strikethrough'), 'FixedToolbar must include clean card');
+
+    // 6. Image Alignment Synchronization across header, footer, and body
+    assert.ok(headerZoneSrc.includes('headerState.image?.align === \'center\''), 'DocumentHeaderZone must position image based on align');
+    assert.ok(footerZoneSrc.includes('footerState.image?.align === \'center\''), 'DocumentFooterZone must position image based on align');
+    assert.ok(headerZoneSrc.includes('onSelectImage'), 'DocumentHeaderZone must accept onSelectImage prop');
+    assert.ok(footerZoneSrc.includes('onSelectImage'), 'DocumentFooterZone must accept onSelectImage prop');
+    assert.ok(plateEditorSrc.includes('headerFooterImageSelected'), 'plate-editor must pass headerFooterImageSelected to toolbar');
+    assert.ok(fixedToolbarSrc.includes('isHeaderImageTarget'), 'fixed-toolbar-buttons must detect header image target');
+    assert.ok(fixedToolbarSrc.includes('isFooterImageTarget'), 'fixed-toolbar-buttons must detect footer image target');
+  });
 });
 
 

@@ -44,10 +44,15 @@ export function HeadingElement({
   ...props
 }: PlateElementProps & VariantProps<typeof headingVariants>) {
   const indent = Math.max(0, Number((element as any)?.indent) || 0);
+  const spaceBefore = (element as any)?.spaceBefore !== undefined ? Number((element as any).spaceBefore) : undefined;
+  const spaceAfter = (element as any)?.spaceAfter !== undefined ? Number((element as any).spaceAfter) : undefined;
+
   const elementStyle: React.CSSProperties = {
     lineHeight: (element as any)?.lineHeight || undefined,
     marginLeft: indent ? `${indent * 1.5}rem` : undefined,
     textAlign: (element as any)?.align || undefined,
+    marginTop: spaceBefore !== undefined ? `${Math.round(spaceBefore * 1.333)}px` : undefined,
+    marginBottom: spaceAfter !== undefined ? `${Math.round(spaceAfter * 1.333)}px` : undefined,
     ...style,
   };
 

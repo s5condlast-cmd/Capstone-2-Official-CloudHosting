@@ -146,15 +146,13 @@ export function ImageElement({
         as="div"
         element={element}
         className={cn(
-          'relative my-4',
-          wrap === 'inline'
-            ? 'inline-flex align-baseline mr-3 mb-1 w-auto max-w-full'
-            : 'w-full flex',
-          wrap !== 'inline' && align === 'left' && 'justify-start',
-          wrap !== 'inline' && align === 'center' && 'justify-center',
-          wrap !== 'inline' && align === 'right' && 'justify-end',
-          wrap === 'wrap' && align === 'left' && 'float-left mr-4 clear-none',
-          wrap === 'wrap' && align === 'right' && 'float-right ml-4 clear-none',
+          'relative my-4 w-full flex',
+          wrap === 'inline' && 'inline-flex',
+          align === 'left' && 'justify-start',
+          align === 'center' && 'justify-center',
+          align === 'right' && 'justify-end',
+          wrap === 'wrap' && align === 'left' && 'float-left mr-4 clear-none w-auto inline-flex',
+          wrap === 'wrap' && align === 'right' && 'float-right ml-4 clear-none w-auto inline-flex',
           wrap === 'behind' && 'absolute opacity-75 pointer-events-auto',
           wrap === 'front' && 'relative z-20',
           className

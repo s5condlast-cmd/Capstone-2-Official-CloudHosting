@@ -1074,8 +1074,27 @@ function AlignToolbarButton({
   const [open, setOpen] = React.useState(false);
   const anchorRef = React.useRef<HTMLDivElement>(null);
 
+  // Detect if an image node is selected in the Slate editor body
+  let imageNode: any = null;
+  try {
+    if (editor?.selection) {
+      const [node] = editor.api?.node?.(editor.selection) || [];
+      if (node?.type === 'img') {
+        imageNode = node;
+      } else if (editor.api?.above) {
+        const [above] = editor.api.above({ match: (n: any) => n.type === 'img' }) || [];
+        if (above) imageNode = above;
+      }
+    }
+  } catch {
+    // non-fatal
+  }
+
   const block = getActiveBlock(editor);
-  const currentAlign = targetAlign !== undefined ? targetAlign : (block?.align || 'left');
+  const currentAlign =
+    targetAlign !== undefined
+      ? targetAlign
+      : (imageNode?.align || block?.align || 'left');
   const currentOption = ALIGN_OPTIONS.find((o) => o.id === currentAlign) || ALIGN_OPTIONS[0];
   const CurrentIcon = currentOption.icon;
 
@@ -1084,7 +1103,7 @@ function AlignToolbarButton({
       <ToolbarButton
         isDropdown
         onClick={() => setOpen(!open)}
-        tooltip="Text Alignment"
+        tooltip={imageNode ? 'Image Alignment' : 'Text Alignment'}
         className="px-2 h-8.5"
       >
         <CurrentIcon className="w-4 h-4" />
@@ -1108,6 +1127,15 @@ function AlignToolbarButton({
                 e.preventDefault();
                 if (onSelectAlign) {
                   onSelectAlign(opt.id as any);
+                } else if (imageNode || block?.type === 'img') {
+                  try {
+                    editor?.tf?.setNodes?.(
+                      { align: opt.id },
+                      { match: (n: any) => n.type === 'img' }
+                    );
+                  } catch {
+                    setBlockProperty(editor, 'align', opt.id);
+                  }
                 } else {
                   setBlockProperty(editor, 'align', opt.id);
                 }
@@ -1115,7 +1143,7 @@ function AlignToolbarButton({
                 editor?.tf?.focus?.();
               }}
               className={cn(
-                'flex items-center justify-between w-full px-3 py-2 text-xs font-medium rounded-lg text-left transition-colors',
+                'flex items-center justify-between w-full px-3 py-2 text-xs font-medium rounded-lg text-left transition-colors cursor-pointer',
                 isSelected
                   ? 'bg-primary/15 text-primary font-semibold'
                   : 'text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800'
@@ -1412,26 +1440,72 @@ function ChecklistToolbarButton({ editor }: { editor: any }) {
         anchorRef={containerRef}
         open={open}
         onClose={() => setOpen(false)}
-        className="w-56 p-1.5"
+        className="w-auto p-2 shadow-2xl rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 z-[150]"
       >
-        <div className="px-3 py-1 text-[11px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
-          Checklist Style
-        </div>
-        {CHECKLIST_STYLES.map((st) => (
+        {/* Checklist Style options */}
+        <div className="flex items-center gap-2" aria-label="Checklist Style">
+          {/* Card 1: Strikethrough style (media_1789892280220.png Left) */}
           <button
-            key={st.id}
             type="button"
+            title="Checklist with strikethrough"
             onMouseDown={(e) => {
               e.preventDefault();
-              selectStyle(st.id);
+              selectStyle('strikethrough');
               setOpen(false);
             }}
-            className="flex items-center gap-2.5 w-full px-2.5 py-1.5 text-xs font-medium rounded-lg text-left text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+            className={cn(
+              'w-[104px] h-[68px] p-2.5 bg-white dark:bg-zinc-900 rounded-sm border flex flex-col justify-between cursor-pointer transition-colors select-none',
+              (!isTodoActive || activeType === 'todo' && !(getActiveBlock(editor)?.noStrikethrough))
+                ? 'border-zinc-700 dark:border-zinc-300 ring-1 ring-zinc-700 dark:ring-zinc-300 shadow-xs'
+                : 'border-zinc-300 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500'
+            )}
           >
-            {st.icon}
-            <span>{st.label}</span>
+            {/* Line 1: Unchecked */}
+            <div className="flex items-center gap-2 w-full">
+              <div className="w-3.5 h-3.5 border border-zinc-700 dark:border-zinc-300 rounded-[2px] shrink-0" />
+              <div className="h-1.5 bg-zinc-300 dark:bg-zinc-600 rounded-full flex-1" />
+            </div>
+            {/* Line 2: Checked with strikethrough */}
+            <div className="flex items-center gap-2 w-full">
+              <div className="w-3.5 h-3.5 border border-zinc-700 dark:border-zinc-300 rounded-[2px] bg-transparent flex items-center justify-center shrink-0">
+                <Check className="w-2.5 h-2.5 text-zinc-800 dark:text-zinc-200 stroke-[3]" />
+              </div>
+              <div className="relative flex-1 h-1.5 bg-zinc-300 dark:bg-zinc-600 rounded-full flex items-center">
+                <div className="w-full h-[1.5px] bg-zinc-700 dark:bg-zinc-300" />
+              </div>
+            </div>
           </button>
-        ))}
+
+          {/* Card 2: Clean style (media_1789892280220.png Right) */}
+          <button
+            type="button"
+            title="Checklist without strikethrough"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              selectStyle('clean');
+              setOpen(false);
+            }}
+            className={cn(
+              'w-[104px] h-[68px] p-2.5 bg-white dark:bg-zinc-900 rounded-sm border flex flex-col justify-between cursor-pointer transition-colors select-none',
+              (isTodoActive && Boolean(getActiveBlock(editor)?.noStrikethrough))
+                ? 'border-zinc-700 dark:border-zinc-300 ring-1 ring-zinc-700 dark:ring-zinc-300 shadow-xs'
+                : 'border-zinc-300 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500'
+            )}
+          >
+            {/* Line 1: Unchecked */}
+            <div className="flex items-center gap-2 w-full">
+              <div className="w-3.5 h-3.5 border border-zinc-700 dark:border-zinc-300 rounded-[2px] shrink-0" />
+              <div className="h-1.5 bg-zinc-300 dark:bg-zinc-600 rounded-full flex-1" />
+            </div>
+            {/* Line 2: Checked without strikethrough */}
+            <div className="flex items-center gap-2 w-full">
+              <div className="w-3.5 h-3.5 border border-zinc-700 dark:border-zinc-300 rounded-[2px] bg-transparent flex items-center justify-center shrink-0">
+                <Check className="w-2.5 h-2.5 text-zinc-800 dark:text-zinc-200 stroke-[3]" />
+              </div>
+              <div className="h-1.5 bg-zinc-300 dark:bg-zinc-600 rounded-full flex-1" />
+            </div>
+          </button>
+        </div>
       </PortalPopover>
     </div>
   );
@@ -2864,6 +2938,7 @@ export interface FixedToolbarButtonsProps {
   activeHeaderFooter?: 'header' | 'footer' | null;
   onFormatHeaderFooter?: (format: any) => void;
   onUploadHeaderFooterImage?: () => void;
+  headerFooterImageSelected?: boolean;
 }
 
 export function FixedToolbarButtons({
@@ -2883,6 +2958,7 @@ export function FixedToolbarButtons({
   activeHeaderFooter,
   onFormatHeaderFooter,
   onUploadHeaderFooterImage,
+  headerFooterImageSelected = false,
 }: FixedToolbarButtonsProps) {
   const [, forceUpdate] = React.useReducer((x) => x + 1, 0);
 
@@ -2902,6 +2978,30 @@ export function FixedToolbarButtons({
     : activeHeaderFooter === 'footer'
       ? headerFooter?.footer
       : null;
+
+  const isHeaderImageTarget =
+    activeHeaderFooter === 'header' &&
+    (headerFooterImageSelected || (headerFooter?.header?.image?.url && !headerFooter?.header?.text?.trim()));
+  const isFooterImageTarget =
+    activeHeaderFooter === 'footer' &&
+    (headerFooterImageSelected || (headerFooter?.footer?.image?.url && !headerFooter?.footer?.text?.trim()));
+  const isImageTarget = isHeaderImageTarget || isFooterImageTarget;
+
+  const resolvedTargetAlign = isImageTarget
+    ? (activeHeaderFooter === 'header' ? headerFooter?.header?.image?.align : headerFooter?.footer?.image?.align) || 'left'
+    : activeHeaderFooter
+      ? targetHeaderFooter?.textAlign || 'left'
+      : undefined;
+
+  const handleSelectAlign = activeHeaderFooter && onFormatHeaderFooter
+    ? (align: 'left' | 'center' | 'right' | 'justify') => {
+        if (isImageTarget) {
+          onFormatHeaderFooter({ imageAlign: align });
+        } else {
+          onFormatHeaderFooter({ textAlign: align });
+        }
+      }
+    : undefined;
 
   // Marks state
   const isBold = activeHeaderFooter ? !!targetHeaderFooter?.bold : isMarkActive(editor, 'bold');
@@ -3261,8 +3361,8 @@ export function FixedToolbarButtons({
                   <div className={cn('flex items-center gap-0.5 shrink-0 flex-nowrap', isViewing && 'opacity-40 pointer-events-none')}>
                     <AlignToolbarButton
                       editor={editor}
-                      targetAlign={activeHeaderFooter ? (targetHeaderFooter?.textAlign || 'left') : undefined}
-                      onSelectAlign={activeHeaderFooter && onFormatHeaderFooter ? (align) => onFormatHeaderFooter({ textAlign: align }) : undefined}
+                      targetAlign={resolvedTargetAlign}
+                      onSelectAlign={handleSelectAlign}
                     />
                     <LineHeightToolbarButton editor={editor} />
                     <div className="mx-1 h-5 w-px bg-zinc-300/80 dark:bg-zinc-700/80 shrink-0" />
@@ -3345,8 +3445,8 @@ export function FixedToolbarButtons({
             <ToolbarGroup className={cn('items-center', isViewing && 'opacity-40 pointer-events-none')}>
               <AlignToolbarButton
                 editor={editor}
-                targetAlign={activeHeaderFooter ? (targetHeaderFooter?.textAlign || 'left') : undefined}
-                onSelectAlign={activeHeaderFooter && onFormatHeaderFooter ? (align) => onFormatHeaderFooter({ textAlign: align }) : undefined}
+                targetAlign={resolvedTargetAlign}
+                onSelectAlign={handleSelectAlign}
               />
               <LineHeightToolbarButton editor={editor} />
 

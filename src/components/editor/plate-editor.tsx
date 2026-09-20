@@ -230,7 +230,44 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
       scope: externalHeaderFooter?.footer?.scope || 'every_page',
     }));
 
-    const handleFormatHeaderFooter = useCallback((format: Partial<HeaderFooterItem>) => {
+    const [headerImageSelected, setHeaderImageSelected] = useState(false);
+    const [footerImageSelected, setFooterImageSelected] = useState(false);
+
+    useEffect(() => {
+      if (!activeHeaderFooter) {
+        setHeaderImageSelected(false);
+        setFooterImageSelected(false);
+      }
+    }, [activeHeaderFooter]);
+
+    const handleFormatHeaderFooter = useCallback((format: Partial<HeaderFooterItem> & { imageAlign?: 'left' | 'center' | 'right' | 'justify' }) => {
+      if (format.imageAlign) {
+        const align = format.imageAlign === 'justify' ? 'left' : format.imageAlign;
+        if (activeHeaderFooter === 'header') {
+          setHeaderState((prev) => ({
+            ...prev,
+            image: prev.image
+              ? {
+                  ...prev.image,
+                  align,
+                  offsetPercent: align === 'left' ? 0 : align === 'center' ? 50 : 100,
+                }
+              : null,
+          }));
+        } else if (activeHeaderFooter === 'footer') {
+          setFooterState((prev) => ({
+            ...prev,
+            image: prev.image
+              ? {
+                  ...prev.image,
+                  align,
+                  offsetPercent: align === 'left' ? 0 : align === 'center' ? 50 : 100,
+                }
+              : null,
+          }));
+        }
+        return;
+      }
       if (activeHeaderFooter === 'header') {
         setHeaderState((prev) => ({ ...prev, ...format }));
       } else if (activeHeaderFooter === 'footer') {
@@ -798,6 +835,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                 headerFooter={{ header: headerState, footer: footerState }}
                 activeHeaderFooter={activeHeaderFooter}
                 onFormatHeaderFooter={handleFormatHeaderFooter}
+                headerFooterImageSelected={activeHeaderFooter === 'header' ? headerImageSelected : activeHeaderFooter === 'footer' ? footerImageSelected : false}
                 onUploadHeaderFooterImage={() => {
                   if (activeHeaderFooter === 'header') {
                     headerInputRef.current?.click();
@@ -873,10 +911,10 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
               </button>
             )}
 
-            {/* Scrollable canvas containing the paper document sheet */}
+            {/* Canvas Viewport (Physical Paper Sheet Container) */}
             <div
               ref={canvasRef}
-              data-editor-canvas="true"
+              tabIndex={-1}
               className="relative flex-1 flex flex-col min-h-0 overflow-hidden bg-[#f0f4f9] dark:bg-zinc-950"
             >
               <EditorContainer
@@ -943,6 +981,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                     onToggleActive={(active) => setActiveHeaderFooter(active ? 'header' : null)}
                     isReadOnly={isEffectivelyReadOnly}
                     headerInputRef={headerInputRef}
+                    onSelectImage={setHeaderImageSelected}
                   />
 
                   {/* ─── Slate Document Body (Seamlessly Inside Paper Sheet) ──────── */}
@@ -979,6 +1018,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                     onToggleActive={(active) => setActiveHeaderFooter(active ? 'footer' : null)}
                     isReadOnly={isEffectivelyReadOnly}
                     footerInputRef={footerInputRef}
+                    onSelectImage={setFooterImageSelected}
                   />
                 </div>
               </div>

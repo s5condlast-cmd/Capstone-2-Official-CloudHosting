@@ -74,11 +74,15 @@ export const MARK_FONT_FAMILY = 'fontFamily';
 
 function blockStyle(element: any): React.CSSProperties {
   const indent = Math.max(0, Number(element?.indent) || 0);
+  const spaceBefore = element?.spaceBefore !== undefined ? Number(element.spaceBefore) : undefined;
+  const spaceAfter = element?.spaceAfter !== undefined ? Number(element.spaceAfter) : undefined;
 
   return {
     lineHeight: element?.lineHeight || undefined,
     marginLeft: indent ? `${indent * 1.5}rem` : undefined,
     textAlign: element?.align || undefined,
+    marginTop: spaceBefore !== undefined ? `${Math.round(spaceBefore * 1.333)}px` : undefined,
+    marginBottom: spaceAfter !== undefined ? `${Math.round(spaceAfter * 1.333)}px` : undefined,
   };
 }
 
@@ -136,21 +140,61 @@ export {
 function ListElement({ element, style, className, ...props }: any) {
   const ordered = element?.type === ELEMENT_OL;
   const listStyle = element?.listStyleType || (ordered ? 'decimal' : 'disc');
+
+  let resolvedListStyle = listStyle;
+  if (!ordered) {
+    if (listStyle === 'diamond') resolvedListStyle = '"❖ "';
+    else if (listStyle === 'shadow-square') resolvedListStyle = '"❏ "';
+    else if (listStyle === 'arrow') resolvedListStyle = '"➔ "';
+    else if (listStyle === 'star') resolvedListStyle = '"★ "';
+    else if (listStyle === 'chevron') resolvedListStyle = '"➢ "';
+    else if (listStyle === 'circle') resolvedListStyle = 'circle';
+    else if (listStyle === 'square') resolvedListStyle = 'square';
+    else resolvedListStyle = 'disc';
+  } else {
+    if (listStyle === 'upper-alpha') resolvedListStyle = 'upper-alpha';
+    else if (listStyle === 'lower-alpha') resolvedListStyle = 'lower-alpha';
+    else if (listStyle === 'upper-roman') resolvedListStyle = 'upper-roman';
+    else if (listStyle === 'lower-roman') resolvedListStyle = 'lower-roman';
+    else if (listStyle === 'decimal-leading-zero') resolvedListStyle = 'decimal-leading-zero';
+    else resolvedListStyle = 'decimal';
+  }
+
   return (
     <BlockDraggable element={element} handleTopOffset="top-1">
       <PlateElement
         as={ordered ? 'ol' : 'ul'}
         element={element}
-        style={{ listStyleType: listStyle, ...style }}
+        style={{ listStyleType: resolvedListStyle, ...style }}
         className={cn(
           'my-1 ml-6 space-y-0.5',
           ordered
-            ? 'list-decimal'
+            ? listStyle === 'upper-alpha'
+              ? 'list-[upper-alpha]'
+              : listStyle === 'lower-alpha'
+                ? 'list-[lower-alpha]'
+                : listStyle === 'upper-roman'
+                  ? 'list-[upper-roman]'
+                  : listStyle === 'lower-roman'
+                    ? 'list-[lower-roman]'
+                    : listStyle === 'decimal-leading-zero'
+                      ? 'list-[decimal-leading-zero]'
+                      : 'list-decimal'
             : listStyle === 'circle'
               ? 'list-[circle]'
               : listStyle === 'square'
                 ? 'list-[square]'
-                : 'list-disc',
+                : listStyle === 'diamond'
+                  ? 'list-["❖_"]'
+                  : listStyle === 'shadow-square'
+                    ? 'list-["❏_"]'
+                    : listStyle === 'arrow'
+                      ? 'list-["➔_"]'
+                      : listStyle === 'star'
+                        ? 'list-["★_"]'
+                        : listStyle === 'chevron'
+                          ? 'list-["➢_"]'
+                          : 'list-disc',
           className
         )}
         {...props}

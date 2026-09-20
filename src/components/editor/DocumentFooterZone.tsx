@@ -35,6 +35,7 @@ export interface DocumentFooterZoneProps {
   onToggleActive: (active: boolean) => void;
   isReadOnly?: boolean;
   footerInputRef: React.RefObject<HTMLInputElement | null>;
+  onSelectImage?: (selected: boolean) => void;
   className?: string;
 }
 
@@ -65,6 +66,7 @@ export const DocumentFooterZone: React.FC<DocumentFooterZoneProps> = ({
   onToggleActive,
   isReadOnly = false,
   footerInputRef,
+  onSelectImage,
   className,
 }) => {
   const [selectedImage, setSelectedImage] = useState(false);
@@ -110,6 +112,7 @@ export const DocumentFooterZone: React.FC<DocumentFooterZoneProps> = ({
       const target = e.target as HTMLElement | null;
       if (!target?.closest('[data-footer-image-container="true"]')) {
         setSelectedImage(false);
+        onSelectImage?.(false);
         if (isCropping) {
           setIsCropping(false);
         }
@@ -117,7 +120,7 @@ export const DocumentFooterZone: React.FC<DocumentFooterZoneProps> = ({
     };
     window.addEventListener('mousedown', handleClickOutside);
     return () => window.removeEventListener('mousedown', handleClickOutside);
-  }, [isCropping]);
+  }, [isCropping, onSelectImage]);
 
   // ── Drag logo handler ──
   const handleDragStart = useCallback(
@@ -126,6 +129,7 @@ export const DocumentFooterZone: React.FC<DocumentFooterZoneProps> = ({
       e.preventDefault();
       e.stopPropagation();
       setSelectedImage(true);
+      onSelectImage?.(true);
       setIsDraggingImage(true);
 
       const updatePosition = (clientX: number) => {
@@ -567,7 +571,16 @@ export const DocumentFooterZone: React.FC<DocumentFooterZoneProps> = ({
           <div className="-mx-[96px] w-[calc(100%+192px)] border-b border-zinc-300 dark:border-zinc-700 my-1" />
 
           {/* Side-by-Side Image, Text, and Page Number (Inline with typing cursor right next to image) */}
-          <div className="w-full max-w-full overflow-visible flex items-center gap-3 relative py-0.5 min-h-[36px]">
+          <div
+            className={cn(
+              'w-full max-w-full overflow-visible flex items-center gap-3 relative py-0.5 min-h-[36px]',
+              footerState.image?.align === 'center' && !footerState.text?.trim()
+                ? 'justify-center'
+                : footerState.image?.align === 'right'
+                  ? 'flex-row-reverse justify-between'
+                  : 'justify-start'
+            )}
+          >
             {footerState.image?.url && (
               <div
                 data-footer-image-container="true"
@@ -584,6 +597,7 @@ export const DocumentFooterZone: React.FC<DocumentFooterZoneProps> = ({
                 onClick={(e) => {
                   e.stopPropagation();
                   setSelectedImage(true);
+                  onSelectImage?.(true);
                 }}
               >
                 {!isCropping ? (
@@ -592,7 +606,14 @@ export const DocumentFooterZone: React.FC<DocumentFooterZoneProps> = ({
                       src={footerState.image.url}
                       alt="Footer Logo"
                       draggable={false}
-                      className="w-full h-full object-contain pointer-events-none select-none block"
+                      className={cn(
+                        'w-full h-full object-contain pointer-events-none select-none block',
+                        footerState.image.align === 'center'
+                          ? 'object-center'
+                          : footerState.image.align === 'right'
+                            ? 'object-right'
+                            : 'object-left'
+                      )}
                     />
                   </div>
                 ) : (
@@ -723,6 +744,19 @@ export const DocumentFooterZone: React.FC<DocumentFooterZoneProps> = ({
                 {/* Authentic Google Docs Selected Image Floating Toolbar (media_1789889872645.png) */}
                 {selectedImage && !isCropping && !isDraggingImage && !isResizingImage && (
                   <ImageFloatingToolbar
+                    align={footerState.image.align || 'left'}
+                    onAlignChange={(newAlign) => {
+                      setFooterState((prev) => ({
+                        ...prev,
+                        image: prev.image
+                          ? {
+                              ...prev.image,
+                              align: newAlign,
+                              offsetPercent: newAlign === 'left' ? 0 : newAlign === 'center' ? 50 : 100,
+                            }
+                          : null,
+                      }));
+                    }}
                     wrap={footerState.image.wrap || 'inline'}
                     onWrapChange={(newWrap) => {
                       setFooterState((prev) => ({
@@ -734,8 +768,9 @@ export const DocumentFooterZone: React.FC<DocumentFooterZoneProps> = ({
                     onRemove={() => {
                       setFooterState((prev) => ({ ...prev, image: null }));
                       setSelectedImage(false);
+                      onSelectImage?.(false);
                     }}
-                    side="bottom"
+                    side="top"
                   />
                 )}
 
@@ -794,6 +829,10 @@ export const DocumentFooterZone: React.FC<DocumentFooterZoneProps> = ({
             <input
               ref={textInputRef}
               type="text"
+              onFocus={() => {
+                setSelectedImage(false);
+                onSelectImage?.(false);
+              }}
               value={footerState.text || ''}
               onChange={(e) => setFooterState((prev) => ({ ...prev, text: e.target.value }))}
               onKeyDown={(e) => {
@@ -837,7 +876,16 @@ export const DocumentFooterZone: React.FC<DocumentFooterZoneProps> = ({
         <div className="flex flex-col gap-1 w-full justify-start h-full">
           {/* Side-by-side Footer preview if text, page number, or image is present */}
           {(footerState.text?.trim() || footerState.pageNumber || footerState.image?.url) && (
-            <div className="w-full max-w-full overflow-hidden flex items-center gap-3 select-none mt-0.5">
+            <div
+              className={cn(
+                'w-full max-w-full overflow-hidden flex items-center gap-3 select-none mt-0.5',
+                footerState.image?.align === 'center' && !footerState.text?.trim()
+                  ? 'justify-center'
+                  : footerState.image?.align === 'right'
+                    ? 'flex-row-reverse justify-between'
+                    : 'justify-start'
+              )}
+            >
               {footerState.image?.url && (
                 <div
                   style={{
@@ -851,7 +899,14 @@ export const DocumentFooterZone: React.FC<DocumentFooterZoneProps> = ({
                     src={footerState.image.url}
                     alt="Footer Logo"
                     draggable={false}
-                    className="w-full h-full object-contain opacity-90 group-hover/footer:opacity-100 transition-opacity block"
+                    className={cn(
+                      'w-full h-full object-contain opacity-90 group-hover/footer:opacity-100 transition-opacity block',
+                      footerState.image.align === 'center'
+                        ? 'object-center'
+                        : footerState.image.align === 'right'
+                          ? 'object-right'
+                          : 'object-left'
+                    )}
                   />
                 </div>
               )}
