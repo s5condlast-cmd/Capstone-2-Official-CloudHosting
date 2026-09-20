@@ -575,8 +575,10 @@ describe('Plate editor runtime wiring', () => {
     const floatingToolbarSrc = fs.readFileSync(path.resolve('src/components/plate-ui/floating-toolbar.tsx'), 'utf8');
     const fixedToolbarSrc = fs.readFileSync(path.resolve('src/components/plate-ui/fixed-toolbar-buttons.tsx'), 'utf8');
 
-    // 1. Full-margin box containers for Header & Footer with dynamic expansion up to 256px / 180px and 16px top spacing
-    assert.ok(headerSrc.includes('w-[calc(100%+192px)] -mx-[96px] px-[96px] min-h-[96px] shrink-0'), 'Header container must span entire top 96px margin box with min-h 96px');
+    // 1. Full-margin box containers for Header & Footer with dynamic expansion up to 256px / 180px, 16px top spacing, and 16px collapse without header
+    assert.ok(headerSrc.includes('w-[calc(100%+192px)] -mx-[96px] px-[96px] shrink-0'), 'Header container must span entire top margin box track');
+    assert.ok(headerSrc.includes("isActive || hasContent"), 'Header collapses to 16px when empty without header content');
+    assert.ok(headerSrc.includes('h-[16px] min-h-[16px]'), 'Header collapses to 16px when empty');
     assert.ok(footerSrc.includes('w-[calc(100%+192px)] -mx-[96px] px-[96px] min-h-[96px] shrink-0'), 'Footer container must span entire bottom 96px margin box with min-h 96px');
     assert.ok(headerSrc.includes('HEADER_TOP_SPACING = 16'), 'Header top spacing must be configured to 16px');
     assert.ok(headerSrc.includes('HEADER_MAX_HEIGHT = 256'), 'Header max height must be configured to 256px');

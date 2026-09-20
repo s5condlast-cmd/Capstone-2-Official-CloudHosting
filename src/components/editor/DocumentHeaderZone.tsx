@@ -474,6 +474,7 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
   };
 
   const textAlign = headerState.textAlign || 'left';
+  const hasContent = Boolean(headerState.image?.url || headerState.text?.trim());
 
   return (
     <header
@@ -485,10 +486,15 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
       }}
       style={{ maxHeight: `${HEADER_MAX_HEIGHT}px` }}
       className={cn(
-        'w-[calc(100%+192px)] -mx-[96px] px-[96px] min-h-[96px] shrink-0 select-none relative transition-all flex flex-col justify-end group/header',
+        'w-[calc(100%+192px)] -mx-[96px] px-[96px] shrink-0 select-none relative transition-all flex flex-col justify-end group/header',
+        isActive || hasContent
+          ? 'min-h-[96px] pt-[16px]'
+          : 'h-[16px] min-h-[16px] pt-0 cursor-pointer hover:bg-zinc-50/60 dark:hover:bg-zinc-800/30 rounded-t-[2px]',
         isActive
-          ? 'pt-[16px] pb-0 bg-transparent'
-          : 'pt-[16px] pb-1 cursor-pointer hover:bg-zinc-50/60 dark:hover:bg-zinc-800/30 rounded-t-[2px]',
+          ? 'pb-0 bg-transparent'
+          : hasContent
+          ? 'pb-1 cursor-pointer hover:bg-zinc-50/60 dark:hover:bg-zinc-800/30 rounded-t-[2px]'
+          : 'pb-0',
         className
       )}
     >
@@ -977,7 +983,12 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
 
           {/* Google Docs Hover Guide Cue (hidden when printing) */}
           {!isReadOnly && (
-            <div className="opacity-0 group-hover/header:opacity-100 transition-opacity border-b border-dashed border-zinc-300 dark:border-zinc-700 pb-1 text-[11px] text-zinc-400 flex items-center justify-between select-none print:hidden">
+            <div
+              className={cn(
+                'opacity-0 group-hover/header:opacity-100 transition-opacity border-b border-dashed border-zinc-300 dark:border-zinc-700 text-zinc-400 flex items-center justify-between select-none print:hidden',
+                hasContent ? 'pb-1 text-[11px]' : 'pb-0 h-full text-[10px]'
+              )}
+            >
               <span>Header · Click to edit</span>
               {headerState.scope === 'first_page_only' && (
                 <span className="text-[10px] bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded">
