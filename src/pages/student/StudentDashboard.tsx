@@ -832,113 +832,127 @@ export const StudentDashboard: React.FC = () => {
   // ─── Main Render ────────────────────────────────────────────────────────────
 
   return (
-    <div className="space-y-4 pb-12 animate-in fade-in duration-300">
+    <div className="space-y-6 pb-12 animate-in fade-in duration-300">
       {/* 1. Header with Student Greeting & Live Metadata */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-200/80 dark:border-zinc-800/80 pb-3.5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
               Welcome back, {user?.name ? user.name.split(' ')[0] : 'Intern'}!
             </h1>
-            <Badge variant="outline" className="text-[10px] font-bold px-2 py-0.5 border-primary/30 text-primary bg-primary/5">
+            <Badge variant="outline" className="text-xs font-semibold px-2.5 py-0.5 border-primary/30 text-primary bg-primary/10 rounded-full">
               {profilePhase === 'before_ojt' ? 'Before OJT' : profilePhase === 'in_ojt' ? 'In OJT' : 'Final Phase'}
             </Badge>
           </div>
-          <p className="text-xs text-muted-foreground font-medium mt-0.5 flex flex-wrap items-center gap-1.5">
-            <span>Student ID: <strong className="text-foreground">{studentId || user?.studentId || '2023-010482'}</strong></span>
-            <span>·</span>
-            <span>Program: <strong className="text-foreground">{programName || user?.course || 'BSIT'}</strong></span>
-            <span>·</span>
-            <span>Section: <strong className="text-foreground">{sectionName || user?.section || 'IT401'}</strong></span>
-            <span>·</span>
-            <span>Deployment: <strong className="text-foreground">{isAssignedCompany ? companyName : 'Pending Placement'}</strong></span>
-          </p>
+          <div className="flex flex-wrap items-center gap-2 mt-2">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-muted/60 text-muted-foreground border border-border text-xs font-medium">
+              <span>ID:</span>
+              <strong className="text-foreground font-mono font-semibold">{studentId || user?.studentId || '2023-010482'}</strong>
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-muted/60 text-muted-foreground border border-border text-xs font-medium">
+              <span>Program:</span>
+              <strong className="text-foreground font-semibold">{programName || user?.course || 'BSIT'}</strong>
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-muted/60 text-muted-foreground border border-border text-xs font-medium">
+              <span>Section:</span>
+              <strong className="text-foreground font-semibold">{sectionName || user?.section || 'IT401'}</strong>
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-muted/60 text-muted-foreground border border-border text-xs font-medium">
+              <BuildingIcon className="w-3.5 h-3.5 text-primary shrink-0" />
+              <span>Placement:</span>
+              <strong className="text-foreground font-semibold">{isAssignedCompany ? companyName : 'Pending Placement'}</strong>
+            </span>
+          </div>
         </div>
 
         {/* Right actions: Refresh & Completed Accomplishments Dialog */}
-        <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
+        <div className="flex items-center gap-2.5 self-start sm:self-auto shrink-0">
           <button
             type="button"
             onClick={() => loadDashboardData(true)}
             disabled={refreshing}
             title="Refresh dashboard state"
-            className="bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800/80 hover:border-zinc-300 dark:hover:border-zinc-700 rounded-xl p-2 text-muted-foreground hover:text-foreground transition-all cursor-pointer disabled:opacity-50 active:scale-95"
+            className="bg-card border border-border hover:bg-muted/80 rounded-xl p-2.5 text-muted-foreground hover:text-foreground transition-all cursor-pointer disabled:opacity-50 active:scale-95 shadow-2xs"
           >
-            <RotateCw size={14} className={cn(refreshing && "animate-spin text-primary")} />
+            <RotateCw size={15} className={cn(refreshing && "animate-spin text-primary")} />
           </button>
 
           <button
             type="button"
             onClick={() => setIsCompletedModalOpen(true)}
-            className="bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800/80 hover:border-zinc-300 dark:hover:border-zinc-700 rounded-xl px-3 py-1.5 shadow-2xs flex items-center gap-2 transition-all cursor-pointer group select-none active:scale-[0.98] hover:bg-zinc-50 dark:hover:bg-zinc-900"
+            className="bg-card border border-border hover:bg-muted/80 rounded-xl px-3.5 py-2 shadow-2xs flex items-center gap-2.5 transition-all cursor-pointer group select-none active:scale-[0.98]"
           >
-            <CheckCircle2 size={14} className="text-emerald-500 shrink-0" />
+            <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
             <span className="text-xs font-semibold text-foreground">Completed Items</span>
-            <span className="px-1.5 py-0.2 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold text-[10px]">
+            <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold text-[10px] border border-emerald-500/20">
               {totalApprovedCount + todos.filter(t => t.done).length} Done
             </span>
-            <ArrowRightIcon size={12} className="text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
+            <ArrowRightIcon size={13} className="text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
           </button>
         </div>
       </div>
 
       {/* 2. Top Pulse Metrics Strip: 4 Sleek Stat Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Metric 1: Practicum Hours */}
-        <div className="bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-3 px-3.5 shadow-2xs flex flex-col justify-between hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors">
+        <div className="bg-card border border-border rounded-2xl p-4 sm:p-5 shadow-xs flex flex-col justify-between hover:border-primary/40 transition-all group">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               Practicum Hours
             </span>
-            <ClockIcon size={13} className="text-muted-foreground" />
+            <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary border border-primary/20 flex items-center justify-center shrink-0">
+              <ClockIcon size={15} />
+            </div>
           </div>
-          <div className="mt-1 space-y-1.5">
+          <div className="mt-3 space-y-2">
             <div className="flex items-baseline gap-1.5">
-              <h3 className="text-lg font-bold text-foreground tracking-tight">{renderedHours.toFixed(1)}</h3>
+              <h3 className="text-2xl font-extrabold text-foreground tracking-tight">{renderedHours.toFixed(1)}</h3>
               <span className="text-xs text-muted-foreground font-medium">/ {totalHours} hrs</span>
-              <span className="ml-auto text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.2 rounded">
+              <span className="ml-auto text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
                 {hoursPercent}%
               </span>
             </div>
-            <div className="w-full bg-zinc-100 dark:bg-zinc-900 rounded-full h-1.5 overflow-hidden">
+            <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
               <div
                 className="bg-primary h-full rounded-full transition-all duration-500"
                 style={{ width: `${hoursPercent}%` }}
               />
             </div>
-            <p className="text-[10px] text-muted-foreground truncate">
+            <p className="text-xs text-muted-foreground truncate">
               {hoursRemaining.toFixed(1)} hrs remaining to completion
             </p>
           </div>
         </div>
 
         {/* Metric 2: Requirements Progress */}
-        <div className="bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-3 px-3.5 shadow-2xs flex flex-col justify-between hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors">
+        <div className="bg-card border border-border rounded-2xl p-4 sm:p-5 shadow-xs flex flex-col justify-between hover:border-primary/40 transition-all group">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               Requirements
             </span>
-            <ClipboardCheckIcon size={13} className="text-muted-foreground" />
+            <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary border border-primary/20 flex items-center justify-center shrink-0">
+              <ClipboardCheckIcon size={15} />
+            </div>
           </div>
-          <div className="mt-1 space-y-1.5">
+          <div className="mt-3 space-y-2">
             <div className="flex items-baseline gap-1.5">
-              <h3 className="text-lg font-bold text-foreground tracking-tight">{totalApprovedCount} of {allRequirements.length}</h3>
+              <h3 className="text-2xl font-extrabold text-foreground tracking-tight">{totalApprovedCount} of {allRequirements.length}</h3>
               <span className="text-xs text-muted-foreground font-medium">Verified</span>
               {totalPendingCount > 0 ? (
-                <span className="ml-auto text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.2 rounded">
+                <span className="ml-auto text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
                   {totalPendingCount} Under Review
                 </span>
               ) : totalRevisionCount > 0 ? (
-                <span className="ml-auto text-[10px] font-bold text-rose-600 dark:text-rose-400 bg-rose-500/10 px-1.5 py-0.2 rounded">
+                <span className="ml-auto text-[10px] font-bold text-rose-600 dark:text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded-full border border-rose-500/20">
                   {totalRevisionCount} Revise
                 </span>
               ) : (
-                <span className="ml-auto text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.2 rounded">
+                <span className="ml-auto text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
                   Up to Date
                 </span>
               )}
             </div>
-            <div className="w-full bg-zinc-100 dark:bg-zinc-900 rounded-full h-1.5 overflow-hidden flex">
+            <div className="w-full bg-muted rounded-full h-2 overflow-hidden flex">
               <div
                 className="bg-emerald-500 h-full transition-all duration-500"
                 style={{ width: `${(totalApprovedCount / allRequirements.length) * 100}%` }}
@@ -948,30 +962,32 @@ export const StudentDashboard: React.FC = () => {
                 style={{ width: `${(totalPendingCount / allRequirements.length) * 100}%` }}
               />
             </div>
-            <p className="text-[10px] text-muted-foreground truncate">
+            <p className="text-xs text-muted-foreground truncate">
               {drafts.length > 0 ? `${drafts.length} draft in progress` : `${allRequirements.length - totalApprovedCount} total remaining`}
             </p>
           </div>
         </div>
 
         {/* Metric 3: Current Phase */}
-        <div className="bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-3 px-3.5 shadow-2xs flex flex-col justify-between hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors">
+        <div className="bg-card border border-border rounded-2xl p-4 sm:p-5 shadow-xs flex flex-col justify-between hover:border-primary/40 transition-all group">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               Practicum Stage
             </span>
-            <Sparkles size={13} className="text-muted-foreground" />
+            <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary border border-primary/20 flex items-center justify-center shrink-0">
+              <Sparkles size={15} />
+            </div>
           </div>
-          <div className="mt-1 space-y-1">
-            <div className="flex items-center gap-1.5">
-              <h3 className="text-base font-bold text-foreground tracking-tight">
+          <div className="mt-3 space-y-1.5">
+            <div className="flex items-center gap-2">
+              <h3 className="text-xl font-extrabold text-foreground tracking-tight">
                 {profilePhase === 'before_ojt' ? 'Before OJT' : profilePhase === 'in_ojt' ? 'In OJT' : 'Final Phase'}
               </h3>
-              <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-primary/10 text-primary">
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
                 {profilePhase === 'before_ojt' ? 'Phase 1/3' : profilePhase === 'in_ojt' ? 'Phase 2/3' : 'Phase 3/3'}
               </span>
             </div>
-            <p className="text-[11px] text-muted-foreground truncate">
+            <p className="text-xs text-muted-foreground leading-relaxed truncate">
               {profilePhase === 'before_ojt'
                 ? 'Clearance & institutional endorsements'
                 : profilePhase === 'in_ojt'
@@ -982,25 +998,27 @@ export const StudentDashboard: React.FC = () => {
         </div>
 
         {/* Metric 4: Placement & Mentor */}
-        <div className="bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-3 px-3.5 shadow-2xs flex flex-col justify-between hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors">
+        <div className="bg-card border border-border rounded-2xl p-4 sm:p-5 shadow-xs flex flex-col justify-between hover:border-primary/40 transition-all group">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               Host Placement
             </span>
-            <BuildingIcon size={13} className="text-muted-foreground" />
+            <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary border border-primary/20 flex items-center justify-center shrink-0">
+              <BuildingIcon size={15} />
+            </div>
           </div>
-          <div className="mt-1 space-y-1">
-            <div className="flex items-center gap-1">
-              <h3 className="text-sm font-bold text-foreground tracking-tight truncate">
+          <div className="mt-3 space-y-1.5">
+            <div className="flex items-center gap-1.5">
+              <h3 className="text-base font-bold text-foreground tracking-tight truncate">
                 {isAssignedCompany ? companyName : 'Pending Placement'}
               </h3>
               {isAssignedCompany ? (
-                <CheckCheck size={13} className="text-emerald-500 shrink-0" />
+                <CheckCheck size={15} className="text-emerald-500 shrink-0" />
               ) : (
-                <ClockIcon size={13} className="text-amber-500 shrink-0" />
+                <ClockIcon size={14} className="text-amber-500 shrink-0" />
               )}
             </div>
-            <p className="text-[11px] text-muted-foreground truncate">
+            <p className="text-xs text-muted-foreground truncate leading-relaxed">
               {isAssignedCompany ? `${supervisorName} · ${companyLocation}` : 'Awaiting company endorsement'}
             </p>
           </div>
@@ -1010,25 +1028,25 @@ export const StudentDashboard: React.FC = () => {
       {/* 3. Main Dashboard Grid: Standard 9:3 Ratio (lg:col-span-9 and lg:col-span-3) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
         {/* LEFT COLUMN: Main Practicum Workflows (9 cols) */}
-        <div className="lg:col-span-9 space-y-4 min-w-0">
+        <div className="lg:col-span-9 space-y-5 min-w-0">
           {/* Active Deployment & Attendance Tracker Banner */}
-          <div className="bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-4 shadow-2xs space-y-3">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-zinc-200/60 dark:border-zinc-800/60 pb-3">
-              <div className="flex items-center gap-2.5">
-                <div className="size-8 rounded-lg bg-primary/10 text-primary border border-primary/20 flex items-center justify-center shrink-0">
-                  <Briefcase size={16} />
+          <div className="bg-card border border-border rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/70 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="size-10 rounded-xl bg-primary/10 text-primary border border-primary/20 flex items-center justify-center shrink-0">
+                  <Briefcase size={18} />
                 </div>
                 <div>
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-2">
                     <span className="text-[10px] font-bold text-primary uppercase tracking-wider">
                       {isAssignedCompany ? 'Active Deployment' : 'Practicum Onboarding'}
                     </span>
-                    <span className="text-muted-foreground text-[10px]">·</span>
-                    <span className="text-xs font-semibold text-foreground">
+                    <span className="text-muted-foreground text-xs">·</span>
+                    <span className="text-sm font-bold text-foreground">
                       {isAssignedCompany ? companyName : 'Deployment Pending'}
                     </span>
                   </div>
-                  <p className="text-[11px] text-muted-foreground">
+                  <p className="text-xs text-muted-foreground mt-0.5">
                     {isAssignedCompany
                       ? `Supervisor: ${supervisorName} · ${studentRole}`
                       : 'Complete your Before OJT documents and MOA to verify industry placement.'}
@@ -1036,22 +1054,22 @@ export const StudentDashboard: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 self-start sm:self-auto">
+              <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
                 <Link to="/student/documents?phase=in_ojt">
-                  <Button variant="primary" size="sm" className="font-bold text-xs h-8 px-3 rounded-lg cursor-pointer active:scale-95">
-                    <ClockIcon size={13} className="mr-1" />
+                  <Button variant="primary" size="sm" className="font-bold text-xs h-8.5 px-3.5 rounded-xl cursor-pointer active:scale-95">
+                    <ClockIcon size={14} className="mr-1.5" />
                     Log DTR
                   </Button>
                 </Link>
                 <Link to="/student/editor?template=weekly-journal">
-                  <Button variant="outline" size="sm" className="font-bold text-xs h-8 px-2.5 rounded-lg cursor-pointer active:scale-95">
-                    <BookOpenIcon size={13} className="mr-1" />
+                  <Button variant="outline" size="sm" className="font-bold text-xs h-8.5 px-3 rounded-xl cursor-pointer active:scale-95">
+                    <BookOpenIcon size={14} className="mr-1.5" />
                     Journal
                   </Button>
                 </Link>
                 <Link to="/student/documents">
-                  <Button variant="outline" size="sm" className="font-bold text-xs h-8 px-2.5 rounded-lg cursor-pointer active:scale-95">
-                    <FolderOpen size={13} className="mr-1" />
+                  <Button variant="outline" size="sm" className="font-bold text-xs h-8.5 px-3 rounded-xl cursor-pointer active:scale-95">
+                    <FolderOpen size={14} className="mr-1.5" />
                     Repository
                   </Button>
                 </Link>
@@ -1059,23 +1077,23 @@ export const StudentDashboard: React.FC = () => {
             </div>
 
             {/* Hours Progress and Milestones */}
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               <div className="flex items-center justify-between text-xs font-semibold">
                 <span className="text-muted-foreground">
-                  Logged: <span className="text-foreground font-bold">{renderedHours.toFixed(1)} / {totalHours} Hours</span>
+                  Logged Hours: <span className="text-foreground font-bold">{renderedHours.toFixed(1)} / {totalHours} hrs</span>
                 </span>
                 <span className="text-primary font-bold">{hoursPercent}% Rendered</span>
               </div>
 
-              <div className="relative w-full bg-zinc-100 dark:bg-zinc-900 rounded-full h-2 overflow-hidden">
+              <div className="relative w-full bg-muted rounded-full h-2.5 overflow-hidden">
                 <div
                   className="bg-primary h-full rounded-full transition-all duration-500"
                   style={{ width: `${hoursPercent}%` }}
                 />
               </div>
 
-              <div className="flex items-center justify-between text-[10px] text-muted-foreground font-medium">
-                <span>Phase: {profilePhase === 'before_ojt' ? 'Prelim Prep' : profilePhase === 'in_ojt' ? 'Active Logging' : 'Final Exit'}</span>
+              <div className="flex items-center justify-between text-[11px] text-muted-foreground font-medium pt-0.5">
+                <span>Phase: {profilePhase === 'before_ojt' ? 'Prelim Clearance' : profilePhase === 'in_ojt' ? 'Active Logging' : 'Final Exit'}</span>
                 <span>Midterm Target: 230.0 hrs</span>
                 <span>Final Clearance: 460.0 hrs</span>
               </div>
@@ -1085,7 +1103,7 @@ export const StudentDashboard: React.FC = () => {
           {/* Smart Priority Alert / Adviser Feedback Banner */}
           <div
             className={cn(
-              "rounded-xl p-3.5 sm:p-4 border shadow-2xs space-y-2.5 transition-all",
+              "rounded-2xl p-4 sm:p-5 border shadow-xs space-y-3 transition-all",
               priorityAction.badgeTone === 'rose' && "bg-rose-500/[0.04] border-rose-500/30",
               priorityAction.badgeTone === 'sky' && "bg-sky-500/[0.04] border-sky-500/30",
               priorityAction.badgeTone === 'primary' && "bg-primary/[0.04] border-primary/30",
@@ -1093,10 +1111,10 @@ export const StudentDashboard: React.FC = () => {
             )}
           >
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="flex items-start gap-2.5">
+              <div className="flex items-start gap-3">
                 <div
                   className={cn(
-                    "size-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5 border",
+                    "size-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5 border",
                     priorityAction.badgeTone === 'rose' && "bg-rose-500/10 text-rose-600 border-rose-500/20",
                     priorityAction.badgeTone === 'sky' && "bg-sky-500/10 text-sky-600 border-sky-500/20",
                     priorityAction.badgeTone === 'primary' && "bg-primary/10 text-primary border-primary/20",
@@ -1104,24 +1122,24 @@ export const StudentDashboard: React.FC = () => {
                   )}
                 >
                   {priorityAction.badgeTone === 'rose' ? (
-                    <AlertTriangle size={16} />
+                    <AlertTriangle size={18} />
                   ) : priorityAction.badgeTone === 'sky' ? (
-                    <FileTextIcon size={16} />
+                    <FileTextIcon size={18} />
                   ) : priorityAction.badgeTone === 'emerald' ? (
-                    <CheckCircle2 size={16} />
+                    <CheckCircle2 size={18} />
                   ) : (
-                    <Sparkles size={16} />
+                    <Sparkles size={18} />
                   )}
                 </div>
-                <div className="space-y-0.5 min-w-0">
-                  <div className="flex items-center gap-1.5">
+                <div className="space-y-1 min-w-0">
+                  <div className="flex items-center gap-2">
                     <span
                       className={cn(
-                        "text-[9px] font-bold px-1.5 py-0.2 rounded uppercase tracking-wider",
-                        priorityAction.badgeTone === 'rose' && "bg-rose-500/10 text-rose-700 dark:text-rose-400",
-                        priorityAction.badgeTone === 'sky' && "bg-sky-500/10 text-sky-700 dark:text-sky-400",
-                        priorityAction.badgeTone === 'primary' && "bg-primary/10 text-primary",
-                        priorityAction.badgeTone === 'emerald' && "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                        "text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider",
+                        priorityAction.badgeTone === 'rose' && "bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/20",
+                        priorityAction.badgeTone === 'sky' && "bg-sky-500/10 text-sky-700 dark:text-sky-400 border border-sky-500/20",
+                        priorityAction.badgeTone === 'primary' && "bg-primary/10 text-primary border border-primary/20",
+                        priorityAction.badgeTone === 'emerald' && "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20"
                       )}
                     >
                       {priorityAction.badgeText}
@@ -1130,118 +1148,63 @@ export const StudentDashboard: React.FC = () => {
                   <h3 className="text-sm font-bold text-foreground tracking-tight">
                     {priorityAction.title}
                   </h3>
-                  <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  <p className="text-xs text-muted-foreground leading-relaxed">
                     {priorityAction.description}
                   </p>
                 </div>
               </div>
 
               <Link to={priorityAction.link} className="shrink-0 self-start sm:self-auto">
-                <Button variant="primary" size="sm" className="font-bold text-xs h-8 px-3 rounded-lg cursor-pointer active:scale-95">
+                <Button variant="primary" size="sm" className="font-bold text-xs h-8.5 px-3.5 rounded-xl cursor-pointer active:scale-95">
                   <span>{priorityAction.ctaText}</span>
-                  <ArrowRightIcon size={12} className="ml-1" />
+                  <ArrowRightIcon size={13} className="ml-1.5" />
                 </Button>
               </Link>
             </div>
           </div>
 
           {/* Practicum Requirements Checklist Hub (13 Official Templates) */}
-          <div className="bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-4 sm:p-4.5 shadow-2xs space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-200/60 dark:border-zinc-800/60 pb-3">
+          <div className="bg-card border border-border rounded-2xl p-5 sm:p-6 shadow-xs space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/70 pb-4">
               <div>
-                <h2 className="text-sm sm:text-base font-bold text-foreground tracking-tight flex items-center gap-2">
-                  <ClipboardListIcon size={16} className="text-primary" />
+                <h2 className="text-base sm:text-lg font-bold text-foreground tracking-tight flex items-center gap-2">
+                  <ClipboardListIcon size={18} className="text-primary" />
                   <span>Practicum Requirements Checklist</span>
                 </h2>
-                <p className="text-[11px] text-muted-foreground font-medium mt-0.5">
+                <p className="text-xs text-muted-foreground font-medium mt-0.5">
                   13 official institutional templates across the 3 practicum phases.
                 </p>
               </div>
 
-              {/* Phase Segmented Buttons */}
-              <div className="bg-zinc-100/80 dark:bg-zinc-900/80 border border-zinc-200/80 dark:border-zinc-800/80 rounded-lg p-0.5 flex items-center gap-0.5 text-xs self-start sm:self-auto shrink-0">
-                <button
-                  type="button"
-                  onClick={() => setActivePhaseTab('before')}
-                  className={cn(
-                    "px-2.5 py-1 rounded-md font-bold transition-all flex items-center gap-1.5 cursor-pointer text-xs active:scale-95",
-                    activePhaseTab === 'before'
-                      ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 border border-zinc-200/90 dark:border-zinc-700 shadow-2xs"
-                      : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
-                  )}
-                >
-                  <span>Before OJT</span>
-                  <span
-                    className={cn(
-                      "px-1.5 py-0.2 rounded-full text-[9px] font-extrabold tabular-nums",
-                      activePhaseTab === 'before' ? "bg-zinc-100 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-200" : "bg-zinc-200/60 dark:bg-zinc-800/60 text-zinc-600 dark:text-zinc-400"
-                    )}
-                  >
-                    {beforeDoneCount}/{beforeRequirements.length}
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setActivePhaseTab('in')}
-                  className={cn(
-                    "px-2.5 py-1 rounded-md font-bold transition-all flex items-center gap-1.5 cursor-pointer text-xs active:scale-95",
-                    activePhaseTab === 'in'
-                      ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 border border-zinc-200/90 dark:border-zinc-700 shadow-2xs"
-                      : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
-                  )}
-                >
-                  <span>In OJT</span>
-                  <span
-                    className={cn(
-                      "px-1.5 py-0.2 rounded-full text-[9px] font-extrabold tabular-nums",
-                      activePhaseTab === 'in' ? "bg-zinc-100 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-200" : "bg-zinc-200/60 dark:bg-zinc-800/60 text-zinc-600 dark:text-zinc-400"
-                    )}
-                  >
-                    {inDoneCount}/{inRequirements.length}
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setActivePhaseTab('final')}
-                  className={cn(
-                    "px-2.5 py-1 rounded-md font-bold transition-all flex items-center gap-1.5 cursor-pointer text-xs active:scale-95",
-                    activePhaseTab === 'final'
-                      ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 border border-zinc-200/90 dark:border-zinc-700 shadow-2xs"
-                      : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
-                  )}
-                >
-                  <span>Final Phase</span>
-                  <span
-                    className={cn(
-                      "px-1.5 py-0.2 rounded-full text-[9px] font-extrabold tabular-nums",
-                      activePhaseTab === 'final' ? "bg-zinc-100 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-200" : "bg-zinc-200/60 dark:bg-zinc-800/60 text-zinc-600 dark:text-zinc-400"
-                    )}
-                  >
-                    {finalDoneCount}/{finalRequirements.length}
-                  </span>
-                </button>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground font-semibold">
+                <span className="inline-flex items-center gap-1.5 bg-muted px-2.5 py-1 rounded-lg">
+                  <span className="size-2 rounded-full bg-emerald-500"></span>
+                  <span>{totalApprovedCount} Approved</span>
+                </span>
+                <span className="inline-flex items-center gap-1.5 bg-muted px-2.5 py-1 rounded-lg">
+                  <span className="size-2 rounded-full bg-amber-500"></span>
+                  <span>{totalPendingCount} Under Review</span>
+                </span>
               </div>
             </div>
 
-            {/* High-Level 3-Stage Progress Stepper */}
-            <div className="bg-zinc-50/80 dark:bg-zinc-900/50 border border-zinc-200/80 dark:border-zinc-800/80 rounded-lg p-2.5">
-              <div className="grid grid-cols-3 gap-2 text-center text-xs">
+            {/* Unified 3-Stage Progress Stepper */}
+            <div className="bg-muted/40 border border-border/70 rounded-xl p-1.5">
+              <div className="grid grid-cols-3 gap-2 text-center">
                 <button
                   type="button"
                   onClick={() => setActivePhaseTab('before')}
                   className={cn(
-                    "p-1.5 rounded-md border transition-all cursor-pointer text-center w-full",
+                    "p-2 sm:p-2.5 rounded-lg border transition-all cursor-pointer text-center w-full",
                     activePhaseTab === 'before'
-                      ? "bg-white dark:bg-zinc-950 border-primary/40 shadow-2xs"
-                      : "border-transparent text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100/60 dark:hover:bg-zinc-800/60"
+                      ? "bg-card border-border shadow-xs text-foreground font-bold"
+                      : "border-transparent text-muted-foreground hover:text-foreground hover:bg-card/50 font-medium"
                   )}
                 >
-                  <div className="flex items-center justify-center gap-1.5 font-bold text-xs">
+                  <div className="flex items-center justify-center gap-2">
                     <span
                       className={cn(
-                        "size-4 rounded-full flex items-center justify-center text-[8px] font-black",
+                        "size-5 rounded-full flex items-center justify-center text-[10px] font-black shrink-0",
                         beforeDoneCount === beforeRequirements.length
                           ? "bg-emerald-500 text-white"
                           : "bg-primary text-primary-foreground"
@@ -1249,9 +1212,9 @@ export const StudentDashboard: React.FC = () => {
                     >
                       {beforeDoneCount === beforeRequirements.length ? '✓' : '1'}
                     </span>
-                    <span className="text-foreground">1. Before OJT</span>
+                    <span className="text-xs sm:text-sm tracking-tight truncate">1. Before OJT</span>
                   </div>
-                  <span className="text-[9px] text-muted-foreground block mt-0.5">
+                  <span className="text-[10px] sm:text-xs text-muted-foreground block mt-1 font-medium">
                     {beforeDoneCount} of {beforeRequirements.length} Done
                   </span>
                 </button>
@@ -1260,28 +1223,28 @@ export const StudentDashboard: React.FC = () => {
                   type="button"
                   onClick={() => setActivePhaseTab('in')}
                   className={cn(
-                    "p-1.5 rounded-md border transition-all cursor-pointer text-center w-full",
+                    "p-2 sm:p-2.5 rounded-lg border transition-all cursor-pointer text-center w-full",
                     activePhaseTab === 'in'
-                      ? "bg-white dark:bg-zinc-950 border-primary/40 shadow-2xs"
-                      : "border-transparent text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100/60 dark:hover:bg-zinc-800/60"
+                      ? "bg-card border-border shadow-xs text-foreground font-bold"
+                      : "border-transparent text-muted-foreground hover:text-foreground hover:bg-card/50 font-medium"
                   )}
                 >
-                  <div className="flex items-center justify-center gap-1.5 font-bold text-xs">
+                  <div className="flex items-center justify-center gap-2">
                     <span
                       className={cn(
-                        "size-4 rounded-full flex items-center justify-center text-[8px] font-black",
+                        "size-5 rounded-full flex items-center justify-center text-[10px] font-black shrink-0",
                         inDoneCount === inRequirements.length
                           ? "bg-emerald-500 text-white"
                           : profilePhase === 'in_ojt' || profilePhase === 'final'
                           ? "bg-primary text-primary-foreground"
-                          : "bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
+                          : "bg-muted-foreground/20 text-muted-foreground"
                       )}
                     >
-                      {inDoneCount === inRequirements.length ? '✓' : profilePhase === 'before_ojt' ? <LockIcon size={8} /> : '2'}
+                      {inDoneCount === inRequirements.length ? '✓' : profilePhase === 'before_ojt' ? <LockIcon size={10} /> : '2'}
                     </span>
-                    <span className="text-foreground">2. In OJT</span>
+                    <span className="text-xs sm:text-sm tracking-tight truncate">2. In OJT</span>
                   </div>
-                  <span className="text-[9px] text-muted-foreground block mt-0.5">
+                  <span className="text-[10px] sm:text-xs text-muted-foreground block mt-1 font-medium">
                     {inDoneCount} of {inRequirements.length} Done
                   </span>
                 </button>
@@ -1290,28 +1253,28 @@ export const StudentDashboard: React.FC = () => {
                   type="button"
                   onClick={() => setActivePhaseTab('final')}
                   className={cn(
-                    "p-1.5 rounded-md border transition-all cursor-pointer text-center w-full",
+                    "p-2 sm:p-2.5 rounded-lg border transition-all cursor-pointer text-center w-full",
                     activePhaseTab === 'final'
-                      ? "bg-white dark:bg-zinc-950 border-primary/40 shadow-2xs"
-                      : "border-transparent text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100/60 dark:hover:bg-zinc-800/60"
+                      ? "bg-card border-border shadow-xs text-foreground font-bold"
+                      : "border-transparent text-muted-foreground hover:text-foreground hover:bg-card/50 font-medium"
                   )}
                 >
-                  <div className="flex items-center justify-center gap-1.5 font-bold text-xs">
+                  <div className="flex items-center justify-center gap-2">
                     <span
                       className={cn(
-                        "size-4 rounded-full flex items-center justify-center text-[8px] font-black",
+                        "size-5 rounded-full flex items-center justify-center text-[10px] font-black shrink-0",
                         finalDoneCount === finalRequirements.length
                           ? "bg-emerald-500 text-white"
                           : profilePhase === 'final'
                           ? "bg-primary text-primary-foreground"
-                          : "bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
+                          : "bg-muted-foreground/20 text-muted-foreground"
                       )}
                     >
-                      {finalDoneCount === finalRequirements.length ? '✓' : profilePhase === 'final' ? '3' : <LockIcon size={8} />}
+                      {finalDoneCount === finalRequirements.length ? '✓' : profilePhase === 'final' ? '3' : <LockIcon size={10} />}
                     </span>
-                    <span className="text-foreground">3. Final Phase</span>
+                    <span className="text-xs sm:text-sm tracking-tight truncate">3. Final Phase</span>
                   </div>
-                  <span className="text-[9px] text-muted-foreground block mt-0.5">
+                  <span className="text-[10px] sm:text-xs text-muted-foreground block mt-1 font-medium">
                     {finalDoneCount} of {finalRequirements.length} Done
                   </span>
                 </button>
@@ -1319,7 +1282,7 @@ export const StudentDashboard: React.FC = () => {
             </div>
 
             {/* Stable Requirement Cards Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
               {currentRequirementItems.map((req, idx) => {
                 const isDone = req.status === 'done';
                 const isRevision = req.status === 'revision' || req.status === 'returned';
@@ -1329,75 +1292,75 @@ export const StudentDashboard: React.FC = () => {
                 const IconComponent = req.icon;
 
                 const cardClasses = cn(
-                  "p-3 rounded-xl border transition-all flex flex-col justify-between gap-2.5 bg-zinc-50/70 dark:bg-zinc-900/60 border-zinc-200/80 dark:border-zinc-800/80 hover:border-zinc-300 dark:hover:border-zinc-700 hover:bg-white dark:hover:bg-zinc-900 no-underline text-inherit",
-                  isDone && "border-emerald-500/30 bg-emerald-500/[0.03] hover:border-emerald-500/40",
-                  isRevision && "border-rose-500/30 bg-rose-500/[0.03] hover:border-rose-500/40",
-                  isPending && "border-amber-500/30 bg-amber-500/[0.03] hover:border-amber-500/40",
-                  isDraft && "border-sky-500/30 bg-sky-500/[0.03] hover:border-sky-500/40",
-                  isLocked ? "opacity-60 border-dashed border-zinc-300/80 dark:border-zinc-800 bg-zinc-100/40 dark:bg-zinc-900/30 cursor-not-allowed" : "cursor-pointer group select-none active:scale-[0.99]"
+                  "p-4 rounded-xl border transition-all flex flex-col justify-between gap-3 bg-muted/20 border-border/70 hover:border-primary/40 hover:bg-card shadow-xs no-underline text-inherit group",
+                  isDone && "border-emerald-500/30 bg-emerald-500/[0.02] hover:border-emerald-500/50",
+                  isRevision && "border-rose-500/30 bg-rose-500/[0.02] hover:border-rose-500/50",
+                  isPending && "border-amber-500/30 bg-amber-500/[0.02] hover:border-amber-500/50",
+                  isDraft && "border-sky-500/30 bg-sky-500/[0.02] hover:border-sky-500/50",
+                  isLocked ? "opacity-60 border-dashed border-border/80 bg-muted/10 cursor-not-allowed" : "cursor-pointer select-none active:scale-[0.99]"
                 );
 
                 const cardInner = (
                   <>
-                    <div className="space-y-1.5">
+                    <div className="space-y-2">
                       <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-1.5 min-w-0">
+                        <div className="flex items-center gap-2 min-w-0">
                           <div
                             className={cn(
-                              "size-7 rounded-lg flex items-center justify-center shrink-0 border",
+                              "size-8 rounded-lg flex items-center justify-center shrink-0 border",
                               isDone && "bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400",
                               isRevision && "bg-rose-500/10 border-rose-500/20 text-rose-600 dark:text-rose-400",
                               isPending && "bg-amber-500/10 border-amber-500/20 text-amber-600 dark:text-amber-400",
                               isDraft && "bg-sky-500/10 border-sky-500/20 text-sky-600 dark:text-sky-400",
-                              req.status === 'not_started' && "bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400",
-                              isLocked && "bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400"
+                              req.status === 'not_started' && "bg-muted border-border text-muted-foreground",
+                              isLocked && "bg-muted border-border text-muted-foreground/60"
                             )}
                           >
-                            <IconComponent size={14} />
+                            <IconComponent size={16} />
                           </div>
-                          <span className="text-[9px] font-extrabold text-muted-foreground uppercase tracking-wider">
+                          <span className="text-[10px] font-extrabold text-muted-foreground uppercase tracking-wider">
                             Item {idx + 1}
                           </span>
                         </div>
 
                         {/* Status Badge */}
                         {isDone && (
-                          <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                             Approved
                           </span>
                         )}
                         {isRevision && (
-                          <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-md bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 animate-pulse">
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 animate-pulse">
                             {req.status === 'returned' ? 'Returned' : 'Revision Needed'}
                           </span>
                         )}
                         {isPending && (
-                          <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
                             Under Review
                           </span>
                         )}
                         {isDraft && (
-                          <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-md bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20">
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20">
                             Draft Saved
                           </span>
                         )}
                         {req.status === 'not_started' && (
-                          <span className="text-[9px] font-medium px-1.5 py-0.2 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border border-zinc-200/80 dark:border-zinc-700">
+                          <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground border border-border">
                             Not Started
                           </span>
                         )}
                         {isLocked && (
-                          <span className="text-[9px] font-semibold px-1.5 py-0.2 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border border-zinc-200/80 dark:border-zinc-700">
+                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-muted text-muted-foreground/70 border border-border">
                             Locked
                           </span>
                         )}
                       </div>
 
                       <div>
-                        <h4 className="text-xs font-bold text-foreground tracking-tight line-clamp-1">
+                        <h4 className="text-sm font-bold text-foreground tracking-tight line-clamp-1 group-hover:text-primary transition-colors">
                           {req.name}
                         </h4>
-                        <p className="text-[11px] text-muted-foreground leading-snug line-clamp-2">
+                        <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2 mt-0.5">
                           {req.feedback ? (
                             <span className="text-rose-600 dark:text-rose-400 font-semibold">
                               Remarks: {req.feedback}
@@ -1410,28 +1373,28 @@ export const StudentDashboard: React.FC = () => {
                     </div>
 
                     {/* Action Footer */}
-                    <div className="pt-1.5 border-t border-zinc-200/60 dark:border-zinc-800/60 flex items-center justify-between">
-                      <span className="text-[10px] font-medium text-muted-foreground">
+                    <div className="pt-2.5 border-t border-border/60 flex items-center justify-between">
+                      <span className="text-[11px] font-medium text-muted-foreground">
                         {req.submissionDate ? `Submitted ${req.submissionDate}` : req.statusLabel}
                       </span>
                       {isLocked ? (
-                        <span className="text-[11px] text-muted-foreground/60 flex items-center gap-1 font-semibold">
-                          <LockIcon size={10} />
+                        <span className="text-xs text-muted-foreground/60 flex items-center gap-1 font-semibold">
+                          <LockIcon size={12} />
                           <span>Phase Locked</span>
                         </span>
                       ) : (
                         <span
                           className={cn(
-                            "inline-flex items-center gap-1 text-[11px] font-bold transition-colors",
+                            "inline-flex items-center gap-1 text-xs font-bold transition-colors",
                             isDone && "text-emerald-600 dark:text-emerald-400 group-hover:text-emerald-700",
                             isRevision && "text-rose-600 dark:text-rose-400 group-hover:text-rose-700",
                             isPending && "text-amber-600 dark:text-amber-400 group-hover:text-amber-700",
                             isDraft && "text-sky-600 dark:text-sky-400 group-hover:text-sky-700",
-                            req.status === 'not_started' && "text-zinc-700 dark:text-zinc-300 group-hover:text-primary"
+                            req.status === 'not_started' && "text-foreground group-hover:text-primary"
                           )}
                         >
                           <span>{req.actionText}</span>
-                          <ArrowRightIcon size={11} className="group-hover:translate-x-0.5 transition-transform" />
+                          <ArrowRightIcon size={12} className="group-hover:translate-x-0.5 transition-transform" />
                         </span>
                       )}
                     </div>
@@ -1456,61 +1419,61 @@ export const StudentDashboard: React.FC = () => {
           </div>
 
           {/* Recent Submissions & Adviser Feedback Stream */}
-          <div className="bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-4 shadow-2xs space-y-3">
-            <div className="flex items-center justify-between border-b border-zinc-200/60 dark:border-zinc-800/60 pb-2.5">
-              <div className="flex items-center gap-2">
-                <FileCheck2 size={16} className="text-primary" />
-                <h3 className="text-xs sm:text-sm font-bold text-foreground tracking-tight">
+          <div className="bg-card border border-border rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
+            <div className="flex items-center justify-between border-b border-border/70 pb-3">
+              <div className="flex items-center gap-2.5">
+                <FileCheck2 size={18} className="text-primary" />
+                <h3 className="text-sm sm:text-base font-bold text-foreground tracking-tight">
                   Recent Submissions & Feedback Stream
                 </h3>
               </div>
               <Link
                 to="/student/documents"
-                className="text-[11px] font-bold text-primary hover:underline cursor-pointer flex items-center gap-1"
+                className="text-xs font-bold text-primary hover:underline cursor-pointer flex items-center gap-1"
               >
                 <span>View all documents</span>
-                <ArrowRightIcon size={11} />
+                <ArrowRightIcon size={12} />
               </Link>
             </div>
 
             {documents.length === 0 ? (
               <EmptyState
-                icon={<FileTextIcon size={24} />}
+                icon={<FileTextIcon size={28} />}
                 title="No Submissions Yet"
                 description="Upload or draft your initial practicum requirements such as Application Letters and Consent Forms."
                 className="min-h-[160px] py-6"
                 action={
                   <Link to="/student/documents">
-                    <Button variant="primary" size="sm" className="font-bold text-xs">
+                    <Button variant="primary" size="sm" className="font-bold text-xs h-8.5 px-3.5 rounded-xl">
                       Open Document Repository
                     </Button>
                   </Link>
                 }
               />
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 {documents.slice(0, 4).map(doc => (
                   <div
                     key={doc.id}
-                    className="p-2.5 rounded-lg border border-zinc-200/70 dark:border-zinc-800/70 bg-zinc-50/50 dark:bg-zinc-900/40 hover:bg-white dark:hover:bg-zinc-900 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs"
+                    className="p-3.5 rounded-xl border border-border/70 bg-muted/20 hover:bg-muted/40 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
                   >
-                    <div className="flex items-start gap-2.5 min-w-0">
+                    <div className="flex items-start gap-3 min-w-0">
                       <div
                         className={cn(
-                          "size-6 rounded-md flex items-center justify-center shrink-0 mt-0.5 border",
+                          "size-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5 border",
                           doc.status === 'Approved' ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" :
                           doc.status === 'Revision Required' || doc.status === 'Returned' ? "bg-rose-500/10 text-rose-600 border-rose-500/20" :
                           "bg-amber-500/10 text-amber-600 border-amber-500/20"
                         )}
                       >
-                        <FileTextIcon size={12} />
+                        <FileTextIcon size={14} />
                       </div>
-                      <div className="space-y-0.5 min-w-0">
-                        <div className="flex items-center gap-1.5 flex-wrap">
+                      <div className="space-y-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-bold text-foreground truncate">{doc.doc_type}</span>
                           <span
                             className={cn(
-                              "text-[9px] font-bold px-1.5 py-0.2 rounded border",
+                              "text-[10px] font-bold px-2 py-0.5 rounded-full border",
                               doc.status === 'Approved' && "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
                               (doc.status === 'Revision Required' || doc.status === 'Returned') && "bg-rose-500/10 text-rose-600 border-rose-500/20",
                               doc.status.includes('Pending') && "bg-amber-500/10 text-amber-600 border-amber-500/20"
@@ -1520,11 +1483,11 @@ export const StudentDashboard: React.FC = () => {
                           </span>
                         </div>
                         {doc.adviser_feedback ? (
-                          <p className="text-[11px] text-rose-600 dark:text-rose-400 font-medium">
+                          <p className="text-xs text-rose-600 dark:text-rose-400 font-medium">
                             Feedback: {doc.adviser_feedback}
                           </p>
                         ) : (
-                          <p className="text-[10px] text-muted-foreground">
+                          <p className="text-[11px] text-muted-foreground">
                             Submitted on {safeFormatDate(doc.created_at, 'MMMM d, yyyy · h:mm a')}
                           </p>
                         )}
@@ -1534,7 +1497,7 @@ export const StudentDashboard: React.FC = () => {
                     <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
                       <Link
                         to="/student/documents"
-                        className="text-[11px] font-bold text-primary hover:underline"
+                        className="text-xs font-bold text-primary hover:underline"
                       >
                         Details
                       </Link>
@@ -1547,39 +1510,39 @@ export const StudentDashboard: React.FC = () => {
         </div>
 
         {/* RIGHT COLUMN: Companion Sidebar Widgets (3 cols) */}
-        <div className="lg:col-span-3 space-y-3.5">
+        <div className="lg:col-span-3 space-y-4">
           {/* Widget 1: Interactive Mini Calendar */}
           {!isCalendarHidden ? (
-            <div className="bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-3.5 shadow-2xs space-y-2">
+            <div className="bg-card border border-border rounded-2xl p-4 sm:p-5 shadow-xs space-y-3">
               {/* Header */}
               <div className="flex items-center justify-between px-0.5">
-                <div className="flex items-center gap-1.5 text-foreground font-bold text-xs">
-                  <CalendarDays className="size-3.5 text-primary" />
+                <div className="flex items-center gap-2 text-foreground font-bold text-xs sm:text-sm">
+                  <CalendarDays className="size-4 text-primary" />
                   <span>Calendar</span>
                 </div>
                 <div className="flex items-center gap-1 text-xs font-bold text-foreground">
                   <button
                     type="button"
                     onClick={() => setCalendarMonth(new Date(calYear, calMonth - 1, 1))}
-                    className="p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md cursor-pointer transition-colors text-muted-foreground hover:text-foreground active:scale-95"
+                    className="p-1 hover:bg-muted rounded-md cursor-pointer transition-colors text-muted-foreground hover:text-foreground active:scale-95"
                     title="Previous month"
                   >
-                    <ChevronLeft size={13} />
+                    <ChevronLeft size={14} />
                   </button>
                   <span className="tracking-tight text-xs font-bold">{monthName}</span>
                   <button
                     type="button"
                     onClick={() => setCalendarMonth(new Date(calYear, calMonth + 1, 1))}
-                    className="p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md cursor-pointer transition-colors text-muted-foreground hover:text-foreground active:scale-95"
+                    className="p-1 hover:bg-muted rounded-md cursor-pointer transition-colors text-muted-foreground hover:text-foreground active:scale-95"
                     title="Next month"
                   >
-                    <ChevronRight size={13} />
+                    <ChevronRight size={14} />
                   </button>
                 </div>
               </div>
 
               {/* Day headers: Su Mo Tu We Th Fr Sa */}
-              <div className="grid grid-cols-7 text-center text-[10px] font-bold text-muted-foreground/75 select-none py-0.5 border-b border-zinc-200/60 dark:border-zinc-800/60">
+              <div className="grid grid-cols-7 text-center text-[10px] font-bold text-muted-foreground select-none py-1 border-b border-border/70">
                 <span>Su</span>
                 <span>Mo</span>
                 <span>Tu</span>
@@ -1590,17 +1553,17 @@ export const StudentDashboard: React.FC = () => {
               </div>
 
               {/* Days cells */}
-              <div className="grid grid-cols-7 gap-y-0.5 text-center text-xs">
+              <div className="grid grid-cols-7 gap-y-1 text-center text-xs">
                 {miniDays.map((d, i) => (
-                  <div key={i} className="flex flex-col items-center justify-center h-6.5">
+                  <div key={i} className="flex flex-col items-center justify-center h-8">
                     <span
                       className={cn(
-                        "size-5.5 flex items-center justify-center rounded-full text-[11px] font-semibold select-none transition-colors",
+                        "size-7 flex items-center justify-center rounded-full text-xs font-semibold select-none transition-colors",
                         d.isToday
-                          ? "bg-primary text-primary-foreground font-bold shadow-2xs"
+                          ? "bg-primary text-primary-foreground font-bold shadow-xs"
                           : d.currentMonth
-                          ? "text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer"
-                          : "text-muted-foreground/25"
+                          ? "text-foreground hover:bg-muted cursor-pointer"
+                          : "text-muted-foreground/30"
                       )}
                     >
                       {d.day}
@@ -1613,15 +1576,15 @@ export const StudentDashboard: React.FC = () => {
               </div>
 
               {/* Footer Links: Full calendar & Reset/Hide */}
-              <div className="flex items-center justify-between pt-1.5 border-t border-zinc-200/60 dark:border-zinc-800/60 text-[11px] font-semibold px-0.5">
+              <div className="flex items-center justify-between pt-2 border-t border-border/70 text-xs font-semibold px-0.5">
                 <Link
                   to="/student/calendar"
-                  className="text-primary hover:underline cursor-pointer flex items-center gap-1"
+                  className="text-primary hover:underline cursor-pointer flex items-center gap-1 font-bold text-xs"
                 >
                   <span>Full calendar</span>
-                  <ExternalLink size={9} />
+                  <ExternalLink size={11} />
                 </Link>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2.5">
                   {!isCurrentMonth && (
                     <button
                       type="button"
@@ -1634,7 +1597,7 @@ export const StudentDashboard: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setIsCalendarHidden(true)}
-                    className="text-muted-foreground/70 hover:text-foreground cursor-pointer transition-colors text-[11px]"
+                    className="text-muted-foreground hover:text-foreground cursor-pointer transition-colors text-xs font-medium"
                   >
                     Hide
                   </button>
@@ -1642,7 +1605,7 @@ export const StudentDashboard: React.FC = () => {
               </div>
             </div>
           ) : (
-            <div className="bg-white dark:bg-zinc-950 border border-dashed border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-3 flex items-center justify-between text-xs text-muted-foreground">
+            <div className="bg-card border border-dashed border-border rounded-2xl p-3.5 flex items-center justify-between text-xs text-muted-foreground">
               <span className="font-semibold text-xs">Calendar hidden</span>
               <button
                 type="button"
@@ -1655,36 +1618,36 @@ export const StudentDashboard: React.FC = () => {
           )}
 
           {/* Widget 2: Interactive To-Do Checklist */}
-          <div className="bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-3.5 shadow-2xs space-y-2.5">
+          <div className="bg-card border border-border rounded-2xl p-4 sm:p-5 shadow-xs space-y-3">
             {/* Header */}
             <div className="flex items-center justify-between px-0.5">
-              <div className="flex items-center gap-1.5 text-foreground font-bold text-xs">
-                <CheckCircle2 className="size-3.5 text-primary" />
+              <div className="flex items-center gap-2 text-foreground font-bold text-xs sm:text-sm">
+                <CheckCircle2 className="size-4 text-primary" />
                 <span>To-do Checklist</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <Badge variant="outline" className="text-[9px] h-4 px-1.5 font-bold">
+                <Badge variant="outline" className="text-[10px] h-5 px-2 font-bold rounded-full">
                   {todos.filter(t => !t.done).length} Pending
                 </Badge>
                 <button
                   type="button"
                   onClick={() => setIsAddingTodo(prev => !prev)}
                   title={isAddingTodo ? "Cancel" : "Add task"}
-                  className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer active:scale-95"
+                  className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer active:scale-95"
                 >
-                  {isAddingTodo ? <X size={12} /> : <Plus size={12} />}
+                  {isAddingTodo ? <X size={14} /> : <Plus size={14} />}
                 </button>
               </div>
             </div>
 
             {/* Filter Pills */}
-            <div className="flex items-center gap-1 border-b border-zinc-200/60 dark:border-zinc-800/60 pb-1 text-[10px] font-bold">
+            <div className="bg-muted/50 p-1 rounded-xl border border-border/60 flex items-center gap-1 text-[11px] font-bold">
               <button
                 type="button"
                 onClick={() => setTodoFilter('all')}
                 className={cn(
-                  "px-2 py-0.5 rounded cursor-pointer transition-colors",
-                  todoFilter === 'all' ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                  "flex-1 py-1 rounded-lg cursor-pointer transition-colors text-center",
+                  todoFilter === 'all' ? "bg-card text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
                 )}
               >
                 All ({todos.length})
@@ -1693,8 +1656,8 @@ export const StudentDashboard: React.FC = () => {
                 type="button"
                 onClick={() => setTodoFilter('pending')}
                 className={cn(
-                  "px-2 py-0.5 rounded cursor-pointer transition-colors",
-                  todoFilter === 'pending' ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                  "flex-1 py-1 rounded-lg cursor-pointer transition-colors text-center",
+                  todoFilter === 'pending' ? "bg-card text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
                 )}
               >
                 Active ({todos.filter(t => !t.done).length})
@@ -1703,8 +1666,8 @@ export const StudentDashboard: React.FC = () => {
                 type="button"
                 onClick={() => setTodoFilter('completed')}
                 className={cn(
-                  "px-2 py-0.5 rounded cursor-pointer transition-colors",
-                  todoFilter === 'completed' ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                  "flex-1 py-1 rounded-lg cursor-pointer transition-colors text-center",
+                  todoFilter === 'completed' ? "bg-card text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
                 )}
               >
                 Done ({todos.filter(t => t.done).length})
@@ -1713,16 +1676,16 @@ export const StudentDashboard: React.FC = () => {
 
             {/* Quick Add Form */}
             {isAddingTodo && (
-              <form onSubmit={handleAddTodo} className="space-y-1.5 pt-0.5 animate-in fade-in duration-200">
+              <form onSubmit={handleAddTodo} className="space-y-2 pt-1 animate-in fade-in duration-200">
                 <input
                   type="text"
                   value={newTodoText}
                   onChange={e => setNewTodoText(e.target.value)}
                   placeholder="Type new practicum task..."
                   autoFocus
-                  className="w-full text-xs px-2.5 py-1.5 rounded-lg bg-zinc-100/80 dark:bg-zinc-900/80 border border-zinc-200/80 dark:border-zinc-800/80 focus:outline-none focus:border-primary text-foreground"
+                  className="w-full text-xs px-3 py-2 rounded-xl bg-muted/30 border border-border focus:outline-none focus:border-primary text-foreground"
                 />
-                <div className="flex justify-end gap-1.5">
+                <div className="flex justify-end gap-2">
                   <Button
                     type="button"
                     variant="outline"
@@ -1731,7 +1694,7 @@ export const StudentDashboard: React.FC = () => {
                       setIsAddingTodo(false);
                       setNewTodoText('');
                     }}
-                    className="h-6 text-[10px] px-2 rounded-md"
+                    className="h-7 text-xs px-2.5 rounded-lg"
                   >
                     Cancel
                   </Button>
@@ -1740,7 +1703,7 @@ export const StudentDashboard: React.FC = () => {
                     variant="primary"
                     size="sm"
                     disabled={!newTodoText.trim()}
-                    className="h-6 text-[10px] px-2 rounded-md font-bold"
+                    className="h-7 text-xs px-3 rounded-lg font-bold"
                   >
                     Add Task
                   </Button>
@@ -1749,9 +1712,9 @@ export const StudentDashboard: React.FC = () => {
             )}
 
             {/* Todo Items */}
-            <div className="space-y-1.5 pt-0.5 max-h-[260px] overflow-y-auto pr-0.5">
+            <div className="space-y-2 pt-1 max-h-[260px] overflow-y-auto pr-0.5">
               {filteredTodos.length === 0 ? (
-                <div className="py-4 text-center text-[11px] text-muted-foreground">
+                <div className="py-5 text-center text-xs text-muted-foreground">
                   {todoFilter === 'pending' ? 'No pending tasks left!' : 'No tasks in this view.'}
                 </div>
               ) : (
@@ -1760,21 +1723,21 @@ export const StudentDashboard: React.FC = () => {
                     key={item.id}
                     onClick={() => toggleTodo(item.id)}
                     className={cn(
-                      "flex items-start gap-2 p-2 px-2.5 rounded-lg border transition-all cursor-pointer group text-xs",
+                      "flex items-start gap-2.5 p-2.5 px-3 rounded-xl border transition-all cursor-pointer group text-xs",
                       item.done
-                        ? "bg-zinc-100/40 dark:bg-zinc-900/30 border-zinc-200/40 dark:border-zinc-800/40 opacity-60"
-                        : "bg-zinc-50/80 dark:bg-zinc-900/50 border-zinc-200/80 dark:border-zinc-800/80 hover:bg-zinc-100/80 dark:hover:bg-zinc-900/80 hover:border-zinc-300 dark:hover:border-zinc-700"
+                        ? "bg-muted/10 border-border/50 opacity-60"
+                        : "bg-muted/20 border-border/70 hover:bg-muted/40 hover:border-border shadow-xs"
                     )}
                   >
                     <div
                       className={cn(
-                        "size-3.5 rounded border flex items-center justify-center shrink-0 mt-0.5 transition-colors",
+                        "size-4 rounded-md border flex items-center justify-center shrink-0 mt-0.5 transition-colors",
                         item.done
                           ? "bg-primary border-primary text-primary-foreground"
                           : "border-muted-foreground/50 group-hover:border-foreground"
                       )}
                     >
-                      {item.done && <Check size={9} strokeWidth={3} />}
+                      {item.done && <Check size={10} strokeWidth={3} />}
                     </div>
                     <div className="min-w-0 flex-1">
                       <p
@@ -1789,10 +1752,10 @@ export const StudentDashboard: React.FC = () => {
                         <Link
                           to={item.link}
                           onClick={e => e.stopPropagation()}
-                          className="inline-flex items-center gap-1 text-[10px] text-primary font-bold hover:underline mt-0.5"
+                          className="inline-flex items-center gap-1 text-[11px] text-primary font-bold hover:underline mt-1"
                         >
                           <span>Open action</span>
-                          <ExternalLink size={8} />
+                          <ExternalLink size={9} />
                         </Link>
                       )}
                     </div>
@@ -1802,7 +1765,7 @@ export const StudentDashboard: React.FC = () => {
                       title="Delete task"
                       className="opacity-70 sm:opacity-0 sm:group-hover:opacity-100 p-1 text-muted-foreground hover:text-rose-500 transition-opacity cursor-pointer"
                     >
-                      <Trash2 size={11} />
+                      <Trash2 size={12} />
                     </button>
                   </div>
                 ))
@@ -1811,69 +1774,69 @@ export const StudentDashboard: React.FC = () => {
           </div>
 
           {/* Widget 3: Practicum Announcements Bulletin */}
-          <div className="bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-3.5 shadow-2xs space-y-2">
+          <div className="bg-card border border-border rounded-2xl p-4 sm:p-5 shadow-xs space-y-3">
             {/* Header */}
             <div className="flex items-center justify-between px-0.5">
-              <div className="flex items-center gap-1.5 text-foreground font-bold text-xs">
-                <Megaphone className="size-3.5 text-primary" />
+              <div className="flex items-center gap-2 text-foreground font-bold text-xs sm:text-sm">
+                <Megaphone className="size-4 text-primary" />
                 <span>Announcements</span>
               </div>
-              <Badge variant="outline" className="text-[9px] h-4 px-1.5 font-bold">
+              <Badge variant="outline" className="text-[10px] h-5 px-2 font-bold rounded-full">
                 1 Notice
               </Badge>
             </div>
 
             {/* Announcement Bulletin */}
-            <div className="space-y-1.5 pt-0.5">
-              <div className="p-2.5 rounded-lg bg-zinc-50/80 dark:bg-zinc-900/50 border border-zinc-200/80 dark:border-zinc-800/80 space-y-1 text-xs">
+            <div className="space-y-2.5 pt-0.5">
+              <div className="p-3.5 rounded-xl bg-muted/30 border border-border/70 space-y-1.5 text-xs">
                 <div className="flex items-center justify-between">
                   <span className="font-bold text-foreground">Midterm Evaluation Window</span>
-                  <span className="text-[9px] text-muted-foreground font-medium">Active</span>
+                  <span className="text-[10px] text-muted-foreground font-bold px-1.5 py-0.5 rounded bg-muted">Active</span>
                 </div>
-                <p className="text-[11px] text-muted-foreground leading-relaxed font-medium">
+                <p className="text-xs text-muted-foreground leading-relaxed">
                   Ensure DTR hours are signed weekly by your corporate supervisor before the Friday 5:00 PM cutoff.
                 </p>
               </div>
 
-              <div className="text-center pt-0.5">
+              <div className="text-center pt-1">
                 <Link
                   to="/student/notifications"
-                  className="text-[11px] font-bold text-primary hover:underline cursor-pointer inline-flex items-center gap-1"
+                  className="text-xs font-bold text-primary hover:underline cursor-pointer inline-flex items-center gap-1"
                 >
                   <span>View institutional alerts</span>
-                  <ArrowRightIcon size={10} />
+                  <ArrowRightIcon size={11} />
                 </Link>
               </div>
             </div>
           </div>
 
           {/* Widget 4: Practicum Support Contacts */}
-          <div className="bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl p-3.5 shadow-2xs space-y-2">
-            <div className="flex items-center gap-1.5 text-foreground font-bold text-xs px-0.5">
-              <UsersIcon className="size-3.5 text-primary" />
+          <div className="bg-card border border-border rounded-2xl p-4 sm:p-5 shadow-xs space-y-3">
+            <div className="flex items-center gap-2 text-foreground font-bold text-xs sm:text-sm px-0.5">
+              <UsersIcon className="size-4 text-primary" />
               <span>Practicum Contacts</span>
             </div>
 
-            <div className="space-y-1.5 text-xs">
-              <div className="flex items-start gap-2 p-2 rounded-lg bg-zinc-50/80 dark:bg-zinc-900/50 border border-zinc-200/80 dark:border-zinc-800/80">
-                <div className="size-6 rounded-md bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5 font-bold text-[10px]">
+            <div className="space-y-2 text-xs">
+              <div className="flex items-start gap-2.5 p-2.5 rounded-xl bg-muted/30 border border-border/70">
+                <div className="size-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5 font-bold text-xs">
                   {getInitials(adviserName, 'SJ')}
                 </div>
-                <div className="min-w-0 flex-1 space-y-0.2">
+                <div className="min-w-0 flex-1 space-y-0.5">
                   <p className="font-bold text-foreground truncate text-xs">{adviserName}</p>
-                  <p className="text-[10px] text-muted-foreground">
+                  <p className="text-[11px] text-muted-foreground">
                     {adviserName === 'Awaiting Assignment' ? 'Coordinator pending assignment' : 'Practicum Adviser · STI Marikina'}
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-start gap-2 p-2 rounded-lg bg-zinc-50/80 dark:bg-zinc-900/50 border border-zinc-200/80 dark:border-zinc-800/80">
-                <div className="size-6 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5 font-bold text-[10px]">
+              <div className="flex items-start gap-2.5 p-2.5 rounded-xl bg-muted/30 border border-border/70">
+                <div className="size-7 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5 font-bold text-xs">
                   {getInitials(supervisorName, 'PR')}
                 </div>
-                <div className="min-w-0 flex-1 space-y-0.2">
+                <div className="min-w-0 flex-1 space-y-0.5">
                   <p className="font-bold text-foreground truncate text-xs">{supervisorName}</p>
-                  <p className="text-[10px] text-muted-foreground">
+                  <p className="text-[11px] text-muted-foreground">
                     {supervisorName === 'Awaiting Placement' ? 'Host company supervisor pending' : `Supervisor · ${companyName}`}
                   </p>
                 </div>
@@ -1885,14 +1848,14 @@ export const StudentDashboard: React.FC = () => {
 
       {/* Completed Tasks & Milestones Modal */}
       <Dialog open={isCompletedModalOpen} onOpenChange={setIsCompletedModalOpen}>
-        <DialogContent className="sm:max-w-lg rounded-2xl p-5 sm:p-6 bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800/80 shadow-2xl">
+        <DialogContent className="sm:max-w-lg rounded-2xl p-5 sm:p-6 bg-card border border-border shadow-2xl">
           <DialogHeader>
             <div className="flex items-center gap-3">
-              <div className="size-9 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-                <CheckCircle2 size={20} />
+              <div className="size-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                <CheckCircle2 size={22} />
               </div>
               <div>
-                <DialogTitle className="text-base font-bold text-foreground">
+                <DialogTitle className="text-base sm:text-lg font-bold text-foreground">
                   Completed Practicum Accomplishments
                 </DialogTitle>
                 <DialogDescription className="text-xs text-muted-foreground mt-0.5">
@@ -1902,25 +1865,25 @@ export const StudentDashboard: React.FC = () => {
             </div>
           </DialogHeader>
 
-          <div className="space-y-2 max-h-[380px] overflow-y-auto pr-1 py-2">
+          <div className="space-y-2.5 max-h-[380px] overflow-y-auto pr-1 py-2">
             {/* Approved submissions */}
             {allRequirements.filter(r => r.status === 'done').map(req => (
               <div
                 key={req.id}
-                className="p-3 rounded-xl bg-emerald-500/[0.04] border border-emerald-500/20 hover:bg-emerald-500/[0.08] transition-colors flex items-start justify-between gap-3 text-xs"
+                className="p-3.5 rounded-xl bg-emerald-500/[0.04] border border-emerald-500/20 hover:bg-emerald-500/[0.08] transition-colors flex items-start justify-between gap-3 text-xs"
               >
-                <div className="flex items-start gap-2.5 min-w-0">
-                  <div className="size-5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
-                    <Check size={12} strokeWidth={3} />
+                <div className="flex items-start gap-3 min-w-0">
+                  <div className="size-6 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
+                    <Check size={13} strokeWidth={3} />
                   </div>
-                  <div className="space-y-0.5 min-w-0">
+                  <div className="space-y-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-foreground truncate">{req.name}</span>
-                      <Badge variant="secondary" className="text-[9px] h-4 px-1.5 font-bold">
+                      <Badge variant="secondary" className="text-[10px] h-4.5 px-2 font-bold rounded-full">
                         {req.phase === 'before_ojt' ? 'Before OJT' : req.phase === 'in_ojt' ? 'In OJT' : 'Final'}
                       </Badge>
                     </div>
-                    <p className="text-[11px] text-muted-foreground leading-snug">
+                    <p className="text-xs text-muted-foreground leading-snug">
                       Verified and approved by your practicum coordinator.
                     </p>
                   </div>
@@ -1928,7 +1891,7 @@ export const StudentDashboard: React.FC = () => {
                 <Link
                   to={req.link}
                   onClick={() => setIsCompletedModalOpen(false)}
-                  className="text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 font-bold text-[11px] shrink-0 self-center"
+                  className="text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 font-bold text-xs shrink-0 self-center"
                 >
                   View
                 </Link>
@@ -1941,22 +1904,22 @@ export const StudentDashboard: React.FC = () => {
               .map(item => (
                 <div
                   key={item.id}
-                  className="p-3 rounded-xl bg-zinc-50/80 dark:bg-zinc-900/50 border border-zinc-200/80 dark:border-zinc-800/80 flex items-start justify-between gap-3 text-xs"
+                  className="p-3.5 rounded-xl bg-muted/30 border border-border/70 flex items-start justify-between gap-3 text-xs"
                 >
-                  <div className="flex items-start gap-2.5 min-w-0">
-                    <div className="size-5 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0 mt-0.5">
-                      <Check size={12} strokeWidth={3} />
+                  <div className="flex items-start gap-3 min-w-0">
+                    <div className="size-6 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0 mt-0.5">
+                      <Check size={13} strokeWidth={3} />
                     </div>
-                    <div className="space-y-0.5 min-w-0">
+                    <div className="space-y-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-foreground truncate line-through opacity-80">
                           {item.text}
                         </span>
-                        <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-none text-[9px] h-4 px-1.5 font-bold">
+                        <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-none text-[10px] h-4.5 px-2 font-bold rounded-full">
                           Task
                         </Badge>
                       </div>
-                      <p className="text-[11px] text-muted-foreground">
+                      <p className="text-xs text-muted-foreground">
                         Completed from your personal practicum checklist.
                       </p>
                     </div>
@@ -1971,12 +1934,12 @@ export const StudentDashboard: React.FC = () => {
             )}
           </div>
 
-          <div className="flex justify-end pt-3 border-t border-zinc-200/60 dark:border-zinc-800/60">
+          <div className="flex justify-end pt-4 border-t border-border/70">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setIsCompletedModalOpen(false)}
-              className="rounded-xl text-xs font-semibold cursor-pointer"
+              className="rounded-xl text-xs font-semibold cursor-pointer h-9 px-4"
             >
               Close
             </Button>
