@@ -64,7 +64,7 @@ export interface DocumentHeaderZoneProps {
   className?: string;
 }
 
-export const HEADER_TOP_SPACING = 16;
+export const HEADER_TOP_SPACING = 20;
 export const HEADER_MIN_HEIGHT = 96;
 export const HEADER_MAX_HEIGHT = 256;
 export const HEADER_IMAGE_MAX_HEIGHT = 200;
@@ -75,7 +75,7 @@ type ResizeHandle = 'nw' | 'ne' | 'sw' | 'se' | 'n' | 's' | 'e' | 'w';
 
 /**
  * Authentic Google Docs Header Zone.
- * - 16px top breathing room matching user specification.
+ * - 20px top breathing room matching user specification.
  * - Dynamic downward header expansion up to 256px to fit large letterheads without squashing.
  * - Borderless direct text typing without placeholder clutter.
  * - Rich formatting support (bold, italic, underline, color, font size, align).
@@ -114,11 +114,11 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
   const textInputRef = useRef<HTMLInputElement | null>(null);
 
   const currentWidth = Math.min(
-    resizeLiveWidth ?? headerState.image?.width ?? (headerState.text?.trim() ? HEADER_IMAGE_MAX_WIDTH_WITH_TEXT : HEADER_CONTENT_WIDTH),
-    headerState.text?.trim() ? HEADER_IMAGE_MAX_WIDTH_WITH_TEXT : HEADER_CONTENT_WIDTH
+    resizeLiveWidth ?? headerState.image?.width ?? (headerState.text?.trim() ? 240 : HEADER_CONTENT_WIDTH),
+    HEADER_CONTENT_WIDTH
   );
   const currentHeight = Math.min(
-    resizeLiveHeight ?? headerState.image?.height ?? 64,
+    resizeLiveHeight ?? headerState.image?.height ?? 60,
     HEADER_IMAGE_MAX_HEIGHT
   );
 
@@ -247,9 +247,7 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
           newHeight = initialHeight - deltaY;
         }
 
-        const maxAllowedWidth = headerState.text?.trim()
-          ? HEADER_IMAGE_MAX_WIDTH_WITH_TEXT
-          : HEADER_CONTENT_WIDTH;
+        const maxAllowedWidth = HEADER_CONTENT_WIDTH;
         const clampedWidth = Math.max(40, Math.min(maxAllowedWidth, Math.round(newWidth)));
         const clampedHeight = Math.max(24, Math.min(HEADER_IMAGE_MAX_HEIGHT, Math.round(newHeight)));
 
@@ -313,7 +311,7 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
     img.crossOrigin = 'anonymous';
     img.onload = () => {
       const aspect = img.naturalWidth / img.naturalHeight;
-      const w = Math.min(HEADER_IMAGE_MAX_WIDTH_WITH_TEXT, img.naturalWidth);
+      const w = Math.min(HEADER_CONTENT_WIDTH, img.naturalWidth);
       const h = Math.min(HEADER_IMAGE_MAX_HEIGHT, Math.round(w / aspect));
       setHeaderState((prev) => ({
         ...prev,
@@ -500,8 +498,8 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
       className={cn(
         'w-[calc(100%+192px)] -mx-[96px] px-[96px] min-h-[96px] shrink-0 select-none relative transition-all flex flex-col justify-end group/header',
         isActive
-          ? 'pt-[16px] pb-0 bg-transparent'
-          : 'pt-[16px] pb-1 cursor-pointer hover:bg-zinc-50/60 dark:hover:bg-zinc-800/30 rounded-t-[2px]',
+          ? 'pt-[20px] pb-0 bg-transparent'
+          : 'pt-[20px] pb-1 cursor-pointer hover:bg-zinc-50/60 dark:hover:bg-zinc-800/30 rounded-t-[2px]',
         className
       )}
     >

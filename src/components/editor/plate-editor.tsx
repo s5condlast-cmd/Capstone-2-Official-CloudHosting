@@ -545,14 +545,23 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
           const dataUrl = reader.result as string;
           const img = new Image();
           img.onload = () => {
-            const aspect = (img.naturalWidth || 624) / Math.max(1, img.naturalHeight || 100);
-            // Expand to natural width, bounded to 624px printable width track
-            let initialWidth = Math.min(624, Math.max(140, img.naturalWidth || 624));
-            let initialHeight = Math.round(initialWidth / aspect);
-            // If height exceeds max header image height (200px), scale down proportionally
-            if (initialHeight > 200) {
-              initialHeight = 200;
-              initialWidth = Math.min(624, Math.max(140, Math.round(initialHeight * aspect)));
+            const naturalW = img.naturalWidth || 240;
+            const naturalH = img.naturalHeight || 60;
+            const maxW = 624;
+            const maxH = 200;
+            let initialWidth = naturalW;
+            let initialHeight = naturalH;
+
+            // Only scale down proportionally if exceeding printable track or max height
+            if (initialWidth > maxW) {
+              const ratio = maxW / initialWidth;
+              initialWidth = maxW;
+              initialHeight = Math.round(initialHeight * ratio);
+            }
+            if (initialHeight > maxH) {
+              const ratio = maxH / initialHeight;
+              initialHeight = maxH;
+              initialWidth = Math.round(initialWidth * ratio);
             }
 
             setHeaderState((prev) => ({
@@ -562,8 +571,8 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                 originalUrl: dataUrl,
                 name: file.name,
                 align: prev.image?.align || 'left',
-                width: prev.image?.width || initialWidth,
-                height: prev.image?.height || initialHeight,
+                width: initialWidth,
+                height: initialHeight,
                 offsetPercent: prev.image?.offsetPercent ?? 0,
               },
             }));
@@ -600,13 +609,23 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
           const dataUrl = reader.result as string;
           const img = new Image();
           img.onload = () => {
-            const aspect = (img.naturalWidth || 624) / Math.max(1, img.naturalHeight || 80);
-            let initialWidth = Math.min(624, Math.max(140, img.naturalWidth || 624));
-            let initialHeight = Math.round(initialWidth / aspect);
-            // Footer image max height is 140px
-            if (initialHeight > 140) {
-              initialHeight = 140;
-              initialWidth = Math.min(624, Math.max(140, Math.round(initialHeight * aspect)));
+            const naturalW = img.naturalWidth || 200;
+            const naturalH = img.naturalHeight || 48;
+            const maxW = 624;
+            const maxH = 140;
+            let initialWidth = naturalW;
+            let initialHeight = naturalH;
+
+            // Only scale down proportionally if exceeding printable track or max height
+            if (initialWidth > maxW) {
+              const ratio = maxW / initialWidth;
+              initialWidth = maxW;
+              initialHeight = Math.round(initialHeight * ratio);
+            }
+            if (initialHeight > maxH) {
+              const ratio = maxH / initialHeight;
+              initialHeight = maxH;
+              initialWidth = Math.round(initialWidth * ratio);
             }
 
             setFooterState((prev) => ({
@@ -616,8 +635,8 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                 originalUrl: dataUrl,
                 name: file.name,
                 align: prev.image?.align || 'left',
-                width: prev.image?.width || initialWidth,
-                height: prev.image?.height || initialHeight,
+                width: initialWidth,
+                height: initialHeight,
                 offsetPercent: prev.image?.offsetPercent ?? 0,
               },
             }));

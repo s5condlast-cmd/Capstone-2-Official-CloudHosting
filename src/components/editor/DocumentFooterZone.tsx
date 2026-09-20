@@ -86,8 +86,8 @@ export const DocumentFooterZone: React.FC<DocumentFooterZoneProps> = ({
   const textInputRef = useRef<HTMLInputElement | null>(null);
 
   const currentWidth = Math.min(
-    resizeLiveWidth ?? footerState.image?.width ?? ((footerState.text?.trim() || footerState.pageNumber) ? FOOTER_IMAGE_MAX_WIDTH_WITH_TEXT : FOOTER_CONTENT_WIDTH),
-    (footerState.text?.trim() || footerState.pageNumber) ? FOOTER_IMAGE_MAX_WIDTH_WITH_TEXT : FOOTER_CONTENT_WIDTH
+    resizeLiveWidth ?? footerState.image?.width ?? ((footerState.text?.trim() || footerState.pageNumber) ? 200 : FOOTER_CONTENT_WIDTH),
+    FOOTER_CONTENT_WIDTH
   );
   const currentHeight = Math.min(
     resizeLiveHeight ?? footerState.image?.height ?? 48,
@@ -219,9 +219,7 @@ export const DocumentFooterZone: React.FC<DocumentFooterZoneProps> = ({
           newHeight = initialHeight - deltaY;
         }
 
-        const maxAllowedWidth = (footerState.text?.trim() || footerState.pageNumber)
-          ? FOOTER_IMAGE_MAX_WIDTH_WITH_TEXT
-          : FOOTER_CONTENT_WIDTH;
+        const maxAllowedWidth = FOOTER_CONTENT_WIDTH;
         const clampedWidth = Math.max(40, Math.min(maxAllowedWidth, Math.round(newWidth)));
         const clampedHeight = Math.max(20, Math.min(FOOTER_IMAGE_MAX_HEIGHT, Math.round(newHeight)));
 
@@ -285,7 +283,7 @@ export const DocumentFooterZone: React.FC<DocumentFooterZoneProps> = ({
     img.crossOrigin = 'anonymous';
     img.onload = () => {
       const aspect = img.naturalWidth / img.naturalHeight;
-      const w = Math.min(FOOTER_IMAGE_MAX_WIDTH_WITH_TEXT, img.naturalWidth);
+      const w = Math.min(FOOTER_CONTENT_WIDTH, img.naturalWidth);
       const h = Math.min(FOOTER_IMAGE_MAX_HEIGHT, Math.round(w / aspect));
       setFooterState((prev) => ({
         ...prev,
