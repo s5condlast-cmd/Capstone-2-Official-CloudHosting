@@ -94,7 +94,6 @@ export function StudentDocumentEditor() {
   const [showConflictBanner, setShowConflictBanner] = useState(false);
   const [conflictLocal, setConflictLocal] = useState<DraftState | null>(null);
   const [conflictRemote, setConflictRemote] = useState<DraftState | null>(null);
-  const [showMultiTabWarning, setShowMultiTabWarning] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [titleEditing, setTitleEditing] = useState(false);
   const [editorEpoch, setEditorEpoch] = useState(0);
@@ -325,7 +324,6 @@ export function StudentDocumentEditor() {
             setConflictRemote(remote);
             setShowConflictBanner(true);
           },
-          onMultiTabConflict: () => setShowMultiTabWarning(true),
           onSaved: (saved) => {
             setDraft((current) => current
               ? { ...current, revision: saved.revision, updatedAt: saved.updatedAt }
@@ -786,23 +784,6 @@ export function StudentDocumentEditor() {
                   draftId={draft?.id ?? ''}
                   onResolved={handleConflictResolved}
                 />
-              </div>
-            )}
-
-            {/* Multi-tab conflict warning */}
-            {showMultiTabWarning && (
-              <div className="flex items-center justify-between gap-3 px-4 py-2 bg-amber-50 dark:bg-amber-950/40 border-b border-amber-200 dark:border-amber-900 text-amber-800 dark:text-amber-300 text-xs z-30 shrink-0">
-                <div className="flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
-                  <span>This document is currently open in another browser tab. Simultaneous editing in multiple tabs may cause conflicting revisions.</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowMultiTabWarning(false)}
-                  className="px-2.5 py-1 rounded-md text-xs font-medium bg-amber-100 hover:bg-amber-200 dark:bg-amber-900/60 dark:hover:bg-amber-800/80 transition-colors cursor-pointer"
-                >
-                  Dismiss
-                </button>
               </div>
             )}
           </div>
