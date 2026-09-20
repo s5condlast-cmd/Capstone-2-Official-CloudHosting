@@ -1019,74 +1019,68 @@ export const StudentDashboard: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
         {/* LEFT COLUMN: Main Practicum Workflows (9 cols) */}
         <div className="lg:col-span-9 space-y-5 min-w-0">
-          {/* Active Deployment & Attendance Tracker Banner */}
-          <div className="bg-card border border-border rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/70 pb-4">
-              <div className="flex items-center gap-3">
-                <div className="size-10 rounded-xl bg-primary/10 text-primary border border-primary/20 flex items-center justify-center shrink-0">
-                  <Briefcase size={18} />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-bold text-primary uppercase tracking-wider">
-                      {isAssignedCompany ? 'Active Deployment' : 'Practicum Onboarding'}
-                    </span>
-                    <span className="text-muted-foreground text-xs">·</span>
-                    <span className="text-sm font-bold text-foreground">
-                      {isAssignedCompany ? companyName : 'Deployment Pending'}
-                    </span>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {isAssignedCompany
-                      ? `Supervisor: ${supervisorName} · ${studentRole}`
-                      : 'Complete your Before OJT documents and MOA to verify industry placement.'}
-                  </p>
-                </div>
+          {/* Host Placement & Industry Partner Card */}
+          <div className="bg-card border border-border rounded-2xl p-4 sm:p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-start sm:items-center gap-3.5 min-w-0">
+              <div className="size-11 rounded-xl bg-primary/10 text-primary border border-primary/20 flex items-center justify-center shrink-0">
+                <BuildingIcon size={20} />
               </div>
-
-              <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
-                <Link to="/student/documents?phase=in_ojt">
-                  <Button variant="primary" size="sm" className="font-bold text-xs h-8.5 px-3.5 rounded-xl cursor-pointer active:scale-95">
-                    <ClockIcon size={14} className="mr-1.5" />
-                    Log DTR
-                  </Button>
-                </Link>
-                <Link to="/student/editor?template=weekly-journal">
-                  <Button variant="outline" size="sm" className="font-bold text-xs h-8.5 px-3 rounded-xl cursor-pointer active:scale-95">
-                    <BookOpenIcon size={14} className="mr-1.5" />
-                    Journal
-                  </Button>
-                </Link>
-                <Link to="/student/documents">
-                  <Button variant="outline" size="sm" className="font-bold text-xs h-8.5 px-3 rounded-xl cursor-pointer active:scale-95">
-                    <FolderOpen size={14} className="mr-1.5" />
-                    Repository
-                  </Button>
-                </Link>
+              <div className="min-w-0 space-y-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-sm font-bold text-foreground truncate">
+                    {isAssignedCompany ? companyName : 'Industry Placement Pending'}
+                  </span>
+                  <span
+                    className={cn(
+                      "text-[10px] font-bold px-2 py-0.5 rounded-full border",
+                      isAssignedCompany
+                        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                        : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+                    )}
+                  >
+                    {isAssignedCompany ? 'Verified Partner' : 'Matching in Progress'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-x-2.5 gap-y-1 text-xs text-muted-foreground flex-wrap">
+                  {isAssignedCompany ? (
+                    <>
+                      <span>Supervisor: <strong className="text-foreground font-semibold">{supervisorName}</strong></span>
+                      <span className="text-border hidden sm:inline">•</span>
+                      <span>Role: <strong className="text-foreground font-semibold">{studentRole}</strong></span>
+                      {companyLocation && (
+                        <>
+                          <span className="text-border hidden sm:inline">•</span>
+                          <span>{companyLocation}</span>
+                        </>
+                      )}
+                    </>
+                  ) : (
+                    <span>Complete your Before OJT documents and MOA to verify your company placement.</span>
+                  )}
+                </div>
               </div>
             </div>
 
-            {/* Hours Progress and Milestones */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-xs font-semibold">
-                <span className="text-muted-foreground">
-                  Logged Hours: <span className="text-foreground font-bold">{renderedHours.toFixed(1)} / {totalHours} hrs</span>
-                </span>
-                <span className="text-primary font-bold">{hoursPercent}% Rendered</span>
-              </div>
-
-              <div className="relative w-full bg-muted rounded-full h-2.5 overflow-hidden">
-                <div
-                  className="bg-primary h-full rounded-full transition-all duration-500"
-                  style={{ width: `${hoursPercent}%` }}
-                />
-              </div>
-
-              <div className="flex items-center justify-between text-[11px] text-muted-foreground font-medium pt-0.5">
-                <span>Phase: {profilePhase === 'before_ojt' ? 'Prelim Clearance' : profilePhase === 'in_ojt' ? 'Active Logging' : 'Final Exit'}</span>
-                <span>Midterm Target: 230.0 hrs</span>
-                <span>Final Clearance: 460.0 hrs</span>
-              </div>
+            {/* Quick Actions */}
+            <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto">
+              <Link to="/student/documents?phase=in_ojt">
+                <Button variant="primary" size="sm" className="font-bold text-xs h-8.5 px-3.5 rounded-xl cursor-pointer active:scale-95 shadow-2xs">
+                  <ClockIcon size={14} className="mr-1.5" />
+                  Log DTR
+                </Button>
+              </Link>
+              <Link to="/student/editor?template=weekly-journal">
+                <Button variant="outline" size="sm" className="font-bold text-xs h-8.5 px-3 rounded-xl cursor-pointer active:scale-95 border-border hover:bg-muted/80 shadow-2xs">
+                  <BookOpenIcon size={14} className="mr-1.5" />
+                  Journal
+                </Button>
+              </Link>
+              <Link to="/student/documents">
+                <Button variant="outline" size="sm" className="font-bold text-xs h-8.5 px-3 rounded-xl cursor-pointer active:scale-95 border-border hover:bg-muted/80 shadow-2xs">
+                  <FolderOpen size={14} className="mr-1.5" />
+                  Repository
+                </Button>
+              </Link>
             </div>
           </div>
 
