@@ -67,9 +67,9 @@ function AppRoutes() {
   const location = useLocation();
 
   useEffect(() => {
-    // Initialize Theme - Default to Monochrome (Black & White)
+    // Initialize the saved system accent. The default token set uses Deep Sky blue.
     const savedTheme = localStorage.getItem('app-theme') || 'default';
-    ['theme-blue', 'theme-indigo', 'theme-sti', 'theme-cyan'].forEach(cls => document.documentElement.classList.remove(cls));
+    ['theme-deep-sky', 'theme-blue', 'theme-indigo', 'theme-sti', 'theme-cyan'].forEach(cls => document.documentElement.classList.remove(cls));
     if (savedTheme !== 'default') {
       document.documentElement.classList.add(savedTheme);
     } else {

@@ -428,7 +428,7 @@ export const Topbar: React.FC<TopbarProps> = ({ title, subtitle, user, onMenuCli
                       <p className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-2">Accent Color</p>
                       <div className="flex items-center gap-2">
                         {[
-                          { id: 'default', color: 'bg-zinc-900 dark:bg-zinc-100', name: 'Monochrome' },
+                          { id: 'default', color: 'bg-[#3B82C4] dark:bg-[#60A5FA]', name: 'System Blue' },
                           { id: 'theme-deep-sky', color: 'bg-[#3B82C4]', name: 'Deep Sky Blue' },
                           { id: 'theme-blue', color: 'bg-[#2563eb]', name: 'Modern Blue' },
                           { id: 'theme-indigo', color: 'bg-[#4f46e5]', name: 'Indigo' },

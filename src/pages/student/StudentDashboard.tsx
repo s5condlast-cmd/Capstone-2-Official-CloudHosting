@@ -3,6 +3,7 @@ import { Badge } from '@/src/components/ui/Badge';
 import { Button } from '@/src/components/ui/Button';
 import { Skeleton } from '@/src/components/ui/Skeleton';
 import { EmptyState } from '@/src/components/ui/EmptyState';
+import { CircularProgress } from '@/src/components/ui/CircularProgress';
 import {
   FileText as FileTextIcon,
   Calendar as CalendarIcon,
@@ -36,6 +37,10 @@ import {
   CalendarDays,
   FileCheck2,
   FolderOpen,
+  Command,
+  Moon,
+  Sun,
+  Sunrise,
 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import { Link, useNavigate } from 'react-router-dom';
@@ -776,6 +781,18 @@ export const StudentDashboard: React.FC = () => {
   const hoursRemaining = Math.max(0, totalHours - renderedHours);
   const hoursPercent = Math.min(100, Math.round((renderedHours / totalHours) * 1000) / 10);
 
+  // Dynamic time-aware greeting
+  const greeting = useMemo(() => {
+    const hour = new Date().getHours();
+    if (hour < 12) return { text: 'Good morning', icon: Sunrise };
+    if (hour < 18) return { text: 'Good afternoon', icon: Sun };
+    return { text: 'Good evening', icon: Moon };
+  }, []);
+
+  const handleOpenCommandPalette = useCallback(() => {
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true, bubbles: true }));
+  }, []);
+
   // ─── Loading State Skeleton ─────────────────────────────────────────────────
 
   if (loading) {
@@ -825,158 +842,220 @@ export const StudentDashboard: React.FC = () => {
 
   return (
     <div className="space-y-6 pb-12 animate-in fade-in duration-300">
-      {/* 1. Header with Clean Student Greeting & Phase Badge */}
-      <div className="flex items-center justify-between gap-4 border-b border-border pb-4">
-        <div className="flex items-center gap-2.5 flex-wrap">
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
-            Welcome back, {user?.name ? user.name.split(' ')[0] : 'Intern'}!
-          </h1>
-          <Badge variant="outline" className="text-xs font-semibold px-2.5 py-0.5 border-primary/30 text-primary bg-primary/10 rounded-full">
-            {profilePhase === 'before_ojt' ? 'Before OJT' : profilePhase === 'in_ojt' ? 'In OJT' : 'Final Phase'}
-          </Badge>
-        </div>
+      {/* 1. Header with Atmospheric Welcome Hero & Command Center */}
+      <div className="relative overflow-hidden rounded-2xl border border-border/80 bg-gradient-to-br from-primary/[0.07] via-card to-card p-5 sm:p-6 shadow-xs">
+        {/* Soft Ambient Radial Glow */}
+        <div className="pointer-events-none absolute -left-12 -top-12 size-48 rounded-full bg-primary/15 blur-3xl" aria-hidden="true" />
 
-        {/* Refresh button */}
-        <button
-          type="button"
-          onClick={() => loadDashboardData(true)}
-          disabled={refreshing}
-          title="Refresh dashboard state"
-          className="bg-card border border-border hover:bg-muted/80 rounded-xl p-2.5 text-muted-foreground hover:text-foreground transition-all cursor-pointer disabled:opacity-50 active:scale-95 shadow-2xs shrink-0"
-        >
-          <RotateCw size={15} className={cn(refreshing && "animate-spin text-primary")} />
-        </button>
+        <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0 space-y-1.5">
+            {/* Top Status & Phase Chips */}
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="outline" className="text-xs font-semibold px-2.5 py-0.5 border-primary/30 text-primary bg-primary/10 rounded-full">
+                {profilePhase === 'before_ojt' ? 'Phase 1 of 3 · Before OJT' : profilePhase === 'in_ojt' ? 'Phase 2 of 3 · In OJT' : 'Phase 3 of 3 · Final Phase'}
+              </Badge>
+              <span className={cn(
+                "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium backdrop-blur-xs",
+                isAssignedCompany
+                  ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+                  : "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300"
+              )}>
+                <span className={cn("size-1.5 rounded-full", isAssignedCompany ? "bg-emerald-500 animate-pulse" : "bg-amber-500")} />
+                {isAssignedCompany ? 'Internship Active' : 'Placement Pending'}
+              </span>
+              {(programName || sectionName) && (
+                <span className="hidden sm:inline-flex text-xs font-medium text-muted-foreground/80">
+                  {[programName, sectionName].filter(Boolean).join(' • ')}
+                </span>
+              )}
+            </div>
+
+            {/* Dynamic Greeting */}
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight flex items-center gap-2.5">
+              <span>{greeting.text}, {user?.name ? user.name.split(' ')[0] : 'Intern'}!</span>
+              <greeting.icon className="size-6 text-warm-amber inline-block shrink-0 animate-in fade-in zoom-in duration-500" />
+            </h1>
+            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+              Your practicum milestones, verified hours, and institutional requirements in one calm command center.
+            </p>
+          </div>
+
+          {/* Action Tools */}
+          <div className="flex shrink-0 items-center gap-2.5 self-start sm:self-center">
+            {/* Quick Search Shortcut */}
+            <button
+              type="button"
+              onClick={handleOpenCommandPalette}
+              title="Open Command Palette (⌘K / Ctrl+K)"
+              className="hidden sm:inline-flex items-center gap-2 rounded-xl border border-border/80 bg-background/80 px-3 py-2 text-xs font-medium text-muted-foreground shadow-2xs hover:border-primary/40 hover:text-foreground active:scale-95 transition-all cursor-pointer"
+            >
+              <Command className="size-3.5" />
+              <span>Search</span>
+              <kbd className="rounded border border-border bg-muted/80 px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground font-mono">
+                ⌘K
+              </kbd>
+            </button>
+
+            {/* Refresh button */}
+            <button
+              type="button"
+              onClick={() => loadDashboardData(true)}
+              disabled={refreshing}
+              title="Refresh dashboard state"
+              className="bg-background/80 border border-border/80 hover:border-primary/40 hover:bg-muted/80 rounded-xl p-2.5 text-muted-foreground hover:text-foreground transition-all cursor-pointer disabled:opacity-50 active:scale-95 shadow-2xs shrink-0"
+              aria-label="Refresh dashboard"
+            >
+              <RotateCw size={15} className={cn(refreshing && "animate-spin text-primary")} />
+            </button>
+
+            {/* Open Documents CTA */}
+            <Link
+              to="/student/documents"
+              className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-xs transition-all hover:bg-primary/90 active:scale-[0.98]"
+            >
+              <FolderOpen size={15} />
+              <span>Documents</span>
+            </Link>
+          </div>
+        </div>
       </div>
 
-      {/* 2. Top Pulse Metrics Strip: 4 Sleek Stat Cards */}
+      {/* 2. Top Pulse Metrics Strip: 4 Sleek Stat Cards (Bento Style) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Metric 1: Practicum Hours */}
         <div className="bg-card border border-border rounded-2xl p-4 sm:p-5 shadow-xs flex flex-col justify-between hover:border-primary/40 transition-all group">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Practicum Hours
-            </span>
-            <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary border border-primary/20 flex items-center justify-center shrink-0">
-              <ClockIcon size={15} />
-            </div>
-          </div>
-          <div className="mt-3 space-y-2">
-            <div className="flex items-baseline gap-1.5">
-              <h3 className="text-2xl font-extrabold text-foreground tracking-tight">{renderedHours.toFixed(1)}</h3>
-              <span className="text-xs text-muted-foreground font-medium">/ {totalHours} hrs</span>
-              <span className="ml-auto text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                {hoursPercent}%
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Practicum Hours
               </span>
+              <div className="mt-2.5 flex items-baseline gap-1.5">
+                <h3 className="text-2xl font-extrabold text-foreground tracking-tight font-mono">{renderedHours.toFixed(1)}</h3>
+                <span className="text-xs text-muted-foreground font-medium">/ {totalHours} hrs</span>
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground truncate">
+                {hoursRemaining.toFixed(1)} hrs to clearance
+              </p>
             </div>
-            <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
-              <div
-                className="bg-primary h-full rounded-full transition-all duration-500"
-                style={{ width: `${hoursPercent}%` }}
-              />
-            </div>
-            <p className="text-xs text-muted-foreground truncate">
-              {hoursRemaining.toFixed(1)} hrs remaining to completion
-            </p>
+            <CircularProgress
+              value={hoursPercent}
+              size={50}
+              strokeWidth={4.5}
+              indicatorClassName={cn(hoursPercent >= 100 ? "text-emerald-500" : "text-primary")}
+              trackClassName="text-muted/40"
+            >
+              <span className="text-[11px] font-extrabold text-foreground font-mono">{hoursPercent}%</span>
+            </CircularProgress>
+          </div>
+          <div className="mt-3 pt-2.5 border-t border-border/50 flex items-center justify-between text-xs text-muted-foreground">
+            <span>Target: 230.0 hrs</span>
+            <span className={cn("font-semibold text-[11px]", hoursPercent >= 50 ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400")}>
+              {hoursPercent >= 100 ? 'Completed' : hoursPercent >= 50 ? 'Midterm Cleared' : 'In Progress'}
+            </span>
           </div>
         </div>
 
         {/* Metric 2: Requirements Progress */}
         <div className="bg-card border border-border rounded-2xl p-4 sm:p-5 shadow-xs flex flex-col justify-between hover:border-primary/40 transition-all group">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Requirements
-            </span>
-            <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary border border-primary/20 flex items-center justify-center shrink-0">
-              <ClipboardCheckIcon size={15} />
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Requirements
+              </span>
+              <div className="mt-2.5 flex items-baseline gap-1.5">
+                <h3 className="text-2xl font-extrabold text-foreground tracking-tight font-mono">
+                  {totalApprovedCount} <span className="text-sm text-muted-foreground font-semibold font-sans">of {allRequirements.length}</span>
+                </h3>
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground truncate">
+                {drafts.length > 0 ? `${drafts.length} draft in progress` : `${allRequirements.length - totalApprovedCount} requirements remaining`}
+              </p>
+            </div>
+            <div className="w-10 h-10 rounded-2xl bg-primary/10 text-primary border border-primary/20 flex items-center justify-center shrink-0">
+              <ClipboardCheckIcon size={18} />
             </div>
           </div>
-          <div className="mt-3 space-y-2">
-            <div className="flex items-baseline gap-1.5">
-              <h3 className="text-2xl font-extrabold text-foreground tracking-tight">{totalApprovedCount} of {allRequirements.length}</h3>
-              <span className="text-xs text-muted-foreground font-medium">Verified</span>
-              {totalPendingCount > 0 ? (
-                <span className="ml-auto text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
-                  {totalPendingCount} Under Review
-                </span>
-              ) : totalRevisionCount > 0 ? (
-                <span className="ml-auto text-[10px] font-bold text-rose-600 dark:text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded-full border border-rose-500/20">
-                  {totalRevisionCount} Revise
-                </span>
-              ) : (
-                <span className="ml-auto text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                  Up to Date
-                </span>
-              )}
+          <div className="mt-3 pt-2.5 border-t border-border/50 flex items-center justify-between text-xs text-muted-foreground">
+            <div className="flex items-center gap-1.5">
+              <span className="inline-flex size-1.5 rounded-full bg-emerald-500" />
+              <span>{totalApprovedCount} Approved</span>
             </div>
-            <div className="w-full bg-muted rounded-full h-2 overflow-hidden flex">
-              <div
-                className="bg-emerald-500 h-full transition-all duration-500"
-                style={{ width: `${(totalApprovedCount / allRequirements.length) * 100}%` }}
-              />
-              <div
-                className="bg-amber-500 h-full transition-all duration-500"
-                style={{ width: `${(totalPendingCount / allRequirements.length) * 100}%` }}
-              />
-            </div>
-            <p className="text-xs text-muted-foreground truncate">
-              {drafts.length > 0 ? `${drafts.length} draft in progress` : `${allRequirements.length - totalApprovedCount} total remaining`}
-            </p>
+            {totalPendingCount > 0 ? (
+              <span className="text-[11px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
+                {totalPendingCount} Under Review
+              </span>
+            ) : totalRevisionCount > 0 ? (
+              <span className="text-[11px] font-semibold text-rose-600 dark:text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded-full border border-rose-500/20">
+                {totalRevisionCount} Revisions
+              </span>
+            ) : (
+              <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/20 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                Up to Date
+              </span>
+            )}
           </div>
         </div>
 
         {/* Metric 3: Current Phase */}
         <div className="bg-card border border-border rounded-2xl p-4 sm:p-5 shadow-xs flex flex-col justify-between hover:border-primary/40 transition-all group">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Practicum Stage
-            </span>
-            <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary border border-primary/20 flex items-center justify-center shrink-0">
-              <Sparkles size={15} />
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Practicum Stage
+              </span>
+              <div className="mt-2.5 flex items-baseline gap-2">
+                <h3 className="text-xl font-extrabold text-foreground tracking-tight">
+                  {profilePhase === 'before_ojt' ? 'Before OJT' : profilePhase === 'in_ojt' ? 'In OJT' : 'Final Phase'}
+                </h3>
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground truncate">
+                {profilePhase === 'before_ojt'
+                  ? 'Institutional clearance & MOA'
+                  : profilePhase === 'in_ojt'
+                  ? 'DTR tracking & journal logs'
+                  : 'Appraisal & final defense'}
+              </p>
+            </div>
+            <div className="w-10 h-10 rounded-2xl bg-primary/10 text-primary border border-primary/20 flex items-center justify-center shrink-0">
+              <Sparkles size={18} />
             </div>
           </div>
-          <div className="mt-3 space-y-1.5">
-            <div className="flex items-center gap-2">
-              <h3 className="text-xl font-extrabold text-foreground tracking-tight">
-                {profilePhase === 'before_ojt' ? 'Before OJT' : profilePhase === 'in_ojt' ? 'In OJT' : 'Final Phase'}
-              </h3>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
-                {profilePhase === 'before_ojt' ? 'Phase 1/3' : profilePhase === 'in_ojt' ? 'Phase 2/3' : 'Phase 3/3'}
-              </span>
-            </div>
-            <p className="text-xs text-muted-foreground leading-relaxed truncate">
-              {profilePhase === 'before_ojt'
-                ? 'Clearance & institutional endorsements'
-                : profilePhase === 'in_ojt'
-                ? 'DTR tracking & weekly reflections'
-                : 'Appraisal, paper & defense clearance'}
-            </p>
+          <div className="mt-3 pt-2.5 border-t border-border/50 flex items-center justify-between text-xs text-muted-foreground">
+            <span>Milestone</span>
+            <span className="text-[11px] font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20">
+              {profilePhase === 'before_ojt' ? 'Phase 1 of 3' : profilePhase === 'in_ojt' ? 'Phase 2 of 3' : 'Phase 3 of 3'}
+            </span>
           </div>
         </div>
 
         {/* Metric 4: Placement & Mentor */}
         <div className="bg-card border border-border rounded-2xl p-4 sm:p-5 shadow-xs flex flex-col justify-between hover:border-primary/40 transition-all group">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Host Placement
-            </span>
-            <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary border border-primary/20 flex items-center justify-center shrink-0">
-              <BuildingIcon size={15} />
-            </div>
-          </div>
-          <div className="mt-3 space-y-1.5">
-            <div className="flex items-center gap-1.5">
-              <h3 className="text-base font-bold text-foreground tracking-tight truncate">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Host Placement
+              </span>
+              <h3 className="mt-2.5 text-base font-bold text-foreground tracking-tight truncate" title={isAssignedCompany ? companyName : 'Pending Placement'}>
                 {isAssignedCompany ? companyName : 'Pending Placement'}
               </h3>
-              {isAssignedCompany ? (
-                <CheckCheck size={15} className="text-emerald-500 shrink-0" />
-              ) : (
-                <ClockIcon size={14} className="text-amber-500 shrink-0" />
-              )}
+              <p className="mt-1 text-xs text-muted-foreground truncate">
+                {isAssignedCompany ? `Supervisor: ${supervisorName}` : 'Awaiting company endorsement'}
+              </p>
             </div>
-            <p className="text-xs text-muted-foreground truncate leading-relaxed">
-              {isAssignedCompany ? `${supervisorName} · ${companyLocation}` : 'Awaiting company endorsement'}
-            </p>
+            <div className="w-10 h-10 rounded-2xl bg-warm-amber/10 text-warm-amber dark:text-amber-300 border border-warm-amber/30 flex items-center justify-center shrink-0">
+              <BuildingIcon size={18} />
+            </div>
+          </div>
+          <div className="mt-3 pt-2.5 border-t border-border/50 flex items-center justify-between text-xs">
+            <span className="text-muted-foreground">Status</span>
+            <span className={cn(
+              "text-[11px] font-semibold px-2 py-0.5 rounded-full border",
+              isAssignedCompany
+                ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/25"
+                : "bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/25"
+            )}>
+              {isAssignedCompany ? 'Verified Partner' : 'Matching'}
+            </span>
           </div>
         </div>
       </div>
