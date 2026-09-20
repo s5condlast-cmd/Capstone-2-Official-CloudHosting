@@ -3327,17 +3327,10 @@ export function FixedToolbarButtons({
                   </>
                 )}
 
-                {/* Group 4: Link, Comment, Image (on the left, appearing first) */}
+                {/* Group 4: Link, Image (on the left, appearing first) */}
                 {hiddenGroups.group4 && (
                   <div className={cn('flex items-center gap-0.5 shrink-0 flex-nowrap', isViewing && 'opacity-40 pointer-events-none')}>
                     <LinkToolbarButton editor={editor} />
-
-                    <CommentToolbarButton
-                      editor={editor}
-                      comments={comments}
-                      onAddComment={onAddComment}
-                      onResolveComment={onResolveComment}
-                    />
 
                     {activeHeaderFooter ? (
                       <ToolbarButton
@@ -3414,17 +3407,10 @@ export function FixedToolbarButtons({
             </div>
           )}
 
-          {/* 4. Link, Add Comment, Image */}
+          {/* 4. Link, Image */}
           {!hiddenGroups.group4 && (
             <ToolbarGroup className={cn('items-center', isViewing && 'opacity-40 pointer-events-none')}>
               <LinkToolbarButton editor={editor} />
-
-              <CommentToolbarButton
-                editor={editor}
-                comments={comments}
-                onAddComment={onAddComment}
-                onResolveComment={onResolveComment}
-              />
 
               {activeHeaderFooter ? (
                 <ToolbarButton

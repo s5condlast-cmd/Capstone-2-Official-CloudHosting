@@ -75,7 +75,7 @@ CREATE OR REPLACE FUNCTION public.add_document_comment(document_id uuid, message
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
 DECLARE author_name text;
 BEGIN
-  IF public.portal_role() NOT IN ('admin','adviser','supervisor') OR public.portal_role() IS NULL
+  IF public.portal_role() NOT IN ('admin','adviser','supervisor','student') OR public.portal_role() IS NULL
     OR length(trim(message)) NOT BETWEEN 1 AND 5000 THEN RAISE EXCEPTION 'Comment not allowed'; END IF;
   SELECT full_name INTO author_name FROM public.profiles WHERE id = (SELECT auth.uid());
   UPDATE public.student_documents SET comments = coalesce(comments,'[]'::jsonb) || jsonb_build_array(

@@ -30,7 +30,6 @@ import { useAuth } from '@/src/contexts/AuthContext';
 import { DocumentHistoryDrawer } from '@/src/components/editor/DocumentHistoryDrawer';
 import PlateEditor, { type PlateEditorRef } from '@/src/components/editor/plate-editor';
 import {
-  type EditorComment,
   type EditorMode,
 } from '@/src/components/plate-ui/fixed-toolbar-buttons';
 import {
@@ -139,68 +138,6 @@ export function StudentDocumentEditor() {
   const isReviewer = user?.role === 'adviser' || user?.role === 'supervisor' || user?.role === 'admin' || searchParams.get('mode') === 'review';
   const [editorMode, setEditorMode] = useState<EditorMode>(() => isReviewer ? 'suggestion' : 'editing');
 
-  // ── Comments State & Local Synchronization ──────────────────────────────
-  const [comments, setComments] = useState<EditorComment[]>(() => {
-    if (!draftIdParam) return [];
-    try {
-      const stored = localStorage.getItem(`comments_${draftIdParam}`);
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  });
-
-  const handleAddComment = useCallback((text: string, selectedText?: string) => {
-    const newComment: EditorComment = {
-      id: crypto.randomUUID(),
-      author: user?.name || (user as any)?.full_name || (isReviewer ? 'Reviewer' : 'Student'),
-      authorRole: (user?.role as any) || 'student',
-      text,
-      createdAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      selectedText,
-      resolved: false,
-    };
-    setComments((prev) => {
-      const updated = [newComment, ...prev];
-      if (draftIdParam || draft?.id) {
-        localStorage.setItem(`comments_${draftIdParam || draft?.id}`, JSON.stringify(updated));
-      }
-      return updated;
-    });
-    toast.success('Comment added');
-  }, [user, isReviewer, draftIdParam, draft?.id]);
-
-  const handleResolveComment = useCallback((id: string) => {
-    setComments((prev) => {
-      const updated = prev.map((c) => (c.id === id ? { ...c, resolved: true } : c));
-      if (draftIdParam || draft?.id) {
-        localStorage.setItem(`comments_${draftIdParam || draft?.id}`, JSON.stringify(updated));
-      }
-      return updated;
-    });
-    toast.success('Comment resolved');
-  }, [draftIdParam, draft?.id]);
-
-  const handleUnresolveComment = useCallback((id: string) => {
-    setComments((prev) => {
-      const updated = prev.map((c) => (c.id === id ? { ...c, resolved: false } : c));
-      if (draftIdParam || draft?.id) {
-        localStorage.setItem(`comments_${draftIdParam || draft?.id}`, JSON.stringify(updated));
-      }
-      return updated;
-    });
-  }, [draftIdParam, draft?.id]);
-
-  const handleDeleteComment = useCallback((id: string) => {
-    setComments((prev) => {
-      const updated = prev.filter((c) => c.id !== id);
-      if (draftIdParam || draft?.id) {
-        localStorage.setItem(`comments_${draftIdParam || draft?.id}`, JSON.stringify(updated));
-      }
-      return updated;
-    });
-    toast.success('Comment deleted');
-  }, [draftIdParam, draft?.id]);
 
   // ── Storage engine ───────────────────────────────────────────────────────
   const storageRef = useRef<DocumentHistoryStorage | null>(null);
@@ -773,11 +710,6 @@ export function StudentDocumentEditor() {
         placeholder="Start writing your document..."
         mode={editorMode}
         onModeChange={setEditorMode}
-        comments={comments}
-        onAddComment={handleAddComment}
-        onResolveComment={handleResolveComment}
-        onUnresolveComment={handleUnresolveComment}
-        onDeleteComment={handleDeleteComment}
         currentUserRole={(user?.role as any) || 'student'}
         currentUserName={user?.name || (user as any)?.full_name || 'User'}
         syncStatus={syncStatus}

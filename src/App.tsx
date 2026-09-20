@@ -22,6 +22,7 @@ import { StudentDashboard } from './pages/student/StudentDashboard';
 
 import { StudentDocumentRepository } from './pages/student/StudentDocumentRepository';
 import { StudentDocumentEditor } from './pages/student/StudentDocumentEditor';
+import { StudentReviewSession } from './pages/student/StudentReviewSession';
 import { ReviewDocs } from './pages/adviser/ReviewDocs';
 import { Endorsements } from './pages/adviser/Endorsements';
 import { ClassReports } from './pages/adviser/ClassReports';
@@ -189,6 +190,8 @@ function AppRoutes() {
           <Route path="evaluation" element={<Navigate to="/student/documents" replace />} />
           <Route path="completion" element={<Navigate to="/student/documents" replace />} />
           <Route path="documents" element={<StudentDocumentRepository />} />
+          <Route path="documents/:id" element={<StudentReviewSession />} />
+          <Route path="review/:id" element={<StudentReviewSession />} />
           <Route path="editor" element={<StudentDocumentEditor />} />
           <Route path="progress" element={<Placeholder name="Progress Tracker" />} />
           <Route path="calendar" element={<CalendarPage user={user} />} />

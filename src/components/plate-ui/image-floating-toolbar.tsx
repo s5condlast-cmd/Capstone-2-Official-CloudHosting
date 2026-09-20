@@ -8,7 +8,6 @@ import {
   Trash2,
   Check,
   ChevronDown,
-  MessageSquarePlus,
   SmilePlus,
   Crop,
   Paintbrush,
@@ -262,22 +261,7 @@ export function ImageFloatingToolbar({
         </button>
       )}
 
-      {/* 3. Add Comment Button */}
-      <button
-        type="button"
-        title="Add comment"
-        aria-label="Add comment"
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          onAddComment?.();
-        }}
-        className="p-1.5 rounded-lg text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer transition-colors"
-      >
-        <MessageSquarePlus className="w-4 h-4" />
-      </button>
-
-      {/* 4. Add Reaction / Emoji Button */}
+      {/* 3. Add Reaction / Emoji Button */}
       <button
         type="button"
         title="Add emoji reaction"

@@ -766,8 +766,7 @@ describe('Plate editor runtime wiring', () => {
     assert.ok(toolbarSrc.includes('BehindTextIcon'), 'image-floating-toolbar must include BehindTextIcon');
     assert.ok(toolbarSrc.includes('InFrontTextIcon'), 'image-floating-toolbar must include InFrontTextIcon');
 
-    // 3. Floating toolbar contains comments, reactions, crop, and delete actions
-    assert.ok(toolbarSrc.includes('MessageSquarePlus'), 'Toolbar must include comment action');
+    // 3. Floating toolbar contains reactions, crop, and delete actions
     assert.ok(toolbarSrc.includes('SmilePlus'), 'Toolbar must include emoji reaction action');
     assert.ok(toolbarSrc.includes('Crop'), 'Toolbar must include crop action');
     assert.ok(toolbarSrc.includes('Trash2'), 'Toolbar must include delete action');
@@ -877,6 +876,37 @@ describe('Plate editor runtime wiring', () => {
     assert.ok(plateEditorSrc.includes('headerFooterImageSelected'), 'plate-editor must pass headerFooterImageSelected to toolbar');
     assert.ok(fixedToolbarSrc.includes('isHeaderImageTarget'), 'fixed-toolbar-buttons must detect header image target');
     assert.ok(fixedToolbarSrc.includes('isFooterImageTarget'), 'fixed-toolbar-buttons must detect footer image target');
+  });
+
+  it('enforces clean editor presentation without in-line comments and wires dedicated StudentReviewSession for PDF and DOCX review', async () => {
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+    const reviewPageSrc = fs.readFileSync(path.resolve('src/pages/student/StudentReviewSession.tsx'), 'utf8');
+    const appSrc = fs.readFileSync(path.resolve('src/App.tsx'), 'utf8');
+    const repoSrc = fs.readFileSync(path.resolve('src/pages/student/StudentDocumentRepository.tsx'), 'utf8');
+    const studentPageSrc = fs.readFileSync(path.resolve('src/components/compose/StudentDocumentPage.tsx'), 'utf8');
+    const floatingToolbarSrc = fs.readFileSync(path.resolve('src/components/plate-ui/floating-toolbar.tsx'), 'utf8');
+    const imageToolbarSrc = fs.readFileSync(path.resolve('src/components/plate-ui/image-floating-toolbar.tsx'), 'utf8');
+
+    // 1. Dedicated StudentReviewSession component with EmbedPdfWorkspace, discussion, and revisions
+    assert.ok(reviewPageSrc.includes('EmbedPdfWorkspace'), 'StudentReviewSession must embed EmbedPdfWorkspace for PDF/DOCX preview');
+    assert.ok(reviewPageSrc.includes('submissionStorage.postComment'), 'StudentReviewSession must support student discussion replies via postComment');
+    assert.ok(reviewPageSrc.includes('doc.adviser_feedback'), 'StudentReviewSession must display adviser remarks');
+    assert.ok(reviewPageSrc.includes('handleRevisionFilePicked'), 'StudentReviewSession must provide revision file upload capability');
+
+    // 2. App routing wires student review routes
+    assert.ok(appSrc.includes('StudentReviewSession'), 'App.tsx must import StudentReviewSession');
+    assert.ok(appSrc.includes('path="review/:id"'), 'App.tsx must register review/:id route');
+    assert.ok(appSrc.includes('path="documents/:id"'), 'App.tsx must register documents/:id route');
+
+    // 3. Document Repository links submitted drafts to Review & Comments
+    assert.ok(repoSrc.includes('Review & Comments'), 'StudentDocumentRepository must provide Review & Comments action on submitted drafts');
+    assert.ok(repoSrc.includes('/student/review/'), 'StudentDocumentRepository must route to /student/review/:id');
+    assert.ok(studentPageSrc.includes('/student/review/'), 'StudentDocumentPage must link to /student/review/:id');
+
+    // 4. Editor toolbars maintain clean presentation without comment buttons
+    assert.ok(!floatingToolbarSrc.includes('MessageSquarePlus'), 'FloatingToolbar must not include comment button');
+    assert.ok(!imageToolbarSrc.includes('MessageSquarePlus'), 'ImageFloatingToolbar must not include comment button');
   });
 });
 

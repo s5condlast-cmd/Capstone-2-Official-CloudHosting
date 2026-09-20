@@ -46,8 +46,6 @@ import {
 import { FloatingToolbar } from '@/src/components/plate-ui/floating-toolbar';
 import { DocumentMenuBar } from './DocumentMenuBar';
 import { DocumentOutline } from './DocumentOutline';
-import { DocumentCommentsRail } from './DocumentCommentsRail';
-import { CommentsDrawer } from './CommentsDrawer';
 import { DocumentRuler } from './DocumentRuler';
 import { DocumentHeaderZone } from './DocumentHeaderZone';
 import { DocumentFooterZone } from './DocumentFooterZone';
@@ -1062,59 +1060,11 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
               </div>
             )}
             </div>
-
-            {/* Right Docked Comments Rail */}
-            <DocumentCommentsRail
-              open={showCommentsRail}
-              onClose={() => {
-                setShowCommentsRail(false);
-                setDrawerQuote('');
-              }}
-              comments={comments ?? internalComments}
-              onAddComment={(t, s) => {
-                const newC: EditorComment = {
-                  id: crypto.randomUUID(),
-                  author: currentUserName || 'Student',
-                  authorRole: currentUserRole || 'student',
-                  text: t,
-                  createdAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                  selectedText: s,
-                };
-                setInternalComments((prev) => [newC, ...prev]);
-                onAddComment?.(t, s);
-              }}
-              onResolveComment={(id) => {
-                setInternalComments((prev) =>
-                  prev.map((c) => (c.id === id ? { ...c, resolved: true } : c))
-                );
-                onResolveComment?.(id);
-              }}
-              onUnresolveComment={(id) => {
-                setInternalComments((prev) =>
-                  prev.map((c) => (c.id === id ? { ...c, resolved: false } : c))
-                );
-                onUnresolveComment?.(id);
-              }}
-              onDeleteComment={(id) => {
-                setInternalComments((prev) => prev.filter((c) => c.id !== id));
-                onDeleteComment?.(id);
-              }}
-              selectedText={drawerQuote}
-              onClearSelectedText={() => setDrawerQuote('')}
-              currentUserRole={currentUserRole}
-              currentUserName={currentUserName}
-            />
           </div>
 
           {/* Floating formatting toolbar on text selection */}
           {!isEffectivelyReadOnly && (
-            <FloatingToolbar
-              editor={editor}
-              onAddComment={(selectedText) => {
-                setDrawerQuote(selectedText);
-                setShowCommentsRail(true);
-              }}
-            />
+            <FloatingToolbar editor={editor} />
           )}
         </div>
       </PlateComp>

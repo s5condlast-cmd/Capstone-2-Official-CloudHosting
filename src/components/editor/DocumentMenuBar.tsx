@@ -395,14 +395,6 @@ export function DocumentMenuBar({
               {showOutline && <Check className="w-4 h-4 text-primary" />}
             </DropdownMenuItem>
 
-            <DropdownMenuItem onClick={onToggleComments} className="cursor-pointer flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <MessageSquare className="w-4 h-4 text-zinc-500" />
-                <span>Show comments</span>
-              </div>
-              {showComments && <Check className="w-4 h-4 text-primary" />}
-            </DropdownMenuItem>
-
             <DropdownMenuItem onClick={onToggleRuler} className="cursor-pointer flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Ruler className="w-4 h-4 text-zinc-500" />

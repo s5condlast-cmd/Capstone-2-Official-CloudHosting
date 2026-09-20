@@ -13,7 +13,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   FileText, Download, Edit3, Trash2, RotateCcw,
   Plus, RefreshCw, AlertCircle, Loader2, FolderOpen,
-  FilePlus2, Clock, CheckCircle, Lock
+  FilePlus2, Clock, CheckCircle, Lock, Eye
 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import { toast } from 'sonner';
@@ -368,6 +368,13 @@ export function StudentDocumentRepository() {
                 key={draft.id}
                 draft={draft}
                 onResume={() => navigate(`/student/editor?draft=${draft.id}`)}
+                onReview={() => {
+                  if (draft.submission_id) {
+                    navigate(`/student/review/${draft.submission_id}`);
+                  } else {
+                    navigate(`/student/editor?draft=${draft.id}`);
+                  }
+                }}
                 onExportDocx={() => void handleExportDocx(draft)}
                 onExportPdf={() => { navigate(`/student/editor?draft=${draft.id}&print=1`); }}
                 onDelete={() => handleSoftDelete(draft)}
@@ -453,12 +460,14 @@ function TemplateCard({
 function DraftCard({
   draft,
   onResume,
+  onReview,
   onExportDocx,
   onExportPdf,
   onDelete,
 }: {
   draft: DraftRow;
   onResume: () => void;
+  onReview: () => void;
   onExportDocx: () => void;
   onExportPdf: () => void;
   onDelete: () => void;
@@ -514,14 +523,14 @@ function DraftCard({
           </button>
         ) : (
           <button
-            onClick={onResume}
+            onClick={onReview}
             className={cn(
               'flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium',
-              'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:opacity-90'
+              'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:opacity-90'
             )}
           >
-            <CheckCircle className="w-3 h-3" />
-            View
+            <Eye className="w-3 h-3" />
+            Review & Comments
           </button>
         )}
         <button onClick={onExportDocx} title="Export as Word DOCX"
