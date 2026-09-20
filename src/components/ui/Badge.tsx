@@ -20,7 +20,7 @@ export const Badge: React.FC<BadgeProps> = ({
     outline: 'bg-transparent text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-800',
     default: 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-950 border-zinc-900 dark:border-zinc-100',
     secondary: 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-800',
-    primary: 'bg-primary text-primary-foreground border-primary'
+    primary: 'bg-primary text-primary-fg border-primary'
   };
 
   return (

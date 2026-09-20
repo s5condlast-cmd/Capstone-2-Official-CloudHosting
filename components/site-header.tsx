@@ -313,7 +313,7 @@ export function SiteHeader({ user, theme, onToggleTheme, onSearchClick, onLogout
                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-1">Accent Color</p>
                   <div className="flex items-center justify-between px-1">
                     {[
-                      { id: 'default', color: 'bg-[#3B82C4] dark:bg-[#60A5FA]', name: 'System Blue' },
+                      { id: 'default', color: 'bg-zinc-900 dark:bg-zinc-100', name: 'Monochrome' },
                       { id: 'theme-deep-sky', color: 'bg-[#3B82C4]', name: 'Deep Sky Blue' },
                       { id: 'theme-blue', color: 'bg-[#2563eb]', name: 'Modern Blue' },
                       { id: 'theme-indigo', color: 'bg-[#4f46e5]', name: 'Indigo' },

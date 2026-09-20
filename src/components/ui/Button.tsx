@@ -12,8 +12,8 @@ interface ButtonProps extends Omit<HTMLMotionProps<'button'>, 'ref' | 'children'
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = 'primary', size = 'md', icon, children, ...props }, ref) => {
     const variants = {
-      primary: 'bg-primary text-primary-foreground hover:bg-primary/90 soft-shadow border border-primary',
-      default: 'bg-primary text-primary-foreground hover:bg-primary/90 soft-shadow border border-primary',
+      primary: 'bg-primary text-primary-fg hover:bg-primary-hover shadow-[0_1px_2px_0_rgba(0,0,0,0.4)] border border-primary',
+      default: 'bg-primary text-primary-fg hover:bg-primary-hover shadow-[0_1px_2px_0_rgba(0,0,0,0.4)] border border-primary',
       secondary: 'bg-white dark:bg-zinc-950 text-zinc-950 dark:text-white hover:bg-zinc-50 dark:hover:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-[0_1px_2px_0_rgba(0,0,0,0.05)]',
       outline: 'bg-transparent text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-100 hover:bg-zinc-100/50 dark:hover:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-800',
       danger: 'bg-zinc-100 dark:bg-zinc-800 text-zinc-950 dark:text-white hover:bg-zinc-200 dark:hover:bg-zinc-700 border border-zinc-200 dark:border-zinc-800 shadow-[0_1px_2px_0_rgba(0,0,0,0.05)]'
