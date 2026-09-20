@@ -442,6 +442,11 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                     }
                     return;
                   }
+                } else if (block.type === 'todo') {
+                  e.preventDefault();
+                  ed.tf.splitNodes({ always: true });
+                  ed.tf.setNodes({ checked: false }, { match: (n: any) => n.type === 'todo' });
+                  return;
                 } else if (block.type === 'toggle') {
                   // 2. If inside a toggle with text and user presses Enter, create a normal paragraph below it
                   e.preventDefault();

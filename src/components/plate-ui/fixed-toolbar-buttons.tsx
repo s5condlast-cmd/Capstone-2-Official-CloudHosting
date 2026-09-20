@@ -90,6 +90,7 @@ import {
   ToolbarSplitButtonPrimary,
   ToolbarSplitButtonSecondary,
 } from './toolbar';
+import { isListActive, unwrapList } from '../editor/editor-commands';
 
 // ─── Slate / Plate Transform Helpers ──────────────────────────────────────────
 
@@ -1206,9 +1207,33 @@ function NumberedListToolbarButton({ editor }: { editor: any }) {
 }
 
 const BULLET_STYLES = [
-  { id: 'disc', label: 'Default (Disc)' },
-  { id: 'circle', label: 'Circle' },
-  { id: 'square', label: 'Square' },
+  {
+    id: 'disc',
+    label: 'Default (Disc)',
+    icon: (
+      <span className="w-4 h-4 flex items-center justify-center text-sm leading-none font-bold text-zinc-800 dark:text-zinc-200 shrink-0 select-none">
+        ●
+      </span>
+    ),
+  },
+  {
+    id: 'circle',
+    label: 'Circle',
+    icon: (
+      <span className="w-4 h-4 flex items-center justify-center text-sm leading-none font-medium text-zinc-800 dark:text-zinc-200 shrink-0 select-none">
+        ○
+      </span>
+    ),
+  },
+  {
+    id: 'square',
+    label: 'Square',
+    icon: (
+      <span className="w-4 h-4 flex items-center justify-center text-xs leading-none text-zinc-800 dark:text-zinc-200 shrink-0 select-none">
+        ■
+      </span>
+    ),
+  },
 ];
 
 function BulletedListToolbarButton({ editor }: { editor: any }) {
@@ -1221,13 +1246,24 @@ function BulletedListToolbarButton({ editor }: { editor: any }) {
     Boolean(editor?.api?.above?.({ match: (n: any) => n.type === 'ul' }));
 
   const toggleList = (styleType = 'disc') => {
-    if (isBulleted) {
+    const isCurrentlyBullet =
+      getActiveBlockType(editor) === 'ul' ||
+      Boolean(editor?.api?.above?.({ match: (n: any) => n.type === 'ul' }));
+
+    if (isCurrentlyBullet) {
+      unwrapList(editor);
       setBlockType(editor, 'p');
     } else {
+      if (isListActive(editor)) unwrapList(editor);
       editor?.tf?.setNodes?.(
-        { type: 'ul', listStyleType: styleType },
+        { type: 'li' },
         { match: (n: any) => (editor.api?.isBlock ? editor.api.isBlock(n) : true) }
       );
+      editor?.tf?.wrapNodes?.({
+        type: 'ul',
+        listStyleType: styleType,
+        children: [],
+      });
     }
     editor?.tf?.focus?.();
   };
@@ -1239,16 +1275,10 @@ function BulletedListToolbarButton({ editor }: { editor: any }) {
         const [, path] = listEntry;
         editor?.tf?.setNodes?.({ listStyleType: styleType }, { at: path });
       } else {
-        editor?.tf?.setNodes?.(
-          { type: 'ul', listStyleType: styleType },
-          { match: (n: any) => (editor.api?.isBlock ? editor.api.isBlock(n) : true) }
-        );
+        toggleList(styleType);
       }
     } catch {
-      editor?.tf?.setNodes?.(
-        { type: 'ul', listStyleType: styleType },
-        { match: (n: any) => (editor.api?.isBlock ? editor.api.isBlock(n) : true) }
-      );
+      toggleList(styleType);
     }
     editor?.tf?.focus?.();
   };
@@ -1272,7 +1302,7 @@ function BulletedListToolbarButton({ editor }: { editor: any }) {
         anchorRef={containerRef}
         open={open}
         onClose={() => setOpen(false)}
-        className="w-40 p-1.5"
+        className="w-48 p-1.5"
       >
         <div className="px-3 py-1 text-[11px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
           Bullet Style
@@ -1286,9 +1316,10 @@ function BulletedListToolbarButton({ editor }: { editor: any }) {
               selectStyle(st.id);
               setOpen(false);
             }}
-            className="flex items-center w-full px-3 py-2 text-xs font-medium rounded-lg text-left text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+            className="flex items-center gap-2.5 w-full px-2.5 py-1.5 text-xs font-medium rounded-lg text-left text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
           >
-            {st.label}
+            {st.icon}
+            <span>{st.label}</span>
           </button>
         ))}
       </PortalPopover>
@@ -1297,8 +1328,24 @@ function BulletedListToolbarButton({ editor }: { editor: any }) {
 }
 
 const CHECKLIST_STYLES = [
-  { id: 'strikethrough', label: 'Default (Strikethrough)' },
-  { id: 'clean', label: 'Without strikethrough' },
+  {
+    id: 'strikethrough',
+    label: 'Default (Strikethrough)',
+    icon: (
+      <div className="w-3.5 h-3.5 rounded-[3px] border border-primary bg-primary text-white flex items-center justify-center shrink-0">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" className="w-2.5 h-2.5">
+          <polyline points="20 6 9 17 4 12" />
+        </svg>
+      </div>
+    ),
+  },
+  {
+    id: 'clean',
+    label: 'Without strikethrough',
+    icon: (
+      <div className="w-3.5 h-3.5 rounded-[3px] border border-zinc-400 dark:border-zinc-500 bg-white dark:bg-zinc-800 shrink-0" />
+    ),
+  },
 ];
 
 function ChecklistToolbarButton({ editor }: { editor: any }) {
@@ -1311,9 +1358,18 @@ function ChecklistToolbarButton({ editor }: { editor: any }) {
     Boolean(editor?.api?.above?.({ match: (n: any) => n.type === 'todo' }));
 
   const toggleChecklist = (styleType = 'strikethrough') => {
-    if (isTodoActive) {
+    const isCurrentlyTodo =
+      getActiveBlockType(editor) === 'todo' ||
+      Boolean(editor?.api?.above?.({ match: (n: any) => n.type === 'todo' }));
+
+    if (isCurrentlyTodo) {
+      if (isListActive(editor)) unwrapList(editor);
       setBlockType(editor, 'p');
+      editor?.tf?.unsetNodes?.(['checked', 'noStrikethrough'], {
+        match: (n: any) => (editor.api?.isBlock ? editor.api.isBlock(n) : true),
+      });
     } else {
+      if (isListActive(editor)) unwrapList(editor);
       editor?.tf?.setNodes?.(
         { type: 'todo', noStrikethrough: styleType === 'clean' },
         { match: (n: any) => (editor.api?.isBlock ? editor.api.isBlock(n) : true) }
@@ -1329,16 +1385,10 @@ function ChecklistToolbarButton({ editor }: { editor: any }) {
         const [, path] = todoEntry;
         editor?.tf?.setNodes?.({ noStrikethrough: styleType === 'clean' }, { at: path });
       } else {
-        editor?.tf?.setNodes?.(
-          { type: 'todo', noStrikethrough: styleType === 'clean' },
-          { match: (n: any) => (editor.api?.isBlock ? editor.api.isBlock(n) : true) }
-        );
+        toggleChecklist(styleType);
       }
     } catch {
-      editor?.tf?.setNodes?.(
-        { type: 'todo', noStrikethrough: styleType === 'clean' },
-        { match: (n: any) => (editor.api?.isBlock ? editor.api.isBlock(n) : true) }
-      );
+      toggleChecklist(styleType);
     }
     editor?.tf?.focus?.();
   };
@@ -1376,9 +1426,10 @@ function ChecklistToolbarButton({ editor }: { editor: any }) {
               selectStyle(st.id);
               setOpen(false);
             }}
-            className="flex items-center w-full px-3 py-2 text-xs font-medium rounded-lg text-left text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+            className="flex items-center gap-2.5 w-full px-2.5 py-1.5 text-xs font-medium rounded-lg text-left text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
           >
-            {st.label}
+            {st.icon}
+            <span>{st.label}</span>
           </button>
         ))}
       </PortalPopover>

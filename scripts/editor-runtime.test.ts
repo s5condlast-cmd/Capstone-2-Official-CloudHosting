@@ -795,6 +795,31 @@ describe('Plate editor runtime wiring', () => {
     assert.ok(!headerSrc.includes('border-dashed'), 'Header idle state must NOT contain dashed hover borders');
     assert.ok(!footerSrc.includes('border-dashed'), 'Footer idle state must NOT contain dashed hover borders');
   });
+
+  it('enforces checklist vertical optical alignment, bullet shape icons, dynamic list styles, and instant repeated checklist toggles', async () => {
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+    const editorKitSrc = fs.readFileSync(path.resolve('src/components/editor/editor-kit.tsx'), 'utf8');
+    const toolbarSrc = fs.readFileSync(path.resolve('src/components/plate-ui/fixed-toolbar-buttons.tsx'), 'utf8');
+    const plateEditorSrc = fs.readFileSync(path.resolve('src/components/editor/plate-editor.tsx'), 'utf8');
+
+    // 1. Checklist checkbox optical alignment (w-[15px] h-[15px] mt-[2px] gap-2)
+    assert.ok(editorKitSrc.includes('w-[15px] h-[15px] mt-[2px]'), 'TodoElement must use w-[15px] h-[15px] mt-[2px] for optical vertical centering');
+    assert.ok(editorKitSrc.includes('gap-2 group/todo'), 'TodoElement must use gap-2 for clean 8px text separation');
+
+    // 2. Dynamic list styles on paper sheet (circle, square, disc)
+    assert.ok(editorKitSrc.includes('list-[circle]'), 'ListElement must dynamically apply list-[circle]');
+    assert.ok(editorKitSrc.includes('list-[square]'), 'ListElement must dynamically apply list-[square]');
+
+    // 3. Bullet Style dropdown contains authentic shape icons (●, ○, ■)
+    assert.ok(toolbarSrc.includes('●'), 'Bullet styles must include solid dot icon ●');
+    assert.ok(toolbarSrc.includes('○'), 'Bullet styles must include hollow circle icon ○');
+    assert.ok(toolbarSrc.includes('■'), 'Bullet styles must include solid square icon ■');
+
+    // 4. Checklist repeated toggle logic
+    assert.ok(toolbarSrc.includes('isCurrentlyTodo'), 'ChecklistToolbarButton must query fresh isCurrentlyTodo on click');
+    assert.ok(plateEditorSrc.includes("ed.tf.setNodes({ checked: false }, { match: (n: any) => n.type === 'todo' })"), 'Enter key on todo must create unchecked new item');
+  });
 });
 
 

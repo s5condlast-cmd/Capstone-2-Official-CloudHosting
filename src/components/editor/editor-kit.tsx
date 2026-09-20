@@ -135,13 +135,24 @@ export {
 
 function ListElement({ element, style, className, ...props }: any) {
   const ordered = element?.type === ELEMENT_OL;
+  const listStyle = element?.listStyleType || (ordered ? 'decimal' : 'disc');
   return (
     <BlockDraggable element={element} handleTopOffset="top-1">
       <PlateElement
         as={ordered ? 'ol' : 'ul'}
         element={element}
-        style={{ listStyleType: element?.listStyleType || (ordered ? 'decimal' : 'disc'), ...style }}
-        className={cn('my-1 ml-6 space-y-0.5', ordered ? 'list-decimal' : 'list-disc', className)}
+        style={{ listStyleType: listStyle, ...style }}
+        className={cn(
+          'my-1 ml-6 space-y-0.5',
+          ordered
+            ? 'list-decimal'
+            : listStyle === 'circle'
+              ? 'list-[circle]'
+              : listStyle === 'square'
+                ? 'list-[square]'
+                : 'list-disc',
+          className
+        )}
         {...props}
       />
     </BlockDraggable>
@@ -191,7 +202,7 @@ function TodoElement({ children, element, style, ...props }: any) {
         as="div"
         element={element}
         style={{ ...blockStyle(element), ...style }}
-        className="my-1 flex items-start gap-2.5 group/todo"
+        className="my-0.5 flex items-start gap-2 group/todo"
         {...props}
       >
         <button
@@ -201,7 +212,7 @@ function TodoElement({ children, element, style, ...props }: any) {
           onClick={handleToggle}
           aria-label={isChecked ? 'Mark task incomplete' : 'Mark task complete'}
           className={cn(
-            'size-4 mt-1 rounded-[3px] border flex items-center justify-center cursor-pointer transition-colors shrink-0 select-none',
+            'w-[15px] h-[15px] mt-[2px] rounded-[3px] border flex items-center justify-center cursor-pointer transition-colors shrink-0 select-none',
             isChecked
               ? 'bg-primary border-primary text-primary-foreground'
               : 'border-zinc-400 dark:border-zinc-500 hover:border-zinc-600 dark:hover:border-zinc-300 bg-white dark:bg-zinc-800'
@@ -221,7 +232,7 @@ function TodoElement({ children, element, style, ...props }: any) {
             </svg>
           )}
         </button>
-        <div className={cn('flex-1 transition-colors', strikeThrough ? 'text-zinc-400 dark:text-zinc-500 line-through' : '')}>
+        <div className={cn('flex-1 leading-[1.15] transition-colors', strikeThrough ? 'text-zinc-400 dark:text-zinc-500 line-through' : '')}>
           {children}
         </div>
       </PlateElement>
