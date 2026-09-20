@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { User } from '@/src/types';
 import { supabase } from '@/src/lib/supabase';
 import { apiJson } from '@/src/lib/api';
+import { formatAuthError } from '@/src/lib/authErrors';
 
 export interface PortalAuthResult {
   user: User;
@@ -47,7 +48,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (version !== generation.current) return;
       setUser(null);
       setPendingUser(null);
-      setAuthError(error instanceof Error ? error.message : 'Unable to verify your session.');
+      setAuthError(formatAuthError(error, true));
       return null;
     } finally { if (version === generation.current) setLoading(false); }
   }, []);

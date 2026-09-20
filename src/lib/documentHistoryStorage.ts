@@ -469,6 +469,28 @@ export class DocumentHistoryStorage {
           createdAt: rawRemote.created_at,
           updatedAt: rawRemote.updated_at,
         };
+
+        // Smart auto-reconciliation: Check if local and remote content & title are identical
+        const localContentJson = JSON.stringify(state.content);
+        const remoteContentJson = JSON.stringify(remote.content);
+        const isSameContent = localContentJson === remoteContentJson && state.title === remote.title;
+
+        if (isSameContent) {
+          // False conflict (e.g. multi-tab duplicate save or reload collision with identical state).
+          // Seamlessly adopt the newer remote revision without displaying the red conflict banner.
+          this.cloudRevision = remote.revision;
+          if (this.pendingState === state) this.pendingState = null;
+          this.onStatusChange?.('saved');
+          const acknowledged: DraftState = {
+            ...state,
+            revision: remote.revision,
+            updatedAt: remote.updatedAt || new Date().toISOString(),
+          };
+          await writeCached(acknowledged);
+          this.onSaved?.(acknowledged);
+          return acknowledged;
+        }
+
         this.onStatusChange?.('conflict');
         this.onConflict?.(state, remote);
         throw new Error('CONFLICT');
@@ -509,6 +531,11 @@ export class DocumentHistoryStorage {
         if (this.pendingState) {
           void writeCached(this.pendingState).catch(() => {});
           void this.doCloudSave().catch(() => {});
+        }
+        try {
+          this.channel?.postMessage({ type: 'DOC_CLOSE', tabId: this.tabId, draftId: this.draftId });
+        } catch {
+          // BroadcastChannel may already be closed
         }
       };
       window.addEventListener('beforeunload', this.beforeUnloadHandler);

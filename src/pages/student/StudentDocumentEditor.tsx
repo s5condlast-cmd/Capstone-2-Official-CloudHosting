@@ -626,19 +626,28 @@ export function StudentDocumentEditor() {
                       <ChevronDown className="w-3.5 h-3.5 opacity-60" />
                     </button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56 shadow-lg z-[150]">
-                    <DropdownMenuItem onClick={handleExportDocx} className="cursor-pointer gap-2 py-2">
-                      <FileText className="w-4 h-4 text-blue-600" />
-                      <div className="flex flex-col">
-                        <span className="font-medium text-xs">Microsoft Word (.docx)</span>
-                        <span className="text-[10px] text-zinc-400">Download editable Word file</span>
+                  <DropdownMenuContent
+                    align="end"
+                    className="w-56 bg-white dark:bg-white text-zinc-900 dark:text-zinc-900 border border-zinc-200/90 shadow-xl rounded-xl p-1.5 z-[150]"
+                  >
+                    <DropdownMenuItem
+                      onClick={handleExportDocx}
+                      className="cursor-pointer gap-2.5 px-3 py-2 rounded-lg text-zinc-900 hover:bg-zinc-100 focus:bg-zinc-100 focus:text-zinc-900 transition-colors"
+                    >
+                      <FileText className="w-4 h-4 text-blue-600 shrink-0" />
+                      <div className="flex flex-col text-left">
+                        <span className="font-medium text-xs text-zinc-900">Microsoft Word (.docx)</span>
+                        <span className="text-[10px] text-zinc-500 font-normal">Download editable Word file</span>
                       </div>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleExportPdf} className="cursor-pointer gap-2 py-2">
-                      <Download className="w-4 h-4 text-red-600" />
-                      <div className="flex flex-col">
-                        <span className="font-medium text-xs">PDF Document (.pdf)</span>
-                        <span className="text-[10px] text-zinc-400">Download printable PDF</span>
+                    <DropdownMenuItem
+                      onClick={handleExportPdf}
+                      className="cursor-pointer gap-2.5 px-3 py-2 rounded-lg text-zinc-900 hover:bg-zinc-100 focus:bg-zinc-100 focus:text-zinc-900 transition-colors"
+                    >
+                      <Download className="w-4 h-4 text-red-600 shrink-0" />
+                      <div className="flex flex-col text-left">
+                        <span className="font-medium text-xs text-zinc-900">PDF Document (.pdf)</span>
+                        <span className="text-[10px] text-zinc-500 font-normal">Download printable PDF</span>
                       </div>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
