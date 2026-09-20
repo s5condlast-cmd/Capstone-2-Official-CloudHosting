@@ -3,6 +3,7 @@ import { User } from '@/src/types';
 import { supabase } from '@/src/lib/supabase';
 import { apiJson } from '@/src/lib/api';
 import { formatAuthError } from '@/src/lib/authErrors';
+import { clearAllSupervisorSignatures } from '@/src/lib/signatureStorage';
 
 export interface PortalAuthResult {
   user: User;
@@ -89,6 +90,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [refreshProfile]);
   const logout = useCallback(async () => {
     ++generation.current; setUser(null); setPendingUser(null);
+    clearAllSupervisorSignatures();
     const { error } = await supabase.auth.signOut({ scope: 'global' });
     if (error) { setAuthError('Sign-out could not reach the server. Retry to revoke all sessions.'); throw error; }
     setAuthError('');

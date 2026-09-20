@@ -32,6 +32,8 @@ import { Button } from '@/src/components/ui/Button';
 import { EmptyState } from '@/src/components/ui/EmptyState';
 import { EmbedPdfWorkspace } from '@/src/components/review/EmbedPdfWorkspace';
 import { submissionStorage, StudentDocument } from '@/src/lib/submissionStorage';
+import { documentReviewService } from '@/src/lib/documentReviewService';
+import { validateDocumentUpload } from '@/src/config/documentUploadPolicy';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { cn } from '@/src/lib/utils';
 import { toast } from 'sonner';
@@ -117,28 +119,38 @@ export function StudentReviewSession() {
     const file = e.target.files?.[0];
     if (!file || !doc) return;
 
-    const ext = file.name.split('.').pop()?.toLowerCase();
-    if (!['pdf', 'docx', 'doc'].includes(ext || '')) {
-      toast.error('Only PDF or DOCX files are supported.');
-      return;
-    }
-    if (file.size > 15 * 1024 * 1024) {
-      toast.error('File size exceeds 15MB limit.');
+    const validation = validateDocumentUpload(file);
+    if (!validation.valid) {
+      toast.error(validation.error);
       return;
     }
 
     setIsUploadingRevision(true);
     try {
-      const updatedDoc = await submissionStorage.uploadSubmission(
-        file,
-        studentName,
-        studentCourse,
-        doc.doc_type,
-        doc.urgency || 'medium'
-      );
-      toast.success(`Revised document "${file.name}" uploaded successfully!`);
-      // Navigate to the newly submitted revision
-      navigate(`/student/review/${updatedDoc.id}`);
+      // Check if this document is linked to a review case
+      const cases = await documentReviewService.listCases('student', 'all');
+      const linkedCase = cases.find(c => c.document_type === doc.doc_type || c.id === doc.id);
+
+      if (linkedCase) {
+        await documentReviewService.uploadRevision(
+          linkedCase.id,
+          linkedCase.current_revision_number || 1,
+          file,
+          'Revised document submission'
+        );
+        toast.success(`Revision uploaded successfully under case "${linkedCase.title}"!`);
+        void loadDocument();
+      } else {
+        const updatedDoc = await submissionStorage.uploadSubmission(
+          file,
+          studentName,
+          studentCourse,
+          doc.doc_type,
+          doc.urgency || 'medium'
+        );
+        toast.success(`Revised document "${file.name}" uploaded successfully!`);
+        navigate(`/student/review/${updatedDoc.id}`);
+      }
     } catch (err: any) {
       console.error('Revision upload failed:', err);
       toast.error(err?.message || 'Failed to upload revised document.');

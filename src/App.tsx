@@ -44,6 +44,10 @@ import { WeeklyJournalReview } from './pages/supervisor/WeeklyJournalReview';
 import { InternshipCompletion } from './pages/supervisor/InternshipCompletion';
 
 import { Profile } from './pages/shared/Profile';
+import { StudentReviewCenterPage } from './pages/student/StudentReviewCenterPage';
+import { SupervisorReviewCenterPage } from './pages/supervisor/SupervisorReviewCenterPage';
+import { AdviserReviewCenterPage } from './pages/adviser/AdviserReviewCenterPage';
+import { AdminReviewCenterPage } from './pages/admin/AdminReviewCenterPage';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { User, Role } from './types';
 
@@ -143,6 +147,8 @@ function AppRoutes() {
           <Route path="documents" element={<DocumentVerification />} />
           <Route path="documents/:id" element={<AdminReviewSession />} />
           <Route path="documents/:id/edit" element={<AdminDocumentEditor />} />
+          <Route path="reviews" element={<AdminReviewCenterPage />} />
+          <Route path="reviews/:id" element={<AdminReviewCenterPage />} />
           <Route path="templates" element={<Templates />} />
           <Route path="reports" element={<Reports />} />
           <Route path="settings" element={<Settings />} />
@@ -164,6 +170,8 @@ function AppRoutes() {
           <Route path="review" element={<ReviewDocs />} />
           <Route path="review/:id" element={<DocumentReviewSession />} />
           <Route path="review/:id/edit" element={<AdviserDocumentEditor />} />
+          <Route path="reviews" element={<AdviserReviewCenterPage />} />
+          <Route path="reviews/:id" element={<AdviserReviewCenterPage />} />
           <Route path="evaluations" element={<CompanyEvaluations />} />
           <Route path="comparison" element={<AdviserComparison />} />
           <Route path="class-reports" element={<ClassReports />} />
@@ -192,6 +200,8 @@ function AppRoutes() {
           <Route path="documents" element={<StudentDocumentRepository />} />
           <Route path="documents/:id" element={<StudentReviewSession />} />
           <Route path="review/:id" element={<StudentReviewSession />} />
+          <Route path="reviews" element={<StudentReviewCenterPage />} />
+          <Route path="reviews/:id" element={<StudentReviewCenterPage />} />
           <Route path="editor" element={<StudentDocumentEditor />} />
           <Route path="progress" element={<Placeholder name="Progress Tracker" />} />
           <Route path="calendar" element={<CalendarPage user={user} />} />
@@ -209,6 +219,8 @@ function AppRoutes() {
           <Route path="interns" element={<MyInterns />} />
           <Route path="dtr" element={<DTRApproval />} />
           <Route path="journal" element={<WeeklyJournalReview />} />
+          <Route path="reviews" element={<SupervisorReviewCenterPage />} />
+          <Route path="reviews/:id" element={<SupervisorReviewCenterPage />} />
           <Route path="completion" element={<InternshipCompletion />} />
           <Route path="calendar" element={<CalendarPage user={user} />} />
           <Route path="notifications" element={<Notifications user={user} />} />

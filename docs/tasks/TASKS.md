@@ -6,6 +6,35 @@ This roadmap tracks active priorities, ongoing implementation plans, and verific
 
 ---
 
+## 0. Current Priority: Review Workflow and Quality Remediation
+
+Detailed plans:
+
+- [Centralized Document Review Center](DOCUMENT_REVIEW_CENTER_PLAN.md)
+- [Code Quality and Production Readiness Remediation](CODE_QUALITY_REMEDIATION_PLAN.md)
+
+- [ ] **P0 — Review case and revision integrity**:
+  - [ ] Add stable review cases with immutable linked revisions, files, comments, and audit events.
+  - [ ] Replace the current unrelated revision-upload behavior.
+  - [ ] Enforce Student/Supervisor/Adviser assignments and workflow stages through RLS/RPCs.
+- [ ] **P0 — Immediate security and contract fixes**:
+  - [ ] Remove the global `supervisor_saved_signature` browser record and implement user/approval-bound signature handling.
+  - [ ] Unify allowed upload types and size limits across UI, service, storage, and database validation.
+  - [ ] Move renewable OneDrive credentials out of plaintext token files for production.
+- [ ] **P1 — Central Review Center**:
+  - [ ] Build one shared inbox/detail workspace for all sent/received files, revisions, comments, decisions, and history.
+  - [ ] Add role adapters for Student, Supervisor, Adviser, and read-only Admin audit access.
+  - [ ] Replace Weekly Journal mock review state as the first three-role workflow.
+- [ ] **P1 — Verification and type-safety gate**:
+  - [ ] Add real workflow, RLS, component, and browser interaction tests.
+  - [ ] Separate `lint`, `typecheck`, and complete release `check` scripts.
+  - [ ] Enable strict TypeScript for all new workflow modules and prevent the `any` baseline from increasing.
+- [ ] **P2 — Maintainability refactor after behavior is protected**:
+  - [ ] Split the 3,506-line toolbar, 1,990-line Student Dashboard, and duplicated header/footer logic into capability modules.
+  - [ ] Remove mock arrays and page-local business rules from remaining production workflows.
+
+---
+
 ## 1. Document Editor Production Hardening
 
 Unified master specification: [Rich Document Editor Master Plan](RICH_DOCUMENT_EDITOR_PLAN.md).

@@ -29,6 +29,8 @@ import {
   Send
 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
+import { useAuth } from '@/src/contexts/AuthContext';
+import { getSupervisorSignature, saveSupervisorSignature } from '@/src/lib/signatureStorage';
 import { generateDTRXlsxBlob, generateDTRFileName, DTREntry, cropCanvasToDataUrl, normalizeSignatureDataUrl } from '@/src/lib/excelGenerator';
 import { submissionStorage } from '@/src/lib/submissionStorage';
 
@@ -139,6 +141,7 @@ const mockWeeklyDTRs: WeeklyDTR[] = [
 ];
 
 export const DTRApproval: React.FC = () => {
+  const { user } = useAuth();
   const [dtrs, setDtrs] = useState<WeeklyDTR[]>(mockWeeklyDTRs);
   const [selectedDtrId, setSelectedDtrId] = useState<string>('dtr-1');
   const [viewMode, setViewMode] = useState<'table' | 'review'>('table');
@@ -146,25 +149,16 @@ export const DTRApproval: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [rejectNotes, setRejectNotes] = useState('');
 
-  // Persistent Saved Signature Store (1 master signature in localStorage)
+  // User-scoped Persistent Saved Signature Store
   const [savedSignature, setSavedSignature] = useState<string | null>(() => {
-    return localStorage.getItem('supervisor_saved_signature') || null;
+    return getSupervisorSignature(user?.id);
   });
 
-  // Auto-upgrade any pre-existing localStorage signature to centered, cropped format
   useEffect(() => {
-    const existingSig = localStorage.getItem('supervisor_saved_signature');
-    if (existingSig && existingSig.startsWith('data:image')) {
-      normalizeSignatureDataUrl(existingSig).then(cleanSig => {
-        if (cleanSig && cleanSig !== existingSig) {
-          try {
-            localStorage.setItem('supervisor_saved_signature', cleanSig);
-          } catch (e) {}
-          setSavedSignature(cleanSig);
-        }
-      });
+    if (user?.id) {
+      setSavedSignature(getSupervisorSignature(user.id));
     }
-  }, []);
+  }, [user?.id]);
 
   const [showSignatureModal, setShowSignatureModal] = useState(false);
   const [targetLogIndex, setTargetLogIndex] = useState<number | null>(null);
@@ -381,11 +375,7 @@ export const DTRApproval: React.FC = () => {
     }
     const signatureUrl = cropCanvasToDataUrl(canvas);
 
-    try {
-      localStorage.setItem('supervisor_saved_signature', signatureUrl);
-    } catch (err) {
-      console.warn('Could not save to localStorage:', err);
-    }
+    saveSupervisorSignature(user?.id, signatureUrl);
     setSavedSignature(signatureUrl);
 
     if (targetLogIndex !== null) {

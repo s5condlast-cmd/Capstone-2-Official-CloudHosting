@@ -11,8 +11,11 @@
     "preview": "vite preview",
     "clean": "node -e \"fs.rmSync('dist', { recursive: true, force: true })\"",
     "lint": "tsc --noEmit && tsc --noEmit -p tsconfig.server.json && node --import tsx --test scripts/editor-runtime.test.ts",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.server.json",
     "test:auth": "node --import tsx --test scripts/auth-security.test.ts scripts/auth-database.test.ts scripts/auth-render.test.ts",
-    "test:editor": "node --import tsx --test scripts/editor-storage.test.ts scripts/editor-runtime.test.ts scripts/editor-database.test.ts"
+    "test:editor": "node --import tsx --test scripts/editor-storage.test.ts scripts/editor-runtime.test.ts scripts/editor-database.test.ts",
+    "test:workflow": "node --import tsx --test scripts/review-workflow.test.ts",
+    "check": "npm run typecheck && npm run test:auth && npm run test:editor && npm run test:workflow"
   },
   "dependencies": {
     "@azure/identity": "^4.13.2",
