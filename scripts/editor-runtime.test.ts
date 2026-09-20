@@ -575,12 +575,12 @@ describe('Plate editor runtime wiring', () => {
     const floatingToolbarSrc = fs.readFileSync(path.resolve('src/components/plate-ui/floating-toolbar.tsx'), 'utf8');
     const fixedToolbarSrc = fs.readFileSync(path.resolve('src/components/plate-ui/fixed-toolbar-buttons.tsx'), 'utf8');
 
-    // 1. Full-margin box containers for Header & Footer with dynamic expansion up to 264px / 180px and 24px top spacing
+    // 1. Full-margin box containers for Header & Footer with dynamic expansion up to 256px / 180px and 16px top spacing
     assert.ok(headerSrc.includes('w-[calc(100%+192px)] -mx-[96px] px-[96px] min-h-[96px] shrink-0'), 'Header container must span entire top 96px margin box with min-h 96px');
     assert.ok(footerSrc.includes('w-[calc(100%+192px)] -mx-[96px] px-[96px] min-h-[96px] shrink-0'), 'Footer container must span entire bottom 96px margin box with min-h 96px');
-    assert.ok(headerSrc.includes('HEADER_TOP_SPACING = 24'), 'Header top spacing must be configured to 24px (0.25 inch)');
-    assert.ok(headerSrc.includes('HEADER_MAX_HEIGHT = 264'), 'Header max height must be configured to 264px');
-    assert.ok(headerSrc.includes('pt-[24px]'), 'Header container must include 24px top breathing room padding');
+    assert.ok(headerSrc.includes('HEADER_TOP_SPACING = 16'), 'Header top spacing must be configured to 16px');
+    assert.ok(headerSrc.includes('HEADER_MAX_HEIGHT = 256'), 'Header max height must be configured to 256px');
+    assert.ok(headerSrc.includes('pt-[16px]'), 'Header container must include 16px top breathing room padding');
     assert.ok(footerSrc.includes('FOOTER_MAX_HEIGHT = 180'), 'Footer max height must be configured to 180px');
     assert.ok(editorSrc.includes('Math.min(624, Math.max(140, img.naturalWidth || 624))'), 'Image upload must expand to natural width up to 624px');
     assert.ok(editorSrc.includes('plate-paper-sheet w-[816px] max-w-[816px] min-h-[1056px]') && editorSrc.includes('pt-0 pb-0'), 'Paper sheet must have pt-0 pb-0 so header and footer occupy the margin areas');

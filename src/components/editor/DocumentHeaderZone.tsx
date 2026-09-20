@@ -57,9 +57,9 @@ export interface DocumentHeaderZoneProps {
   className?: string;
 }
 
-export const HEADER_TOP_SPACING = 24;
+export const HEADER_TOP_SPACING = 16;
 export const HEADER_MIN_HEIGHT = 96;
-export const HEADER_MAX_HEIGHT = 264;
+export const HEADER_MAX_HEIGHT = 256;
 export const HEADER_IMAGE_MAX_HEIGHT = 200;
 export const HEADER_IMAGE_MAX_WIDTH_WITH_TEXT = 360;
 export const HEADER_CONTENT_WIDTH = 624;
@@ -68,8 +68,8 @@ type ResizeHandle = 'nw' | 'ne' | 'sw' | 'se' | 'n' | 's' | 'e' | 'w';
 
 /**
  * Authentic Google Docs Header Zone.
- * - 24px top breathing room (0.25-inch standard margin from top edge).
- * - Dynamic downward header expansion up to 264px to fit large letterheads without squashing.
+ * - 16px top breathing room matching user specification.
+ * - Dynamic downward header expansion up to 256px to fit large letterheads without squashing.
  * - Borderless direct text typing without placeholder clutter.
  * - Rich formatting support (bold, italic, underline, color, font size, align).
  * - 8-handle free-form resizing for both width and height.
@@ -487,8 +487,8 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
       className={cn(
         'w-[calc(100%+192px)] -mx-[96px] px-[96px] min-h-[96px] shrink-0 select-none relative transition-all flex flex-col justify-end group/header',
         isActive
-          ? 'pt-[24px] pb-0 bg-transparent'
-          : 'pt-[24px] pb-1 cursor-pointer hover:bg-zinc-50/60 dark:hover:bg-zinc-800/30 rounded-t-[2px]',
+          ? 'pt-[16px] pb-0 bg-transparent'
+          : 'pt-[16px] pb-1 cursor-pointer hover:bg-zinc-50/60 dark:hover:bg-zinc-800/30 rounded-t-[2px]',
         className
       )}
     >
@@ -931,47 +931,49 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
         /* ── Idle State: Permanent 1-inch physical margin & Google Docs Hover Line ── */
         <div className="flex flex-col gap-1 w-full justify-end h-full">
           {/* Side-by-side image & text preview */}
-          <div className="w-full max-w-full min-h-[48px] flex items-center gap-3 select-none">
-            {headerState.image?.url && (
-              <div
-                style={{
-                  width: `${currentWidth}px`,
-                  height: `${currentHeight}px`,
-                  maxWidth: '100%',
-                }}
-                className="relative shrink-0 select-none max-w-full overflow-hidden"
-              >
-                <img
-                  src={headerState.image.url}
-                  alt="Header Logo"
-                  draggable={false}
-                  className="w-full h-full object-contain object-left opacity-90 group-hover/header:opacity-100 transition-opacity block"
-                />
-              </div>
-            )}
+          {Boolean(headerState.image?.url || headerState.text?.trim()) && (
+            <div className="w-full max-w-full min-h-[48px] flex items-center gap-3 select-none">
+              {headerState.image?.url && (
+                <div
+                  style={{
+                    width: `${currentWidth}px`,
+                    height: `${currentHeight}px`,
+                    maxWidth: '100%',
+                  }}
+                  className="relative shrink-0 select-none max-w-full overflow-hidden"
+                >
+                  <img
+                    src={headerState.image.url}
+                    alt="Header Logo"
+                    draggable={false}
+                    className="w-full h-full object-contain object-left opacity-90 group-hover/header:opacity-100 transition-opacity block"
+                  />
+                </div>
+              )}
 
-            {headerState.text?.trim() && (
-              <div
-                style={{
-                  textAlign: headerState.textAlign || 'left',
-                  fontWeight: headerState.bold ? 'bold' : 'normal',
-                  fontStyle: headerState.italic ? 'italic' : 'normal',
-                  textDecoration: headerState.underline ? 'underline' : 'none',
-                  color: headerState.color || undefined,
-                  fontSize: headerState.fontSize ? `${headerState.fontSize}px` : undefined,
-                  fontFamily: headerState.fontFamily || undefined,
-                }}
-                className={cn(
-                  'flex-1 text-sm text-zinc-700 dark:text-zinc-300 tracking-wide',
-                  textAlign === 'left' && 'text-left',
-                  textAlign === 'center' && 'text-center',
-                  textAlign === 'right' && 'text-right'
-                )}
-              >
-                {headerState.text}
-              </div>
-            )}
-          </div>
+              {headerState.text?.trim() && (
+                <div
+                  style={{
+                    textAlign: headerState.textAlign || 'left',
+                    fontWeight: headerState.bold ? 'bold' : 'normal',
+                    fontStyle: headerState.italic ? 'italic' : 'normal',
+                    textDecoration: headerState.underline ? 'underline' : 'none',
+                    color: headerState.color || undefined,
+                    fontSize: headerState.fontSize ? `${headerState.fontSize}px` : undefined,
+                    fontFamily: headerState.fontFamily || undefined,
+                  }}
+                  className={cn(
+                    'flex-1 text-sm text-zinc-700 dark:text-zinc-300 tracking-wide',
+                    textAlign === 'left' && 'text-left',
+                    textAlign === 'center' && 'text-center',
+                    textAlign === 'right' && 'text-right'
+                  )}
+                >
+                  {headerState.text}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Google Docs Hover Guide Cue (hidden when printing) */}
           {!isReadOnly && (
