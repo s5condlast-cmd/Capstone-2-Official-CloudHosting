@@ -545,9 +545,15 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
           const dataUrl = reader.result as string;
           const img = new Image();
           img.onload = () => {
-            const aspect = (img.naturalWidth || 180) / Math.max(1, img.naturalHeight || 60);
-            const initialWidth = 180;
-            const initialHeight = Math.max(36, Math.min(160, Math.round(initialWidth / aspect)));
+            const aspect = (img.naturalWidth || 624) / Math.max(1, img.naturalHeight || 100);
+            // Expand to natural width, bounded to 624px printable width track
+            let initialWidth = Math.min(624, Math.max(140, img.naturalWidth || 624));
+            let initialHeight = Math.round(initialWidth / aspect);
+            // If height exceeds max header image height (200px), scale down proportionally
+            if (initialHeight > 200) {
+              initialHeight = 200;
+              initialWidth = Math.min(624, Math.max(140, Math.round(initialHeight * aspect)));
+            }
 
             setHeaderState((prev) => ({
               ...prev,
@@ -570,8 +576,8 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                 originalUrl: dataUrl,
                 name: file.name,
                 align: prev.image?.align || 'left',
-                width: prev.image?.width || 180,
-                height: prev.image?.height || 60,
+                width: prev.image?.width || 320,
+                height: prev.image?.height || 80,
                 offsetPercent: prev.image?.offsetPercent ?? 0,
               },
             }));
@@ -594,9 +600,14 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
           const dataUrl = reader.result as string;
           const img = new Image();
           img.onload = () => {
-            const aspect = (img.naturalWidth || 140) / Math.max(1, img.naturalHeight || 48);
-            const initialWidth = 140;
-            const initialHeight = Math.max(24, Math.min(100, Math.round(initialWidth / aspect)));
+            const aspect = (img.naturalWidth || 624) / Math.max(1, img.naturalHeight || 80);
+            let initialWidth = Math.min(624, Math.max(140, img.naturalWidth || 624));
+            let initialHeight = Math.round(initialWidth / aspect);
+            // Footer image max height is 140px
+            if (initialHeight > 140) {
+              initialHeight = 140;
+              initialWidth = Math.min(624, Math.max(140, Math.round(initialHeight * aspect)));
+            }
 
             setFooterState((prev) => ({
               ...prev,
@@ -619,8 +630,8 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                 originalUrl: dataUrl,
                 name: file.name,
                 align: prev.image?.align || 'left',
-                width: prev.image?.width || 140,
-                height: prev.image?.height || 48,
+                width: prev.image?.width || 240,
+                height: prev.image?.height || 60,
                 offsetPercent: prev.image?.offsetPercent ?? 0,
               },
             }));

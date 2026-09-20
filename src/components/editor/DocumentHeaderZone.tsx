@@ -57,9 +57,9 @@ export interface DocumentHeaderZoneProps {
   className?: string;
 }
 
-export const HEADER_TOP_SPACING = 48;
+export const HEADER_TOP_SPACING = 24;
 export const HEADER_MIN_HEIGHT = 96;
-export const HEADER_MAX_HEIGHT = 288;
+export const HEADER_MAX_HEIGHT = 264;
 export const HEADER_IMAGE_MAX_HEIGHT = 200;
 export const HEADER_IMAGE_MAX_WIDTH_WITH_TEXT = 360;
 export const HEADER_CONTENT_WIDTH = 624;
@@ -68,8 +68,8 @@ type ResizeHandle = 'nw' | 'ne' | 'sw' | 'se' | 'n' | 's' | 'e' | 'w';
 
 /**
  * Authentic Google Docs Header Zone.
- * - 48px top breathing room (0.5-inch standard Word/Google Docs margin from top edge).
- * - Dynamic downward header expansion up to 288px to fit large letterheads without squashing.
+ * - 24px top breathing room (0.25-inch standard margin from top edge).
+ * - Dynamic downward header expansion up to 264px to fit large letterheads without squashing.
  * - Borderless direct text typing without placeholder clutter.
  * - Rich formatting support (bold, italic, underline, color, font size, align).
  * - 8-handle free-form resizing for both width and height.
@@ -101,7 +101,7 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
   const textInputRef = useRef<HTMLInputElement | null>(null);
 
   const currentWidth = Math.min(
-    resizeLiveWidth ?? headerState.image?.width ?? 180,
+    resizeLiveWidth ?? headerState.image?.width ?? (headerState.text?.trim() ? HEADER_IMAGE_MAX_WIDTH_WITH_TEXT : HEADER_CONTENT_WIDTH),
     headerState.text?.trim() ? HEADER_IMAGE_MAX_WIDTH_WITH_TEXT : HEADER_CONTENT_WIDTH
   );
   const currentHeight = Math.min(
@@ -487,8 +487,8 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
       className={cn(
         'w-[calc(100%+192px)] -mx-[96px] px-[96px] min-h-[96px] shrink-0 select-none relative transition-all flex flex-col justify-end group/header',
         isActive
-          ? 'pt-[48px] pb-0 bg-transparent'
-          : 'pt-[48px] pb-1 cursor-pointer hover:bg-zinc-50/60 dark:hover:bg-zinc-800/30 rounded-t-[2px]',
+          ? 'pt-[24px] pb-0 bg-transparent'
+          : 'pt-[24px] pb-1 cursor-pointer hover:bg-zinc-50/60 dark:hover:bg-zinc-800/30 rounded-t-[2px]',
         className
       )}
     >

@@ -77,7 +77,7 @@ export const DocumentFooterZone: React.FC<DocumentFooterZoneProps> = ({
   const textInputRef = useRef<HTMLInputElement | null>(null);
 
   const currentWidth = Math.min(
-    resizeLiveWidth ?? footerState.image?.width ?? 140,
+    resizeLiveWidth ?? footerState.image?.width ?? ((footerState.text?.trim() || footerState.pageNumber) ? FOOTER_IMAGE_MAX_WIDTH_WITH_TEXT : FOOTER_CONTENT_WIDTH),
     (footerState.text?.trim() || footerState.pageNumber) ? FOOTER_IMAGE_MAX_WIDTH_WITH_TEXT : FOOTER_CONTENT_WIDTH
   );
   const currentHeight = Math.min(
