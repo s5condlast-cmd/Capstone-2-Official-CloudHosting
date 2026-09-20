@@ -774,6 +774,13 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                 headerFooter={{ header: headerState, footer: footerState }}
                 activeHeaderFooter={activeHeaderFooter}
                 onFormatHeaderFooter={handleFormatHeaderFooter}
+                onUploadHeaderFooterImage={() => {
+                  if (activeHeaderFooter === 'header') {
+                    headerInputRef.current?.click();
+                  } else if (activeHeaderFooter === 'footer') {
+                    footerInputRef.current?.click();
+                  }
+                }}
               />
             </FixedToolbar>
           </div>
@@ -906,6 +913,8 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                   <DocumentHeaderZone
                     headerState={headerState}
                     setHeaderState={setHeaderState}
+                    footerState={footerState}
+                    setFooterState={setFooterState}
                     isActive={activeHeaderFooter === 'header'}
                     onToggleActive={(active) => setActiveHeaderFooter(active ? 'header' : null)}
                     isReadOnly={isEffectivelyReadOnly}
@@ -940,6 +949,8 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                   <DocumentFooterZone
                     footerState={footerState}
                     setFooterState={setFooterState}
+                    headerState={headerState}
+                    setHeaderState={setHeaderState}
                     isActive={activeHeaderFooter === 'footer'}
                     onToggleActive={(active) => setActiveHeaderFooter(active ? 'footer' : null)}
                     isReadOnly={isEffectivelyReadOnly}

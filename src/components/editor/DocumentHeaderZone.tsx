@@ -21,6 +21,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { HeadersFootersDialog, PageNumbersDialog } from './HeaderFooterDialogs';
 
 export interface HeaderFooterImage {
   url: string;
@@ -39,6 +40,10 @@ export interface HeaderFooterItem {
   textAlign?: 'left' | 'center' | 'right' | 'justify';
   scope?: 'every_page' | 'first_page_only';
   pageNumber?: boolean;
+  pageNumberStartAt?: number;
+  showPageNumberOnFirstPage?: boolean;
+  differentOddEven?: boolean;
+  marginInches?: number;
   bold?: boolean;
   italic?: boolean;
   underline?: boolean;
@@ -50,6 +55,8 @@ export interface HeaderFooterItem {
 export interface DocumentHeaderZoneProps {
   headerState: HeaderFooterItem;
   setHeaderState: React.Dispatch<React.SetStateAction<HeaderFooterItem>>;
+  footerState?: HeaderFooterItem;
+  setFooterState?: React.Dispatch<React.SetStateAction<HeaderFooterItem>>;
   isActive: boolean;
   onToggleActive: (active: boolean) => void;
   isReadOnly?: boolean;
@@ -79,6 +86,8 @@ type ResizeHandle = 'nw' | 'ne' | 'sw' | 'se' | 'n' | 's' | 'e' | 'w';
 export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
   headerState,
   setHeaderState,
+  footerState,
+  setFooterState,
   isActive,
   onToggleActive,
   isReadOnly = false,
@@ -91,6 +100,10 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
   const [resizeHandleType, setResizeHandleType] = useState<string | null>(null);
   const [resizeLiveWidth, setResizeLiveWidth] = useState<number | null>(null);
   const [resizeLiveHeight, setResizeLiveHeight] = useState<number | null>(null);
+
+  // ── Headers & Footers / Page Numbers dialog states ──
+  const [formatDialogOpen, setFormatDialogOpen] = useState(false);
+  const [pageNumbersDialogOpen, setPageNumbersDialogOpen] = useState(false);
 
   // ── Image Cropping state ──
   const [isCropping, setIsCropping] = useState(false);
@@ -474,7 +487,6 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
   };
 
   const textAlign = headerState.textAlign || 'left';
-  const hasContent = Boolean(headerState.image?.url || headerState.text?.trim());
 
   return (
     <header
@@ -486,15 +498,10 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
       }}
       style={{ maxHeight: `${HEADER_MAX_HEIGHT}px` }}
       className={cn(
-        'w-[calc(100%+192px)] -mx-[96px] px-[96px] shrink-0 select-none relative transition-all flex flex-col justify-end group/header',
-        isActive || hasContent
-          ? 'min-h-[96px] pt-[16px]'
-          : 'h-[16px] min-h-[16px] pt-0 cursor-pointer hover:bg-zinc-50/60 dark:hover:bg-zinc-800/30 rounded-t-[2px]',
+        'w-[calc(100%+192px)] -mx-[96px] px-[96px] min-h-[96px] shrink-0 select-none relative transition-all flex flex-col justify-end group/header',
         isActive
-          ? 'pb-0 bg-transparent'
-          : hasContent
-          ? 'pb-1 cursor-pointer hover:bg-zinc-50/60 dark:hover:bg-zinc-800/30 rounded-t-[2px]'
-          : 'pb-0',
+          ? 'pt-[16px] pb-0 bg-transparent'
+          : 'pt-[16px] pb-1 cursor-pointer hover:bg-zinc-50/60 dark:hover:bg-zinc-800/30 rounded-t-[2px]',
         className
       )}
     >
@@ -771,6 +778,15 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
               }}
               className="flex-1 min-w-[60px] bg-transparent px-0 py-0.5 text-sm text-zinc-900 dark:text-zinc-100 outline-none border-none font-normal overflow-hidden text-ellipsis whitespace-nowrap"
             />
+
+            {headerState.pageNumber && (
+              <span
+                className="text-xs font-mono px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700 select-none cursor-default shrink-0"
+                title="Page number active"
+              >
+                #
+              </span>
+            )}
           </div>
 
           {/* Google Docs Horizontal Divider Line 1 (Above Sub-Bar) */}
@@ -799,119 +815,41 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
                 <span className="text-xs">Different first page</span>
               </label>
 
-              {/* Options Dropdown */}
+              {/* Options Dropdown (Authentic Google Docs: Header format, Page numbers, Remove header) */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
                     type="button"
-                    className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium inline-flex items-center gap-1 cursor-pointer select-none text-xs"
+                    className="text-blue-600 dark:text-blue-400 hover:bg-blue-50/80 dark:hover:bg-blue-950/40 data-[state=open]:bg-blue-100 dark:data-[state=open]:bg-blue-950/70 font-medium inline-flex items-center gap-1.5 cursor-pointer select-none text-xs px-2.5 py-1 rounded-full transition-colors"
                   >
                     <span>Options</span>
-                    <svg className="w-2.5 h-2.5 fill-current" viewBox="0 0 10 6">
+                    <svg className="w-2.5 h-2.5 fill-current transition-transform duration-200 [[data-state=open]_&]:rotate-180" viewBox="0 0 10 6">
                       <path d="M0 0l5 5 5-5z" />
                     </svg>
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   align="end"
-                  className="w-56 p-1 shadow-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900"
+                  className="w-48 p-1.5 shadow-xl border border-zinc-200/90 dark:border-zinc-800 rounded-2xl bg-white dark:bg-zinc-900"
                 >
-                  <div className="px-2.5 py-1 text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">
-                    Alignment
-                  </div>
                   <DropdownMenuItem
-                    onClick={() => setHeaderState((prev) => ({ ...prev, textAlign: 'left' }))}
-                    className="flex items-center justify-between text-xs px-2.5 py-1.5 cursor-pointer rounded-md"
+                    onClick={() => setFormatDialogOpen(true)}
+                    className="text-sm font-normal text-zinc-800 dark:text-zinc-200 px-3.5 py-2.5 cursor-pointer rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800/70"
                   >
-                    <div className="flex items-center gap-2">
-                      <AlignLeft className="w-3.5 h-3.5 text-zinc-500" />
-                      <span>Align left</span>
-                    </div>
-                    {textAlign === 'left' && <Check className="w-3.5 h-3.5 text-blue-600" />}
+                    Header format
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    onClick={() => setHeaderState((prev) => ({ ...prev, textAlign: 'center' }))}
-                    className="flex items-center justify-between text-xs px-2.5 py-1.5 cursor-pointer rounded-md"
+                    onClick={() => setPageNumbersDialogOpen(true)}
+                    className="text-sm font-normal text-zinc-800 dark:text-zinc-200 px-3.5 py-2.5 cursor-pointer rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800/70"
                   >
-                    <div className="flex items-center gap-2">
-                      <AlignCenter className="w-3.5 h-3.5 text-zinc-500" />
-                      <span>Align center</span>
-                    </div>
-                    {textAlign === 'center' && <Check className="w-3.5 h-3.5 text-blue-600" />}
+                    Page numbers
                   </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => setHeaderState((prev) => ({ ...prev, textAlign: 'right' }))}
-                    className="flex items-center justify-between text-xs px-2.5 py-1.5 cursor-pointer rounded-md"
-                  >
-                    <div className="flex items-center gap-2">
-                      <AlignRight className="w-3.5 h-3.5 text-zinc-500" />
-                      <span>Align right</span>
-                    </div>
-                    {textAlign === 'right' && <Check className="w-3.5 h-3.5 text-blue-600" />}
-                  </DropdownMenuItem>
-
-                  <DropdownMenuSeparator />
-
-                  <div className="px-2.5 py-1 text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">
-                    Text Formatting
-                  </div>
-                  <DropdownMenuItem
-                    onClick={() => setHeaderState((prev) => ({ ...prev, bold: !prev.bold }))}
-                    className="flex items-center justify-between text-xs px-2.5 py-1.5 cursor-pointer rounded-md"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Bold className="w-3.5 h-3.5 text-zinc-500" />
-                      <span>Bold</span>
-                    </div>
-                    {headerState.bold && <Check className="w-3.5 h-3.5 text-blue-600" />}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => setHeaderState((prev) => ({ ...prev, italic: !prev.italic }))}
-                    className="flex items-center justify-between text-xs px-2.5 py-1.5 cursor-pointer rounded-md"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Italic className="w-3.5 h-3.5 text-zinc-500" />
-                      <span>Italic</span>
-                    </div>
-                    {headerState.italic && <Check className="w-3.5 h-3.5 text-blue-600" />}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => setHeaderState((prev) => ({ ...prev, underline: !prev.underline }))}
-                    className="flex items-center justify-between text-xs px-2.5 py-1.5 cursor-pointer rounded-md"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Underline className="w-3.5 h-3.5 text-zinc-500" />
-                      <span>Underline</span>
-                    </div>
-                    {headerState.underline && <Check className="w-3.5 h-3.5 text-blue-600" />}
-                  </DropdownMenuItem>
-
-                  <DropdownMenuSeparator />
-
-                  <DropdownMenuItem
-                    onClick={() => headerInputRef.current?.click()}
-                    className="flex items-center gap-2 text-xs px-2.5 py-1.5 cursor-pointer rounded-md"
-                  >
-                    <ImageIcon className="w-3.5 h-3.5 text-zinc-500" />
-                    <span>{headerState.image?.url ? 'Replace Logo' : 'Upload Logo'}</span>
-                  </DropdownMenuItem>
-                  {headerState.image?.url && (
-                    <DropdownMenuItem
-                      onClick={() => setHeaderState((prev) => ({ ...prev, image: null }))}
-                      className="flex items-center gap-2 text-xs px-2.5 py-1.5 text-red-600 dark:text-red-400 cursor-pointer rounded-md hover:bg-red-50 dark:hover:bg-red-950/40"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      <span>Remove Logo</span>
-                    </DropdownMenuItem>
-                  )}
-
-                  <DropdownMenuSeparator />
-
                   <DropdownMenuItem
                     onClick={() => {
                       setHeaderState({
                         image: null,
                         text: '',
+                        pageNumber: false,
                         textAlign: 'left',
                         scope: 'every_page',
                         bold: false,
@@ -920,10 +858,9 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
                       });
                       onToggleActive(false);
                     }}
-                    className="flex items-center gap-2 text-xs px-2.5 py-1.5 text-red-600 dark:text-red-400 cursor-pointer rounded-md hover:bg-red-50 dark:hover:bg-red-950/40"
+                    className="text-sm font-normal text-zinc-800 dark:text-zinc-200 px-3.5 py-2.5 cursor-pointer rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800/70 text-red-600 dark:text-red-400"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    <span>Remove Header</span>
+                    Remove header
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -937,7 +874,7 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
         /* ── Idle State: Permanent 1-inch physical margin & Google Docs Hover Line ── */
         <div className="flex flex-col gap-1 w-full justify-end h-full">
           {/* Side-by-side image & text preview */}
-          {Boolean(headerState.image?.url || headerState.text?.trim()) && (
+          {Boolean(headerState.image?.url || headerState.text?.trim() || headerState.pageNumber) && (
             <div className="w-full max-w-full min-h-[48px] flex items-center gap-3 select-none">
               {headerState.image?.url && (
                 <div
@@ -978,17 +915,18 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
                   {headerState.text}
                 </div>
               )}
+
+              {headerState.pageNumber && (
+                <span className="text-xs font-mono text-zinc-500 shrink-0">
+                  {headerState.pageNumberStartAt || 1}
+                </span>
+              )}
             </div>
           )}
 
           {/* Google Docs Hover Guide Cue (hidden when printing) */}
           {!isReadOnly && (
-            <div
-              className={cn(
-                'opacity-0 group-hover/header:opacity-100 transition-opacity border-b border-dashed border-zinc-300 dark:border-zinc-700 text-zinc-400 flex items-center justify-between select-none print:hidden',
-                hasContent ? 'pb-1 text-[11px]' : 'pb-0 h-full text-[10px]'
-              )}
-            >
+            <div className="opacity-0 group-hover/header:opacity-100 transition-opacity border-b border-dashed border-zinc-300 dark:border-zinc-700 pb-1 text-[11px] text-zinc-400 flex items-center justify-between select-none print:hidden">
               <span>Header · Click to edit</span>
               {headerState.scope === 'first_page_only' && (
                 <span className="text-[10px] bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded">
@@ -999,6 +937,69 @@ export const DocumentHeaderZone: React.FC<DocumentHeaderZoneProps> = ({
           )}
         </div>
       )}
+
+      {/* ─── Google Docs Format & Page Numbers Dialogs ─── */}
+      <HeadersFootersDialog
+        isOpen={formatDialogOpen}
+        onClose={() => setFormatDialogOpen(false)}
+        headerMargin={headerState.marginInches ?? 0.5}
+        footerMargin={footerState?.marginInches ?? 0.5}
+        differentFirstPage={headerState.scope === 'first_page_only'}
+        differentOddEven={headerState.differentOddEven ?? false}
+        onApply={({ headerMargin, footerMargin, differentFirstPage, differentOddEven }) => {
+          setHeaderState((prev) => ({
+            ...prev,
+            marginInches: headerMargin,
+            scope: differentFirstPage ? 'first_page_only' : 'every_page',
+            differentOddEven,
+          }));
+          if (setFooterState) {
+            setFooterState((prev) => ({
+              ...prev,
+              marginInches: footerMargin,
+              scope: differentFirstPage ? 'first_page_only' : 'every_page',
+              differentOddEven,
+            }));
+          }
+        }}
+      />
+
+      <PageNumbersDialog
+        isOpen={pageNumbersDialogOpen}
+        onClose={() => setPageNumbersDialogOpen(false)}
+        initialPosition="header"
+        showOnFirstPage={headerState.showPageNumberOnFirstPage ?? true}
+        startAt={headerState.pageNumberStartAt ?? 1}
+        onApply={({ position, showOnFirstPage, startAt }) => {
+          if (position === 'header') {
+            setHeaderState((prev) => ({
+              ...prev,
+              pageNumber: true,
+              pageNumberStartAt: startAt,
+              showPageNumberOnFirstPage: showOnFirstPage,
+            }));
+            if (setFooterState) {
+              setFooterState((prev) => ({
+                ...prev,
+                pageNumber: false,
+              }));
+            }
+          } else {
+            setHeaderState((prev) => ({
+              ...prev,
+              pageNumber: false,
+            }));
+            if (setFooterState) {
+              setFooterState((prev) => ({
+                ...prev,
+                pageNumber: true,
+                pageNumberStartAt: startAt,
+                showPageNumberOnFirstPage: showOnFirstPage,
+              }));
+            }
+          }
+        }}
+      />
     </header>
   );
 };

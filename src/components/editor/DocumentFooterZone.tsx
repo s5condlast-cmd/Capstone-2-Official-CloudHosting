@@ -23,10 +23,13 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { type HeaderFooterItem } from './DocumentHeaderZone';
+import { HeadersFootersDialog, PageNumbersDialog } from './HeaderFooterDialogs';
 
 export interface DocumentFooterZoneProps {
   footerState: HeaderFooterItem;
   setFooterState: React.Dispatch<React.SetStateAction<HeaderFooterItem>>;
+  headerState?: HeaderFooterItem;
+  setHeaderState?: React.Dispatch<React.SetStateAction<HeaderFooterItem>>;
   isActive: boolean;
   onToggleActive: (active: boolean) => void;
   isReadOnly?: boolean;
@@ -55,6 +58,8 @@ type ResizeHandle = 'nw' | 'ne' | 'sw' | 'se' | 'n' | 's' | 'e' | 'w';
 export const DocumentFooterZone: React.FC<DocumentFooterZoneProps> = ({
   footerState,
   setFooterState,
+  headerState,
+  setHeaderState,
   isActive,
   onToggleActive,
   isReadOnly = false,
@@ -67,6 +72,10 @@ export const DocumentFooterZone: React.FC<DocumentFooterZoneProps> = ({
   const [resizeHandleType, setResizeHandleType] = useState<string | null>(null);
   const [resizeLiveWidth, setResizeLiveWidth] = useState<number | null>(null);
   const [resizeLiveHeight, setResizeLiveHeight] = useState<number | null>(null);
+
+  // ── Headers & Footers / Page Numbers dialog states ──
+  const [formatDialogOpen, setFormatDialogOpen] = useState(false);
+  const [pageNumbersDialogOpen, setPageNumbersDialogOpen] = useState(false);
 
   // ── Image Cropping state ──
   const [isCropping, setIsCropping] = useState(false);
@@ -496,129 +505,35 @@ export const DocumentFooterZone: React.FC<DocumentFooterZoneProps> = ({
                 <span className="text-xs">Different first page</span>
               </label>
 
-              {/* Options Dropdown */}
+              {/* Options Dropdown (Authentic Google Docs: Footer format, Page numbers, Remove footer) */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
                     type="button"
-                    className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium inline-flex items-center gap-1 cursor-pointer select-none text-xs"
+                    className="text-blue-600 dark:text-blue-400 hover:bg-blue-50/80 dark:hover:bg-blue-950/40 data-[state=open]:bg-blue-100 dark:data-[state=open]:bg-blue-950/70 font-medium inline-flex items-center gap-1.5 cursor-pointer select-none text-xs px-2.5 py-1 rounded-full transition-colors"
                   >
                     <span>Options</span>
-                    <svg className="w-2.5 h-2.5 fill-current" viewBox="0 0 10 6">
+                    <svg className="w-2.5 h-2.5 fill-current transition-transform duration-200 [[data-state=open]_&]:rotate-180" viewBox="0 0 10 6">
                       <path d="M0 0l5 5 5-5z" />
                     </svg>
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   align="end"
-                  className="w-56 p-1 shadow-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900"
+                  className="w-48 p-1.5 shadow-xl border border-zinc-200/90 dark:border-zinc-800 rounded-2xl bg-white dark:bg-zinc-900"
                 >
-                  <div className="px-2.5 py-1 text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">
-                    Alignment
-                  </div>
                   <DropdownMenuItem
-                    onClick={() => setFooterState((prev) => ({ ...prev, textAlign: 'left' }))}
-                    className="flex items-center justify-between text-xs px-2.5 py-1.5 cursor-pointer rounded-md"
+                    onClick={() => setFormatDialogOpen(true)}
+                    className="text-sm font-normal text-zinc-800 dark:text-zinc-200 px-3.5 py-2.5 cursor-pointer rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800/70"
                   >
-                    <div className="flex items-center gap-2">
-                      <AlignLeft className="w-3.5 h-3.5 text-zinc-500" />
-                      <span>Align left</span>
-                    </div>
-                    {textAlign === 'left' && <Check className="w-3.5 h-3.5 text-blue-600" />}
+                    Footer format
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    onClick={() => setFooterState((prev) => ({ ...prev, textAlign: 'center' }))}
-                    className="flex items-center justify-between text-xs px-2.5 py-1.5 cursor-pointer rounded-md"
+                    onClick={() => setPageNumbersDialogOpen(true)}
+                    className="text-sm font-normal text-zinc-800 dark:text-zinc-200 px-3.5 py-2.5 cursor-pointer rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800/70"
                   >
-                    <div className="flex items-center gap-2">
-                      <AlignCenter className="w-3.5 h-3.5 text-zinc-500" />
-                      <span>Align center</span>
-                    </div>
-                    {textAlign === 'center' && <Check className="w-3.5 h-3.5 text-blue-600" />}
+                    Page numbers
                   </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => setFooterState((prev) => ({ ...prev, textAlign: 'right' }))}
-                    className="flex items-center justify-between text-xs px-2.5 py-1.5 cursor-pointer rounded-md"
-                  >
-                    <div className="flex items-center gap-2">
-                      <AlignRight className="w-3.5 h-3.5 text-zinc-500" />
-                      <span>Align right</span>
-                    </div>
-                    {textAlign === 'right' && <Check className="w-3.5 h-3.5 text-blue-600" />}
-                  </DropdownMenuItem>
-
-                  <DropdownMenuSeparator />
-
-                  <div className="px-2.5 py-1 text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">
-                    Text Formatting
-                  </div>
-                  <DropdownMenuItem
-                    onClick={() => setFooterState((prev) => ({ ...prev, bold: !prev.bold }))}
-                    className="flex items-center justify-between text-xs px-2.5 py-1.5 cursor-pointer rounded-md"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Bold className="w-3.5 h-3.5 text-zinc-500" />
-                      <span>Bold</span>
-                    </div>
-                    {footerState.bold && <Check className="w-3.5 h-3.5 text-blue-600" />}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => setFooterState((prev) => ({ ...prev, italic: !prev.italic }))}
-                    className="flex items-center justify-between text-xs px-2.5 py-1.5 cursor-pointer rounded-md"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Italic className="w-3.5 h-3.5 text-zinc-500" />
-                      <span>Italic</span>
-                    </div>
-                    {footerState.italic && <Check className="w-3.5 h-3.5 text-blue-600" />}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => setFooterState((prev) => ({ ...prev, underline: !prev.underline }))}
-                    className="flex items-center justify-between text-xs px-2.5 py-1.5 cursor-pointer rounded-md"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Underline className="w-3.5 h-3.5 text-zinc-500" />
-                      <span>Underline</span>
-                    </div>
-                    {footerState.underline && <Check className="w-3.5 h-3.5 text-blue-600" />}
-                  </DropdownMenuItem>
-
-                  <DropdownMenuSeparator />
-
-                  <DropdownMenuItem
-                    onClick={() =>
-                      setFooterState((prev) => ({ ...prev, pageNumber: !prev.pageNumber }))
-                    }
-                    className="flex items-center justify-between text-xs px-2.5 py-1.5 cursor-pointer rounded-md"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Hash className="w-3.5 h-3.5 text-zinc-500" />
-                      <span>Page numbers</span>
-                    </div>
-                    {footerState.pageNumber && <Check className="w-3.5 h-3.5 text-blue-600" />}
-                  </DropdownMenuItem>
-
-                  <DropdownMenuSeparator />
-
-                  <DropdownMenuItem
-                    onClick={() => footerInputRef.current?.click()}
-                    className="flex items-center gap-2 text-xs px-2.5 py-1.5 cursor-pointer rounded-md"
-                  >
-                    <ImageIcon className="w-3.5 h-3.5 text-zinc-500" />
-                    <span>{footerState.image?.url ? 'Replace Logo' : 'Upload Logo'}</span>
-                  </DropdownMenuItem>
-                  {footerState.image?.url && (
-                    <DropdownMenuItem
-                      onClick={() => setFooterState((prev) => ({ ...prev, image: null }))}
-                      className="flex items-center gap-2 text-xs px-2.5 py-1.5 text-red-600 dark:text-red-400 cursor-pointer rounded-md hover:bg-red-50 dark:hover:bg-red-950/40"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      <span>Remove Logo</span>
-                    </DropdownMenuItem>
-                  )}
-
-                  <DropdownMenuSeparator />
-
                   <DropdownMenuItem
                     onClick={() => {
                       setFooterState({
@@ -633,10 +548,9 @@ export const DocumentFooterZone: React.FC<DocumentFooterZoneProps> = ({
                       });
                       onToggleActive(false);
                     }}
-                    className="flex items-center gap-2 text-xs px-2.5 py-1.5 text-red-600 dark:text-red-400 cursor-pointer rounded-md hover:bg-red-50 dark:hover:bg-red-950/40"
+                    className="text-sm font-normal text-zinc-800 dark:text-zinc-200 px-3.5 py-2.5 cursor-pointer rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800/70 text-red-600 dark:text-red-400"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    <span>Remove Footer</span>
+                    Remove footer
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -986,12 +900,77 @@ export const DocumentFooterZone: React.FC<DocumentFooterZoneProps> = ({
               )}
 
               {footerState.pageNumber && (
-                <span className="text-xs font-mono text-zinc-500 shrink-0">1</span>
+                <span className="text-xs font-mono text-zinc-500 shrink-0">
+                  {footerState.pageNumberStartAt || 1}
+                </span>
               )}
             </div>
           )}
         </div>
       )}
+
+      {/* ─── Google Docs Format & Page Numbers Dialogs ─── */}
+      <HeadersFootersDialog
+        isOpen={formatDialogOpen}
+        onClose={() => setFormatDialogOpen(false)}
+        headerMargin={headerState?.marginInches ?? 0.5}
+        footerMargin={footerState.marginInches ?? 0.5}
+        differentFirstPage={footerState.scope === 'first_page_only'}
+        differentOddEven={footerState.differentOddEven ?? false}
+        onApply={({ headerMargin, footerMargin, differentFirstPage, differentOddEven }) => {
+          setFooterState((prev) => ({
+            ...prev,
+            marginInches: footerMargin,
+            scope: differentFirstPage ? 'first_page_only' : 'every_page',
+            differentOddEven,
+          }));
+          if (setHeaderState) {
+            setHeaderState((prev) => ({
+              ...prev,
+              marginInches: headerMargin,
+              scope: differentFirstPage ? 'first_page_only' : 'every_page',
+              differentOddEven,
+            }));
+          }
+        }}
+      />
+
+      <PageNumbersDialog
+        isOpen={pageNumbersDialogOpen}
+        onClose={() => setPageNumbersDialogOpen(false)}
+        initialPosition="footer"
+        showOnFirstPage={footerState.showPageNumberOnFirstPage ?? true}
+        startAt={footerState.pageNumberStartAt ?? 1}
+        onApply={({ position, showOnFirstPage, startAt }) => {
+          if (position === 'footer') {
+            setFooterState((prev) => ({
+              ...prev,
+              pageNumber: true,
+              pageNumberStartAt: startAt,
+              showPageNumberOnFirstPage: showOnFirstPage,
+            }));
+            if (setHeaderState) {
+              setHeaderState((prev) => ({
+                ...prev,
+                pageNumber: false,
+              }));
+            }
+          } else {
+            setFooterState((prev) => ({
+              ...prev,
+              pageNumber: false,
+            }));
+            if (setHeaderState) {
+              setHeaderState((prev) => ({
+                ...prev,
+                pageNumber: true,
+                pageNumberStartAt: startAt,
+                showPageNumberOnFirstPage: showOnFirstPage,
+              }));
+            }
+          }
+        }}
+      />
     </footer>
   );
 };

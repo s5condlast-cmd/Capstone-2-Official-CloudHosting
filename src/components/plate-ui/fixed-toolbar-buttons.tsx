@@ -2693,6 +2693,7 @@ export interface FixedToolbarButtonsProps {
   headerFooter?: any;
   activeHeaderFooter?: 'header' | 'footer' | null;
   onFormatHeaderFooter?: (format: any) => void;
+  onUploadHeaderFooterImage?: () => void;
 }
 
 export function FixedToolbarButtons({
@@ -2711,6 +2712,7 @@ export function FixedToolbarButtons({
   headerFooter,
   activeHeaderFooter,
   onFormatHeaderFooter,
+  onUploadHeaderFooterImage,
 }: FixedToolbarButtonsProps) {
   const [, forceUpdate] = React.useReducer((x) => x + 1, 0);
 
@@ -3075,7 +3077,17 @@ export function FixedToolbarButtons({
                       onResolveComment={onResolveComment}
                     />
 
-                    <MediaToolbarButton editor={editor} />
+                    {activeHeaderFooter ? (
+                      <ToolbarButton
+                        onClick={onUploadHeaderFooterImage}
+                        tooltip={activeHeaderFooter === 'header' ? 'Insert logo in header' : 'Insert logo in footer'}
+                        aria-label={activeHeaderFooter === 'header' ? 'Insert logo in header' : 'Insert logo in footer'}
+                      >
+                        <ImageIcon className="w-4 h-4" />
+                      </ToolbarButton>
+                    ) : (
+                      <MediaToolbarButton editor={editor} />
+                    )}
                     {hiddenGroups.group5 && (
                       <div className="mx-1 h-5 w-px bg-zinc-300/80 dark:bg-zinc-700/80 shrink-0" />
                     )}
@@ -3087,7 +3099,7 @@ export function FixedToolbarButtons({
                   <div className={cn('flex items-center gap-0.5 shrink-0 flex-nowrap', isViewing && 'opacity-40 pointer-events-none')}>
                     <AlignToolbarButton
                       editor={editor}
-                      targetAlign={activeHeaderFooter ? (targetHeaderFooter?.textAlign || 'center') : undefined}
+                      targetAlign={activeHeaderFooter ? (targetHeaderFooter?.textAlign || 'left') : undefined}
                       onSelectAlign={activeHeaderFooter && onFormatHeaderFooter ? (align) => onFormatHeaderFooter({ textAlign: align }) : undefined}
                     />
                     <LineHeightToolbarButton editor={editor} />
@@ -3162,7 +3174,17 @@ export function FixedToolbarButtons({
                 onResolveComment={onResolveComment}
               />
 
-              <MediaToolbarButton editor={editor} />
+              {activeHeaderFooter ? (
+                <ToolbarButton
+                  onClick={onUploadHeaderFooterImage}
+                  tooltip={activeHeaderFooter === 'header' ? 'Insert logo in header' : 'Insert logo in footer'}
+                  aria-label={activeHeaderFooter === 'header' ? 'Insert logo in header' : 'Insert logo in footer'}
+                >
+                  <ImageIcon className="w-4 h-4" />
+                </ToolbarButton>
+              ) : (
+                <MediaToolbarButton editor={editor} />
+              )}
             </ToolbarGroup>
           )}
 
@@ -3171,7 +3193,7 @@ export function FixedToolbarButtons({
             <ToolbarGroup className={cn('items-center', isViewing && 'opacity-40 pointer-events-none')}>
               <AlignToolbarButton
                 editor={editor}
-                targetAlign={activeHeaderFooter ? (targetHeaderFooter?.textAlign || 'center') : undefined}
+                targetAlign={activeHeaderFooter ? (targetHeaderFooter?.textAlign || 'left') : undefined}
                 onSelectAlign={activeHeaderFooter && onFormatHeaderFooter ? (align) => onFormatHeaderFooter({ textAlign: align }) : undefined}
               />
               <LineHeightToolbarButton editor={editor} />

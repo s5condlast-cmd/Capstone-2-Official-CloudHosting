@@ -575,10 +575,8 @@ describe('Plate editor runtime wiring', () => {
     const floatingToolbarSrc = fs.readFileSync(path.resolve('src/components/plate-ui/floating-toolbar.tsx'), 'utf8');
     const fixedToolbarSrc = fs.readFileSync(path.resolve('src/components/plate-ui/fixed-toolbar-buttons.tsx'), 'utf8');
 
-    // 1. Full-margin box containers for Header & Footer with dynamic expansion up to 256px / 180px, 16px top spacing, and 16px collapse without header
-    assert.ok(headerSrc.includes('w-[calc(100%+192px)] -mx-[96px] px-[96px] shrink-0'), 'Header container must span entire top margin box track');
-    assert.ok(headerSrc.includes("isActive || hasContent"), 'Header collapses to 16px when empty without header content');
-    assert.ok(headerSrc.includes('h-[16px] min-h-[16px]'), 'Header collapses to 16px when empty');
+    // 1. Full-margin box containers for Header & Footer with dynamic expansion up to 256px / 180px and 16px top spacing
+    assert.ok(headerSrc.includes('w-[calc(100%+192px)] -mx-[96px] px-[96px] min-h-[96px] shrink-0'), 'Header container must span entire top 96px margin box with min-h 96px');
     assert.ok(footerSrc.includes('w-[calc(100%+192px)] -mx-[96px] px-[96px] min-h-[96px] shrink-0'), 'Footer container must span entire bottom 96px margin box with min-h 96px');
     assert.ok(headerSrc.includes('HEADER_TOP_SPACING = 16'), 'Header top spacing must be configured to 16px');
     assert.ok(headerSrc.includes('HEADER_MAX_HEIGHT = 256'), 'Header max height must be configured to 256px');
@@ -653,6 +651,60 @@ describe('Plate editor runtime wiring', () => {
     // 3. App.tsx must not mount Agentation (removes floating star icon button)
     assert.ok(!appSrc.includes('agentation'), 'App.tsx must not import or mount agentation');
     assert.ok(!appSrc.includes('<Agentation'), 'App.tsx must not render Agentation star button');
+  });
+
+  it('enforces Google Docs 3-item Options dropdown, HeadersFooters and PageNumbers dialogs, and main toolbar image upload integration', async () => {
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+    const headerSrc = fs.readFileSync(path.resolve('src/components/editor/DocumentHeaderZone.tsx'), 'utf8');
+    const footerSrc = fs.readFileSync(path.resolve('src/components/editor/DocumentFooterZone.tsx'), 'utf8');
+    const toolbarSrc = fs.readFileSync(path.resolve('src/components/plate-ui/fixed-toolbar-buttons.tsx'), 'utf8');
+    const editorSrc = fs.readFileSync(path.resolve('src/components/editor/plate-editor.tsx'), 'utf8');
+    const dialogsSrc = fs.readFileSync(path.resolve('src/components/editor/HeaderFooterDialogs.tsx'), 'utf8');
+
+    // 1. Header zone Options dropdown matches Google Docs 3 items
+    assert.ok(headerSrc.includes('Header format'), 'Header Options dropdown must have "Header format"');
+    assert.ok(headerSrc.includes('Page numbers'), 'Header Options dropdown must have "Page numbers"');
+    assert.ok(headerSrc.includes('Remove header'), 'Header Options dropdown must have "Remove header"');
+    assert.ok(!headerSrc.includes('>Alignment<'), 'Header Options dropdown must NOT contain redundant Alignment group');
+    assert.ok(!headerSrc.includes('>Text Formatting<'), 'Header Options dropdown must NOT contain redundant Text Formatting group');
+    assert.ok(!headerSrc.includes('Replace Logo'), 'Header Options dropdown must NOT contain Replace Logo (handled by main toolbar image)');
+
+    // 2. Footer zone Options dropdown matches Google Docs 3 items
+    assert.ok(footerSrc.includes('Footer format'), 'Footer Options dropdown must have "Footer format"');
+    assert.ok(footerSrc.includes('Page numbers'), 'Footer Options dropdown must have "Page numbers"');
+    assert.ok(footerSrc.includes('Remove footer'), 'Footer Options dropdown must have "Remove footer"');
+    assert.ok(!footerSrc.includes('>Alignment<'), 'Footer Options dropdown must NOT contain redundant Alignment group');
+    assert.ok(!footerSrc.includes('>Text Formatting<'), 'Footer Options dropdown must NOT contain redundant Text Formatting group');
+    assert.ok(!footerSrc.includes('Replace Logo'), 'Footer Options dropdown must NOT contain Replace Logo (handled by main toolbar image)');
+
+    // 3. Dialogs are imported and mounted in both header and footer zones
+    assert.ok(headerSrc.includes('<HeadersFootersDialog'), 'DocumentHeaderZone must mount HeadersFootersDialog');
+    assert.ok(headerSrc.includes('<PageNumbersDialog'), 'DocumentHeaderZone must mount PageNumbersDialog');
+    assert.ok(footerSrc.includes('<HeadersFootersDialog'), 'DocumentFooterZone must mount HeadersFootersDialog');
+    assert.ok(footerSrc.includes('<PageNumbersDialog'), 'DocumentFooterZone must mount PageNumbersDialog');
+
+    // 4. HeaderFooterDialogs component exists with exact Google Docs inputs and controls
+    assert.ok(dialogsSrc.includes('Header (inches from top)'), 'HeadersFootersDialog must configure header margin inches');
+    assert.ok(dialogsSrc.includes('Footer (inches from bottom)'), 'HeadersFootersDialog must configure footer margin inches');
+    assert.ok(dialogsSrc.includes('Different first page'), 'HeadersFootersDialog must configure Different first page');
+    assert.ok(dialogsSrc.includes('Different odd & even'), 'HeadersFootersDialog must configure Different odd & even');
+    assert.ok(dialogsSrc.includes('Position'), 'PageNumbersDialog must configure position');
+    assert.ok(dialogsSrc.includes('Show on first page'), 'PageNumbersDialog must configure Show on first page');
+    assert.ok(dialogsSrc.includes('Start at'), 'PageNumbersDialog must configure Start at');
+    assert.ok(dialogsSrc.includes('Continue from previous section'), 'PageNumbersDialog must configure Continue from previous section');
+
+    // 5. FixedToolbarButtons has onUploadHeaderFooterImage prop and wires it to ImageIcon when activeHeaderFooter is set
+    assert.ok(toolbarSrc.includes('onUploadHeaderFooterImage?: () => void;'), 'FixedToolbarButtonsProps must include onUploadHeaderFooterImage');
+    assert.ok(toolbarSrc.includes('onClick={onUploadHeaderFooterImage}'), 'Toolbar image button must trigger onUploadHeaderFooterImage when activeHeaderFooter is set');
+    assert.ok(toolbarSrc.includes("targetHeaderFooter?.textAlign || 'left'"), 'Toolbar alignment must default to left for headers and footers');
+
+    // 6. plate-editor.tsx passes onUploadHeaderFooterImage to FixedToolbarButtons and synchronizes cross-zone states
+    assert.ok(editorSrc.includes('onUploadHeaderFooterImage='), 'plate-editor.tsx must pass onUploadHeaderFooterImage to FixedToolbarButtons');
+    assert.ok(editorSrc.includes('headerInputRef.current?.click()'), 'plate-editor must trigger header file input for header image');
+    assert.ok(editorSrc.includes('footerInputRef.current?.click()'), 'plate-editor must trigger footer file input for footer image');
+    assert.ok(editorSrc.includes('footerState={footerState}'), 'DocumentHeaderZone must receive footerState');
+    assert.ok(editorSrc.includes('headerState={headerState}'), 'DocumentFooterZone must receive headerState');
   });
 });
 
