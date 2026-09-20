@@ -323,13 +323,9 @@ export function StudentDocumentRepository() {
         </div>
         <button
           onClick={handleOpenBlankDocument}
-          className={cn(
-            'inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold',
-            'bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200',
-            'shadow-2xs active:scale-95 transition-all cursor-pointer'
-          )}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:opacity-90 cursor-pointer"
         >
-          <Plus className="w-4 h-4" />
+          <Plus className="w-3.5 h-3.5" />
           <span>New Blank Document</span>
         </button>
       </div>
@@ -470,44 +466,38 @@ function TemplateCard({
         </div>
       </div>
 
-      <div className="flex flex-col gap-2 mt-auto pt-2 border-t border-border/60">
+      <div className="flex flex-col gap-1.5 mt-auto pt-2 border-t border-border/60">
         {template.editable ? (
           <button
             onClick={onEdit}
-            className={cn(
-              'flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold',
-              'bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 shadow-2xs active:scale-95 transition-all cursor-pointer'
-            )}
+            className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:opacity-90 cursor-pointer"
           >
-            <Edit3 className="w-3.5 h-3.5" />
-            <span>Edit in Editor</span>
+            <Edit3 className="w-3 h-3" />
+            Edit in Editor
           </button>
         ) : (
           <button
             onClick={onEdit}
-            className={cn(
-              'flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold',
-              'bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-900 dark:text-zinc-100 border border-border/80 shadow-2xs active:scale-95 transition-all cursor-pointer'
-            )}
+            className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:opacity-90 cursor-pointer"
           >
-            <FilePlus2 className="w-3.5 h-3.5" />
-            <span>Open Workflow</span>
+            <FilePlus2 className="w-3 h-3" />
+            Open Workflow
           </button>
         )}
-        <div className="flex gap-2">
+        <div className="flex gap-1.5">
           <button
             onClick={onDownloadDocx}
-            className="flex-1 flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold border border-border bg-card hover:bg-muted text-muted-foreground hover:text-foreground transition-all cursor-pointer shadow-2xs active:scale-95"
+            className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-md text-xs border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 cursor-pointer"
           >
-            <Download className="w-3 h-3 text-muted-foreground" />
-            <span>DOCX</span>
+            <Download className="w-3 h-3" />
+            DOCX
           </button>
           <button
             onClick={onDownloadPdf}
-            className="flex-1 flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold border border-border bg-card hover:bg-muted text-muted-foreground hover:text-foreground transition-all cursor-pointer shadow-2xs active:scale-95"
+            className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-md text-xs border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 cursor-pointer"
           >
-            <Download className="w-3 h-3 text-muted-foreground" />
-            <span>PDF</span>
+            <Download className="w-3 h-3" />
+            PDF
           </button>
         </div>
       </div>
@@ -573,34 +563,28 @@ function DraftCard({
         </div>
       </div>
 
-      <div className="flex items-center gap-2 pt-2 border-t border-border/60">
+      <div className="flex gap-1.5 pt-2 border-t border-border/60">
         {!isLocked ? (
           <button
             onClick={onResume}
-            className={cn(
-              'flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold',
-              'bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 shadow-2xs active:scale-95 transition-all cursor-pointer'
-            )}
+            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:opacity-90 cursor-pointer"
           >
-            <Edit3 className="w-3.5 h-3.5" />
-            <span>Resume</span>
+            <Edit3 className="w-3 h-3" />
+            Resume
           </button>
         ) : (
           <button
             onClick={onReview}
-            className={cn(
-              'flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold',
-              'bg-card border border-border hover:bg-muted text-foreground shadow-2xs active:scale-95 transition-all cursor-pointer'
-            )}
+            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:opacity-90 cursor-pointer"
           >
-            <Eye className="w-3.5 h-3.5 text-zinc-600 dark:text-zinc-400" />
-            <span>Review & Comments</span>
+            <Eye className="w-3 h-3" />
+            Review & Comments
           </button>
         )}
         <button
           onClick={onExportDocx}
           title="Export as Word DOCX"
-          className="h-8.5 w-8.5 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground bg-card hover:bg-muted border border-border shadow-2xs transition-all cursor-pointer active:scale-95"
+          className="h-8 w-8 rounded-md flex items-center justify-center text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 cursor-pointer"
         >
           <Download className="w-3.5 h-3.5" />
         </button>
@@ -608,7 +592,7 @@ function DraftCard({
           <button
             onClick={onDelete}
             title="Delete draft"
-            className="h-8.5 w-8.5 rounded-xl flex items-center justify-center text-muted-foreground hover:text-rose-500 bg-card hover:bg-rose-500/10 border border-border hover:border-rose-500/30 shadow-2xs transition-all cursor-pointer active:scale-95"
+            className="h-8 w-8 rounded-md flex items-center justify-center text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 border border-zinc-200 dark:border-zinc-700 cursor-pointer"
           >
             <Trash2 className="w-3.5 h-3.5" />
           </button>
