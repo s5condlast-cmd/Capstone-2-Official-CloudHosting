@@ -497,10 +497,10 @@ export const DocumentReviewCenter: React.FC<DocumentReviewCenterProps> = ({ role
               <div className="flex-1 bg-zinc-200 dark:bg-zinc-900/60 overflow-hidden relative">
                 {activeFileUrl ? (
                   <EmbedPdfWorkspace
-                    pdfUrl={activeFileUrl}
-                    studentName={caseDetails.caseRecord.student_name || 'Student'}
-                    docTitle={caseDetails.caseRecord.title}
+                    fileUrl={activeFileUrl}
+                    title={caseDetails.caseRecord.title}
                     readOnly={true}
+                    className="w-full h-full"
                   />
                 ) : (
                   <div className="w-full h-full flex flex-col items-center justify-center p-8 text-center">
@@ -588,7 +588,7 @@ export const DocumentReviewCenter: React.FC<DocumentReviewCenterProps> = ({ role
                       </Button>
                       <Button
                         size="sm"
-                        variant="danger"
+                        variant="destructive"
                         onClick={() => void handleDecision('supervisor_request_revision')}
                         disabled={isSubmittingDecision || !decisionRemarks.trim()}
                         className="text-xs h-8 cursor-pointer"
@@ -620,7 +620,7 @@ export const DocumentReviewCenter: React.FC<DocumentReviewCenterProps> = ({ role
                       </Button>
                       <Button
                         size="sm"
-                        variant="danger"
+                        variant="destructive"
                         onClick={() => void handleDecision('adviser_request_revision')}
                         disabled={isSubmittingDecision || !decisionRemarks.trim()}
                         className="text-xs h-8 cursor-pointer"
@@ -811,3 +811,4 @@ export const DocumentReviewCenter: React.FC<DocumentReviewCenterProps> = ({ role
 };
 
 export default DocumentReviewCenter;
+

@@ -72,6 +72,7 @@ export function AppSidebar({ user, onLogout, onSearchClick, ...props }: AppSideb
               { title: 'Accounts', url: '/admin/users', icon: UsersIcon, badge: 3 },
               { title: 'Companies', url: '/admin/companies', icon: BuildingIcon },
               { title: 'Documents', url: '/admin/documents', icon: FileTextIcon, badge: 38 },
+              { title: 'Review Center', url: '/admin/reviews', icon: ClipboardCheckIcon },
               { title: 'DTR Audit', url: '/admin/documents?filter=dtr', icon: FileSpreadsheetIcon },
               { title: 'Templates', url: '/admin/templates', icon: ClipboardListIcon },
               { title: 'Announcements', url: '/admin/announcements', icon: BellIcon },
@@ -106,6 +107,7 @@ export function AppSidebar({ user, onLogout, onSearchClick, ...props }: AppSideb
             group: 'Review Hub',
             items: [
               { title: 'Document Review', url: '/adviser/review', icon: SearchIcon, badge: 4 },
+              { title: 'Review Center', url: '/adviser/reviews', icon: ClipboardCheckIcon },
               { title: 'DTR Verification', url: '/adviser/review?type=dtr', icon: FileSpreadsheetIcon },
             ],
           },
@@ -124,6 +126,7 @@ export function AppSidebar({ user, onLogout, onSearchClick, ...props }: AppSideb
             items: [
               { title: 'Dashboard', url: '/student', icon: LayoutDashboardIcon },
               { title: 'Document Repository', url: '/student/documents', icon: FileTextIcon },
+              { title: 'Review Center', url: '/student/reviews', icon: ClipboardCheckIcon },
               { title: 'Document Editor', url: '/student/editor', icon: FilePlus2Icon },
               { title: 'Practicum Calendar', url: '/student/calendar', icon: CalendarIcon },
             ],
@@ -149,6 +152,7 @@ export function AppSidebar({ user, onLogout, onSearchClick, ...props }: AppSideb
             items: [
               { title: 'DTR Approval', url: '/supervisor/dtr', icon: CalendarIcon, badge: 5 },
               { title: 'Weekly Journal Review', url: '/supervisor/journal', icon: BookOpenIcon, badge: 2 },
+              { title: 'Review Center', url: '/supervisor/reviews', icon: ClipboardCheckIcon },
             ],
           },
         ]

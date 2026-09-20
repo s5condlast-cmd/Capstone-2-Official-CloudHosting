@@ -861,3 +861,4 @@ GRANT EXECUTE ON FUNCTION public.backfill_legacy_student_documents_to_cases() TO
 SELECT public.backfill_legacy_student_documents_to_cases();
 
 COMMIT;
+
