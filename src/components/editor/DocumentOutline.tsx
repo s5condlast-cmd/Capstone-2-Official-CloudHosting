@@ -109,31 +109,31 @@ export function DocumentOutline({
   return (
     <aside
       className={cn(
-        'w-64 shrink-0 bg-white/70 dark:bg-zinc-900/70 backdrop-blur-md',
-        'border-r border-zinc-200 dark:border-zinc-800 flex flex-col',
+        'w-64 shrink-0 bg-card/95 backdrop-blur-md',
+        'border-r border-border flex flex-col',
         'h-full select-none print:hidden transition-all duration-200 ease-in-out',
         className
       )}
     >
       {/* Outline Header */}
-      <div className="flex items-center justify-between px-3 py-2.5 border-b border-zinc-200/80 dark:border-zinc-800/80">
-        <div className="flex items-center gap-2 text-xs font-semibold text-zinc-600 dark:text-zinc-400">
-          <AlignLeft className="w-4 h-4 text-zinc-500" />
+      <div className="flex items-center justify-between px-3 py-2.5 border-b border-border">
+        <div className="flex items-center gap-2 text-xs font-semibold text-foreground">
+          <AlignLeft className="w-4 h-4 text-muted-foreground" />
           <span>Document outline</span>
         </div>
         <button
           type="button"
           onClick={onClose}
           title="Close outline"
-          className="p-1 rounded text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+          className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
         >
           <PanelLeftClose className="w-4 h-4" />
         </button>
       </div>
 
       {/* Active Document Title */}
-      <div className="px-3 py-2 border-b border-zinc-100 dark:border-zinc-800/50">
-        <div className="flex items-center gap-2 text-xs font-medium text-zinc-600 dark:text-zinc-300 truncate">
+      <div className="px-3 py-2 border-b border-border/60">
+        <div className="flex items-center gap-2 text-xs font-medium text-foreground truncate">
           <FileText className="w-3.5 h-3.5 text-primary shrink-0" />
           <span className="truncate" title={documentTitle}>
             {documentTitle || 'Untitled Document'}
@@ -151,13 +151,13 @@ export function DocumentOutline({
               onClick={() => handleHeadingClick(item, idx)}
               style={{ paddingLeft: `${item.depth * 14 + 8}px` }}
               className={cn(
-                'w-full text-left py-1.5 pr-2 rounded-md text-xs transition-colors truncate block group',
-                'hover:bg-zinc-100 dark:hover:bg-zinc-800/70',
+                'w-full text-left py-1.5 pr-2 rounded-lg text-xs transition-colors truncate block group',
+                'hover:bg-muted',
                 item.depth === 0
-                  ? 'font-semibold text-zinc-900 dark:text-zinc-100'
+                  ? 'font-semibold text-foreground'
                   : item.depth === 1
-                  ? 'font-medium text-zinc-700 dark:text-zinc-300'
-                  : 'text-zinc-500 dark:text-zinc-400'
+                  ? 'font-medium text-foreground/90'
+                  : 'text-muted-foreground'
               )}
               title={item.text}
             >
@@ -167,8 +167,8 @@ export function DocumentOutline({
             </button>
           ))
         ) : (
-          <div className="px-3 py-6 text-center text-xs text-zinc-400 dark:text-zinc-500 space-y-2">
-            <Bookmark className="w-6 h-6 mx-auto stroke-[1.5] text-zinc-300 dark:text-zinc-600" />
+          <div className="px-3 py-6 text-center text-xs text-muted-foreground space-y-2">
+            <Bookmark className="w-6 h-6 mx-auto stroke-[1.5] text-muted-foreground/60" />
             <p>Headings you add to the document will appear here.</p>
           </div>
         )}

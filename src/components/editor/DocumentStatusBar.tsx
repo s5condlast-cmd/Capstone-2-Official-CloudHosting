@@ -41,7 +41,7 @@ export const DocumentStatusBar: React.FC<DocumentStatusBarProps> = ({
 }) => {
   const syncConfig = {
     saved: { icon: CheckCircle2, label: 'Saved to cloud', color: 'text-emerald-600 dark:text-emerald-400' },
-    saving: { icon: Loader2, label: 'Saving…', color: 'text-zinc-500', spin: true },
+    saving: { icon: Loader2, label: 'Saving…', color: 'text-muted-foreground', spin: true },
     offline: { icon: WifiOff, label: 'Offline (saved locally)', color: 'text-amber-500' },
     conflict: { icon: AlertTriangle, label: 'Revision conflict', color: 'text-red-500' },
     error: { icon: AlertTriangle, label: 'Save error', color: 'text-red-500' },
@@ -54,30 +54,30 @@ export const DocumentStatusBar: React.FC<DocumentStatusBarProps> = ({
     <footer
       data-document-statusbar="true"
       className={cn(
-        'w-full h-8 px-4 bg-zinc-100/90 dark:bg-zinc-900/90 border-t border-zinc-200 dark:border-zinc-800/80 flex items-center justify-between text-xs text-zinc-600 dark:text-zinc-400 select-none shrink-0 backdrop-blur-xs z-30 print:hidden',
+        'w-full h-8 px-4 bg-card/90 border-t border-border flex items-center justify-between text-xs text-muted-foreground select-none shrink-0 backdrop-blur-xs z-30 print:hidden',
         className
       )}
     >
       {/* Left: Page count & Word count */}
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-1.5 font-medium">
-          <FileText className="w-3.5 h-3.5 text-zinc-500" />
+          <FileText className="w-3.5 h-3.5 text-muted-foreground" />
           <span>
             Page {currentPage} of {Math.max(1, pageCount)}
           </span>
         </div>
 
-        <span className="text-zinc-300 dark:text-zinc-700">|</span>
+        <span className="text-border">|</span>
 
         <div className="flex items-center gap-1.5" title={charCount !== undefined ? `${charCount.toLocaleString()} characters` : undefined}>
-          <span className="font-medium text-zinc-700 dark:text-zinc-300">{wordCount.toLocaleString()}</span>
+          <span className="font-semibold text-foreground">{wordCount.toLocaleString()}</span>
           <span>{wordCount === 1 ? 'word' : 'words'}</span>
         </div>
 
         {isReadOnly && (
           <>
-            <span className="text-zinc-300 dark:text-zinc-700">|</span>
-            <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300">
+            <span className="text-border">|</span>
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-muted text-muted-foreground border border-border">
               Read-Only
             </span>
           </>
@@ -94,7 +94,7 @@ export const DocumentStatusBar: React.FC<DocumentStatusBarProps> = ({
           </span>
         </div>
 
-        <span className="text-zinc-300 dark:text-zinc-700 hidden sm:inline">|</span>
+        <span className="text-border hidden sm:inline">|</span>
 
         {/* Zoom Controls */}
         {onZoomChange && (
@@ -103,7 +103,7 @@ export const DocumentStatusBar: React.FC<DocumentStatusBarProps> = ({
               type="button"
               title="Zoom out"
               onClick={() => onZoomChange(Math.max(50, zoomLevel - 10))}
-              className="p-1 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 cursor-pointer"
+              className="p-1 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
             >
               <ZoomOut className="w-3.5 h-3.5" />
             </button>
@@ -111,7 +111,7 @@ export const DocumentStatusBar: React.FC<DocumentStatusBarProps> = ({
               type="button"
               title="Reset to 100%"
               onClick={() => onZoomChange(100)}
-              className="px-1.5 py-0.5 font-mono font-medium hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded cursor-pointer"
+              className="px-2 py-0.5 font-mono font-medium hover:bg-muted text-foreground rounded-lg cursor-pointer transition-colors"
             >
               {zoomLevel}%
             </button>
@@ -119,7 +119,7 @@ export const DocumentStatusBar: React.FC<DocumentStatusBarProps> = ({
               type="button"
               title="Zoom in"
               onClick={() => onZoomChange(Math.min(200, zoomLevel + 10))}
-              className="p-1 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 cursor-pointer"
+              className="p-1 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
             >
               <ZoomIn className="w-3.5 h-3.5" />
             </button>

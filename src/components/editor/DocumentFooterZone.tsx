@@ -491,16 +491,16 @@ export const DocumentFooterZone: React.FC<DocumentFooterZoneProps> = ({
       {isActive ? (
         <div className="w-full flex flex-col">
           {/* Google Docs Horizontal Divider Line 1 (Above Sub-Bar, bordering body) */}
-          <div className="-mx-[96px] w-[calc(100%+192px)] border-b border-zinc-300 dark:border-zinc-700 my-1" />
+          <div className="-mx-[96px] w-[calc(100%+192px)] border-b border-border my-1" />
           {/* Google Docs Footer Sub-Bar (on top, bordering the body) */}
           <div className="w-full flex items-center justify-between py-1 text-xs select-none">
-            <span className="text-zinc-500 dark:text-zinc-400 font-normal">
+            <span className="text-muted-foreground font-normal">
               Footer
             </span>
 
             <div className="flex items-center gap-4">
               {/* Different first page checkbox */}
-              <label className="flex items-center gap-1.5 cursor-pointer text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 select-none">
+              <label className="flex items-center gap-1.5 cursor-pointer text-muted-foreground hover:text-foreground select-none">
                 <input
                   type="checkbox"
                   checked={footerState.scope === 'first_page_only'}
@@ -510,7 +510,7 @@ export const DocumentFooterZone: React.FC<DocumentFooterZoneProps> = ({
                       scope: e.target.checked ? 'first_page_only' : 'every_page',
                     }))
                   }
-                  className="w-3.5 h-3.5 rounded border-zinc-300 dark:border-zinc-600 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                  className="w-3.5 h-3.5 rounded border-border accent-primary focus:ring-primary cursor-pointer"
                 />
                 <span className="text-xs">Different first page</span>
               </label>
@@ -520,7 +520,7 @@ export const DocumentFooterZone: React.FC<DocumentFooterZoneProps> = ({
                 <DropdownMenuTrigger asChild>
                   <button
                     type="button"
-                    className="text-blue-600 dark:text-blue-400 hover:bg-blue-50/80 dark:hover:bg-blue-950/40 data-[state=open]:bg-blue-100 dark:data-[state=open]:bg-blue-950/70 font-medium inline-flex items-center gap-1.5 cursor-pointer select-none text-xs px-2.5 py-1 rounded-full transition-colors"
+                    className="text-primary hover:bg-muted data-[state=open]:bg-muted font-medium inline-flex items-center gap-1.5 cursor-pointer select-none text-xs px-2.5 py-1 rounded-lg transition-colors"
                   >
                     <span>Options</span>
                     <svg className="w-2.5 h-2.5 fill-current transition-transform duration-200 [[data-state=open]_&]:rotate-180" viewBox="0 0 10 6">
@@ -530,17 +530,17 @@ export const DocumentFooterZone: React.FC<DocumentFooterZoneProps> = ({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   align="end"
-                  className="w-48 p-1.5 shadow-xl border border-zinc-200/90 dark:border-zinc-800 rounded-2xl bg-white dark:bg-zinc-900"
+                  className="w-48 p-1.5 shadow-xl border border-border rounded-2xl bg-card text-foreground"
                 >
                   <DropdownMenuItem
                     onClick={() => setFormatDialogOpen(true)}
-                    className="text-sm font-normal text-zinc-800 dark:text-zinc-200 px-3.5 py-2.5 cursor-pointer rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800/70"
+                    className="text-sm font-medium text-foreground px-3.5 py-2 cursor-pointer rounded-xl hover:bg-muted"
                   >
                     Footer format
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => setPageNumbersDialogOpen(true)}
-                    className="text-sm font-normal text-zinc-800 dark:text-zinc-200 px-3.5 py-2.5 cursor-pointer rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800/70"
+                    className="text-sm font-medium text-foreground px-3.5 py-2 cursor-pointer rounded-xl hover:bg-muted"
                   >
                     Page numbers
                   </DropdownMenuItem>
@@ -558,7 +558,7 @@ export const DocumentFooterZone: React.FC<DocumentFooterZoneProps> = ({
                       });
                       onToggleActive(false);
                     }}
-                    className="text-sm font-normal text-zinc-800 dark:text-zinc-200 px-3.5 py-2.5 cursor-pointer rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800/70 text-red-600 dark:text-red-400"
+                    className="text-sm font-medium text-rose-500 hover:text-rose-600 px-3.5 py-2 cursor-pointer rounded-xl hover:bg-rose-500/10"
                   >
                     Remove footer
                   </DropdownMenuItem>
@@ -568,7 +568,7 @@ export const DocumentFooterZone: React.FC<DocumentFooterZoneProps> = ({
           </div>
 
           {/* Google Docs Horizontal Divider Line 2 (Below Sub-Bar, separating from footer typing area) */}
-          <div className="-mx-[96px] w-[calc(100%+192px)] border-b border-zinc-300 dark:border-zinc-700 my-1" />
+          <div className="-mx-[96px] w-[calc(100%+192px)] border-b border-border my-1" />
 
           {/* Side-by-Side Image, Text, and Page Number (Inline with typing cursor right next to image) */}
           <div

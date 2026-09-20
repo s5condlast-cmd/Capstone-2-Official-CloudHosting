@@ -107,26 +107,26 @@ export function CommentsDrawer({
 
   return (
     <div
-      className="fixed inset-y-0 right-0 z-[130] w-full sm:w-96 bg-white dark:bg-zinc-900 border-l border-zinc-200 dark:border-zinc-800 shadow-2xl flex flex-col animate-in slide-in-from-right duration-200"
+      className="fixed inset-y-0 right-0 z-[130] w-full sm:w-96 bg-card border-l border-border shadow-2xl flex flex-col animate-in slide-in-from-right duration-200"
       role="dialog"
       aria-label="Document comments"
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-border bg-card">
         <div className="flex items-center gap-2">
-          <MessageSquare className="w-5 h-5 text-zinc-700 dark:text-zinc-200" />
-          <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+          <MessageSquare className="w-5 h-5 text-primary" />
+          <h2 className="text-base font-bold text-foreground">
             Comments
           </h2>
           {activeComments.length > 0 && (
-            <span className="px-2 py-0.5 text-xs font-bold rounded-full bg-primary/10 text-primary">
+            <span className="px-2 py-0.5 text-xs font-bold rounded-full bg-primary/10 text-primary border border-primary/20">
               {activeComments.length}
             </span>
           )}
         </div>
         <button
           onClick={onClose}
-          className="p-1 rounded-lg text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+          className="p-1 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
           aria-label="Close comments drawer"
         >
           <X className="w-5 h-5" />
@@ -134,14 +134,14 @@ export function CommentsDrawer({
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center px-5 border-b border-zinc-200 dark:border-zinc-800 text-xs font-medium">
+      <div className="flex items-center px-5 border-b border-border bg-muted/40 text-xs font-medium">
         <button
           onClick={() => setActiveTab('active')}
           className={cn(
-            'py-2.5 px-3 border-b-2 transition-colors',
+            'py-2.5 px-3 border-b-2 transition-colors cursor-pointer',
             activeTab === 'active'
-              ? 'border-primary text-primary font-semibold'
-              : 'border-transparent text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200'
+              ? 'border-primary text-primary font-bold'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
           )}
         >
           Active ({activeComments.length})
@@ -149,10 +149,10 @@ export function CommentsDrawer({
         <button
           onClick={() => setActiveTab('resolved')}
           className={cn(
-            'py-2.5 px-3 border-b-2 transition-colors',
+            'py-2.5 px-3 border-b-2 transition-colors cursor-pointer',
             activeTab === 'resolved'
-              ? 'border-primary text-primary font-semibold'
-              : 'border-transparent text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200'
+              ? 'border-primary text-primary font-bold'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
           )}
         >
           Resolved ({resolvedComments.length})
@@ -160,18 +160,18 @@ export function CommentsDrawer({
       </div>
 
       {/* New Comment Input Section */}
-      <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-900/60">
+      <div className="p-4 border-b border-border bg-primary/5">
         <form onSubmit={handleSubmit} className="space-y-2.5">
           {selectedText && (
-            <div className="flex items-start justify-between gap-2 p-2.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700/60 text-xs text-zinc-700 dark:text-zinc-300">
+            <div className="flex items-start justify-between gap-2 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-foreground">
               <div className="flex items-start gap-1.5 min-w-0">
-                <Quote className="w-3.5 h-3.5 text-zinc-400 shrink-0 mt-0.5" />
+                <Quote className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
                 <span className="italic line-clamp-2">"{selectedText}"</span>
               </div>
               <button
                 type="button"
                 onClick={onClearSelectedText}
-                className="text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 shrink-0"
+                className="text-muted-foreground hover:text-foreground shrink-0 cursor-pointer"
                 title="Remove quote"
               >
                 <X className="w-3.5 h-3.5" />
@@ -196,14 +196,14 @@ export function CommentsDrawer({
                   : 'Add general document feedback or a note…'
               }
               rows={3}
-              className="w-full text-xs sm:text-sm p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/80 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none"
+              className="w-full text-xs sm:text-sm p-3 rounded-xl border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none"
             />
           </div>
 
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5 text-[11px] text-zinc-500">
+            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
               <span>Posting as:</span>
-              <span className="font-semibold text-zinc-700 dark:text-zinc-300 truncate max-w-[120px]">
+              <span className="font-semibold text-foreground truncate max-w-[120px]">
                 {currentUserName}
               </span>
               <span
@@ -219,7 +219,7 @@ export function CommentsDrawer({
             <button
               type="submit"
               disabled={!newCommentText.trim()}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-primary text-primary-fg hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed shadow-xs transition-all"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-primary text-primary-fg hover:bg-primary-hover disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs transition-all cursor-pointer"
             >
               <Send className="w-3 h-3" />
               <span>Comment</span>
@@ -231,9 +231,9 @@ export function CommentsDrawer({
       {/* Comment List */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {displayedList.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center text-zinc-400 dark:text-zinc-500">
-            <MessageSquare className="w-10 h-10 mb-2 opacity-40" />
-            <p className="text-sm font-medium">
+          <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
+            <MessageSquare className="w-10 h-10 mb-2 opacity-40 text-muted-foreground" />
+            <p className="text-sm font-semibold text-foreground">
               {activeTab === 'active' ? 'No active comments' : 'No resolved comments'}
             </p>
             <p className="text-xs mt-1 max-w-[200px]">
@@ -250,19 +250,19 @@ export function CommentsDrawer({
               <div
                 key={item.id}
                 className={cn(
-                  'p-3.5 rounded-xl border transition-all space-y-2',
+                  'p-3.5 rounded-2xl border transition-all space-y-2',
                   item.resolved
-                    ? 'bg-zinc-50/50 dark:bg-zinc-900/40 border-zinc-200/60 dark:border-zinc-800/60 opacity-80'
-                    : 'bg-white dark:bg-zinc-800/60 border-zinc-200 dark:border-zinc-700/80 shadow-xs'
+                    ? 'bg-muted/40 border-border/60 opacity-80'
+                    : 'bg-card border-border hover:border-border/90 shadow-2xs'
                 )}
               >
                 {/* Author Info & Actions */}
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 min-w-0">
-                    <div className="w-6 h-6 rounded-full bg-zinc-100 dark:bg-zinc-700 flex items-center justify-center text-xs font-bold text-zinc-700 dark:text-zinc-200 shrink-0">
+                    <div className="w-6 h-6 rounded-full bg-primary/10 text-primary border border-primary/20 flex items-center justify-center text-xs font-bold shrink-0">
                       {item.author.charAt(0).toUpperCase()}
                     </div>
-                    <span className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 truncate">
+                    <span className="text-xs font-semibold text-foreground truncate">
                       {item.author}
                     </span>
                     <span
@@ -275,30 +275,30 @@ export function CommentsDrawer({
                     </span>
                   </div>
 
-                  <span className="text-[10px] text-zinc-400 shrink-0">
+                  <span className="text-[10px] text-muted-foreground shrink-0">
                     {item.createdAt}
                   </span>
                 </div>
 
                 {/* Quoted Text if any */}
                 {item.selectedText && (
-                  <div className="p-2 rounded-lg bg-zinc-50 dark:bg-zinc-900/70 border-l-2 border-primary/60 text-xs text-zinc-600 dark:text-zinc-400 italic line-clamp-2">
+                  <div className="p-2 rounded-lg bg-amber-500/10 border-l-2 border-amber-500 text-xs text-foreground/80 italic line-clamp-2">
                     "{item.selectedText}"
                   </div>
                 )}
 
                 {/* Comment Text */}
-                <p className="text-xs sm:text-sm text-zinc-800 dark:text-zinc-200 whitespace-pre-wrap leading-relaxed">
+                <p className="text-xs sm:text-sm text-foreground/90 whitespace-pre-wrap leading-relaxed">
                   {item.text}
                 </p>
 
                 {/* Footer Controls: Resolve / Re-open / Delete */}
-                <div className="flex items-center justify-end gap-1.5 pt-1 border-t border-zinc-100 dark:border-zinc-800/60">
+                <div className="flex items-center justify-end gap-1.5 pt-1 border-t border-border/60">
                   {item.resolved ? (
                     <button
                       type="button"
                       onClick={() => onUnresolveComment?.(item.id)}
-                      className="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-medium rounded-md text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                      className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
                       title="Re-open comment"
                     >
                       <RotateCcw className="w-3 h-3" />
@@ -308,7 +308,7 @@ export function CommentsDrawer({
                     <button
                       type="button"
                       onClick={() => onResolveComment?.(item.id)}
-                      className="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-medium rounded-md text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors"
+                      className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium rounded-lg text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 transition-colors cursor-pointer"
                       title="Mark as resolved"
                     >
                       <Check className="w-3 h-3" />
@@ -320,7 +320,7 @@ export function CommentsDrawer({
                     <button
                       type="button"
                       onClick={() => onDeleteComment(item.id)}
-                      className="p-1 rounded-md text-zinc-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+                      className="p-1 rounded-lg text-muted-foreground hover:text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer"
                       title="Delete comment"
                     >
                       <Trash2 className="w-3.5 h-3.5" />

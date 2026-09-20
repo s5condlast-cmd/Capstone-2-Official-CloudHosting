@@ -139,21 +139,21 @@ export function DocumentHistoryDrawer({
         className={cn(
           'relative z-[130]',
           'w-full max-w-sm h-full',
-          'bg-white dark:bg-zinc-950',
-          'border-l border-zinc-200 dark:border-zinc-800',
+          'bg-card',
+          'border-l border-border',
           'flex flex-col shadow-2xl animate-in slide-in-from-right duration-200'
         )}
         aria-label="Document version history"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200 dark:border-zinc-800">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border">
         <div className="flex items-center gap-2">
-          <Clock className="w-4 h-4 text-zinc-500" />
-          <span className="font-semibold text-sm text-zinc-900 dark:text-zinc-100">Version History</span>
+          <Clock className="w-4 h-4 text-primary" />
+          <span className="font-bold text-sm text-foreground">Version History</span>
         </div>
         <button
           onClick={onClose}
-          className="h-7 w-7 rounded flex items-center justify-center text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+          className="h-8 w-8 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
           aria-label="Close history"
         >
           <X className="w-4 h-4" />
@@ -163,23 +163,23 @@ export function DocumentHistoryDrawer({
       {/* Version list */}
       <div className="flex-1 overflow-y-auto">
         {loading && (
-          <div className="flex items-center justify-center py-12 gap-2 text-zinc-400">
-            <Loader2 className="w-4 h-4 animate-spin" />
-            <span className="text-sm">Loading history…</span>
+          <div className="flex items-center justify-center py-12 gap-2 text-muted-foreground">
+            <Loader2 className="w-4 h-4 animate-spin text-primary" />
+            <span className="text-sm font-medium">Loading history…</span>
           </div>
         )}
 
         {!loading && error && (
-          <div className="flex items-start gap-2 p-4 text-red-500 text-sm">
+          <div className="flex items-start gap-2 p-4 text-rose-500 text-sm">
             <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
             <span>{error}</span>
           </div>
         )}
 
         {!loading && !error && versions.length === 0 && (
-          <div className="flex flex-col items-center gap-2 py-12 text-zinc-400 text-sm text-center px-4">
-            <Clock className="w-8 h-8 opacity-30" />
-            <p>No saved versions yet.</p>
+          <div className="flex flex-col items-center gap-2 py-12 text-muted-foreground text-sm text-center px-4">
+            <Clock className="w-8 h-8 opacity-40 text-muted-foreground" />
+            <p className="font-semibold text-foreground">No saved versions yet.</p>
             <p className="text-xs">Versions are created automatically or when you click "Save Version".</p>
           </div>
         )}
@@ -193,25 +193,25 @@ export function DocumentHistoryDrawer({
               key={version.version_id}
               onClick={() => setSelectedId(isSelected ? null : version.version_id)}
               className={cn(
-                'px-4 py-3 cursor-pointer border-b border-zinc-100 dark:border-zinc-800/60',
-                'hover:bg-zinc-50 dark:hover:bg-zinc-900',
-                isSelected && 'bg-zinc-100 dark:bg-zinc-900'
+                'px-4 py-3 cursor-pointer border-b border-border/60 transition-colors',
+                'hover:bg-muted/50',
+                isSelected && 'bg-muted/80'
               )}
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5 mb-0.5">
                     {version.label && (
-                      <Tag className="w-3 h-3 text-zinc-400 shrink-0" />
+                      <Tag className="w-3 h-3 text-muted-foreground shrink-0" />
                     )}
-                    <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200 truncate">
+                    <span className="text-sm font-semibold text-foreground truncate">
                       {version.label ?? 'Auto-save'}
                     </span>
                   </div>
-                  <p className="text-xs text-zinc-500">
+                  <p className="text-xs text-muted-foreground">
                     {format(savedDate, 'MMM d, yyyy h:mm a')}
                   </p>
-                  <p className="text-xs text-zinc-400 mt-0.5">
+                  <p className="text-xs text-muted-foreground/80 mt-0.5">
                     {version.word_count.toLocaleString()} words · Rev {version.source_revision}
                   </p>
                 </div>
@@ -224,9 +224,9 @@ export function DocumentHistoryDrawer({
                     onClick={(e) => { e.stopPropagation(); void handleRestore(version); }}
                     disabled={restoring}
                     className={cn(
-                      'flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium',
-                      'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900',
-                      'hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed'
+                      'flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold',
+                      'bg-primary text-primary-fg hover:bg-primary-hover shadow-2xs transition-all cursor-pointer',
+                      'disabled:opacity-50 disabled:cursor-not-allowed'
                     )}
                   >
                     {restoring ? (
@@ -244,8 +244,8 @@ export function DocumentHistoryDrawer({
       </div>
 
       {/* Footer info */}
-      <div className="px-4 py-3 border-t border-zinc-200 dark:border-zinc-800">
-        <p className="text-xs text-zinc-400">
+      <div className="px-4 py-3 border-t border-border">
+        <p className="text-xs text-muted-foreground">
           Up to 20 versions are kept. Older versions are removed automatically.
         </p>
       </div>

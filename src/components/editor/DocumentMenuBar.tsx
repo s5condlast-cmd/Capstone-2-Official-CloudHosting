@@ -189,11 +189,11 @@ export function DocumentMenuBar({
   };
 
   const MENU_TRIGGER_CLASS =
-    'px-2 py-0.5 text-sm font-medium rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-[color,background-color,transform] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 cursor-pointer text-zinc-800 dark:text-zinc-200 hover:text-zinc-950 dark:hover:text-white antialiased';
+    'px-2.5 py-1 text-xs font-semibold rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-all active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 cursor-pointer antialiased';
 
   return (
     <>
-      <div className="flex items-center gap-0.5 select-none print:hidden flex-nowrap min-w-max text-zinc-800 dark:text-zinc-200 antialiased">
+      <div className="flex items-center gap-1 select-none print:hidden flex-nowrap min-w-max text-foreground antialiased">
         {/* 1. FILE MENU */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -207,22 +207,22 @@ export function DocumentMenuBar({
           <DropdownMenuContent align="start" className="w-56 shadow-lg z-[150]">
             {onRename && !isLocked && (
               <DropdownMenuItem onClick={onRename} className="cursor-pointer gap-2">
-                <Pencil className="w-4 h-4 text-zinc-500" />
+                <Pencil className="w-4 h-4 text-muted-foreground" />
                 <span>Rename</span>
               </DropdownMenuItem>
             )}
             {onSaveVersion && !isLocked && (
               <DropdownMenuItem onClick={onSaveVersion} className="cursor-pointer gap-2">
-                <Save className="w-4 h-4 text-zinc-500" />
+                <Save className="w-4 h-4 text-muted-foreground" />
                 <span className="flex-1">Save version</span>
-                <span className="text-[11px] text-zinc-400">Ctrl+S</span>
+                <span className="text-[11px] text-muted-foreground/80">Ctrl+S</span>
               </DropdownMenuItem>
             )}
             {onShowHistory && (
               <DropdownMenuItem onClick={onShowHistory} className="cursor-pointer gap-2">
-                <History className="w-4 h-4 text-zinc-500" />
+                <History className="w-4 h-4 text-muted-foreground" />
                 <span className="flex-1">Version history</span>
-                <span className="text-[11px] text-zinc-400">Ctrl+Alt+H</span>
+                <span className="text-[11px] text-muted-foreground/80">Ctrl+Alt+H</span>
               </DropdownMenuItem>
             )}
 
@@ -230,27 +230,27 @@ export function DocumentMenuBar({
 
             {onExportDocx && (
               <DropdownMenuItem onClick={onExportDocx} className="cursor-pointer gap-2">
-                <Download className="w-4 h-4 text-zinc-500" />
+                <Download className="w-4 h-4 text-muted-foreground" />
                 <span>Download Microsoft Word (.docx)</span>
               </DropdownMenuItem>
             )}
             {onExportPdf && (
               <DropdownMenuItem onClick={onExportPdf} className="cursor-pointer gap-2">
-                <FileText className="w-4 h-4 text-zinc-500" />
+                <FileText className="w-4 h-4 text-muted-foreground" />
                 <span>Download PDF document (.pdf)</span>
               </DropdownMenuItem>
             )}
             <DropdownMenuItem onClick={handlePrint} className="cursor-pointer gap-2">
-              <Printer className="w-4 h-4 text-zinc-500" />
+              <Printer className="w-4 h-4 text-muted-foreground" />
               <span className="flex-1">Print</span>
-              <span className="text-[11px] text-zinc-400">Ctrl+P</span>
+              <span className="text-[11px] text-muted-foreground/80">Ctrl+P</span>
             </DropdownMenuItem>
 
             {onDuplicate && (
               <>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={onDuplicate} className="cursor-pointer gap-2">
-                  <Copy className="w-4 h-4 text-zinc-500" />
+                  <Copy className="w-4 h-4 text-muted-foreground" />
                   <span>Duplicate as Draft</span>
                 </DropdownMenuItem>
               </>
@@ -274,53 +274,53 @@ export function DocumentMenuBar({
               disabled={isViewing || isLocked}
               className="cursor-pointer gap-2"
             >
-              <Undo className="w-4 h-4 text-zinc-500" />
+              <Undo className="w-4 h-4 text-muted-foreground" />
               <span className="flex-1">Undo</span>
-              <span className="text-[11px] text-zinc-400">Ctrl+Z</span>
+              <span className="text-[11px] text-muted-foreground/80">Ctrl+Z</span>
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => editor?.redo?.()}
               disabled={isViewing || isLocked}
               className="cursor-pointer gap-2"
             >
-              <Redo className="w-4 h-4 text-zinc-500" />
+              <Redo className="w-4 h-4 text-muted-foreground" />
               <span className="flex-1">Redo</span>
-              <span className="text-[11px] text-zinc-400">Ctrl+Y</span>
+              <span className="text-[11px] text-muted-foreground/80">Ctrl+Y</span>
             </DropdownMenuItem>
 
             <DropdownMenuSeparator />
 
             <DropdownMenuItem onClick={handleCut} disabled={isViewing || isLocked} className="cursor-pointer gap-2">
-              <Scissors className="w-4 h-4 text-zinc-500" />
+              <Scissors className="w-4 h-4 text-muted-foreground" />
               <span className="flex-1">Cut</span>
-              <span className="text-[11px] text-zinc-400">Ctrl+X</span>
+              <span className="text-[11px] text-muted-foreground/80">Ctrl+X</span>
             </DropdownMenuItem>
             <DropdownMenuItem onClick={handleCopy} className="cursor-pointer gap-2">
-              <Copy className="w-4 h-4 text-zinc-500" />
+              <Copy className="w-4 h-4 text-muted-foreground" />
               <span className="flex-1">Copy</span>
-              <span className="text-[11px] text-zinc-400">Ctrl+C</span>
+              <span className="text-[11px] text-muted-foreground/80">Ctrl+C</span>
             </DropdownMenuItem>
             <DropdownMenuItem onClick={handlePaste} disabled={isViewing || isLocked} className="cursor-pointer gap-2">
-              <Clipboard className="w-4 h-4 text-zinc-500" />
+              <Clipboard className="w-4 h-4 text-muted-foreground" />
               <span className="flex-1">Paste</span>
-              <span className="text-[11px] text-zinc-400">Ctrl+V</span>
+              <span className="text-[11px] text-muted-foreground/80">Ctrl+V</span>
             </DropdownMenuItem>
 
             <DropdownMenuSeparator />
 
             <DropdownMenuItem onClick={() => selectAll(editor)} className="cursor-pointer gap-2">
-              <CheckSquare className="w-4 h-4 text-zinc-500" />
+              <CheckSquare className="w-4 h-4 text-muted-foreground" />
               <span className="flex-1">Select all</span>
-              <span className="text-[11px] text-zinc-400">Ctrl+A</span>
+              <span className="text-[11px] text-muted-foreground/80">Ctrl+A</span>
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => clearFormatting(editor)}
               disabled={isViewing || isLocked}
               className="cursor-pointer gap-2"
             >
-              <RemoveFormatting className="w-4 h-4 text-zinc-500" />
+              <RemoveFormatting className="w-4 h-4 text-muted-foreground" />
               <span className="flex-1">Clear formatting</span>
-              <span className="text-[11px] text-zinc-400">Ctrl+\</span>
+              <span className="text-[11px] text-muted-foreground/80">Ctrl+\</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -338,7 +338,7 @@ export function DocumentMenuBar({
           <DropdownMenuContent align="start" className="w-56 shadow-lg z-[150]">
             <DropdownMenuSub>
               <DropdownMenuSubTrigger className="cursor-pointer gap-2">
-                <Eye className="w-4 h-4 text-zinc-500" />
+                <Eye className="w-4 h-4 text-muted-foreground" />
                 <span>Mode</span>
               </DropdownMenuSubTrigger>
               <DropdownMenuSubContent className="w-48 shadow-lg">
@@ -358,7 +358,7 @@ export function DocumentMenuBar({
                   className="cursor-pointer flex items-center justify-between"
                 >
                   <div className="flex items-center gap-2">
-                    <Eye className="w-3.5 h-3.5 text-zinc-500" />
+                    <Eye className="w-3.5 h-3.5 text-muted-foreground" />
                     <span>Viewing</span>
                   </div>
                   {mode === 'viewing' && <Check className="w-4 h-4 text-primary" />}
@@ -368,7 +368,7 @@ export function DocumentMenuBar({
 
             <DropdownMenuSub>
               <DropdownMenuSubTrigger className="cursor-pointer gap-2">
-                <Sliders className="w-4 h-4 text-zinc-500" />
+                <Sliders className="w-4 h-4 text-muted-foreground" />
                 <span>Zoom ({zoomLevel}%)</span>
               </DropdownMenuSubTrigger>
               <DropdownMenuSubContent className="w-40 shadow-lg">
@@ -389,7 +389,7 @@ export function DocumentMenuBar({
 
             <DropdownMenuItem onClick={onToggleOutline} className="cursor-pointer flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <PanelLeft className="w-4 h-4 text-zinc-500" />
+                <PanelLeft className="w-4 h-4 text-muted-foreground" />
                 <span>Show outline</span>
               </div>
               {showOutline && <Check className="w-4 h-4 text-primary" />}
@@ -397,7 +397,7 @@ export function DocumentMenuBar({
 
             <DropdownMenuItem onClick={onToggleRuler} className="cursor-pointer flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Ruler className="w-4 h-4 text-zinc-500" />
+                <Ruler className="w-4 h-4 text-muted-foreground" />
                 <span>Show ruler</span>
               </div>
               {showRuler && <Check className="w-4 h-4 text-primary" />}
@@ -410,11 +410,11 @@ export function DocumentMenuBar({
                 <>
                   <Minimize2 className="w-4 h-4 text-primary" />
                   <span className="flex-1">Exit fullscreen</span>
-                  <span className="text-[11px] text-zinc-400">Esc</span>
+                  <span className="text-[11px] text-muted-foreground/80">Esc</span>
                 </>
               ) : (
                 <>
-                  <Maximize2 className="w-4 h-4 text-zinc-500" />
+                  <Maximize2 className="w-4 h-4 text-muted-foreground" />
                   <span className="flex-1">Full screen</span>
                 </>
               )}
@@ -438,7 +438,7 @@ export function DocumentMenuBar({
               disabled={isViewing || isLocked}
               className="cursor-pointer gap-2"
             >
-              <ImageIcon className="w-4 h-4 text-zinc-500" />
+              <ImageIcon className="w-4 h-4 text-muted-foreground" />
               <span>Image</span>
             </DropdownMenuItem>
 
@@ -447,7 +447,7 @@ export function DocumentMenuBar({
               disabled={isViewing || isLocked}
               className="cursor-pointer gap-2"
             >
-              <TableIcon className="w-4 h-4 text-zinc-500" />
+              <TableIcon className="w-4 h-4 text-muted-foreground" />
               <span>Table (3×3)</span>
             </DropdownMenuItem>
 
@@ -456,9 +456,9 @@ export function DocumentMenuBar({
               disabled={isViewing || isLocked}
               className="cursor-pointer gap-2"
             >
-              <Link2 className="w-4 h-4 text-zinc-500" />
+              <Link2 className="w-4 h-4 text-muted-foreground" />
               <span className="flex-1">Link</span>
-              <span className="text-[11px] text-zinc-400">Ctrl+K</span>
+              <span className="text-[11px] text-muted-foreground/80">Ctrl+K</span>
             </DropdownMenuItem>
 
             <DropdownMenuItem
@@ -466,7 +466,7 @@ export function DocumentMenuBar({
               disabled={isViewing || isLocked}
               className="cursor-pointer gap-2"
             >
-              <Calendar className="w-4 h-4 text-zinc-500" />
+              <Calendar className="w-4 h-4 text-muted-foreground" />
               <span>Date field</span>
             </DropdownMenuItem>
 
@@ -475,7 +475,7 @@ export function DocumentMenuBar({
               disabled={isViewing || isLocked}
               className="cursor-pointer gap-2"
             >
-              <Minus className="w-4 h-4 text-zinc-500" />
+              <Minus className="w-4 h-4 text-muted-foreground" />
               <span>Horizontal line</span>
             </DropdownMenuItem>
 
@@ -488,7 +488,7 @@ export function DocumentMenuBar({
                   disabled={isViewing || isLocked}
                   className="cursor-pointer gap-2"
                 >
-                  <FileText className="w-4 h-4 text-zinc-500" />
+                  <FileText className="w-4 h-4 text-muted-foreground" />
                   <span>Header</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
@@ -496,7 +496,7 @@ export function DocumentMenuBar({
                   disabled={isViewing || isLocked}
                   className="cursor-pointer gap-2"
                 >
-                  <FileText className="w-4 h-4 text-zinc-500" />
+                  <FileText className="w-4 h-4 text-muted-foreground" />
                   <span>Footer</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
@@ -507,9 +507,9 @@ export function DocumentMenuBar({
               onClick={onToggleComments}
               className="cursor-pointer gap-2"
             >
-              <MessageSquarePlus className="w-4 h-4 text-zinc-500" />
+              <MessageSquarePlus className="w-4 h-4 text-muted-foreground" />
               <span className="flex-1">Comment</span>
-              <span className="text-[11px] text-zinc-400">Ctrl+Alt+M</span>
+              <span className="text-[11px] text-muted-foreground/80">Ctrl+Alt+M</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -527,24 +527,24 @@ export function DocumentMenuBar({
           <DropdownMenuContent align="start" className="w-56 shadow-lg z-[150]">
             <DropdownMenuSub>
               <DropdownMenuSubTrigger className="cursor-pointer gap-2">
-                <Bold className="w-4 h-4 text-zinc-500" />
+                <Bold className="w-4 h-4 text-muted-foreground" />
                 <span>Text</span>
               </DropdownMenuSubTrigger>
               <DropdownMenuSubContent className="w-52 shadow-lg">
                 <DropdownMenuItem onClick={() => toggleMark(editor, 'bold')} disabled={isViewing || isLocked} className="cursor-pointer gap-2">
                   <Bold className="w-3.5 h-3.5" />
                   <span className="flex-1">Bold</span>
-                  <span className="text-[11px] text-zinc-400">Ctrl+B</span>
+                  <span className="text-[11px] text-muted-foreground/80">Ctrl+B</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => toggleMark(editor, 'italic')} disabled={isViewing || isLocked} className="cursor-pointer gap-2">
                   <Italic className="w-3.5 h-3.5" />
                   <span className="flex-1">Italic</span>
-                  <span className="text-[11px] text-zinc-400">Ctrl+I</span>
+                  <span className="text-[11px] text-muted-foreground/80">Ctrl+I</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => toggleMark(editor, 'underline')} disabled={isViewing || isLocked} className="cursor-pointer gap-2">
                   <Underline className="w-3.5 h-3.5" />
                   <span className="flex-1">Underline</span>
-                  <span className="text-[11px] text-zinc-400">Ctrl+U</span>
+                  <span className="text-[11px] text-muted-foreground/80">Ctrl+U</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => toggleMark(editor, 'strikethrough')} disabled={isViewing || isLocked} className="cursor-pointer gap-2">
                   <Strikethrough className="w-3.5 h-3.5" />
@@ -567,7 +567,7 @@ export function DocumentMenuBar({
 
             <DropdownMenuSub>
               <DropdownMenuSubTrigger className="cursor-pointer gap-2">
-                <FileText className="w-4 h-4 text-zinc-500" />
+                <FileText className="w-4 h-4 text-muted-foreground" />
                 <span>Paragraph styles</span>
               </DropdownMenuSubTrigger>
               <DropdownMenuSubContent className="w-48 shadow-lg">
@@ -583,7 +583,7 @@ export function DocumentMenuBar({
                 <DropdownMenuItem onClick={() => setBlockType(editor, 'h3')} disabled={isViewing || isLocked} className="cursor-pointer text-xs font-semibold">
                   Heading 3
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setBlockType(editor, 'blockquote')} disabled={isViewing || isLocked} className="cursor-pointer italic text-zinc-500">
+                <DropdownMenuItem onClick={() => setBlockType(editor, 'blockquote')} disabled={isViewing || isLocked} className="cursor-pointer italic text-muted-foreground">
                   Blockquote
                 </DropdownMenuItem>
               </DropdownMenuSubContent>
@@ -591,7 +591,7 @@ export function DocumentMenuBar({
 
             <DropdownMenuSub>
               <DropdownMenuSubTrigger className="cursor-pointer gap-2">
-                <AlignLeft className="w-4 h-4 text-zinc-500" />
+                <AlignLeft className="w-4 h-4 text-muted-foreground" />
                 <span>Align & indent</span>
               </DropdownMenuSubTrigger>
               <DropdownMenuSubContent className="w-48 shadow-lg">
@@ -625,7 +625,7 @@ export function DocumentMenuBar({
 
             <DropdownMenuSub>
               <DropdownMenuSubTrigger className="cursor-pointer gap-2">
-                <Minus className="w-4 h-4 text-zinc-500" />
+                <Minus className="w-4 h-4 text-muted-foreground" />
                 <span>Line spacing</span>
               </DropdownMenuSubTrigger>
               <DropdownMenuSubContent className="w-40 shadow-lg">
@@ -646,7 +646,7 @@ export function DocumentMenuBar({
 
             <DropdownMenuSub>
               <DropdownMenuSubTrigger className="cursor-pointer gap-2">
-                <List className="w-4 h-4 text-zinc-500" />
+                <List className="w-4 h-4 text-muted-foreground" />
                 <span>Bullets & numbering</span>
               </DropdownMenuSubTrigger>
               <DropdownMenuSubContent className="w-48 shadow-lg">
@@ -672,9 +672,9 @@ export function DocumentMenuBar({
               disabled={isViewing || isLocked}
               className="cursor-pointer gap-2"
             >
-              <RemoveFormatting className="w-4 h-4 text-zinc-500" />
+              <RemoveFormatting className="w-4 h-4 text-muted-foreground" />
               <span className="flex-1">Clear formatting</span>
-              <span className="text-[11px] text-zinc-400">Ctrl+\</span>
+              <span className="text-[11px] text-muted-foreground/80">Ctrl+\</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -691,9 +691,9 @@ export function DocumentMenuBar({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-56 shadow-lg z-[150]">
             <DropdownMenuItem onClick={() => setShowWordCountModal(true)} className="cursor-pointer gap-2">
-              <FileText className="w-4 h-4 text-zinc-500" />
+              <FileText className="w-4 h-4 text-muted-foreground" />
               <span className="flex-1">Word count</span>
-              <span className="text-[11px] text-zinc-400">Ctrl+Shift+C</span>
+              <span className="text-[11px] text-muted-foreground/80">Ctrl+Shift+C</span>
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => {
@@ -702,7 +702,7 @@ export function DocumentMenuBar({
               }}
               className="cursor-pointer gap-2"
             >
-              <ShieldCheck className="w-4 h-4 text-zinc-500" />
+              <ShieldCheck className="w-4 h-4 text-muted-foreground" />
               <span>Document validation</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -711,26 +711,26 @@ export function DocumentMenuBar({
 
       {/* Word count dialog */}
       <Dialog open={showWordCountModal} onOpenChange={setShowWordCountModal}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md bg-card border-border rounded-2xl">
           <DialogHeader>
-            <DialogTitle>Word count</DialogTitle>
+            <DialogTitle className="text-foreground font-bold">Word count</DialogTitle>
           </DialogHeader>
           <div className="space-y-3 py-3 text-sm">
-            <div className="flex justify-between border-b pb-2 border-zinc-200 dark:border-zinc-800">
-              <span className="text-zinc-600 dark:text-zinc-400">Pages</span>
-              <span className="font-semibold text-zinc-900 dark:text-zinc-100">{pageEstimate}</span>
+            <div className="flex justify-between border-b pb-2 border-border">
+              <span className="text-muted-foreground">Pages</span>
+              <span className="font-semibold text-foreground">{pageEstimate}</span>
             </div>
-            <div className="flex justify-between border-b pb-2 border-zinc-200 dark:border-zinc-800">
-              <span className="text-zinc-600 dark:text-zinc-400">Words</span>
-              <span className="font-semibold text-zinc-900 dark:text-zinc-100">{wordCount}</span>
+            <div className="flex justify-between border-b pb-2 border-border">
+              <span className="text-muted-foreground">Words</span>
+              <span className="font-semibold text-foreground">{wordCount}</span>
             </div>
-            <div className="flex justify-between border-b pb-2 border-zinc-200 dark:border-zinc-800">
-              <span className="text-zinc-600 dark:text-zinc-400">Characters</span>
-              <span className="font-semibold text-zinc-900 dark:text-zinc-100">{characterCount}</span>
+            <div className="flex justify-between border-b pb-2 border-border">
+              <span className="text-muted-foreground">Characters</span>
+              <span className="font-semibold text-foreground">{characterCount}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-zinc-600 dark:text-zinc-400">Characters excluding spaces</span>
-              <span className="font-semibold text-zinc-900 dark:text-zinc-100">{characterCountNoSpaces}</span>
+              <span className="text-muted-foreground">Characters excluding spaces</span>
+              <span className="font-semibold text-foreground">{characterCountNoSpaces}</span>
             </div>
           </div>
         </DialogContent>

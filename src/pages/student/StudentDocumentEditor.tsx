@@ -509,9 +509,9 @@ export function StudentDocumentEditor() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh] gap-3 text-zinc-400">
-        <Loader2 className="w-5 h-5 animate-spin" />
-        <span className="text-sm">Loading document…</span>
+      <div className="flex items-center justify-center min-h-[60vh] gap-3 text-muted-foreground">
+        <Loader2 className="w-5 h-5 animate-spin text-primary" />
+        <span className="text-sm font-medium">Loading document…</span>
       </div>
     );
   }
@@ -519,8 +519,8 @@ export function StudentDocumentEditor() {
   if (loadError) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-        <AlertTriangle className="w-10 h-10 text-red-400" />
-        <p className="text-zinc-600 dark:text-zinc-400">{loadError}</p>
+        <AlertTriangle className="w-10 h-10 text-rose-500" />
+        <p className="text-muted-foreground">{loadError}</p>
         <button
           onClick={() => void handleSafeNavigate(getReturnRoute())}
           className="text-sm text-primary underline underline-offset-4"
@@ -546,20 +546,20 @@ export function StudentDocumentEditor() {
 
           return (
             <div className="flex flex-col shrink-0 select-none">
-              <div className="flex items-center justify-between gap-4 px-3 pt-3 sm:pt-3.5 pb-2 sm:pb-2.5 bg-white dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80 shrink-0">
+              <div className="flex items-center justify-between gap-4 px-3 pt-3 sm:pt-3.5 pb-2 sm:pb-2.5 bg-card border-b border-border shrink-0">
                 {/* Left: Document Return Button + 2-Row Stack (Title on top, MenuBar below) */}
                 <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                  {/* Document Return Button (Lucide Black & White, No Shadow, Spans Both Lines) */}
+                  {/* Document Return Button */}
                   <button
                     type="button"
                     onClick={() => void handleSafeNavigate(getReturnRoute())}
-                    className="group relative flex items-center justify-center p-0.5 rounded-lg text-zinc-800 dark:text-zinc-200 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-colors shrink-0 cursor-pointer shadow-none border-0 bg-transparent"
+                    className="group relative flex items-center justify-center p-1 rounded-xl text-foreground hover:bg-muted transition-colors shrink-0 cursor-pointer shadow-none border-0 bg-transparent active:scale-95"
                     title={draft?.templateName ? `Back to ${draft.templateName} in Repository` : "Back to Documents"}
                     aria-label={draft?.templateName ? `Back to ${draft.templateName} in Repository` : "Back to Documents"}
                   >
                   <div className="relative flex items-center justify-center w-10 h-[46px] transition-transform group-hover:scale-105">
-                    <FileText size={46} className="w-10 h-[46px] text-zinc-800 dark:text-zinc-200 group-hover:opacity-0 transition-opacity" />
-                    <ArrowLeft size={22} className="w-5.5 h-5.5 text-zinc-900 dark:text-white absolute inset-0 m-auto opacity-0 group-hover:opacity-100 transition-opacity stroke-[2.2]" />
+                    <FileText size={46} className="w-10 h-[46px] text-muted-foreground group-hover:opacity-0 transition-opacity" />
+                    <ArrowLeft size={22} className="w-5.5 h-5.5 text-foreground absolute inset-0 m-auto opacity-0 group-hover:opacity-100 transition-opacity stroke-[2.2]" />
                   </div>
                 </button>
 
@@ -574,15 +574,15 @@ export function StudentDocumentEditor() {
                         onChange={e => handleTitleChange(e.target.value)}
                         onBlur={() => setTitleEditing(false)}
                         onKeyDown={e => { if (e.key === 'Enter') setTitleEditing(false); }}
-                        className="text-base font-medium leading-tight bg-transparent border-b border-zinc-400 dark:border-zinc-500 focus:outline-none text-zinc-600 dark:text-zinc-300 py-0.5 px-0.5 min-w-[180px] max-w-[480px] shrink-0"
+                        className="text-base font-bold leading-tight bg-transparent border-b border-primary focus:outline-none text-foreground py-0.5 px-0.5 min-w-[180px] max-w-[480px] shrink-0"
                         maxLength={120}
                       />
                     ) : (
                       <button
                         onClick={() => !isLocked && setTitleEditing(true)}
                         className={cn(
-                          'text-base font-medium leading-tight text-zinc-500 dark:text-zinc-400 text-left truncate min-w-[140px] max-w-[480px] shrink-0 transition-colors',
-                          !isLocked && 'hover:text-zinc-800 dark:hover:text-zinc-200 cursor-text hover:underline decoration-dashed underline-offset-4'
+                          'text-base font-bold leading-tight text-foreground text-left truncate min-w-[140px] max-w-[480px] shrink-0 transition-colors',
+                          !isLocked && 'hover:text-primary cursor-text hover:underline decoration-dashed underline-offset-4'
                         )}
                         title={isLocked ? undefined : 'Click to rename'}
                       >
@@ -606,10 +606,10 @@ export function StudentDocumentEditor() {
                 {!isLocked && (
                   <button
                     onClick={() => setShowHistory(true)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold border border-border bg-card text-foreground hover:bg-muted/80 shadow-2xs transition-all active:scale-95 cursor-pointer"
                     title="Version history (Ctrl+Alt+H)"
                   >
-                    <History className="w-4 h-4 text-zinc-500" />
+                    <History className="w-4 h-4 text-primary" />
                     <span className="hidden sm:inline">History</span>
                   </button>
                 )}
@@ -619,35 +619,35 @@ export function StudentDocumentEditor() {
                   <DropdownMenuTrigger asChild>
                     <button
                       type="button"
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold border border-border bg-card text-foreground hover:bg-muted/80 shadow-2xs transition-all active:scale-95 cursor-pointer"
                     >
-                      <Download className="w-4 h-4 text-zinc-500" />
+                      <Download className="w-4 h-4 text-muted-foreground" />
                       <span>Export</span>
                       <ChevronDown className="w-3.5 h-3.5 opacity-60" />
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent
                     align="end"
-                    className="w-56 bg-white dark:bg-white text-zinc-900 dark:text-zinc-900 border border-zinc-200/90 shadow-xl rounded-xl p-1.5 z-[150]"
+                    className="w-56 bg-card text-foreground border border-border shadow-xl rounded-2xl p-1.5 z-[150]"
                   >
                     <DropdownMenuItem
                       onClick={handleExportDocx}
-                      className="cursor-pointer gap-2.5 px-3 py-2 rounded-lg text-zinc-900 hover:bg-zinc-100 focus:bg-zinc-100 focus:text-zinc-900 transition-colors"
+                      className="cursor-pointer gap-2.5 px-3 py-2 rounded-xl text-foreground hover:bg-muted focus:bg-muted focus:text-foreground transition-colors"
                     >
-                      <FileText className="w-4 h-4 text-blue-600 shrink-0" />
+                      <FileText className="w-4 h-4 text-primary shrink-0" />
                       <div className="flex flex-col text-left">
-                        <span className="font-medium text-xs text-zinc-900">Microsoft Word (.docx)</span>
-                        <span className="text-[10px] text-zinc-500 font-normal">Download editable Word file</span>
+                        <span className="font-semibold text-xs text-foreground">Microsoft Word (.docx)</span>
+                        <span className="text-[10px] text-muted-foreground font-normal">Download editable Word file</span>
                       </div>
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={handleExportPdf}
-                      className="cursor-pointer gap-2.5 px-3 py-2 rounded-lg text-zinc-900 hover:bg-zinc-100 focus:bg-zinc-100 focus:text-zinc-900 transition-colors"
+                      className="cursor-pointer gap-2.5 px-3 py-2 rounded-xl text-foreground hover:bg-muted focus:bg-muted focus:text-foreground transition-colors"
                     >
-                      <Download className="w-4 h-4 text-red-600 shrink-0" />
+                      <Download className="w-4 h-4 text-rose-500 shrink-0" />
                       <div className="flex flex-col text-left">
-                        <span className="font-medium text-xs text-zinc-900">PDF Document (.pdf)</span>
-                        <span className="text-[10px] text-zinc-500 font-normal">Download printable PDF</span>
+                        <span className="font-semibold text-xs text-foreground">PDF Document (.pdf)</span>
+                        <span className="text-[10px] text-muted-foreground font-normal">Download printable PDF</span>
                       </div>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -656,7 +656,7 @@ export function StudentDocumentEditor() {
                 {isLocked ? (
                   <button
                     onClick={handleDuplicate}
-                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-sm font-medium bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:opacity-90 transition-opacity shadow-xs cursor-pointer"
+                    className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold bg-primary text-primary-fg hover:bg-primary-hover shadow-2xs active:scale-95 transition-all cursor-pointer"
                   >
                     <Copy className="w-4 h-4" />
                     <span>Duplicate as Draft</span>
@@ -665,12 +665,12 @@ export function StudentDocumentEditor() {
                   <button
                     onClick={() => void handleSubmit()}
                     disabled={submitting}
-                    className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-semibold bg-white hover:bg-zinc-100 active:bg-zinc-200 text-zinc-900 dark:text-zinc-900 border border-zinc-200/90 dark:border-zinc-700 shadow-sm transition-all disabled:opacity-50 cursor-pointer"
+                    className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs sm:text-sm font-bold bg-primary text-primary-fg hover:bg-primary-hover border border-primary shadow-xs transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
                   >
                     {submitting ? (
-                      <Loader2 className="w-4 h-4 animate-spin text-zinc-700" />
+                      <Loader2 className="w-4 h-4 animate-spin text-primary-fg" />
                     ) : (
-                      <Send className="w-4 h-4 text-zinc-900 stroke-[2.2]" />
+                      <Send className="w-4 h-4 text-primary-fg stroke-[2.2]" />
                     )}
                     <span>Submit</span>
                   </button>
@@ -762,8 +762,8 @@ function TelemetryStrip({
   isLocked: boolean;
 }) {
   const statusConfig = {
-    saved:    { icon: CheckCircle, label: 'Saved', color: 'text-green-500' },
-    saving:   { icon: Loader2,     label: 'Saving…', color: 'text-zinc-400', spin: true },
+    saved:    { icon: CheckCircle, label: 'Saved', color: 'text-emerald-500' },
+    saving:   { icon: Loader2,     label: 'Saving…', color: 'text-muted-foreground', spin: true },
     offline:  { icon: WifiOff,     label: 'Offline', color: 'text-amber-500' },
     conflict: { icon: AlertTriangle, label: 'Conflict', color: 'text-red-500' },
     error:    { icon: AlertTriangle, label: 'Error', color: 'text-red-500' },
@@ -774,10 +774,10 @@ function TelemetryStrip({
 
   if (isLocked) {
     return (
-      <div className="flex items-center gap-1.5 text-xs text-zinc-400">
-        <CheckCircle className="w-3.5 h-3.5 text-green-500" />
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+        <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
         <span>Submitted</span>
-        <span className="text-zinc-300 dark:text-zinc-700">·</span>
+        <span className="text-border">·</span>
         <span>{wordCount.toLocaleString()} words</span>
       </div>
     );
@@ -786,11 +786,11 @@ function TelemetryStrip({
   return (
     <div
       data-editor-telemetry
-      className="flex items-center gap-1.5 text-xs text-zinc-500"
+      className="flex items-center gap-1.5 text-xs text-muted-foreground"
     >
       <Icon className={cn('w-3.5 h-3.5', cfg.color, (cfg as any).spin && 'animate-spin')} />
       <span className={cfg.color}>{cfg.label}</span>
-      <span className="text-zinc-300 dark:text-zinc-700">·</span>
+      <span className="text-border">·</span>
       <span>{wordCount.toLocaleString()} words</span>
     </div>
   );
@@ -844,33 +844,36 @@ function ConflictBanner({
   );
 
   return (
-    <div className="flex flex-col gap-3 px-4 py-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+    <div
+      data-conflict-banner
+      className="flex flex-col gap-3 px-4 py-3 bg-red-500/10 border border-red-500/20 rounded-2xl"
+    >
       <div className="flex items-center gap-2">
         <AlertTriangle className="w-4 h-4 text-red-500 shrink-0" />
-        <p className="text-sm font-medium text-red-700 dark:text-red-400">Edit conflict detected</p>
+        <p className="text-sm font-bold text-red-700 dark:text-red-400">Edit conflict detected</p>
       </div>
-      <p className="text-xs text-red-600 dark:text-red-500">
+      <p className="text-xs text-red-600 dark:text-red-400">
         Your local changes conflict with a newer cloud version (Rev {remote.revision}). Choose how to resolve:
       </p>
       <div className="flex gap-2 flex-wrap">
         <button
           onClick={() => void resolve('keep_local')}
           disabled={resolving}
-          className="px-3 py-1.5 text-xs rounded-md bg-red-700 text-white hover:opacity-90 disabled:opacity-50"
+          className="px-3 py-1.5 text-xs font-semibold rounded-xl bg-red-600 text-white hover:bg-red-700 shadow-2xs transition-all cursor-pointer disabled:opacity-50"
         >
           Keep My Changes
         </button>
         <button
           onClick={() => void resolve('accept_cloud')}
           disabled={resolving}
-          className="px-3 py-1.5 text-xs rounded-md bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 hover:opacity-90 disabled:opacity-50"
+          className="px-3 py-1.5 text-xs font-semibold rounded-xl bg-muted hover:bg-muted/80 text-foreground border border-border shadow-2xs transition-all cursor-pointer disabled:opacity-50"
         >
           Accept Cloud Version
         </button>
         <button
           onClick={() => void resolve('fork_local')}
           disabled={resolving}
-          className="px-3 py-1.5 text-xs rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:opacity-90 disabled:opacity-50"
+          className="px-3 py-1.5 text-xs font-semibold rounded-xl bg-card hover:bg-muted/60 text-muted-foreground hover:text-foreground border border-border shadow-2xs transition-all cursor-pointer disabled:opacity-50"
         >
           Fork as Offline Copy
         </button>

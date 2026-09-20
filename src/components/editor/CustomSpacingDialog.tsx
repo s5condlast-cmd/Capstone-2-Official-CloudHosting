@@ -66,10 +66,10 @@ export const CustomSpacingDialog: React.FC<CustomSpacingDialogProps> = ({
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent
         data-custom-spacing-dialog
-        className="sm:max-w-[340px] p-6 rounded-[28px] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xl z-[160]"
+        className="sm:max-w-[340px] p-6 rounded-2xl bg-card border border-border shadow-2xl z-[160]"
       >
         <DialogHeader className="p-0 text-left">
-          <DialogTitle className="text-[22px] font-normal text-zinc-900 dark:text-zinc-100 font-sans tracking-tight">
+          <DialogTitle className="text-xl font-bold text-foreground tracking-tight">
             Custom spacing
           </DialogTitle>
         </DialogHeader>
@@ -85,11 +85,11 @@ export const CustomSpacingDialog: React.FC<CustomSpacingDialogProps> = ({
               max="10"
               value={lineSpacingVal}
               onChange={(e) => setLineSpacingVal(e.target.value)}
-              className="w-full h-12 px-3.5 pt-1 text-base text-zinc-900 dark:text-zinc-100 bg-transparent border-2 border-blue-600 rounded-md focus:outline-none"
+              className="w-full h-11 px-3.5 pt-1 text-sm font-medium text-foreground bg-background border border-primary rounded-xl focus:ring-1 focus:ring-primary focus:outline-none"
             />
             <label
               htmlFor="custom-line-spacing"
-              className="absolute -top-2.5 left-3 px-1 text-xs font-medium text-blue-600 bg-white dark:bg-zinc-900 select-none"
+              className="absolute -top-2.5 left-3 px-1 text-xs font-semibold text-primary bg-card select-none"
             >
               Line spacing
             </label>
@@ -97,7 +97,7 @@ export const CustomSpacingDialog: React.FC<CustomSpacingDialogProps> = ({
 
           {/* 2. Paragraph spacing (pts) */}
           <div className="pt-2">
-            <span className="text-[15px] font-medium text-zinc-900 dark:text-zinc-100 block mb-3">
+            <span className="text-sm font-semibold text-foreground block mb-3">
               Paragraph spacing (pts)
             </span>
 
@@ -112,11 +112,11 @@ export const CustomSpacingDialog: React.FC<CustomSpacingDialogProps> = ({
                   max="100"
                   value={spaceBeforeVal}
                   onChange={(e) => setSpaceBeforeVal(e.target.value)}
-                  className="w-full h-12 px-3.5 pt-1 text-base text-zinc-900 dark:text-zinc-100 bg-transparent border border-zinc-400 dark:border-zinc-600 focus:border-2 focus:border-blue-600 rounded-md focus:outline-none transition-colors"
+                  className="w-full h-11 px-3.5 pt-1 text-sm font-medium text-foreground bg-background border border-border focus:border-primary focus:ring-1 focus:ring-primary rounded-xl focus:outline-none transition-colors"
                 />
                 <label
                   htmlFor="custom-spacing-before"
-                  className="absolute -top-2.5 left-3 px-1 text-xs font-normal text-zinc-600 dark:text-zinc-400 bg-white dark:bg-zinc-900 select-none"
+                  className="absolute -top-2.5 left-3 px-1 text-xs font-medium text-muted-foreground bg-card select-none"
                 >
                   Before
                 </label>
@@ -132,11 +132,11 @@ export const CustomSpacingDialog: React.FC<CustomSpacingDialogProps> = ({
                   max="100"
                   value={spaceAfterVal}
                   onChange={(e) => setSpaceAfterVal(e.target.value)}
-                  className="w-full h-12 px-3.5 pt-1 text-base text-zinc-900 dark:text-zinc-100 bg-transparent border border-zinc-400 dark:border-zinc-600 focus:border-2 focus:border-blue-600 rounded-md focus:outline-none transition-colors"
+                  className="w-full h-11 px-3.5 pt-1 text-sm font-medium text-foreground bg-background border border-border focus:border-primary focus:ring-1 focus:ring-primary rounded-xl focus:outline-none transition-colors"
                 />
                 <label
                   htmlFor="custom-spacing-after"
-                  className="absolute -top-2.5 left-3 px-1 text-xs font-normal text-zinc-600 dark:text-zinc-400 bg-white dark:bg-zinc-900 select-none"
+                  className="absolute -top-2.5 left-3 px-1 text-xs font-medium text-muted-foreground bg-card select-none"
                 >
                   After
                 </label>
@@ -145,19 +145,19 @@ export const CustomSpacingDialog: React.FC<CustomSpacingDialogProps> = ({
           </div>
         </div>
 
-        {/* Action buttons matching Google Docs pill styling */}
+        {/* Action buttons matching system styling */}
         <div className="flex items-center justify-end gap-2 mt-6">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 rounded-full transition-colors cursor-pointer"
+            className="px-5 py-2 text-sm font-semibold text-muted-foreground hover:text-foreground hover:bg-muted rounded-xl transition-colors cursor-pointer"
           >
             Cancel
           </button>
           <button
             type="button"
             onClick={handleApply}
-            className="px-6 py-2 text-sm font-medium text-white bg-[#0b57d0] hover:bg-[#0842a0] rounded-full shadow-xs transition-colors cursor-pointer"
+            className="px-6 py-2 text-sm font-semibold text-primary-fg bg-primary hover:bg-primary-hover rounded-xl shadow-xs transition-colors cursor-pointer"
           >
             Apply
           </button>

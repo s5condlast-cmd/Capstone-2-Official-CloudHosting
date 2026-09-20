@@ -17,7 +17,7 @@ export const toolbarVariants = cva(
     variants: {
       variant: {
         default: 'w-full',
-        floating: 'rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-lg p-1',
+        floating: 'rounded-xl bg-card border border-border shadow-lg p-1',
       },
     },
   }
@@ -68,7 +68,7 @@ export function ToolbarSeparator({
     <div
       role="separator"
       className={cn(
-        'mx-1.5 h-5 w-px bg-zinc-300/80 dark:bg-zinc-700/80 shrink-0 group-last/toolbar-group:hidden',
+        'mx-1.5 h-5 w-px bg-border shrink-0 group-last/toolbar-group:hidden',
         className
       )}
       {...props}
@@ -78,10 +78,10 @@ export function ToolbarSeparator({
 
 export const toolbarButtonVariants = cva(
   cn(
-    'inline-flex cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium text-xs outline-none',
-    'text-zinc-700 dark:text-zinc-200 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-200/70 dark:hover:bg-zinc-800',
+    'inline-flex cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-lg font-medium text-xs outline-none',
+    'text-muted-foreground hover:text-foreground hover:bg-muted',
     'focus-visible:ring-1 focus-visible:ring-primary focus-visible:outline-none disabled:pointer-events-none disabled:opacity-40',
-    'aria-checked:bg-zinc-200 dark:aria-checked:bg-zinc-800 aria-checked:text-zinc-950 dark:aria-checked:text-white',
+    'aria-checked:bg-primary/10 aria-checked:text-primary aria-checked:border aria-checked:border-primary/20',
     'transition-[color,background-color,transform] active:scale-[0.98]'
   ),
   {
@@ -97,7 +97,7 @@ export const toolbarButtonVariants = cva(
       },
       variant: {
         default: 'bg-transparent',
-        active: 'bg-zinc-200 dark:bg-zinc-800 text-zinc-950 dark:text-white font-semibold shadow-xs',
+        active: 'bg-primary/10 text-primary border border-primary/20 font-semibold shadow-2xs',
         accent: 'bg-primary/15 text-primary hover:bg-primary/25',
       },
     },
@@ -175,8 +175,8 @@ export function ToolbarSplitButton({
     <div
       data-state={pressed ? 'on' : 'off'}
       className={cn(
-        'group inline-flex items-center rounded-md text-xs font-medium transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800/70',
-        pressed && 'bg-zinc-200 dark:bg-zinc-800',
+        'group inline-flex items-center rounded-lg text-xs font-medium transition-colors hover:bg-muted',
+        pressed && 'bg-primary/10 text-primary border border-primary/20',
         className
       )}
       {...props}
@@ -211,8 +211,8 @@ export const ToolbarSplitButtonPrimary = React.forwardRef<
       }}
       onClick={onClick}
       className={cn(
-        'inline-flex h-8.5 items-center justify-center px-2 rounded-l-md text-zinc-700 dark:text-zinc-200 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-200/70 dark:hover:bg-zinc-800 transition-colors',
-        active && 'bg-zinc-200 dark:bg-zinc-800 text-zinc-950 dark:text-white font-semibold',
+        'inline-flex h-8.5 items-center justify-center px-2 rounded-l-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors',
+        active && 'bg-primary/10 text-primary font-semibold border-y border-l border-primary/20',
         className
       )}
       {...props}
@@ -242,13 +242,13 @@ export const ToolbarSplitButtonSecondary = React.forwardRef<
       }}
       onClick={onClick}
       className={cn(
-        'inline-flex h-8.5 w-5 items-center justify-center rounded-r-md text-zinc-600 dark:text-zinc-200 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-200/70 dark:hover:bg-zinc-800 transition-colors',
-        active && 'bg-zinc-200 dark:bg-zinc-800 text-zinc-950 dark:text-white',
+        'inline-flex h-8.5 w-5 items-center justify-center rounded-r-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors',
+        active && 'bg-primary/10 text-primary border-y border-r border-primary/20',
         className
       )}
       {...props}
     >
-      {children || <ChevronDown className="w-3.5 h-3.5 text-zinc-600 dark:text-zinc-200" />}
+      {children || <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />}
     </button>
   );
 });
@@ -262,7 +262,7 @@ export function ToolbarMenuGroup({
   return (
     <div className={cn('py-1', className)}>
       {label && (
-        <div className="px-2.5 py-1 text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">
+        <div className="px-2.5 py-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
           {label}
         </div>
       )}

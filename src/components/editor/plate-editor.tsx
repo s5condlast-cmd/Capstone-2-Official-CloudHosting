@@ -710,13 +710,13 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
       return (
         <div
           className={cn(
-            'plate-editor-loading min-h-[600px] p-8 bg-zinc-50 dark:bg-zinc-950/80 border border-zinc-200 dark:border-zinc-800 rounded-xl flex items-center justify-center',
+            'plate-editor-loading min-h-[600px] p-8 bg-muted/20 border border-border rounded-2xl flex items-center justify-center',
             className
           )}
           aria-label="Loading editor"
         >
-          <div className="flex flex-col items-center gap-3 text-zinc-400">
-            <div className="w-6 h-6 border-2 border-zinc-300 border-t-zinc-700 dark:border-zinc-700 dark:border-t-zinc-300 rounded-full animate-spin" />
+          <div className="flex flex-col items-center gap-3 text-muted-foreground">
+            <div className="w-6 h-6 border-2 border-border border-t-primary rounded-full animate-spin" />
             <span className="text-sm font-medium">Loading document editor…</span>
           </div>
         </div>
@@ -729,9 +729,9 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
           ref={wrapperRef}
           data-editor-fullscreen={isFullscreen ? 'true' : 'false'}
           className={cn(
-            'plate-editor-wrapper relative flex flex-col rounded-xl overflow-hidden shadow-xs transition-all border border-zinc-200/90 dark:border-zinc-800/90 bg-white dark:bg-zinc-900',
+            'plate-editor-wrapper relative flex flex-col rounded-2xl overflow-hidden shadow-xs transition-all border border-border bg-card',
             isFullscreen
-              ? '!fixed !inset-0 !z-[100] !w-full !h-full !max-w-none !max-h-none rounded-none bg-zinc-100 dark:bg-zinc-950 border-none m-0'
+              ? '!fixed !inset-0 !z-[100] !w-full !h-full !max-w-none !max-h-none rounded-none bg-background border-none m-0'
               : 'flex-1 min-h-0 h-full max-h-full',
             className,
             isFullscreen && '!fixed !inset-0 !z-[100] !w-full !h-full !max-w-none !max-h-none'
@@ -788,7 +788,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
             return (
               <>
                 {topBar}
-                <div className="w-full px-4 py-0.5 bg-white dark:bg-zinc-900 border-b border-zinc-200/60 dark:border-zinc-800/60 shrink-0">
+                <div className="w-full px-4 py-0.5 bg-card border-b border-border shrink-0">
                   {menuBarElement}
                 </div>
               </>
@@ -796,7 +796,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
           })()}
 
           {/* Google Docs Full-Width Formatting Toolbar Bar */}
-          <div className="w-full bg-[#f9fbfd] dark:bg-zinc-900 border-b border-zinc-200/80 dark:border-zinc-800/80 px-3 py-1 flex items-center shrink-0">
+          <div className="w-full bg-card/95 border-b border-border px-3 py-1 flex items-center shrink-0 backdrop-blur-xs">
             <FixedToolbar className="w-full">
               <FixedToolbarButtons
                 editor={editor}
@@ -866,9 +866,9 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
           )}
 
           {activeMode === 'viewing' && (
-            <div className="flex items-center justify-between px-4 py-1.5 bg-zinc-100 dark:bg-zinc-800/60 border-b border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 text-xs font-medium shrink-0">
+            <div className="flex items-center justify-between px-4 py-1.5 bg-muted border-b border-border text-muted-foreground text-xs font-medium shrink-0">
               <div className="flex items-center gap-2">
-                <Eye className="w-3.5 h-3.5 text-zinc-500" />
+                <Eye className="w-3.5 h-3.5 text-primary" />
                 <span>Viewing Mode: Document is read-only. Switch mode to make edits.</span>
               </div>
               {!readOnly && (
@@ -903,7 +903,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                 onClick={() => setShowOutline(true)}
                 title="Show document outline"
                 aria-label="Show document outline"
-                className="absolute top-3 left-3 z-30 p-1.5 rounded-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 shadow-xs hover:bg-zinc-50 dark:hover:bg-zinc-700 text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 transition-colors"
+                className="absolute top-3 left-3 z-30 p-1.5 rounded-full bg-card border border-border shadow-xs hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
               >
                 <PanelLeftOpen className="w-4 h-4" />
               </button>
@@ -913,13 +913,13 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
             <div
               ref={canvasRef}
               tabIndex={-1}
-              className="relative flex-1 flex flex-col min-h-0 overflow-hidden bg-[#f0f4f9] dark:bg-zinc-950"
+              className="relative flex-1 flex flex-col min-h-0 overflow-hidden bg-muted/30 dark:bg-background"
             >
               <EditorContainer
                 data-editor-paper-scroll="true"
                 variant="default"
                 className={cn(
-                  'flex-1 min-h-0 overflow-y-auto editor-scrollbar bg-[#f0f4f9] dark:bg-zinc-950 p-4 md:p-8 pb-28 md:pb-36',
+                  'flex-1 min-h-0 overflow-y-auto editor-scrollbar bg-muted/30 dark:bg-background p-4 md:p-8 pb-28 md:pb-36',
                   zoomLevel > 100 && 'overflow-x-auto'
                 )}
               >
@@ -949,8 +949,8 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                 {/* ─── Authentic 8.5" × 11" Paper Sheet (US Letter Standard) ─── */}
                 <div
                   className={cn(
-                    'plate-paper-sheet w-[816px] max-w-[816px] min-h-[1056px] bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 border border-zinc-200/90 dark:border-zinc-800/90 shadow-[0_1px_4px_rgba(0,0,0,0.12),0_8px_30px_rgba(0,0,0,0.15)] dark:shadow-[0_8px_36px_rgba(0,0,0,0.7)] rounded-[2px] px-[96px] pt-0 pb-0 flex flex-col relative transition-all print:bg-white print:text-black print:border-none print:shadow-none',
-                    activeHeaderFooter && 'ring-1 ring-primary/40 shadow-md'
+                    'plate-paper-sheet w-[816px] max-w-[816px] min-h-[1056px] bg-card text-foreground border border-border/80 shadow-[0_1px_4px_rgba(0,0,0,0.08),0_8px_30px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_36px_rgba(0,0,0,0.7)] rounded-[2px] px-[96px] pt-0 pb-0 flex flex-col relative transition-all print:bg-white print:text-black print:border-none print:shadow-none',
+                    activeHeaderFooter && 'ring-2 ring-primary/40 shadow-md'
                   )}
                 >
                   {/* Hidden Header & Footer File Inputs */}
@@ -1002,7 +1002,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                       spellCheck
                       autoFocus={!isEffectivelyReadOnly}
                       onKeyDown={handleKeyDown}
-                      className="flex-1 w-full min-h-[768px] p-0 border-0 shadow-none rounded-none focus-visible:outline-none text-zinc-900 dark:text-zinc-100 selection:bg-primary/20 selection:text-zinc-900 dark:selection:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500"
+                      className="flex-1 w-full min-h-[768px] p-0 border-0 shadow-none rounded-none focus-visible:outline-none text-foreground selection:bg-primary/20 selection:text-foreground placeholder:text-muted-foreground"
                     />
                   </div>
 
@@ -1040,7 +1040,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
               <div
                 className={cn(
                   'absolute bottom-4 right-4 z-40 flex items-center gap-2 px-3 py-1.5 rounded-full',
-                  'bg-zinc-900/90 dark:bg-zinc-100/90 text-white dark:text-zinc-900 shadow-md',
+                  'bg-primary text-primary-fg shadow-md',
                   'text-xs font-semibold backdrop-blur-sm select-none'
                 )}
               >
@@ -1052,7 +1052,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                       setZoomLevel(100);
                       setShowZoomIndicator(false);
                     }}
-                    className="text-[11px] px-1.5 py-0.5 rounded bg-white/20 dark:bg-zinc-900/20 hover:bg-white/30 dark:hover:bg-zinc-900/30 font-medium transition-colors"
+                    className="text-[11px] px-1.5 py-0.5 rounded bg-primary-fg/20 hover:bg-primary-fg/30 text-primary-fg font-medium transition-colors"
                   >
                     Reset
                   </button>
