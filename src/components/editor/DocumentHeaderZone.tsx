@@ -71,7 +71,7 @@ export const HEADER_MIN_HEIGHT = 96;
 export const HEADER_MAX_HEIGHT = 256;
 export const HEADER_IMAGE_MAX_HEIGHT = 200;
 export const HEADER_IMAGE_MAX_WIDTH_WITH_TEXT = 480;
-export const HEADER_CONTENT_WIDTH = 816;
+export const HEADER_CONTENT_WIDTH = 624;
 
 type ResizeHandle = 'nw' | 'ne' | 'sw' | 'se' | 'n' | 's' | 'e' | 'w';
 

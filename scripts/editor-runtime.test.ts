@@ -581,8 +581,8 @@ describe('Plate editor runtime wiring', () => {
     assert.ok(headerSrc.includes('HEADER_MAX_HEIGHT = 256'), 'Header max height must be configured to 256px');
     assert.ok(headerSrc.includes('pt-[20px]'), 'Header container must include 20px top breathing room padding');
     assert.ok(footerSrc.includes('FOOTER_MAX_HEIGHT = 180'), 'Footer max height must be configured to 180px');
-    assert.ok(editorSrc.includes('const naturalW = img.naturalWidth') && editorSrc.includes('const maxW = 816;'), 'Image upload must preserve natural width and proportionally scale down only if exceeding 816px');
-    assert.ok(editorSrc.includes('plate-paper-sheet w-[1008px] max-w-[1008px] min-h-[1056px]') && editorSrc.includes('pt-0 pb-0'), 'Paper sheet must have 1008px width (+2 inches) and pt-0 pb-0');
+    assert.ok(editorSrc.includes('const naturalW = img.naturalWidth') && editorSrc.includes('const maxW = 624;'), 'Image upload must preserve natural width and proportionally scale down only if exceeding 624px (printable track)');
+    assert.ok(editorSrc.includes('plate-paper-sheet w-[816px] max-w-[816px] min-h-[1056px]') && editorSrc.includes('pt-0 pb-0'), 'Paper sheet must have 816px width (8.5 inches standard US Letter) and pt-0 pb-0');
 
     // 2. Default Fullscreen state (must NOT be fullscreen already when user enters editor)
     assert.ok(editorSrc.includes('const [isFullscreen, setIsFullscreen] = useState(false);'), 'Editor must NOT initialize in fullscreen already');
@@ -706,7 +706,7 @@ describe('Plate editor runtime wiring', () => {
     assert.ok(editorSrc.includes('headerState={headerState}'), 'DocumentFooterZone must receive headerState');
   });
 
-  it('enforces Google Docs link dropview popover, checklist and bullet style split-dropdowns, clickable task checkboxes, and 1008px paper sheet width', async () => {
+  it('enforces Google Docs link dropview popover, checklist and bullet style split-dropdowns, clickable task checkboxes, and 816px paper sheet width', async () => {
     const fs = await import('node:fs');
     const path = await import('node:path');
     const toolbarSrc = fs.readFileSync(path.resolve('src/components/plate-ui/fixed-toolbar-buttons.tsx'), 'utf8');
@@ -736,10 +736,10 @@ describe('Plate editor runtime wiring', () => {
     assert.ok(editorKitSrc.includes('e.stopPropagation()'), 'TodoElement checkbox must stop propagation to prevent Slate focus stealing');
     assert.ok(editorKitSrc.includes('aria-label={isChecked'), 'TodoElement must render clickable toggle button');
 
-    // 5. Paper sheet and DocumentRuler 1008px width expansion (+2 inches)
-    assert.ok(editorSrc.includes('w-[1008px] max-w-[1008px]'), 'Paper sheet width must be 1008px');
-    assert.ok(editorSrc.includes('width={1008}'), 'DocumentRuler width prop in plate-editor must be 1008');
-    assert.ok(rulerSrc.includes('width = 1008'), 'DocumentRuler default width must be 1008');
+    // 5. Paper sheet and DocumentRuler 816px width (US Letter Standard parity)
+    assert.ok(editorSrc.includes('w-[816px] max-w-[816px]'), 'Paper sheet width must be 816px');
+    assert.ok(editorSrc.includes('width={816}'), 'DocumentRuler width prop in plate-editor must be 816');
+    assert.ok(rulerSrc.includes('width = 816'), 'DocumentRuler default width must be 816');
   });
 
   it('enforces Google Docs image selection floating toolbar and 5 wrap options across document body, header, and footer', async () => {

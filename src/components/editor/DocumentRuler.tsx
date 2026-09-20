@@ -19,7 +19,7 @@ export interface DocumentRulerProps {
  * shaded 1-inch margin gutters on left and right, and draggable/visual indent markers.
  */
 export const DocumentRuler: React.FC<DocumentRulerProps> = ({
-  width = 1008,
+  width = 816,
   leftMargin = 96,
   rightMargin = 96,
   zoom = 100,
@@ -27,7 +27,7 @@ export const DocumentRuler: React.FC<DocumentRulerProps> = ({
 }) => {
   const pixelsPerInch = 96;
   const totalInches = width / pixelsPerInch;
-  const printableWidth = width - leftMargin - rightMargin; // 816px (8.5 inches)
+  const printableWidth = width - leftMargin - rightMargin; // 624px (6.5 inches)
 
   // Generate tick marks for each 1/8th inch (12px each)
   const totalTicks = Math.floor(width / 12);
