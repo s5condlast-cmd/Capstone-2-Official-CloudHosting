@@ -3,6 +3,8 @@
 [← Back to Tasks Hub](README.md) | [Documentation Hub](../README.md) | [Active Tasks](TASKS.md) | [Task History](TASK_HISTORY.md)
 
 **Status:** Unified Master Specification & Production Plan  
+**Last implementation update:** September 20, 2026
+
 **Scope:** Student Document Editor (`/student/editor`), Plate.js v53 Primitives, Google Docs Layout Adaptation, and DOCX/PDF Template Fidelity  
 **Companion Implementations:** `src/pages/student/StudentDocumentEditor.tsx`, `src/components/editor/plate-editor.tsx`, `src/components/plate-ui/*`, `src/components/editor/serializers/docxSerializer.ts`
 
@@ -95,19 +97,20 @@ The editor interface adapts the familiar Google Docs layout into the STI practic
 
 ### Installed Baseline
 - **Runtime**: `platejs@53.3.11`, React 19, Tailwind CSS v4.
-- **Automated Test Coverage**: **67/67** tests passing in `npm run test:editor`.
+- **Automated Test Coverage**: **72/72** tests passing in `npm run test:editor`.
 
 ### Verified Capabilities (Compiler & Automated Test Proven)
 
 | Area | Status | Verification Evidence |
 | :--- | :---: | :--- |
-| **Paragraphs & Headings (H1–H6)** | Verified | Plate native block renderers and transforms registered. |
+| **Paragraphs & Headings (H1–H6)** | Verified | Plate native block renderers and transforms registered. Normal paragraphs use 11pt Calibri, 1.15 line height, and zero paragraph-after spacing so Enter-created lines do not show artificial gaps. |
 | **Inline Formatting (B, I, U, S, Code, Highlight)** | Verified | Leaf renderers active; Plate v53 transforms covered by runtime tests. |
 | **Typographic Styling (Size, Color, BgColor, Sub/Superscript)** | Verified | Leaf properties registered and serialized to DOCX runs. |
 | **Lists (Bulleted, Numbered, Checklist, Toggle)** | Verified | Proper `ul/ol > li` tree nesting; empty line unwrap to paragraph. |
 | **Block Reordering & Movement** | Verified | Verified with `moveNodes` Plate transform tests. |
 | **Tables, Links, Dividers, Dates** | Verified | Complete React node renderers; void nodes preserve Slate children. |
-| **Word Header & Footer Serialization** | Verified | Native Word header/footer with moveable logo, alignment, and page numbering. |
+| **Word Header & Footer Serialization** | Verified | Native Word header/footer with bounded embedded images, side-by-side image/text layout, alignment, first-page scope, and page numbering. |
+| **Editor/DOCX/PDF Layout Parity** | Verified | The editor, Word serializer, and print stylesheet share Letter geometry, one-inch margins, compact paragraph rhythm, and matching heading spacing. |
 | **Autosave & OCC Revision Tracking** | Verified | IndexedDB debounced local caching; optimistic concurrency control on cloud sync. |
 | **Snapshots & Version Restore** | Verified | Immutable snapshots in `editor_draft_versions`; clean state remounting. |
 | **Sanitization & Word Count** | Verified | `sanitizeDocumentFilename` and `countWords` pass all boundary test cases. |
@@ -125,11 +128,19 @@ interface DocumentEnvelope {
   revision: number;
   body: PlateNode[];
   headerFooter: {
-    firstPageOnly?: boolean;
-    headerText?: string;
-    footerText?: string;
-    logoUrl?: string;
-    logoAlignment?: 'left' | 'center' | 'right';
+    header?: {
+      image?: { url: string; width?: number; align?: 'left' | 'center' | 'right' } | null;
+      text?: string;
+      textAlign?: 'left' | 'center' | 'right' | 'justify';
+      scope?: 'every_page' | 'first_page_only';
+    } | null;
+    footer?: {
+      image?: { url: string; width?: number; align?: 'left' | 'center' | 'right' } | null;
+      text?: string;
+      textAlign?: 'left' | 'center' | 'right' | 'justify';
+      pageNumber?: boolean;
+      scope?: 'every_page' | 'first_page_only';
+    } | null;
   };
   pageSettings: {
     paperSize: 'letter' | 'a4';
@@ -144,7 +155,17 @@ interface DocumentEnvelope {
 1. **Font Size Metric Conversion**: Accurately maps CSS pixel values to Word half-points (e.g., `16px` $\rightarrow$ 24 half-points / 12pt).
 2. **Table Geometry**: Serializes explicit cell column widths, `colSpan`, `rowSpan`, and header styling.
 3. **Hyperlinks**: Serializes Plate inline link elements into Word `ExternalHyperlink` instances.
-4. **Header & Footer Integration**: Serializes native Word Header and Footer sections with offset-derived logo alignment and dynamic `PageNumber` fields.
+4. **Paragraph Rhythm Fidelity**: Normal text exports as 11pt Calibri with 1.15 line height and no paragraph-after gap. Heading sizes and before/after spacing mirror the editor canvas.
+5. **Header Image Containment**: Header images preserve their aspect ratio inside a 48px-equivalent height boundary. When header text is present, the image slot is limited to 320px of the 624px printable content width.
+6. **Side-by-Side Word Header**: When an image and text are both present, DOCX uses a fixed-width, borderless two-column table so the image remains on the left and text remains vertically centered on its right.
+7. **Header & Footer Integration**: Serializes native Word Header and Footer sections with first-page scope, embedded images, formatting, and dynamic `PageNumber` fields.
+
+### PDF / Print Fidelity
+
+- The print path preserves the same 8.5in × 11in Letter sheet and applies the one-inch margin exactly once.
+- Editor zoom transforms and application-shell constraints are removed during printing.
+- The document header and footer remain visible while editor controls, toolbars, resize handles, and application navigation are hidden.
+- Uploaded header images remain contained and header text stays beside the image in the printed result.
 
 ---
 

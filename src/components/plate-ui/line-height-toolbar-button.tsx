@@ -21,9 +21,9 @@ export function LineHeightToolbarButton() {
 
   const value =
     useSelectionFragmentProp({
-      defaultValue: '1.5',
-      getProp: (node: any) => String(node?.lineHeight || '1.5'),
-    }) || '1.5';
+      defaultValue: '1.15',
+      getProp: (node: any) => String(node?.lineHeight || '1.15'),
+    }) || '1.15';
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen} modal={false}>
@@ -60,4 +60,3 @@ export function LineHeightToolbarButton() {
     </DropdownMenu>
   );
 }
-

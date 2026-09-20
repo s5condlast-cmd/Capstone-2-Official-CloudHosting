@@ -82,7 +82,7 @@ export const toolbarButtonVariants = cva(
     'text-zinc-700 dark:text-zinc-200 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-200/70 dark:hover:bg-zinc-800',
     'focus-visible:ring-1 focus-visible:ring-primary focus-visible:outline-none disabled:pointer-events-none disabled:opacity-40',
     'aria-checked:bg-zinc-200 dark:aria-checked:bg-zinc-800 aria-checked:text-zinc-950 dark:aria-checked:text-white',
-    'transition-colors'
+    'transition-[color,background-color,transform] active:scale-[0.98]'
   ),
   {
     defaultVariants: {

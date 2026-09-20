@@ -741,6 +741,39 @@ describe('Plate editor runtime wiring', () => {
     assert.ok(editorSrc.includes('width={1008}'), 'DocumentRuler width prop in plate-editor must be 1008');
     assert.ok(rulerSrc.includes('width = 1008'), 'DocumentRuler default width must be 1008');
   });
+
+  it('enforces Google Docs image selection floating toolbar and 5 wrap options across document body, header, and footer', async () => {
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+    const toolbarSrc = fs.readFileSync(path.resolve('src/components/plate-ui/image-floating-toolbar.tsx'), 'utf8');
+    const headerSrc = fs.readFileSync(path.resolve('src/components/editor/DocumentHeaderZone.tsx'), 'utf8');
+    const footerSrc = fs.readFileSync(path.resolve('src/components/editor/DocumentFooterZone.tsx'), 'utf8');
+    const imageElementSrc = fs.readFileSync(path.resolve('src/components/plate-ui/image-element.tsx'), 'utf8');
+
+    // 1. Google Docs 5 wrap options exist
+    const expectedWrapOptions = ['In line', 'Wrap text', 'Break text', 'Behind text', 'In front of text'];
+    for (const opt of expectedWrapOptions) {
+      assert.ok(toolbarSrc.includes(opt), `image-floating-toolbar must include "${opt}" wrap option`);
+    }
+
+    // 2. Custom SVG wrap icons exist
+    assert.ok(toolbarSrc.includes('InLineWrapIcon'), 'image-floating-toolbar must include InLineWrapIcon');
+    assert.ok(toolbarSrc.includes('WrapTextIcon'), 'image-floating-toolbar must include WrapTextIcon');
+    assert.ok(toolbarSrc.includes('BreakTextIcon'), 'image-floating-toolbar must include BreakTextIcon');
+    assert.ok(toolbarSrc.includes('BehindTextIcon'), 'image-floating-toolbar must include BehindTextIcon');
+    assert.ok(toolbarSrc.includes('InFrontTextIcon'), 'image-floating-toolbar must include InFrontTextIcon');
+
+    // 3. Floating toolbar contains comments, reactions, crop, and delete actions
+    assert.ok(toolbarSrc.includes('MessageSquarePlus'), 'Toolbar must include comment action');
+    assert.ok(toolbarSrc.includes('SmilePlus'), 'Toolbar must include emoji reaction action');
+    assert.ok(toolbarSrc.includes('Crop'), 'Toolbar must include crop action');
+    assert.ok(toolbarSrc.includes('Trash2'), 'Toolbar must include delete action');
+
+    // 4. Header, Footer, and Body Image Element wire ImageFloatingToolbar
+    assert.ok(headerSrc.includes('<ImageFloatingToolbar'), 'DocumentHeaderZone must mount ImageFloatingToolbar');
+    assert.ok(footerSrc.includes('<ImageFloatingToolbar'), 'DocumentFooterZone must mount ImageFloatingToolbar');
+    assert.ok(imageElementSrc.includes('<ImageFloatingToolbar'), 'ImageElement must mount ImageFloatingToolbar');
+  });
 });
 
 

@@ -24,6 +24,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { type HeaderFooterItem } from './DocumentHeaderZone';
 import { HeadersFootersDialog, PageNumbersDialog } from './HeaderFooterDialogs';
+import { ImageFloatingToolbar } from '@/src/components/plate-ui/image-floating-toolbar';
 
 export interface DocumentFooterZoneProps {
   footerState: HeaderFooterItem;
@@ -712,38 +713,23 @@ export const DocumentFooterZone: React.FC<DocumentFooterZoneProps> = ({
                   </div>
                 )}
 
-                {/* Selected Image Floating Pill (Crop + Dimensions + Reset) */}
+                {/* Authentic Google Docs Selected Image Floating Toolbar (media_1789889872645.png) */}
                 {selectedImage && !isCropping && !isDraggingImage && !isResizingImage && (
-                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-zinc-900/90 text-zinc-100 text-[11px] font-medium shadow-md whitespace-nowrap z-40 backdrop-blur-xs border border-zinc-700/60">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        startCropping();
-                      }}
-                      className="flex items-center gap-1 px-1.5 py-0.5 rounded hover:bg-zinc-700/80 text-zinc-200 hover:text-white transition-colors"
-                      title="Crop image"
-                    >
-                      <Crop className="w-3 h-3 text-blue-400" />
-                      <span>Crop</span>
-                    </button>
-                    {footerState.image.originalUrl && footerState.image.originalUrl !== footerState.image.url && (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          resetCrop();
-                        }}
-                        className="px-1.5 py-0.5 rounded hover:bg-zinc-700/80 text-zinc-300 hover:text-white text-[10px] transition-colors"
-                        title="Reset to original"
-                      >
-                        Reset
-                      </button>
-                    )}
-                    <span className="text-[10px] text-zinc-400 border-l border-zinc-700 pl-1.5">
-                      {currentWidth} × {currentHeight}px
-                    </span>
-                  </div>
+                  <ImageFloatingToolbar
+                    wrap={footerState.image.wrap || 'inline'}
+                    onWrapChange={(newWrap) => {
+                      setFooterState((prev) => ({
+                        ...prev,
+                        image: prev.image ? { ...prev.image, wrap: newWrap } : null,
+                      }));
+                    }}
+                    onCrop={startCropping}
+                    onRemove={() => {
+                      setFooterState((prev) => ({ ...prev, image: null }));
+                      setSelectedImage(false);
+                    }}
+                    side="bottom"
+                  />
                 )}
 
                 {/* 8 Resize Handles (Corners and Sides for width and height enlargement) */}
