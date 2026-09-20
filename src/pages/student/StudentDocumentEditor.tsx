@@ -48,6 +48,7 @@ import {
   wrapContentEnvelope,
 } from '@/src/lib/documentHistoryStorage';
 import { submissionStorage } from '@/src/lib/submissionStorage';
+import { getEditorTemplate } from '@/src/config/editorTemplates';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -73,6 +74,7 @@ export function StudentDocumentEditor() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const draftIdParam = searchParams.get('draft');
+  const templateParam = searchParams.get('template');
   const printOnLoad = searchParams.get('print') === '1';
   const { user } = useAuth();
 
@@ -179,37 +181,133 @@ export function StudentDocumentEditor() {
             createdAt: row.created_at,
             updatedAt: row.updated_at,
           };
+        } else if (templateParam) {
+          // 1. Check if user already has an active, unsubmitted draft for this template
+          const { data: existingDraft } = await supabase
+            .from('editor_drafts')
+            .select('*')
+            .eq('user_id', user.id)
+            .eq('template_id', templateParam)
+            .is('deleted_at', null)
+            .neq('status', 'locked')
+            .order('updated_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          if (existingDraft) {
+            const row = existingDraft as any;
+            const { content: unwrappedContent, headerFooter: unwrappedHF } = unwrapContentEnvelope(row.content);
+            loadedDraft = {
+              id: row.id,
+              title: row.title,
+              content: unwrappedContent,
+              headerFooter: unwrappedHF,
+              wordCount: row.word_count,
+              revision: row.revision,
+              status: row.status,
+              submissionId: row.submission_id,
+              templateId: row.template_id,
+              templateName: row.template_name,
+              phase: row.phase,
+              createdAt: row.created_at,
+              updatedAt: row.updated_at,
+            };
+            window.history.replaceState(null, '', `/student/editor?draft=${row.id}`);
+          } else {
+            // Create a single draft from the template
+            const template = getEditorTemplate(templateParam);
+            const newId = crypto.randomUUID();
+            const initialContent = template?.seedContent ?? [{ type: 'p', children: [{ text: '' }] }];
+            const draftTitle = template?.name ?? 'Untitled Document';
+            const { error } = await supabase.rpc('create_editor_draft', {
+              p_id: newId,
+              p_title: draftTitle,
+              p_template_id: template?.id ?? templateParam,
+              p_template_name: template?.name ?? null,
+              p_phase: template?.phase ?? null,
+              p_content: initialContent,
+              p_word_count: 0,
+            });
+            if (error) throw new Error(error.message);
+            loadedDraft = {
+              id: newId,
+              title: draftTitle,
+              content: initialContent,
+              wordCount: 0,
+              revision: 1,
+              status: 'draft',
+              submissionId: null,
+              templateId: template?.id ?? templateParam,
+              templateName: template?.name ?? null,
+              phase: template?.phase ?? null,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            };
+            window.history.replaceState(null, '', `/student/editor?draft=${newId}`);
+          }
         } else {
-          // Create a new blank draft
-          const newId = crypto.randomUUID();
-          const initialContent = [{ type: 'p', children: [{ text: '' }] }];
-          const { data, error } = await supabase.rpc('create_editor_draft', {
-            p_id: newId,
-            p_title: 'Untitled Document',
-            p_template_id: null,
-            p_template_name: null,
-            p_phase: null,
-            p_content: initialContent,
-            p_word_count: 0,
-          });
-          if (error) throw new Error(error.message);
-          const row = data as any;
-          loadedDraft = {
-            id: newId,
-            title: 'Untitled Document',
-            content: initialContent,
-            wordCount: 0,
-            revision: 1,
-            status: 'draft',
-            submissionId: null,
-            templateId: null,
-            templateName: null,
-            phase: null,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          };
-          // Update URL without full navigation
-          window.history.replaceState(null, '', `/student/editor?draft=${newId}`);
+          // Direct visit to /student/editor without draft or template param:
+          // Check if user already has an active, unsubmitted blank draft
+          const { data: existingBlank } = await supabase
+            .from('editor_drafts')
+            .select('*')
+            .eq('user_id', user.id)
+            .is('template_id', null)
+            .is('deleted_at', null)
+            .neq('status', 'locked')
+            .order('updated_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          if (existingBlank) {
+            const row = existingBlank as any;
+            const { content: unwrappedContent, headerFooter: unwrappedHF } = unwrapContentEnvelope(row.content);
+            loadedDraft = {
+              id: row.id,
+              title: row.title,
+              content: unwrappedContent,
+              headerFooter: unwrappedHF,
+              wordCount: row.word_count,
+              revision: row.revision,
+              status: row.status,
+              submissionId: row.submission_id,
+              templateId: null,
+              templateName: null,
+              phase: null,
+              createdAt: row.created_at,
+              updatedAt: row.updated_at,
+            };
+            window.history.replaceState(null, '', `/student/editor?draft=${row.id}`);
+          } else {
+            // Create a single new blank draft
+            const newId = crypto.randomUUID();
+            const initialContent = [{ type: 'p', children: [{ text: '' }] }];
+            const { error } = await supabase.rpc('create_editor_draft', {
+              p_id: newId,
+              p_title: 'Untitled Document',
+              p_template_id: null,
+              p_template_name: null,
+              p_phase: null,
+              p_content: initialContent,
+              p_word_count: 0,
+            });
+            if (error) throw new Error(error.message);
+            loadedDraft = {
+              id: newId,
+              title: 'Untitled Document',
+              content: initialContent,
+              wordCount: 0,
+              revision: 1,
+              status: 'draft',
+              submissionId: null,
+              templateId: null,
+              templateName: null,
+              phase: null,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            };
+            window.history.replaceState(null, '', `/student/editor?draft=${newId}`);
+          }
         }
 
         setDraft(loadedDraft);
@@ -254,7 +352,7 @@ export function StudentDocumentEditor() {
       storageRef.current = null;
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id, draftIdParam]);
+  }, [user?.id, draftIdParam, templateParam]);
 
   const draftRef = useRef<LocalDraft | null>(null);
   draftRef.current = draft;
@@ -628,26 +726,26 @@ export function StudentDocumentEditor() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent
                     align="end"
-                    className="w-56 bg-card text-foreground border border-border shadow-xl rounded-2xl p-1.5 z-[150]"
+                    className="w-56 bg-white dark:bg-white text-zinc-900 dark:text-zinc-900 border border-zinc-200/90 shadow-xl rounded-xl p-1.5 z-[150]"
                   >
                     <DropdownMenuItem
                       onClick={handleExportDocx}
-                      className="cursor-pointer gap-2.5 px-3 py-2 rounded-xl text-foreground hover:bg-muted focus:bg-muted focus:text-foreground transition-colors"
+                      className="cursor-pointer gap-2.5 px-3 py-2 rounded-lg text-zinc-900 hover:bg-zinc-100 focus:bg-zinc-100 focus:text-zinc-900 transition-colors"
                     >
-                      <FileText className="w-4 h-4 text-primary shrink-0" />
+                      <FileText className="w-4 h-4 text-blue-600 shrink-0" />
                       <div className="flex flex-col text-left">
-                        <span className="font-semibold text-xs text-foreground">Microsoft Word (.docx)</span>
-                        <span className="text-[10px] text-muted-foreground font-normal">Download editable Word file</span>
+                        <span className="font-semibold text-xs text-zinc-900">Microsoft Word (.docx)</span>
+                        <span className="text-[10px] text-zinc-500 font-normal">Download editable Word file</span>
                       </div>
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={handleExportPdf}
-                      className="cursor-pointer gap-2.5 px-3 py-2 rounded-xl text-foreground hover:bg-muted focus:bg-muted focus:text-foreground transition-colors"
+                      className="cursor-pointer gap-2.5 px-3 py-2 rounded-lg text-zinc-900 hover:bg-zinc-100 focus:bg-zinc-100 focus:text-zinc-900 transition-colors"
                     >
                       <Download className="w-4 h-4 text-rose-500 shrink-0" />
                       <div className="flex flex-col text-left">
-                        <span className="font-semibold text-xs text-foreground">PDF Document (.pdf)</span>
-                        <span className="text-[10px] text-muted-foreground font-normal">Download printable PDF</span>
+                        <span className="font-semibold text-xs text-zinc-900">PDF Document (.pdf)</span>
+                        <span className="text-[10px] text-zinc-500 font-normal">Download printable PDF</span>
                       </div>
                     </DropdownMenuItem>
                   </DropdownMenuContent>

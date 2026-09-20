@@ -8,7 +8,7 @@
  * - Draft actions: Resume, Export Word, Export PDF, Soft Delete + 10s undo
  * - Template actions: Download DOCX, Download PDF, Edit in Editor
  */
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   FileText, Download, Edit3, Trash2, RotateCcw,
@@ -134,13 +134,23 @@ export function StudentDocumentRepository() {
 
   useEffect(() => { void loadDrafts(); }, [loadDrafts]);
 
-  // ── Create new draft from template ─────────────────────────────────────
+  // ── Create or resume draft from template ───────────────────────────────
   const handleCreateFromTemplate = useCallback(
     async (template: EditorTemplate) => {
       if (!user?.id) return;
 
       if (!template.editable && template.redirectTo) {
         navigate(template.redirectTo);
+        return;
+      }
+
+      // Re-use single active draft if it already exists for this template
+      const existingDraft = drafts.find(d =>
+        (d.template_id === template.id || d.template_name === template.name) &&
+        d.status !== 'locked'
+      );
+      if (existingDraft) {
+        navigate(`/student/editor?draft=${existingDraft.id}`);
         return;
       }
 
@@ -162,7 +172,7 @@ export function StudentDocumentRepository() {
         toast.error(e instanceof Error ? e.message : 'Could not create document. Please retry.');
       }
     },
-    [navigate, user?.id]
+    [drafts, navigate, user?.id]
   );
 
   // ── Download template file ──────────────────────────────────────────────
@@ -251,9 +261,51 @@ export function StudentDocumentRepository() {
     []
   );
 
-  // ── Derived data ────────────────────────────────────────────────────────
+  // ── Open or resume blank document ──────────────────────────────────────
+  const handleOpenBlankDocument = useCallback(async () => {
+    if (!user?.id) return;
+
+    // Check if an existing unsubmitted blank draft exists
+    const existingBlank = drafts.find(d => !d.template_id && d.status !== 'locked');
+    if (existingBlank) {
+      navigate(`/student/editor?draft=${existingBlank.id}`);
+      return;
+    }
+
+    const draftId = crypto.randomUUID();
+    try {
+      const { error } = await supabase.rpc('create_editor_draft', {
+        p_id: draftId,
+        p_title: 'Untitled Document',
+        p_template_id: null,
+        p_template_name: null,
+        p_phase: null,
+        p_content: [{ type: 'p', children: [{ text: '' }] }],
+        p_word_count: 0,
+      });
+      if (error) throw new Error(error.message);
+
+      navigate(`/student/editor?draft=${draftId}`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Could not create document.');
+    }
+  }, [drafts, navigate, user?.id]);
+
+  // ── Derived data (deduplicated so only 1 working draft per template is displayed) ──
   const phaseTemplates = getTemplatesForPhase(activePhase as TemplatePhase);
-  const phaseDrafts = drafts.filter(d => d.phase === activePhase || d.phase === null);
+  const phaseDrafts = useMemo(() => {
+    const raw = drafts.filter(d => d.phase === activePhase || d.phase === null);
+    const seen = new Set<string>();
+    const result: DraftRow[] = [];
+    for (const d of raw) {
+      const key = d.template_id || `blank_${d.id}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        result.push(d);
+      }
+    }
+    return result;
+  }, [activePhase, drafts]);
 
   // ─── Render ───────────────────────────────────────────────────────────────
 
@@ -270,10 +322,10 @@ export function StudentDocumentRepository() {
           </p>
         </div>
         <button
-          onClick={() => navigate('/student/editor')}
+          onClick={handleOpenBlankDocument}
           className={cn(
             'inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold',
-            'bg-primary text-primary-fg hover:bg-primary-hover',
+            'bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200',
             'shadow-2xs active:scale-95 transition-all cursor-pointer'
           )}
         >
@@ -403,13 +455,13 @@ function TemplateCard({
   onDownloadPdf: () => void;
 }) {
   return (
-    <div className="flex flex-col gap-3.5 p-4 sm:p-5 bg-card border border-border hover:border-primary/40 rounded-2xl shadow-xs transition-all group">
+    <div className="flex flex-col gap-3.5 p-4 sm:p-5 bg-card border border-border hover:border-zinc-400 dark:hover:border-zinc-700 rounded-2xl shadow-xs transition-all group">
       <div className="flex items-start gap-3">
-        <div className="size-9 rounded-xl bg-primary/10 text-primary border border-primary/20 flex items-center justify-center shrink-0 mt-0.5 group-hover:scale-105 transition-transform">
+        <div className="size-9 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center shrink-0 mt-0.5 group-hover:scale-105 transition-transform">
           <FileText className="w-4 h-4" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-bold text-foreground leading-snug group-hover:text-primary transition-colors truncate">
+          <p className="text-sm font-bold text-foreground leading-snug group-hover:text-foreground transition-colors truncate">
             {template.name}
           </p>
           <p className="text-xs text-muted-foreground mt-1 line-clamp-2 leading-relaxed">
@@ -424,7 +476,7 @@ function TemplateCard({
             onClick={onEdit}
             className={cn(
               'flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold',
-              'bg-primary text-primary-fg hover:bg-primary-hover shadow-2xs active:scale-95 transition-all cursor-pointer'
+              'bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 shadow-2xs active:scale-95 transition-all cursor-pointer'
             )}
           >
             <Edit3 className="w-3.5 h-3.5" />
@@ -435,7 +487,7 @@ function TemplateCard({
             onClick={onEdit}
             className={cn(
               'flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold',
-              'bg-muted/70 hover:bg-muted text-foreground border border-border/80 shadow-2xs active:scale-95 transition-all cursor-pointer'
+              'bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-900 dark:text-zinc-100 border border-border/80 shadow-2xs active:scale-95 transition-all cursor-pointer'
             )}
           >
             <FilePlus2 className="w-3.5 h-3.5" />
@@ -445,16 +497,16 @@ function TemplateCard({
         <div className="flex gap-2">
           <button
             onClick={onDownloadDocx}
-            className="flex-1 flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold border border-border bg-card hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-all cursor-pointer shadow-2xs active:scale-95"
+            className="flex-1 flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold border border-border bg-card hover:bg-muted text-muted-foreground hover:text-foreground transition-all cursor-pointer shadow-2xs active:scale-95"
           >
-            <Download className="w-3 h-3 text-primary" />
+            <Download className="w-3 h-3 text-muted-foreground" />
             <span>DOCX</span>
           </button>
           <button
             onClick={onDownloadPdf}
-            className="flex-1 flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold border border-border bg-card hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-all cursor-pointer shadow-2xs active:scale-95"
+            className="flex-1 flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold border border-border bg-card hover:bg-muted text-muted-foreground hover:text-foreground transition-all cursor-pointer shadow-2xs active:scale-95"
           >
-            <Download className="w-3 h-3 text-rose-500" />
+            <Download className="w-3 h-3 text-muted-foreground" />
             <span>PDF</span>
           </button>
         </div>
@@ -484,27 +536,27 @@ function DraftCard({
   const isSubmitted = draft.status === 'submitted';
 
   return (
-    <div className="flex flex-col justify-between gap-3.5 p-4 sm:p-5 bg-card border border-border hover:border-border/90 rounded-2xl shadow-xs transition-all group">
+    <div className="flex flex-col justify-between gap-3.5 p-4 sm:p-5 bg-card border border-border hover:border-zinc-400 dark:hover:border-zinc-700 rounded-2xl shadow-xs transition-all group">
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <div className="size-7 rounded-lg bg-primary/10 text-primary border border-primary/20 flex items-center justify-center shrink-0">
+            <div className="size-7 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center shrink-0">
               {isLocked ? (
                 <Lock className="w-3.5 h-3.5" />
               ) : (
                 <FileText className="w-3.5 h-3.5" />
               )}
             </div>
-            <p className="text-sm font-bold text-foreground truncate group-hover:text-primary transition-colors">
+            <p className="text-sm font-bold text-foreground truncate group-hover:text-foreground transition-colors">
               {draft.title}
             </p>
           </div>
           <div className="flex items-center gap-2.5 mt-2">
             <span className={cn(
               'text-[10px] px-2 py-0.5 rounded-full font-bold border',
-              isLocked   ? 'bg-muted text-muted-foreground border-border' :
-              isSubmitted ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' :
-                           'bg-primary/10 text-primary border-primary/20'
+              isLocked   ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 border-zinc-200 dark:border-zinc-700' :
+              isSubmitted ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700' :
+                           'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700'
             )}>
               {isLocked ? 'Locked' : isSubmitted ? 'Submitted' : 'Draft'}
             </span>
@@ -527,7 +579,7 @@ function DraftCard({
             onClick={onResume}
             className={cn(
               'flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold',
-              'bg-primary text-primary-fg hover:bg-primary-hover shadow-2xs active:scale-95 transition-all cursor-pointer'
+              'bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 shadow-2xs active:scale-95 transition-all cursor-pointer'
             )}
           >
             <Edit3 className="w-3.5 h-3.5" />
@@ -538,17 +590,17 @@ function DraftCard({
             onClick={onReview}
             className={cn(
               'flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold',
-              'bg-card border border-border hover:bg-muted/80 text-foreground shadow-2xs active:scale-95 transition-all cursor-pointer'
+              'bg-card border border-border hover:bg-muted text-foreground shadow-2xs active:scale-95 transition-all cursor-pointer'
             )}
           >
-            <Eye className="w-3.5 h-3.5 text-primary" />
+            <Eye className="w-3.5 h-3.5 text-zinc-600 dark:text-zinc-400" />
             <span>Review & Comments</span>
           </button>
         )}
         <button
           onClick={onExportDocx}
           title="Export as Word DOCX"
-          className="h-8.5 w-8.5 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground bg-card hover:bg-muted/80 border border-border shadow-2xs transition-all cursor-pointer active:scale-95"
+          className="h-8.5 w-8.5 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground bg-card hover:bg-muted border border-border shadow-2xs transition-all cursor-pointer active:scale-95"
         >
           <Download className="w-3.5 h-3.5" />
         </button>
