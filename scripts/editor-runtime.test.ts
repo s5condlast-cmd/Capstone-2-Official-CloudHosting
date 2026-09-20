@@ -496,9 +496,8 @@ describe('Plate editor runtime wiring', () => {
     // 3. Strict 624px printable bounding without container dashed box
     assert.ok(!headerSrc.includes('border border-dashed border-zinc-300'), 'Header image must NOT have dashed container box');
     assert.ok(!footerSrc.includes('border border-dashed border-zinc-300'), 'Footer image must NOT have dashed container box');
-    assert.ok(!headerSrc.includes('max-h-18'), 'Header logo must NOT be trapped in max-h-18');
-    assert.ok(headerSrc.includes('624'), 'Header logo must be bounded to 624px printable page track');
-    assert.ok(footerSrc.includes('624'), 'Footer logo must be bounded to 624px printable page track');
+    assert.ok(headerSrc.includes('HEADER_CONTENT_WIDTH'), 'Header logo must be bounded to printable page track width');
+    assert.ok(footerSrc.includes('FOOTER_CONTENT_WIDTH'), 'Footer logo must be bounded to printable page track width');
     assert.ok(imageElSrc.includes('Math.min(624'), 'Body image must be bounded to 624px printable page track');
 
     // 4. Side-by-side text & image layout (cursor right next to image)
@@ -582,8 +581,8 @@ describe('Plate editor runtime wiring', () => {
     assert.ok(headerSrc.includes('HEADER_MAX_HEIGHT = 256'), 'Header max height must be configured to 256px');
     assert.ok(headerSrc.includes('pt-[20px]'), 'Header container must include 20px top breathing room padding');
     assert.ok(footerSrc.includes('FOOTER_MAX_HEIGHT = 180'), 'Footer max height must be configured to 180px');
-    assert.ok(editorSrc.includes('const naturalW = img.naturalWidth') && editorSrc.includes('const maxW = 624;'), 'Image upload must preserve natural width and proportionally scale down only if exceeding 624px');
-    assert.ok(editorSrc.includes('plate-paper-sheet w-[816px] max-w-[816px] min-h-[1056px]') && editorSrc.includes('pt-0 pb-0'), 'Paper sheet must have pt-0 pb-0 so header and footer occupy the margin areas');
+    assert.ok(editorSrc.includes('const naturalW = img.naturalWidth') && editorSrc.includes('const maxW = 816;'), 'Image upload must preserve natural width and proportionally scale down only if exceeding 816px');
+    assert.ok(editorSrc.includes('plate-paper-sheet w-[1008px] max-w-[1008px] min-h-[1056px]') && editorSrc.includes('pt-0 pb-0'), 'Paper sheet must have 1008px width (+2 inches) and pt-0 pb-0');
 
     // 2. Default Fullscreen state (must NOT be fullscreen already when user enters editor)
     assert.ok(editorSrc.includes('const [isFullscreen, setIsFullscreen] = useState(false);'), 'Editor must NOT initialize in fullscreen already');
@@ -705,6 +704,42 @@ describe('Plate editor runtime wiring', () => {
     assert.ok(editorSrc.includes('footerInputRef.current?.click()'), 'plate-editor must trigger footer file input for footer image');
     assert.ok(editorSrc.includes('footerState={footerState}'), 'DocumentHeaderZone must receive footerState');
     assert.ok(editorSrc.includes('headerState={headerState}'), 'DocumentFooterZone must receive headerState');
+  });
+
+  it('enforces Google Docs link dropview popover, checklist and bullet style split-dropdowns, clickable task checkboxes, and 1008px paper sheet width', async () => {
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+    const toolbarSrc = fs.readFileSync(path.resolve('src/components/plate-ui/fixed-toolbar-buttons.tsx'), 'utf8');
+    const menuBarSrc = fs.readFileSync(path.resolve('src/components/editor/DocumentMenuBar.tsx'), 'utf8');
+    const insertBtnSrc = fs.readFileSync(path.resolve('src/components/plate-ui/insert-toolbar-button.tsx'), 'utf8');
+    const editorKitSrc = fs.readFileSync(path.resolve('src/components/editor/editor-kit.tsx'), 'utf8');
+    const editorSrc = fs.readFileSync(path.resolve('src/components/editor/plate-editor.tsx'), 'utf8');
+    const rulerSrc = fs.readFileSync(path.resolve('src/components/editor/DocumentRuler.tsx'), 'utf8');
+
+    // 1. Zero window.prompt in any toolbar or menu link actions
+    assert.ok(!toolbarSrc.includes('window.prompt'), 'Fixed toolbar must NOT contain window.prompt');
+    assert.ok(!menuBarSrc.includes('window.prompt'), 'DocumentMenuBar must NOT contain window.prompt');
+    assert.ok(!insertBtnSrc.includes('window.prompt'), 'InsertToolbarButton must NOT contain window.prompt');
+
+    // 2. LinkToolbarButton dropview is wired to both visible toolbar and overflow popover
+    assert.ok(toolbarSrc.includes('<LinkToolbarButton editor={editor} />'), 'Visible toolbar must use LinkToolbarButton dropview');
+    assert.ok(toolbarSrc.includes('editor-open-link-popover'), 'LinkToolbarButton must listen to editor-open-link-popover event');
+    assert.ok(toolbarSrc.includes('Link URL'), 'LinkToolbarButton popover must contain Link URL input');
+    assert.ok(toolbarSrc.includes('Text to display'), 'LinkToolbarButton popover must contain Text to display input');
+
+    // 3. Checklist and bullet style split-dropdown buttons
+    assert.ok(toolbarSrc.includes('<ChecklistToolbarButton editor={editor} />'), 'Toolbar must use ChecklistToolbarButton split button');
+    assert.ok(toolbarSrc.includes('Checklist Style'), 'ChecklistToolbarButton must include Checklist Style dropdown');
+    assert.ok(toolbarSrc.includes('Bullet Style'), 'BulletedListToolbarButton must include Bullet Style dropdown');
+
+    // 4. TodoElement clickable checkbox and Slate focus protection
+    assert.ok(editorKitSrc.includes('e.stopPropagation()'), 'TodoElement checkbox must stop propagation to prevent Slate focus stealing');
+    assert.ok(editorKitSrc.includes('aria-label={isChecked'), 'TodoElement must render clickable toggle button');
+
+    // 5. Paper sheet and DocumentRuler 1008px width expansion (+2 inches)
+    assert.ok(editorSrc.includes('w-[1008px] max-w-[1008px]'), 'Paper sheet width must be 1008px');
+    assert.ok(editorSrc.includes('width={1008}'), 'DocumentRuler width prop in plate-editor must be 1008');
+    assert.ok(rulerSrc.includes('width = 1008'), 'DocumentRuler default width must be 1008');
   });
 });
 

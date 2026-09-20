@@ -547,7 +547,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
           img.onload = () => {
             const naturalW = img.naturalWidth || 240;
             const naturalH = img.naturalHeight || 60;
-            const maxW = 624;
+            const maxW = 816;
             const maxH = 200;
             let initialWidth = naturalW;
             let initialHeight = naturalH;
@@ -611,7 +611,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
           img.onload = () => {
             const naturalW = img.naturalWidth || 200;
             const naturalH = img.naturalHeight || 48;
-            const maxW = 624;
+            const maxW = 816;
             const maxH = 140;
             let initialWidth = naturalW;
             let initialHeight = naturalH;
@@ -897,7 +897,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                 {/* ─── Google Docs Horizontal Ruler ──────────────────────────── */}
                 {showRuler && (
                   <DocumentRuler
-                    width={816}
+                    width={1008}
                     leftMargin={96}
                     rightMargin={96}
                     zoom={zoomLevel}
@@ -905,10 +905,10 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                   />
                 )}
 
-                {/* ─── Authentic 8.5" × 11" US Letter Paper Sheet ─────────────── */}
+                {/* ─── Authentic 10.5" × 11" Paper Sheet (+2 inches width expansion) ─── */}
                 <div
                   className={cn(
-                    'plate-paper-sheet w-[816px] max-w-[816px] min-h-[1056px] bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 border border-zinc-200/90 dark:border-zinc-800/90 shadow-[0_1px_4px_rgba(0,0,0,0.12),0_8px_30px_rgba(0,0,0,0.15)] dark:shadow-[0_8px_36px_rgba(0,0,0,0.7)] rounded-[2px] px-[96px] pt-0 pb-0 flex flex-col relative transition-all print:bg-white print:text-black print:border-none print:shadow-none',
+                    'plate-paper-sheet w-[1008px] max-w-[1008px] min-h-[1056px] bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 border border-zinc-200/90 dark:border-zinc-800/90 shadow-[0_1px_4px_rgba(0,0,0,0.12),0_8px_30px_rgba(0,0,0,0.15)] dark:shadow-[0_8px_36px_rgba(0,0,0,0.7)] rounded-[2px] px-[96px] pt-0 pb-0 flex flex-col relative transition-all print:bg-white print:text-black print:border-none print:shadow-none',
                     activeHeaderFooter && 'ring-1 ring-primary/40 shadow-md'
                   )}
                 >

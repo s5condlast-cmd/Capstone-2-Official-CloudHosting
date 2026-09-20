@@ -168,24 +168,60 @@ function TodoElement({ children, element, style, ...props }: any) {
   const editor = useEditorRef();
   const path = usePath();
 
+  const handleToggle = (e: React.MouseEvent | React.ChangeEvent) => {
+    e.stopPropagation();
+    try {
+      const nodePath = editor?.api?.findPath ? editor.api.findPath(element) : path;
+      if (nodePath) {
+        editor?.tf?.setNodes?.({ checked: !element?.checked }, { at: nodePath });
+      } else {
+        editor?.tf?.setNodes?.({ checked: !element?.checked }, { at: path });
+      }
+    } catch {
+      editor?.tf?.setNodes?.({ checked: !element?.checked }, { at: path });
+    }
+  };
+
+  const isChecked = Boolean(element?.checked);
+  const strikeThrough = !element?.noStrikethrough && isChecked;
+
   return (
     <BlockDraggable element={element} handleTopOffset="top-1">
       <PlateElement
         as="div"
         element={element}
         style={{ ...blockStyle(element), ...style }}
-        className="my-1 flex items-start gap-2"
+        className="my-1 flex items-start gap-2.5 group/todo"
         {...props}
       >
-        <input
-          type="checkbox"
-          checked={Boolean(element?.checked)}
-          onChange={(event) => editor.tf.setNodes({ checked: event.target.checked }, { at: path })}
+        <button
+          type="button"
           contentEditable={false}
-          className="mt-1.5 cursor-pointer accent-primary"
-          aria-label="Mark task complete"
-        />
-        <div className={element?.checked ? 'flex-1 text-zinc-400 line-through' : 'flex-1'}>
+          onMouseDown={(e) => e.stopPropagation()}
+          onClick={handleToggle}
+          aria-label={isChecked ? 'Mark task incomplete' : 'Mark task complete'}
+          className={cn(
+            'size-4 mt-1 rounded-[3px] border flex items-center justify-center cursor-pointer transition-colors shrink-0 select-none',
+            isChecked
+              ? 'bg-primary border-primary text-primary-foreground'
+              : 'border-zinc-400 dark:border-zinc-500 hover:border-zinc-600 dark:hover:border-zinc-300 bg-white dark:bg-zinc-800'
+          )}
+        >
+          {isChecked && (
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="3.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="w-3 h-3 text-white"
+            >
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          )}
+        </button>
+        <div className={cn('flex-1 transition-colors', strikeThrough ? 'text-zinc-400 dark:text-zinc-500 line-through' : '')}>
           {children}
         </div>
       </PlateElement>

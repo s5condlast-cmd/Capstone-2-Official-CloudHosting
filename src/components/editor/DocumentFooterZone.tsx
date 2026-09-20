@@ -40,8 +40,8 @@ export interface DocumentFooterZoneProps {
 export const FOOTER_MIN_HEIGHT = 96;
 export const FOOTER_MAX_HEIGHT = 180;
 export const FOOTER_IMAGE_MAX_HEIGHT = 140;
-export const FOOTER_IMAGE_MAX_WIDTH_WITH_TEXT = 360;
-export const FOOTER_CONTENT_WIDTH = 624;
+export const FOOTER_IMAGE_MAX_WIDTH_WITH_TEXT = 480;
+export const FOOTER_CONTENT_WIDTH = 816;
 
 type ResizeHandle = 'nw' | 'ne' | 'sw' | 'se' | 'n' | 's' | 'e' | 'w';
 

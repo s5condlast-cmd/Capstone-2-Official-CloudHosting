@@ -473,20 +473,8 @@ function InsertToolbarButton({ editor }: { editor: any }) {
         {
           icon: Link2,
           label: 'Link',
-          action: (ed) => {
-            const url = window.prompt('Enter link URL:');
-            if (!url) return;
-            ed?.tf?.insertNodes?.([{ type: 'a', url, children: [{ text: url }] }]);
-            let selectedText = '';
-            try {
-              if (ed?.selection && ed?.api?.string) {
-                selectedText = ed.api.string(ed.selection);
-              }
-            } catch { /* non-fatal */ }
-            ed?.tf?.insertNodes?.([
-              { type: 'a', url: 'https://', children: [{ text: selectedText || 'https://' }] },
-            ]);
-            ed?.tf?.focus?.();
+          action: () => {
+            window.dispatchEvent(new CustomEvent('editor-open-link-popover'));
           },
         },
         {
@@ -1228,12 +1216,35 @@ function BulletedListToolbarButton({ editor }: { editor: any }) {
   const containerRef = React.useRef<HTMLDivElement>(null);
 
   const activeType = getActiveBlockType(editor);
-  const isBulleted = activeType === 'ul';
+  const isBulleted =
+    activeType === 'ul' ||
+    Boolean(editor?.api?.above?.({ match: (n: any) => n.type === 'ul' }));
 
   const toggleList = (styleType = 'disc') => {
     if (isBulleted) {
       setBlockType(editor, 'p');
     } else {
+      editor?.tf?.setNodes?.(
+        { type: 'ul', listStyleType: styleType },
+        { match: (n: any) => (editor.api?.isBlock ? editor.api.isBlock(n) : true) }
+      );
+    }
+    editor?.tf?.focus?.();
+  };
+
+  const selectStyle = (styleType: string) => {
+    try {
+      const listEntry = editor?.api?.above?.({ match: (n: any) => n.type === 'ul' });
+      if (listEntry) {
+        const [, path] = listEntry;
+        editor?.tf?.setNodes?.({ listStyleType: styleType }, { at: path });
+      } else {
+        editor?.tf?.setNodes?.(
+          { type: 'ul', listStyleType: styleType },
+          { match: (n: any) => (editor.api?.isBlock ? editor.api.isBlock(n) : true) }
+        );
+      }
+    } catch {
       editor?.tf?.setNodes?.(
         { type: 'ul', listStyleType: styleType },
         { match: (n: any) => (editor.api?.isBlock ? editor.api.isBlock(n) : true) }
@@ -1272,7 +1283,97 @@ function BulletedListToolbarButton({ editor }: { editor: any }) {
             type="button"
             onMouseDown={(e) => {
               e.preventDefault();
-              toggleList(st.id);
+              selectStyle(st.id);
+              setOpen(false);
+            }}
+            className="flex items-center w-full px-3 py-2 text-xs font-medium rounded-lg text-left text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+          >
+            {st.label}
+          </button>
+        ))}
+      </PortalPopover>
+    </div>
+  );
+}
+
+const CHECKLIST_STYLES = [
+  { id: 'strikethrough', label: 'Default (Strikethrough)' },
+  { id: 'clean', label: 'Without strikethrough' },
+];
+
+function ChecklistToolbarButton({ editor }: { editor: any }) {
+  const [open, setOpen] = React.useState(false);
+  const containerRef = React.useRef<HTMLDivElement>(null);
+
+  const activeType = getActiveBlockType(editor);
+  const isTodoActive =
+    activeType === 'todo' ||
+    Boolean(editor?.api?.above?.({ match: (n: any) => n.type === 'todo' }));
+
+  const toggleChecklist = (styleType = 'strikethrough') => {
+    if (isTodoActive) {
+      setBlockType(editor, 'p');
+    } else {
+      editor?.tf?.setNodes?.(
+        { type: 'todo', noStrikethrough: styleType === 'clean' },
+        { match: (n: any) => (editor.api?.isBlock ? editor.api.isBlock(n) : true) }
+      );
+    }
+    editor?.tf?.focus?.();
+  };
+
+  const selectStyle = (styleType: string) => {
+    try {
+      const todoEntry = editor?.api?.above?.({ match: (n: any) => n.type === 'todo' });
+      if (todoEntry) {
+        const [, path] = todoEntry;
+        editor?.tf?.setNodes?.({ noStrikethrough: styleType === 'clean' }, { at: path });
+      } else {
+        editor?.tf?.setNodes?.(
+          { type: 'todo', noStrikethrough: styleType === 'clean' },
+          { match: (n: any) => (editor.api?.isBlock ? editor.api.isBlock(n) : true) }
+        );
+      }
+    } catch {
+      editor?.tf?.setNodes?.(
+        { type: 'todo', noStrikethrough: styleType === 'clean' },
+        { match: (n: any) => (editor.api?.isBlock ? editor.api.isBlock(n) : true) }
+      );
+    }
+    editor?.tf?.focus?.();
+  };
+
+  return (
+    <div ref={containerRef} className="relative">
+      <ToolbarSplitButton pressed={isTodoActive}>
+        <ToolbarSplitButtonPrimary
+          title="Checklist"
+          onClick={() => toggleChecklist('strikethrough')}
+        >
+          <ListTodo className="w-4 h-4" />
+        </ToolbarSplitButtonPrimary>
+        <ToolbarSplitButtonSecondary
+          onClick={() => setOpen(!open)}
+          title="Checklist options"
+        />
+      </ToolbarSplitButton>
+
+      <PortalPopover
+        anchorRef={containerRef}
+        open={open}
+        onClose={() => setOpen(false)}
+        className="w-56 p-1.5"
+      >
+        <div className="px-3 py-1 text-[11px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
+          Checklist Style
+        </div>
+        {CHECKLIST_STYLES.map((st) => (
+          <button
+            key={st.id}
+            type="button"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              selectStyle(st.id);
               setOpen(false);
             }}
             className="flex items-center w-full px-3 py-2 text-xs font-medium rounded-lg text-left text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
@@ -1299,7 +1400,7 @@ function LinkToolbarButton({ editor }: { editor: any }) {
   const linkEntry = editor?.api?.above?.({ match: (n: any) => n.type === 'a' });
   const isLinkActive = Boolean(linkEntry);
 
-  const handleOpen = () => {
+  const handleOpen = React.useCallback(() => {
     if (open) {
       setOpen(false);
       return;
@@ -1328,7 +1429,25 @@ function LinkToolbarButton({ editor }: { editor: any }) {
     }
 
     setOpen(true);
-  };
+  }, [open, editor]);
+
+  React.useEffect(() => {
+    const handleTrigger = () => {
+      handleOpen();
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) {
+        e.preventDefault();
+        handleOpen();
+      }
+    };
+    window.addEventListener('editor-open-link-popover', handleTrigger);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('editor-open-link-popover', handleTrigger);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [handleOpen]);
 
   // Auto-focus URL input when popover opens
   React.useEffect(() => {
@@ -2744,13 +2863,7 @@ export function FixedToolbarButtons({
   const isTodo = activeType === 'todo';
   const isToggle = activeType === 'toggle';
 
-  const handleLink = () => {
-    if (isViewing) return;
-    const url = window.prompt('Enter link URL:');
-    if (!url) return;
-    editor?.tf?.insertNodes?.([{ type: 'a', url, children: [{ text: url }] }]);
-    editor?.tf?.focus?.();
-  };
+
 
   const handleOutdent = () => {
     if (isViewing) return;
@@ -3066,9 +3179,7 @@ export function FixedToolbarButtons({
                 {/* Group 4: Link, Comment, Image (on the left, appearing first) */}
                 {hiddenGroups.group4 && (
                   <div className={cn('flex items-center gap-0.5 shrink-0 flex-nowrap', isViewing && 'opacity-40 pointer-events-none')}>
-                    <ToolbarButton onClick={handleLink} tooltip="Insert link (Ctrl+K)">
-                      <Link2 className="w-4 h-4" />
-                    </ToolbarButton>
+                    <LinkToolbarButton editor={editor} />
 
                     <CommentToolbarButton
                       editor={editor}
@@ -3110,15 +3221,7 @@ export function FixedToolbarButtons({
                 {/* Group 5 - Part B: Lists, Indent, Clear Formatting */}
                 {hiddenGroups.group5 && (
                   <div className={cn('flex items-center gap-0.5 shrink-0 flex-nowrap', isViewing && 'opacity-40 pointer-events-none')}>
-                    <ToolbarButton
-                      active={isTodo}
-                      onClick={() => {
-                        setBlockType(editor, isTodo ? 'p' : 'todo');
-                      }}
-                      tooltip="Checklist"
-                    >
-                      <ListTodo className="w-4 h-4" />
-                    </ToolbarButton>
+                    <ChecklistToolbarButton editor={editor} />
 
                     <BulletedListToolbarButton editor={editor} />
                     <NumberedListToolbarButton editor={editor} />
@@ -3163,9 +3266,7 @@ export function FixedToolbarButtons({
           {/* 4. Link, Add Comment, Image */}
           {!hiddenGroups.group4 && (
             <ToolbarGroup className={cn('items-center', isViewing && 'opacity-40 pointer-events-none')}>
-              <ToolbarButton onClick={handleLink} tooltip="Insert link (Ctrl+K)">
-                <Link2 className="w-4 h-4" />
-              </ToolbarButton>
+              <LinkToolbarButton editor={editor} />
 
               <CommentToolbarButton
                 editor={editor}
@@ -3198,13 +3299,7 @@ export function FixedToolbarButtons({
               />
               <LineHeightToolbarButton editor={editor} />
 
-              <ToolbarButton
-                active={isTodo}
-                onClick={() => setBlockType(editor, isTodo ? 'p' : 'todo')}
-                tooltip="Checklist"
-              >
-                <ListTodo className="w-4 h-4" />
-              </ToolbarButton>
+              <ChecklistToolbarButton editor={editor} />
 
               <BulletedListToolbarButton editor={editor} />
               <NumberedListToolbarButton editor={editor} />

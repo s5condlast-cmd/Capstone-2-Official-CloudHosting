@@ -165,10 +165,8 @@ export function InsertToolbarButton() {
           icon: Link2,
           label: 'Link',
           value: 'link',
-          action: (ed) => {
-            const url = window.prompt('Enter link URL:');
-            if (!url) return;
-            ed?.tf?.insertNodes?.([{ type: 'a', url, children: [{ text: url }] }]);
+          action: () => {
+            window.dispatchEvent(new CustomEvent('editor-open-link-popover'));
           },
         },
         {

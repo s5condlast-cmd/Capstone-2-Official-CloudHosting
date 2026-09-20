@@ -19,16 +19,15 @@ export interface DocumentRulerProps {
  * shaded 1-inch margin gutters on left and right, and draggable/visual indent markers.
  */
 export const DocumentRuler: React.FC<DocumentRulerProps> = ({
-  width = 816,
+  width = 1008,
   leftMargin = 96,
   rightMargin = 96,
   zoom = 100,
   className,
 }) => {
-  // Total width in inches (8.5 inches for 816px at 96 DPI)
-  const totalInches = 8.5;
   const pixelsPerInch = 96;
-  const printableWidth = width - leftMargin - rightMargin; // 624px (6.5 inches)
+  const totalInches = width / pixelsPerInch;
+  const printableWidth = width - leftMargin - rightMargin; // 816px (8.5 inches)
 
   // Generate tick marks for each 1/8th inch (12px each)
   const totalTicks = Math.floor(width / 12);
@@ -84,8 +83,9 @@ export const DocumentRuler: React.FC<DocumentRulerProps> = ({
         {/* Tick Marks & Numbers Overlay */}
         <div className="absolute inset-0 pointer-events-none">
           {ticks.map(({ index, px, isInch, isHalfInch, isQuarterInch, inchNumber }) => {
-            // Numbers are displayed for inches 1 through 7
-            const showNumber = isInch && inchNumber !== null && inchNumber >= 1 && inchNumber <= 7;
+            // Numbers are displayed for inches between left and right margins
+            const maxInch = Math.floor((width - rightMargin) / pixelsPerInch);
+            const showNumber = isInch && inchNumber !== null && inchNumber >= 1 && inchNumber <= maxInch;
 
             return (
               <React.Fragment key={index}>

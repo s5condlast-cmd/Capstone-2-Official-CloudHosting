@@ -185,18 +185,11 @@ export function DocumentMenuBar({
   };
 
   const handleInsertLink = () => {
-    const url = window.prompt('Enter link URL:');
-    if (url) {
-      editor?.tf?.wrapNodes?.({
-        type: 'a',
-        url,
-        children: [],
-      });
-    }
+    window.dispatchEvent(new CustomEvent('editor-open-link-popover'));
   };
 
   const MENU_TRIGGER_CLASS =
-    'px-2 py-0.5 text-sm font-medium rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors focus:outline-none cursor-pointer text-zinc-800 dark:text-zinc-200 hover:text-zinc-950 dark:hover:text-white antialiased';
+    'px-2 py-0.5 text-sm font-medium rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-[color,background-color,transform] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 cursor-pointer text-zinc-800 dark:text-zinc-200 hover:text-zinc-950 dark:hover:text-white antialiased';
 
   return (
     <>
@@ -753,4 +746,3 @@ export function DocumentMenuBar({
     </>
   );
 }
-
