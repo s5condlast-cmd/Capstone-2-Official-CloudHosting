@@ -190,6 +190,13 @@ USING (
 );
 ```
 
+### Storage Providers & Cloud Backup Architecture
+
+1. **Supabase Storage (Active Primary)**: Handles live document uploads (`student_submissions`), supervisor-signed timesheets (`signed_dtrs`), and official institutional master templates (`templates`). Client-side IndexedDB (`CapstoneTemplateDB`) caches templates for instant offline preview.
+2. **Microsoft OneDrive via Graph API (Active Institutional Archival)**: Automatically archives approved student letters, notarized MOAs, and signed `.xlsx` timesheets into the university's Microsoft 365 cloud directory (`STI_Practicum_Archive`). See [OneDrive Integration Summary](ONEDRIVE_INTEGRATION_SUMMARY.md).
+3. **Cloudinary CDN (Preserved / Dormant in Comments)**: File upload routing through Cloudinary CDN (`resource_type: 'raw'`) was implemented and validated for `.pdf`, `.docx`, and `.xlsx` blob storage. The router (`backend/routes/cloudinary.ts`), configuration (`backend/config/cloudinaryConfig.ts`), and client methods (`src/lib/submissionStorage.ts`) are preserved in code comments for potential future multi-cloud CDN distribution without exposing client secrets to the browser.
+
+
 ---
 
 ## 4. Supabase Security & Database Advisor Guidelines
@@ -287,6 +294,7 @@ All methods are on the exported `submissionStorage` object in [`src/lib/submissi
 - [System Architecture Overview](ARCHITECTURE.md) — High-level architecture, client SPA, and serverless Express routes
 - [Document Workflows & Templates](DOCUMENT_WORKFLOWS.md) — 13-template inventory and dynamic generation pipeline
 - [04. AI Grammar & Document Audit](../features/04_AI_GRAMMAR_AUDIT.md) — Serverless AI review pipeline mechanics
-- [08. Auth, OTP & OneDrive Sync](../features/08_AUTH_AND_ONEDRIVE_SYNC.md) — Institutional security and Microsoft Graph backup
-- [Cloudinary Document Storage Integration](CLOUDINARY_INTEGRATION_SUMMARY.md) — Blob storage and CDN routing
+- [08. Authentication & Security](../features/08_AUTHENTICATION_AND_SECURITY.md) — Institutional security, two-step login, TOTP MFA, and RLS
+- [OneDrive Integration Summary](ONEDRIVE_INTEGRATION_SUMMARY.md) — Microsoft Graph institutional cloud archival
 - [Vercel Deployment Guide](DEPLOYMENT_AND_VERCEL.md) — Serverless API configuration and environment checklist
+

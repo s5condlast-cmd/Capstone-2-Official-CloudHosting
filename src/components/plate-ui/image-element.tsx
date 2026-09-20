@@ -18,15 +18,12 @@ export function ImageElement({
   const selected = useSelected();
   const focused = useFocused();
   const [showToolbar, setShowToolbar] = React.useState(false);
-  const [isCropping, setIsCropping] = React.useState(false);
 
   const align = (element as any)?.align || 'center';
-  const wrap: ImageWrapMode = (element as any)?.wrap || 'break';
+  const wrap: ImageWrapMode = (element as any)?.wrap || 'inline';
   const nodeWidth = Number((element as any)?.width) || 420;
-  const cropZoom = Number((element as any)?.cropZoom) || 100;
 
   const [width, setWidth] = React.useState<number>(nodeWidth);
-  const [zoom, setZoom] = React.useState<number>(cropZoom);
   const isResizingRef = React.useRef(false);
   const containerRef = React.useRef<HTMLDivElement>(null);
 
@@ -38,7 +35,7 @@ export function ImageElement({
 
   // Click outside to dismiss handles and toolbar
   React.useEffect(() => {
-    if (!showToolbar && !isCropping) return;
+    if (!showToolbar) return;
 
     const handleClickOutside = (e: MouseEvent) => {
       if (isResizingRef.current) return;
@@ -54,31 +51,17 @@ export function ImageElement({
         return;
       }
       setShowToolbar(false);
-      setIsCropping(false);
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [showToolbar, isCropping]);
+  }, [showToolbar]);
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     setShowToolbar(true);
-    try {
-      if (path && editor?.tf) {
-        editor.tf.select(path);
-      }
-    } catch {
-      // non-fatal
-    }
-  };
-
-  const handleDoubleClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setShowToolbar(true);
-    setIsCropping(true);
     try {
       if (path && editor?.tf) {
         editor.tf.select(path);
@@ -131,9 +114,9 @@ export function ImageElement({
       const deltaX = moveEvent.clientX - startX;
       let newW = startWidth;
       if (direction === 'e' || direction === 'se') {
-        newW = Math.max(120, Math.min(800, startWidth + deltaX));
+        newW = Math.max(120, Math.min(624, startWidth + deltaX));
       } else {
-        newW = Math.max(120, Math.min(800, startWidth - deltaX));
+        newW = Math.max(120, Math.min(624, startWidth - deltaX));
       }
       setWidth(Math.round(newW));
     };
@@ -155,18 +138,7 @@ export function ImageElement({
     window.addEventListener('mouseup', onMouseUp);
   };
 
-  const handleApplyCrop = () => {
-    setIsCropping(false);
-    try {
-      if (path && editor?.tf) {
-        editor.tf.setNodes({ cropZoom: zoom }, { at: path });
-      }
-    } catch {
-      // non-fatal
-    }
-  };
-
-  const isFocused = (selected && focused) || showToolbar || isCropping;
+  const isFocused = (selected && focused) || showToolbar;
 
   return (
     <BlockDraggable element={element} handleTopOffset="top-3">
@@ -175,11 +147,12 @@ export function ImageElement({
         element={element}
         className={cn(
           'relative my-4 w-full flex',
+          wrap === 'inline' && 'inline-flex',
           align === 'left' && 'justify-start',
           align === 'center' && 'justify-center',
           align === 'right' && 'justify-end',
-          wrap === 'wrap' && align === 'left' && 'float-left mr-4 clear-none',
-          wrap === 'wrap' && align === 'right' && 'float-right ml-4 clear-none',
+          wrap === 'wrap' && align === 'left' && 'float-left mr-4 clear-none w-auto inline-flex',
+          wrap === 'wrap' && align === 'right' && 'float-right ml-4 clear-none w-auto inline-flex',
           wrap === 'behind' && 'absolute opacity-75 pointer-events-auto',
           wrap === 'front' && 'relative z-20',
           className
@@ -190,28 +163,25 @@ export function ImageElement({
           ref={containerRef}
           contentEditable={false}
           onClick={handleClick}
-          onDoubleClick={handleDoubleClick}
-          style={{ width: `${width}px` }}
+          style={{ width: `${Math.min(624, width)}px`, maxWidth: '100%' }}
           className={cn(
             'relative group/image inline-block select-none cursor-pointer rounded-lg transition-shadow',
             isFocused && 'ring-2 ring-blue-500'
           )}
         >
-          {/* Floating Alignment, Wrap & Crop Toolbar */}
+          {/* Floating Alignment & Wrap Toolbar */}
           {isFocused && (
             <ImageFloatingToolbar
               align={align}
               wrap={wrap}
-              isCropping={isCropping}
               onAlignChange={handleAlignChange}
               onWrapChange={handleWrapChange}
-              onToggleCrop={() => setIsCropping((prev) => !prev)}
               onRemove={handleRemove}
             />
           )}
 
           {/* 8 Blue Resize Handles & Top Stem Handle (matching media_1789525299979.png) */}
-          {isFocused && !isCropping && (
+          {isFocused && (
             <>
               {/* Top Rotation Stem */}
               <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-0.5 h-4 bg-blue-500 pointer-events-none" />
@@ -249,50 +219,12 @@ export function ImageElement({
             </>
           )}
 
-          {/* Interactive Crop Framing Controls */}
-          {isCropping && (
-            <div
-              onClick={(e) => e.stopPropagation()}
-              onMouseDown={(e) => e.stopPropagation()}
-              className="absolute -bottom-12 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 px-3 py-1.5 bg-zinc-900/95 text-white rounded-lg shadow-xl text-xs backdrop-blur-xs"
-            >
-              <span className="font-semibold text-zinc-300">Crop Zoom:</span>
-              <button
-                type="button"
-                onClick={() => setZoom((z) => Math.max(100, z - 10))}
-                className="px-1.5 py-0.5 bg-zinc-800 hover:bg-zinc-700 rounded font-bold"
-              >
-                -
-              </button>
-              <span className="w-10 text-center font-mono">{zoom}%</span>
-              <button
-                type="button"
-                onClick={() => setZoom((z) => Math.min(250, z + 10))}
-                className="px-1.5 py-0.5 bg-zinc-800 hover:bg-zinc-700 rounded font-bold"
-              >
-                +
-              </button>
-              <button
-                type="button"
-                onClick={handleApplyCrop}
-                className="ml-2 px-2.5 py-1 bg-primary text-primary-foreground font-semibold rounded hover:opacity-90 cursor-pointer"
-              >
-                Done
-              </button>
-            </div>
-          )}
-
-          {/* Image Canvas with Cropping/Zoom */}
+          {/* Image Canvas */}
           <div className="overflow-hidden rounded-lg">
             <img
               src={(element as any)?.url}
               alt={(element as any)?.name || ''}
               draggable={false}
-              style={{
-                transform: zoom !== 100 ? `scale(${zoom / 100})` : undefined,
-                transformOrigin: 'center center',
-                transition: 'transform 0.1s ease-out',
-              }}
               className="block w-full max-h-[500px] border border-zinc-200 dark:border-zinc-800 shadow-xs object-cover pointer-events-auto"
             />
           </div>

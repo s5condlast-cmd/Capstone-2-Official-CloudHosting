@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
-import { Agentation } from 'agentation';
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { LandingPage } from './pages/public/LandingPage';
 import { ForgotPassword } from './pages/public/ForgotPassword';
@@ -23,6 +22,7 @@ import { StudentDashboard } from './pages/student/StudentDashboard';
 
 import { StudentDocumentRepository } from './pages/student/StudentDocumentRepository';
 import { StudentDocumentEditor } from './pages/student/StudentDocumentEditor';
+import { StudentReviewSession } from './pages/student/StudentReviewSession';
 import { ReviewDocs } from './pages/adviser/ReviewDocs';
 import { Endorsements } from './pages/adviser/Endorsements';
 import { ClassReports } from './pages/adviser/ClassReports';
@@ -44,6 +44,10 @@ import { WeeklyJournalReview } from './pages/supervisor/WeeklyJournalReview';
 import { InternshipCompletion } from './pages/supervisor/InternshipCompletion';
 
 import { Profile } from './pages/shared/Profile';
+import { StudentReviewCenterPage } from './pages/student/StudentReviewCenterPage';
+import { SupervisorReviewCenterPage } from './pages/supervisor/SupervisorReviewCenterPage';
+import { AdviserReviewCenterPage } from './pages/adviser/AdviserReviewCenterPage';
+import { AdminReviewCenterPage } from './pages/admin/AdminReviewCenterPage';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { User, Role } from './types';
 
@@ -60,6 +64,7 @@ const Placeholder = ({ name }: { name: string }) => (
 function AppRoutes() {
   const { user, loading, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     // Initialize Theme - Default to Monochrome (Black & White)
@@ -142,6 +147,8 @@ function AppRoutes() {
           <Route path="documents" element={<DocumentVerification />} />
           <Route path="documents/:id" element={<AdminReviewSession />} />
           <Route path="documents/:id/edit" element={<AdminDocumentEditor />} />
+          <Route path="reviews" element={<AdminReviewCenterPage />} />
+          <Route path="reviews/:id" element={<AdminReviewCenterPage />} />
           <Route path="templates" element={<Templates />} />
           <Route path="reports" element={<Reports />} />
           <Route path="settings" element={<Settings />} />
@@ -163,6 +170,8 @@ function AppRoutes() {
           <Route path="review" element={<ReviewDocs />} />
           <Route path="review/:id" element={<DocumentReviewSession />} />
           <Route path="review/:id/edit" element={<AdviserDocumentEditor />} />
+          <Route path="reviews" element={<AdviserReviewCenterPage />} />
+          <Route path="reviews/:id" element={<AdviserReviewCenterPage />} />
           <Route path="evaluations" element={<CompanyEvaluations />} />
           <Route path="comparison" element={<AdviserComparison />} />
           <Route path="class-reports" element={<ClassReports />} />
@@ -189,6 +198,10 @@ function AppRoutes() {
           <Route path="evaluation" element={<Navigate to="/student/documents" replace />} />
           <Route path="completion" element={<Navigate to="/student/documents" replace />} />
           <Route path="documents" element={<StudentDocumentRepository />} />
+          <Route path="documents/:id" element={<StudentReviewSession />} />
+          <Route path="review/:id" element={<StudentReviewSession />} />
+          <Route path="reviews" element={<StudentReviewCenterPage />} />
+          <Route path="reviews/:id" element={<StudentReviewCenterPage />} />
           <Route path="editor" element={<StudentDocumentEditor />} />
           <Route path="progress" element={<Placeholder name="Progress Tracker" />} />
           <Route path="calendar" element={<CalendarPage user={user} />} />
@@ -206,6 +219,8 @@ function AppRoutes() {
           <Route path="interns" element={<MyInterns />} />
           <Route path="dtr" element={<DTRApproval />} />
           <Route path="journal" element={<WeeklyJournalReview />} />
+          <Route path="reviews" element={<SupervisorReviewCenterPage />} />
+          <Route path="reviews/:id" element={<SupervisorReviewCenterPage />} />
           <Route path="completion" element={<InternshipCompletion />} />
           <Route path="calendar" element={<CalendarPage user={user} />} />
           <Route path="notifications" element={<Notifications user={user} />} />
@@ -214,8 +229,6 @@ function AppRoutes() {
 
         <Route path="*" element={<Navigate to={user ? `/${user.role}` : "/"} replace />} />
       </Routes>
-      {/* @ts-ignore */}
-      {import.meta.env.DEV && <Agentation />}
     </>
   );
 }

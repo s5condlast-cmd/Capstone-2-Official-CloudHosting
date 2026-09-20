@@ -17,16 +17,9 @@ All routes are defined in [`src/App.tsx`](../../src/App.tsx).
 | Route | Main Component | Description | Key Subcomponents / Utilities |
 | :--- | :--- | :--- | :--- |
 | `/student` | [`StudentDashboard.tsx`](../../src/pages/student/StudentDashboard.tsx) | Student homepage, checklist hero card, placement progress, compact sidebar | `Card.tsx`, `Badge.tsx`, `dialog.tsx` |
-| `/student/application-letter` | [`StudentApplicationLetter.tsx`](../../src/pages/student/StudentApplicationLetter.tsx) | Before OJT application letter submission & preview | `StudentDocumentPage.tsx`, `DocumentWorkflow.tsx` |
-| `/student/consent` | [`ParentConsentForm.tsx`](../../src/pages/student/LetterOfConsent.tsx) | Parent/student consent form (with/without fee) | `StudentDocumentPage.tsx`, `DocumentWorkflow.tsx` |
-| `/student/moa` | [`MOATemplate.tsx`](../../src/pages/student/MemorandumOfAgreement.tsx) | Memorandum of Agreement workflow | `StudentDocumentPage.tsx`, `DocumentWorkflow.tsx` |
-| `/student/endorsement` | [`EndorsementLetter.tsx`](../../src/pages/student/STIOJTEndorsementLetter.tsx) | Endorsement letter upload & status | `StudentDocumentPage.tsx`, `DocumentWorkflow.tsx` |
-| `/student/proposal` | [`ProposalLetterToTheIndustry.tsx`](../../src/pages/student/ProposalLetterToTheIndustry.tsx) | Industry proposal letter workflow | `StudentDocumentPage.tsx`, `DocumentWorkflow.tsx` |
-| `/student/journal` | [`WeeklyJournal.tsx`](../../src/pages/student/WeeklyJournal.tsx) | Weekly OJT journal submission & AI grammar feedback | `AiAssistantPanel.tsx`, `submissionStorage.ts` |
-| `/student/dtr` | [`DailyTimeRecord.tsx`](../../src/pages/student/DTR.tsx) | Time tracking, daily punch logs, rendered hours | `excelGenerator.ts`, `submissionStorage.ts` |
-| `/student/training-plan` | [`TrainingPlanForm.tsx`](../../src/pages/student/OJTTrainingPlan.tsx) | Training plan submission & company task schedule | `StudentDocumentPage.tsx` |
-| `/student/evaluation` | [`PerformanceAppraisal.tsx`](../../src/pages/student/PerformanceAppraisal.tsx) | Supervisor performance appraisal review | `StudentDocumentPage.tsx` |
-| `/student/completion` | [`IntegrationPaper.tsx`](../../src/pages/student/IntegrationPaper.tsx) | Final integration paper submission & clearance sign-off | `StudentDocumentPage.tsx` |
+| `/student/documents` | [`StudentDocumentRepository.tsx`](../../src/pages/student/StudentDocumentRepository.tsx) | Centralized document repository, phase filters (Before/In/Finals), submission statuses | `Card.tsx`, `Badge.tsx`, `submissionStorage.ts` |
+| `/student/editor` | [`StudentDocumentEditor.tsx`](../../src/pages/student/StudentDocumentEditor.tsx) | Rich document editor for official templates, autosave, version snapshots, Word/PDF export | `plate-editor.tsx`, `fixed-toolbar.tsx`, `docxSerializer.ts` |
+| `/student/generative` | [`StudentGenerativeUI.tsx`](../../src/pages/student/StudentGenerativeUI.tsx) | AI-assisted generative interface for practicum guidance | `AiAssistantPanel.tsx` |
 
 #### B. Adviser Portal (`/adviser/*`)
 
@@ -290,5 +283,5 @@ When troubleshooting an issue, follow this 3-step diagnostic sequence:
 * [Backend & Database Architecture](BACKEND_AND_DATABASE.md) — Supabase schemas and RLS policies
 * [Document Workflows & Template Generation](DOCUMENT_WORKFLOWS.md) — 13-template inventory and DOCX pipeline
 * [Feature Guides Index](../features/README.md) — Visual dataflow documentation for all 8 core features
-* [Vercel Deployment Guide](DEPLOYMENT_AND_VERCEL.md) — Serverless backend compatibility
-* [Cloudinary Document Storage Integration](CLOUDINARY_INTEGRATION_SUMMARY.md) — Cloud document storage and CDN
+* [OneDrive Integration Summary](ONEDRIVE_INTEGRATION_SUMMARY.md) — Microsoft Graph institutional cloud archival
+

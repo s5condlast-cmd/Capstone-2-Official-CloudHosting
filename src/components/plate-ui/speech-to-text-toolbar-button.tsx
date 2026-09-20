@@ -92,7 +92,7 @@ export function SpeechToTextToolbarButton() {
       {isListening && (
         <div
           className={cn(
-            'fixed bottom-8 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-4 py-2 rounded-full',
+            'fixed bottom-8 left-1/2 -translate-x-1/2 z-[120] flex items-center gap-3 px-4 py-2 rounded-full',
             'bg-zinc-900/95 dark:bg-zinc-100/95 text-white dark:text-zinc-900 shadow-2xl backdrop-blur-md',
             'border border-zinc-700/50 dark:border-zinc-300/50 select-none animate-in fade-in slide-in-from-bottom-4 duration-150'
           )}

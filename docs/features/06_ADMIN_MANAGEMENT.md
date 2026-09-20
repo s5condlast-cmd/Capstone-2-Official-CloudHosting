@@ -92,7 +92,7 @@ The final institutional gate before a student receives academic practicum credit
 
 1. **No Dropdowns for Actions**: Never hide upload/download buttons behind dropdown menus on template cards. Maintain the explicit 4-button grid.
 2. **Synchronized Sizing**: All template cards must maintain identical height, grid padding, and button alignment regardless of title length.
-3. **Template Storage Bucket**: All files are stored under Cloudinary (`practicum/templates`) and the Supabase `templates` storage bucket with public read access for authenticated students.
+3. **Template Storage Bucket**: All master template files are stored in the Supabase `templates` storage bucket, with client-side IndexedDB caching for instant in-browser previews.
 
 ---
 
@@ -101,4 +101,5 @@ The final institutional gate before a student receives academic practicum credit
 - [02. Digital Document Generation Pipeline](02_DOCUMENT_PIPELINE.md) — 13-template pipeline and dynamic generation
 - [Document Workflows Architecture](../architecture/DOCUMENT_WORKFLOWS.md) — Official OJT template inventory
 - [Backend & Database Architecture](../architecture/BACKEND_AND_DATABASE.md) — `template_metadata` table and storage policies
-- [Cloudinary Document Storage Integration](../architecture/CLOUDINARY_INTEGRATION_SUMMARY.md) — CDN media storage and master template assets
+- [OneDrive Integration Summary](../architecture/ONEDRIVE_INTEGRATION_SUMMARY.md) — Institutional Microsoft OneDrive cloud archival
+

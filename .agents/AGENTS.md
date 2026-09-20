@@ -375,3 +375,24 @@ When creating temporary files, scratch scripts, mock data, or test outputs in `t
 2. **Zero Lingering Artifacts**: Never leave one-off test files (e.g. `tmp/test-*.js`, `tmp/*.json`, dummy uploads) sitting in the project tree.
 3. **Pristine Git Working Tree**: Before completing a turn or reporting results to the user, ensure that temporary testing files do not appear in `git status` as untracked files.
 
+## System Design Conditions & Brand Standards
+
+All future user interface modifications must strictly adhere to the project's official design system conditions (defined in `.agents/skills/system-conditions/SKILL.md` and `docs/SYSTEM_DESIGN_CONDITIONS.md`):
+
+1. **Brand Colors**:
+   - **Electric Blue** (`#2563eb`): Used strictly for logo, links, key metric highlights, active states, and icon accents. Never apply as a large background fill.
+   - **Deep Sapphire** (`#1e40af`): Reserved for exactly one high-emphasis primary action per surface. Never use it decoratively.
+2. **Neutrals & Container Elevation**:
+   - Containers and cards rely on a **1px solid border (`#e5e5e5` / Ash)** as the default boundary line. Heavy drop shadows are strictly forbidden.
+   - Body text must never use pure black (`#000000`). Always use `#171717` (Charcoal) or `#0a0a0a` (Midnight Ink) for softer, readable contrast.
+   - Secondary button and container outlines use `#d4d4d4` (Smoke), and alt surfaces use `#f5f5f5` (Paper Mist).
+3. **Typography**:
+   - **Display Headings**: **Satoshi** weight `500` (sizes 36px, 40px, 48px; line-height 1.0–1.11, letter-spacing normal, fallback Inter 500 `-0.02em`). Strictly reserved for 36px+ headlines; never use Satoshi at body sizes.
+   - **Body & UI**: **Inter** (Weight 400 default body, 500 emphasis/buttons, 600 important UI labels; canonical body 16px / line-height 1.5, dense data 14px, micro-labels 11–12px).
+   - **Code**: **Geist Mono** (Weight 400, 500; sizes 12px, 14px, 24px).
+4. **Border Radii Vocabulary**:
+   - Strict radii: `6px` (inputs), `8px` (buttons), `12px` (cards), `16px` (large cards/modals), `9999px` (pills, tags, badges). Ad-hoc radii outside this vocabulary are forbidden.
+5. **Single Reusable Draft Rule**:
+   - When editing or saving any document (from templates or blank documents), the system must query for and update the single existing active draft rather than generating duplicate draft records.
+
+

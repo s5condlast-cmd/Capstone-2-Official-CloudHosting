@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card } from '@/src/components/ui/Card';
 import { Badge } from '@/src/components/ui/Badge';
 import { Button } from '@/src/components/ui/Button';
@@ -13,6 +14,7 @@ import {
   X,
   Info,
   UserCheck,
+  Eye,
   Users,
   ChevronDown,
   Cloud,
@@ -192,6 +194,7 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
   headerAction,
   showOneDriveCard = true
 }) => {
+  const navigate = useNavigate();
   const [isUrgent, setIsUrgent] = useState(false);
   const [selectedTemplateIndex, setSelectedTemplateIndex] = useState(0);
   const [activeModal, setActiveModal] = useState<{ title: string; description: string } | null>(null);
@@ -691,6 +694,17 @@ export const StudentDocumentPage: React.FC<StudentDocumentPageProps> = ({
               {currentStatus === 'Returned' && (
                 <Button variant="primary" className="w-full h-8 text-[11px] font-bold justify-center" icon={<FileUp size={14} />}>
                   Upload Revised File
+                </Button>
+              )}
+
+              {dbDoc?.id && (
+                <Button
+                  variant="outline"
+                  className="w-full h-8 text-[11px] font-bold justify-center"
+                  icon={<Eye size={13} />}
+                  onClick={() => navigate(`/student/review/${dbDoc.id}`)}
+                >
+                  Open Full Review & Comments ↗
                 </Button>
               )}
             </div>

@@ -6,10 +6,10 @@
 | --- | --- |
 | [Architecture overview](ARCHITECTURE.md) | System boundaries, frontend, backend, and service topology |
 | [System map](SYSTEM_MAP.md) | Routes, components, services, and quick code location |
-| [Backend and database](BACKEND_AND_DATABASE.md) | Express APIs, Supabase schema, RLS, storage, and AI services |
+| [Backend and database](BACKEND_AND_DATABASE.md) | Express APIs, Supabase schema, RLS, storage providers, and AI services |
 | [Document workflows](DOCUMENT_WORKFLOWS.md) | Template lifecycle, generation, review, and submission |
-| [Deployment and Vercel](DEPLOYMENT_AND_VERCEL.md) | Environment setup, deployment, and troubleshooting |
-| [OneDrive integration](ONEDRIVE_INTEGRATION_SUMMARY.md) | Microsoft Graph authorization, folders, and archival |
-| [Cloudinary integration](CLOUDINARY_INTEGRATION_SUMMARY.md) | Media storage design and preserved integration notes |
+| [Deployment and Vercel](DEPLOYMENT_AND_VERCEL.md) | Environment setup, serverless config, and troubleshooting |
+| [OneDrive integration](ONEDRIVE_INTEGRATION_SUMMARY.md) | Microsoft Graph authorization, token rotation, folder hierarchy, and archival |
 
-Suggested reading order for a new developer: Architecture overview → System map → the relevant integration or workflow guide.
+Suggested reading order for a new developer: Architecture overview → System map → Backend & database → specific feature/workflow guide.
+

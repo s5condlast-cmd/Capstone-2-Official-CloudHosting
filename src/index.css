@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+@import url('https://api.fontshare.com/v2/css?f[]=satoshi@500,700&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
@@ -10,13 +11,24 @@
 
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Satoshi", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
   --radius-xl: 1rem;
   --radius-2xl: 1.5rem;
+
+  /* System Conditions Radii */
+  --radius-input: 6px;
+  --radius-btn: 8px;
+  --radius-card: 12px;
+  --radius-card-lg: 16px;
+  --radius-pill: 9999px;
 
   /* Theme Variables */
   --color-primary: var(--theme-primary);
   --color-primary-hover: var(--theme-primary-hover);
   --color-primary-fg: var(--theme-primary-fg);
+  --color-accent-on-paper: var(--theme-accent-on-paper);
 
   /* Deep Sky & Warm Amber Palette */
   --color-sky-blue: #3B82C4;
@@ -24,6 +36,28 @@
   --color-warm-amber: #E8A33D;
   --color-warm-amber-hover: #D4902A;
   --color-soft-slate: #4B5563;
+
+  /* System Conditions Brand & Accent Tokens */
+  --color-electric-blue: #2563eb;
+  --color-deep-sapphire: #1e40af;
+  --color-soft-mint: #dcfce7;
+  --color-vivid-green: #16a34a;
+  --color-tangerine: #ea580c;
+  --color-lavender: #7c3aed;
+
+  /* System Conditions Neutrals */
+  --color-midnight-ink: #0a0a0a;
+  --color-charcoal: #171717;
+  --color-graphite: #262626;
+  --color-slate-neutral: #404040;
+  --color-steel: #525252;
+  --color-fog: #737373;
+  --color-silver: #a3a3a3;
+  --color-pebble: #c8c8c8;
+  --color-smoke: #d4d4d4;
+  --color-ash: #e5e5e5;
+  --color-paper-mist: #f5f5f5;
+  --color-canvas-white: #ffffff;
 }
 
 @layer base {
@@ -32,6 +66,7 @@
     --theme-primary: #09090b;
     --theme-primary-hover: #27272a;
     --theme-primary-fg: #ffffff;
+    --theme-accent-on-paper: var(--theme-primary);
   }
 
   .dark {
@@ -40,6 +75,7 @@
     --theme-primary: #f4f4f5;
     --theme-primary-hover: #e4e4e7;
     --theme-primary-fg: #09090b;
+    --theme-accent-on-paper: #18181b;
   }
 
   /* Shared Text Color for Colored Themes (always white foreground) */
@@ -54,6 +90,7 @@
   .dark.theme-cyan,
   .dark.theme-deep-sky {
     --theme-primary-fg: #ffffff;
+    --theme-accent-on-paper: var(--theme-primary);
   }
 
   /* Deep Sky Blue (Primary + Warm Amber Accent + Soft Slate) */
@@ -181,21 +218,102 @@
     box-shadow: 0 12px 24px -4px rgba(0, 0, 0, 0.08), 0 8px 16px -4px rgba(0, 0, 0, 0.04);
   }
 
+  /* Global Sleek Modern Scrollbar (Inside Containers - No Arrow Buttons) */
+  ::-webkit-scrollbar,
+  .editor-scrollbar::-webkit-scrollbar,
   .custom-scrollbar::-webkit-scrollbar {
-    width: 4px;
-    height: 4px;
+    width: 8px;
+    height: 8px;
   }
 
+  ::-webkit-scrollbar-track,
+  .editor-scrollbar::-webkit-scrollbar-track,
   .custom-scrollbar::-webkit-scrollbar-track {
     background: transparent;
   }
 
+  ::-webkit-scrollbar-thumb,
+  .editor-scrollbar::-webkit-scrollbar-thumb,
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    @apply bg-zinc-200 rounded-full;
+    background-color: rgba(161, 161, 170, 0.45);
+    border-radius: 9999px;
   }
 
+  ::-webkit-scrollbar-thumb:hover,
+  .editor-scrollbar::-webkit-scrollbar-thumb:hover,
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    @apply bg-zinc-300;
+    background-color: rgba(113, 113, 122, 0.75);
+  }
+
+  .dark ::-webkit-scrollbar-thumb,
+  .dark .editor-scrollbar::-webkit-scrollbar-thumb,
+  .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgba(161, 161, 170, 0.35);
+  }
+
+  .dark ::-webkit-scrollbar-thumb:hover,
+  .dark .editor-scrollbar::-webkit-scrollbar-thumb:hover,
+  .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(212, 212, 216, 0.65);
+  }
+
+  ::-webkit-scrollbar-button,
+  .editor-scrollbar::-webkit-scrollbar-button,
+  .custom-scrollbar::-webkit-scrollbar-button {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
+
+  @supports not selector(::-webkit-scrollbar) {
+    *,
+    .editor-scrollbar,
+    .custom-scrollbar {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(161, 161, 170, 0.45) transparent;
+    }
+
+    .dark *,
+    .dark .editor-scrollbar,
+    .dark .custom-scrollbar {
+      scrollbar-color: rgba(161, 161, 170, 0.35) transparent;
+    }
+  }
+
+  /* Authenticated Portal: Keep scroll inside container, never on outer browser window */
+  body:has([data-slot="sidebar-inset"]) {
+    overflow: hidden !important;
+    height: 100vh !important;
+  }
+
+  /* Fullscreen & Editor Page Single Scrollbar Enforcement (Disables any outer layout/page scrollbars) */
+  html:has([data-editor-fullscreen="true"]),
+  body:has([data-editor-fullscreen="true"]),
+  html:has([data-editor-page="true"]),
+  body:has([data-editor-page="true"]) {
+    overflow: hidden !important;
+  }
+
+  body:has([data-editor-fullscreen="true"]) .overflow-y-auto:not(.editor-scrollbar),
+  body:has([data-editor-page="true"]) .overflow-y-auto:not(.editor-scrollbar) {
+    overflow-y: hidden !important;
+  }
+
+  /* Fullscreen Document Editor: Hide sidebar completely (never seen or open in fullscreen) */
+  body[data-editor-fullscreen="true"] [data-slot="sidebar"],
+  body[data-editor-fullscreen="true"] [data-slot="sidebar-gap"],
+  body[data-editor-fullscreen="true"] [data-slot="sidebar-container"],
+  body[data-editor-fullscreen="true"] [data-slot="sidebar-fullscreen-backdrop"],
+  body[data-editor-fullscreen="true"] [data-slot="sidebar-rail"],
+  body[data-editor-fullscreen="true"] [data-slot="sheet-overlay"],
+  body[data-editor-fullscreen="true"] [data-slot="sheet-content"],
+  body[data-editor-fullscreen="true"] header:not([data-document-header="true"]) {
+    display: none !important;
+    pointer-events: none !important;
+  }
+
+  body[data-editor-fullscreen="true"] header[data-document-header="true"] {
+    display: flex !important;
   }
 
   .h-13 {

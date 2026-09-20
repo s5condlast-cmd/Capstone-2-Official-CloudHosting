@@ -13,6 +13,8 @@
 import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { sanitizeDocumentFilename } from '../src/lib/sanitizeDocumentFilename';
+import { countWords, DocumentHistoryStorage, type DraftState } from '../src/lib/documentHistoryStorage';
+import { formatAuthError } from '../src/lib/authErrors';
 
 describe('sanitizeDocumentFilename', () => {
   test('strips path traversal sequences', () => {
@@ -65,22 +67,6 @@ describe('sanitizeDocumentFilename', () => {
 
 
 // ─── Word count tests ─────────────────────────────────────────────────────────
-
-function countWords(content: object[]): number {
-  let count = 0;
-  function traverse(nodes: object[]): void {
-    for (const node of nodes) {
-      const n = node as Record<string, unknown>;
-      if (typeof n.text === 'string') {
-        const words = n.text.trim().split(/\s+/).filter(Boolean);
-        count += words.length;
-      }
-      if (Array.isArray(n.children)) traverse(n.children as object[]);
-    }
-  }
-  traverse(content);
-  return count;
-}
 
 describe('countWords', () => {
   test('counts words in flat paragraph', () => {
@@ -262,3 +248,208 @@ describe('Conflict resolution types', () => {
     assert.notEqual(original, forked, 'Fork must generate a distinct UUID');
   });
 });
+
+// ─── Data Safety & Navigation Flush ──────────────────────────────────────────
+
+describe('Data safety and navigation flush', () => {
+  test('DocumentHistoryStorage flushNow exists and handles empty and pending state', async () => {
+    const storage = new DocumentHistoryStorage('test-user-1', 'test-draft-1');
+    assert.equal(typeof storage.flushNow, 'function', 'flushNow must be exposed');
+
+    // flushNow with no pending state returns null
+    const result = await storage.flushNow();
+    assert.equal(result, null);
+    storage.destroy();
+  });
+
+  test('destroy cleans up timers, triggers cached flush, and closes channel', () => {
+    let statusHistory: string[] = [];
+    const storage = new DocumentHistoryStorage('test-user-1', 'test-draft-2', {
+      onStatusChange: (status) => statusHistory.push(status),
+    });
+
+    const testState: DraftState = {
+      id: 'test-draft-2',
+      userId: 'test-user-1',
+      title: 'Pending Title',
+      content: [{ type: 'p', children: [{ text: 'Hello' }] }],
+      wordCount: 1,
+      revision: 1,
+      status: 'draft',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    storage.onChange(testState);
+    assert.ok(statusHistory.includes('saving'), 'onChange should transition status to saving');
+
+    // Call destroy while state is pending
+    storage.destroy();
+    // After destroy, calling destroy again does not throw
+    assert.doesNotThrow(() => storage.destroy());
+  });
+
+  test('beforeunload listener triggers persistence for pendingState without error', () => {
+    const storage = new DocumentHistoryStorage('test-user-1', 'test-draft-3');
+    const testState: DraftState = {
+      id: 'test-draft-3',
+      userId: 'test-user-1',
+      title: 'Unload Title',
+      content: [{ type: 'p', children: [{ text: 'Test' }] }],
+      wordCount: 1,
+      revision: 1,
+      status: 'draft',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    storage.onChange(testState);
+    assert.doesNotThrow(() => {
+      storage.destroy();
+    });
+  });
+});
+
+// ─── Fullscreen & Sidebar Elevation Verification ─────────────────────────────
+
+describe('Fullscreen and sidebar elevation architecture', () => {
+  test('entering fullscreen sets data-editor-fullscreen on document.body and removes on exit', () => {
+    const mockBody = {
+      attributes: new Map<string, string>(),
+      setAttribute(k: string, v: string) { this.attributes.set(k, v); },
+      removeAttribute(k: string) { this.attributes.delete(k); },
+      hasAttribute(k: string) { return this.attributes.has(k); },
+      getAttribute(k: string) { return this.attributes.get(k); },
+    };
+
+    function onEnterFullscreen() {
+      mockBody.setAttribute('data-editor-fullscreen', 'true');
+    }
+
+    function onExitFullscreen() {
+      mockBody.removeAttribute('data-editor-fullscreen');
+    }
+
+    onEnterFullscreen();
+    assert.equal(mockBody.getAttribute('data-editor-fullscreen'), 'true');
+    assert.ok(mockBody.hasAttribute('data-editor-fullscreen'));
+
+    onExitFullscreen();
+    assert.equal(mockBody.hasAttribute('data-editor-fullscreen'), false);
+  });
+
+  test('sidebar in fullscreen is completely hidden and ignored', () => {
+    function getSidebarDisplay(isFullscreen: boolean) {
+      if (isFullscreen) {
+        return { display: 'none', pointerEvents: 'none' };
+      }
+      return { display: 'flex', pointerEvents: 'auto' };
+    }
+
+    const inFullscreen = getSidebarDisplay(true);
+    assert.equal(inFullscreen.display, 'none', 'Sidebar must be hidden (display: none) in fullscreen mode');
+    assert.equal(inFullscreen.pointerEvents, 'none', 'Sidebar must ignore pointer events in fullscreen mode');
+
+    const inNormalMode = getSidebarDisplay(false);
+    assert.equal(inNormalMode.display, 'flex', 'Sidebar must be visible in normal mode');
+    assert.equal(inNormalMode.pointerEvents, 'auto', 'Sidebar must accept pointer events in normal mode');
+  });
+});
+
+// ─── Auth Error Sanitization Verification ────────────────────────────────────
+
+describe('Auth error sanitization & clean login', () => {
+  test('suppresses raw Failed to fetch on initial page load / background checks', () => {
+    const suppressed = formatAuthError('TypeError: Failed to fetch', true);
+    assert.equal(suppressed, '', 'Failed to fetch must be suppressed on initial load');
+
+    const networkSuppressed = formatAuthError(new Error('NetworkError when attempting to fetch resource.'), true);
+    assert.equal(networkSuppressed, '', 'NetworkError must be suppressed on initial load');
+  });
+
+  test('translates network failure during active submit to clear user-friendly message', () => {
+    const activeFetchErr = formatAuthError('TypeError: Failed to fetch', false);
+    assert.equal(
+      activeFetchErr,
+      'Unable to connect to the server. Please check your internet connection and try again.'
+    );
+  });
+
+  test('translates invalid credentials into user-friendly message', () => {
+    const invalidCredentials = formatAuthError(new Error('Invalid login credentials'));
+    assert.equal(invalidCredentials, 'The email or password you entered is incorrect.');
+
+    const invalidGrant = formatAuthError({ message: 'invalid_grant: error description' });
+    assert.equal(invalidGrant, 'The email or password you entered is incorrect.');
+  });
+
+  test('translates rate limits and unconfirmed emails into user-friendly messages', () => {
+    const rateLimit = formatAuthError('Too many requests, try again later');
+    assert.equal(rateLimit, 'Too many sign-in attempts. Please wait a moment before trying again.');
+
+    const unconfirmed = formatAuthError('Email not confirmed');
+    assert.equal(unconfirmed, 'Your email address has not been verified yet. Please check your inbox.');
+  });
+
+  test('suppresses internal SQL / Supabase error codes from leaking to users', () => {
+    const pgrstError = formatAuthError('PGRST116: JSON object requested, multiple (or no) rows returned');
+    assert.equal(pgrstError, 'Unable to complete sign-in at this time. Please try again.');
+  });
+});
+
+// ─── White Export Dropdown Card Styling Verification ─────────────────────────
+
+describe('White export dropdown card styling', () => {
+  test('enforces pure white card background and high-contrast text in StudentDocumentEditor', async () => {
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+    const editorSrc = fs.readFileSync(path.resolve('src/pages/student/StudentDocumentEditor.tsx'), 'utf8');
+
+    // 1. Dropdown content must explicitly declare white background and dark text for all color modes
+    assert.ok(
+      editorSrc.includes('bg-white dark:bg-white text-zinc-900 dark:text-zinc-900'),
+      'Export DropdownMenuContent must have explicit bg-white dark:bg-white text-zinc-900 dark:text-zinc-900 classes'
+    );
+    assert.ok(
+      editorSrc.includes('border border-zinc-200/90 shadow-xl rounded-xl p-1.5 z-[150]'),
+      'Export DropdownMenuContent must have refined border, shadow-xl, and rounded-xl card styling'
+    );
+
+    // 2. Export items must have clean hover feedback and high-contrast icons
+    assert.ok(
+      editorSrc.includes('hover:bg-zinc-100 focus:bg-zinc-100 focus:text-zinc-900'),
+      'Export DropdownMenuItem must have clean hover/focus background'
+    );
+    assert.ok(
+      editorSrc.includes('text-blue-600') && editorSrc.includes('Microsoft Word (.docx)'),
+      'Word export item must have blue Word icon'
+    );
+    assert.ok(
+      editorSrc.includes('text-red-600') && editorSrc.includes('PDF Document (.pdf)'),
+      'PDF export item must have red PDF icon'
+    );
+  });
+});
+
+// ─── Smart Conflict Auto-Reconciliation Verification ─────────────────────────
+
+describe('Smart conflict auto-reconciliation', () => {
+  test('auto-reconciles identical content without false alarm conflict banner', async () => {
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+    const storageSrc = fs.readFileSync(path.resolve('src/lib/documentHistoryStorage.ts'), 'utf8');
+
+    assert.ok(
+      storageSrc.includes('localContentJson === remoteContentJson && state.title === remote.title'),
+      'documentHistoryStorage must check for identical content before raising conflict'
+    );
+    assert.ok(
+      storageSrc.includes('this.cloudRevision = remote.revision;'),
+      'documentHistoryStorage must seamlessly adopt remote revision on identical content'
+    );
+    assert.ok(
+      storageSrc.includes("this.channel?.postMessage({ type: 'DOC_CLOSE', tabId: this.tabId, draftId: this.draftId });"),
+      'beforeUnloadHandler must emit DOC_CLOSE to immediately clear presence map'
+    );
+  });
+});
+

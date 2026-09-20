@@ -35,7 +35,7 @@ export const documentGenerator = {
       };
 
       const docTitle = title || '';
-      const isApplicationLetter = docTitle.toLowerCase().includes('application') || !docTitle.toLowerCase().includes('endorsement');
+      const isApplicationLetter = docTitle.toLowerCase().includes('application letter');
 
       // Helper to fetch typed non-empty values from allData
       const getVal = (key: string, synonyms: string[] = []): string => {

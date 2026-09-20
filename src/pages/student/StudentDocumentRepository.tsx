@@ -8,12 +8,12 @@
  * - Draft actions: Resume, Export Word, Export PDF, Soft Delete + 10s undo
  * - Template actions: Download DOCX, Download PDF, Edit in Editor
  */
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   FileText, Download, Edit3, Trash2, RotateCcw,
   Plus, RefreshCw, AlertCircle, Loader2, FolderOpen,
-  FilePlus2, Clock, CheckCircle, Lock
+  FilePlus2, Clock, CheckCircle, Lock, Eye
 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import { toast } from 'sonner';
@@ -59,9 +59,16 @@ const PHASES: { key: Phase; label: string }[] = [
 
 export function StudentDocumentRepository() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const phaseQuery = searchParams.get('phase') as Phase | null;
   const { user } = useAuth();
 
-  const [activePhase, setActivePhase] = useState<Phase>('before_ojt');
+  const [activePhase, setActivePhase] = useState<Phase>(() => {
+    if (phaseQuery === 'before_ojt' || phaseQuery === 'in_ojt' || phaseQuery === 'final') {
+      return phaseQuery;
+    }
+    return 'before_ojt';
+  });
   const [drafts, setDrafts] = useState<DraftRow[]>([]);
   const [loadingDrafts, setLoadingDrafts] = useState(true);
   const [loadingProfile, setLoadingProfile] = useState(true);
@@ -70,6 +77,13 @@ export function StudentDocumentRepository() {
 
   // Undo-delete state
   const [pendingDelete, setPendingDelete] = useState<{ draft: DraftRow; timeoutId: ReturnType<typeof setTimeout> } | null>(null);
+
+  // Sync activePhase if searchParam changes
+  useEffect(() => {
+    if (phaseQuery === 'before_ojt' || phaseQuery === 'in_ojt' || phaseQuery === 'final') {
+      setActivePhase(phaseQuery);
+    }
+  }, [phaseQuery]);
 
   // ── Load profile phase ──────────────────────────────────────────────────
   useEffect(() => {
@@ -82,15 +96,17 @@ export function StudentDocumentRepository() {
           .select('practicum_phase')
           .eq('id', user.id)
           .single();
-        const phase = (data?.practicum_phase as Phase | null) ?? 'before_ojt';
-        setActivePhase(phase);
+        if (!phaseQuery) {
+          const phase = (data?.practicum_phase as Phase | null) ?? 'before_ojt';
+          setActivePhase(phase);
+        }
       } catch {
-        setActivePhase('before_ojt');
+        if (!phaseQuery) setActivePhase('before_ojt');
       } finally {
         setLoadingProfile(false);
       }
     })();
-  }, [user?.id]);
+  }, [user?.id, phaseQuery]);
 
   // ── Load drafts from Supabase ───────────────────────────────────────────
   const loadDrafts = useCallback(async () => {
@@ -118,13 +134,23 @@ export function StudentDocumentRepository() {
 
   useEffect(() => { void loadDrafts(); }, [loadDrafts]);
 
-  // ── Create new draft from template ─────────────────────────────────────
+  // ── Create or resume draft from template ───────────────────────────────
   const handleCreateFromTemplate = useCallback(
     async (template: EditorTemplate) => {
       if (!user?.id) return;
 
       if (!template.editable && template.redirectTo) {
         navigate(template.redirectTo);
+        return;
+      }
+
+      // Re-use single active draft if it already exists for this template
+      const existingDraft = drafts.find(d =>
+        (d.template_id === template.id || d.template_name === template.name) &&
+        d.status !== 'locked'
+      );
+      if (existingDraft) {
+        navigate(`/student/editor?draft=${existingDraft.id}`);
         return;
       }
 
@@ -146,7 +172,7 @@ export function StudentDocumentRepository() {
         toast.error(e instanceof Error ? e.message : 'Could not create document. Please retry.');
       }
     },
-    [navigate, user?.id]
+    [drafts, navigate, user?.id]
   );
 
   // ── Download template file ──────────────────────────────────────────────
@@ -235,48 +261,86 @@ export function StudentDocumentRepository() {
     []
   );
 
-  // ── Derived data ────────────────────────────────────────────────────────
+  // ── Open or resume blank document ──────────────────────────────────────
+  const handleOpenBlankDocument = useCallback(async () => {
+    if (!user?.id) return;
+
+    // Check if an existing unsubmitted blank draft exists
+    const existingBlank = drafts.find(d => !d.template_id && d.status !== 'locked');
+    if (existingBlank) {
+      navigate(`/student/editor?draft=${existingBlank.id}`);
+      return;
+    }
+
+    const draftId = crypto.randomUUID();
+    try {
+      const { error } = await supabase.rpc('create_editor_draft', {
+        p_id: draftId,
+        p_title: 'Untitled Document',
+        p_template_id: null,
+        p_template_name: null,
+        p_phase: null,
+        p_content: [{ type: 'p', children: [{ text: '' }] }],
+        p_word_count: 0,
+      });
+      if (error) throw new Error(error.message);
+
+      navigate(`/student/editor?draft=${draftId}`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Could not create document.');
+    }
+  }, [drafts, navigate, user?.id]);
+
+  // ── Derived data (deduplicated so only 1 working draft per template is displayed) ──
   const phaseTemplates = getTemplatesForPhase(activePhase as TemplatePhase);
-  const phaseDrafts = drafts.filter(d => d.phase === activePhase || d.phase === null);
+  const phaseDrafts = useMemo(() => {
+    const raw = drafts.filter(d => d.phase === activePhase || d.phase === null);
+    const seen = new Set<string>();
+    const result: DraftRow[] = [];
+    for (const d of raw) {
+      const key = d.template_id || `blank_${d.id}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        result.push(d);
+      }
+    }
+    return result;
+  }, [activePhase, drafts]);
 
   // ─── Render ───────────────────────────────────────────────────────────────
 
   return (
     <div className="space-y-6">
       {/* Page header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
             Document Repository
           </h1>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
-            Browse templates and manage your working documents.
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+            Browse institutional templates and manage your working practicum drafts.
           </p>
         </div>
         <button
-          onClick={() => navigate('/student/editor')}
-          className={cn(
-            'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium',
-            'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900',
-            'hover:opacity-90'
-          )}
+          onClick={handleOpenBlankDocument}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:opacity-90 cursor-pointer"
         >
-          <Plus className="w-4 h-4" />
-          New Blank Document
+          <Plus className="w-3.5 h-3.5" />
+          <span>New Blank Document</span>
         </button>
       </div>
 
       {/* Phase tabs */}
-      <div className="flex gap-1 p-1 bg-zinc-100 dark:bg-zinc-800 rounded-lg w-fit">
+      <div className="flex gap-1.5 p-1 bg-muted/60 border border-border/80 rounded-xl w-fit">
         {PHASES.map(({ key, label }) => (
           <button
             key={key}
             onClick={() => setActivePhase(key)}
             className={cn(
-              'px-4 py-1.5 rounded-md text-sm font-medium',
+              'px-4 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer',
               activePhase === key
-                ? 'bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 shadow-sm'
-                : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
+                ? 'bg-card text-foreground shadow-xs border border-border/60'
+                : 'text-muted-foreground hover:text-foreground'
             )}
           >
             {label}
@@ -285,11 +349,11 @@ export function StudentDocumentRepository() {
       </div>
 
       {/* Templates section */}
-      <section>
-        <h2 className="text-sm font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-3">
-          Official Templates
+      <section className="space-y-3">
+        <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider px-0.5">
+          Official Institutional Templates
         </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5">
           {phaseTemplates.map((template) => (
             <TemplateCard
               key={template.id}
@@ -303,34 +367,34 @@ export function StudentDocumentRepository() {
       </section>
 
       {/* Drafts section */}
-      <section>
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+      <section className="space-y-3">
+        <div className="flex items-center justify-between px-0.5">
+          <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
             My Working Drafts
           </h2>
           <button
             onClick={() => void loadDrafts()}
-            className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
           >
-            <RefreshCw className={cn('w-3.5 h-3.5', loadingDrafts && 'animate-spin')} />
-            Refresh
+            <RefreshCw className={cn('w-3.5 h-3.5', loadingDrafts && 'animate-spin text-primary')} />
+            <span>Refresh</span>
           </button>
         </div>
 
         {loadingDrafts && (
-          <div className="flex items-center gap-2 py-8 justify-center text-zinc-400">
-            <Loader2 className="w-4 h-4 animate-spin" />
+          <div className="flex items-center gap-2 py-8 justify-center text-muted-foreground">
+            <Loader2 className="w-4 h-4 animate-spin text-primary" />
             <span className="text-sm">Loading documents…</span>
           </div>
         )}
 
         {!loadingDrafts && draftsError && (
-          <div className="flex flex-col items-center gap-3 py-8 text-center">
-            <AlertCircle className="w-8 h-8 text-red-400" />
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">{draftsError}</p>
+          <div className="flex flex-col items-center gap-3 py-8 text-center bg-card border border-rose-500/20 rounded-2xl p-6">
+            <AlertCircle className="w-8 h-8 text-rose-500" />
+            <p className="text-sm text-foreground">{draftsError}</p>
             <button
               onClick={() => void loadDrafts()}
-              className="text-xs text-primary underline underline-offset-4"
+              className="text-xs text-primary font-semibold underline underline-offset-4 hover:opacity-80"
             >
               Retry
             </button>
@@ -338,20 +402,29 @@ export function StudentDocumentRepository() {
         )}
 
         {!loadingDrafts && !draftsError && phaseDrafts.length === 0 && (
-          <div className="flex flex-col items-center gap-3 py-12 border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-xl text-center">
-            <FolderOpen className="w-8 h-8 text-zinc-300 dark:text-zinc-700" />
-            <p className="text-sm text-zinc-500">No working drafts for this phase yet.</p>
-            <p className="text-xs text-zinc-400">Click "Edit in Editor" on a template above to start.</p>
+          <div className="flex flex-col items-center gap-3 py-12 border border-dashed border-border/80 bg-muted/10 rounded-2xl text-center">
+            <div className="size-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+              <FolderOpen className="size-5" />
+            </div>
+            <p className="text-sm font-semibold text-foreground">No working drafts for this phase yet.</p>
+            <p className="text-xs text-muted-foreground">Click "Edit in Editor" on a template above to start drafting.</p>
           </div>
         )}
 
         {!loadingDrafts && !draftsError && phaseDrafts.length > 0 && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5">
             {phaseDrafts.map((draft) => (
               <DraftCard
                 key={draft.id}
                 draft={draft}
                 onResume={() => navigate(`/student/editor?draft=${draft.id}`)}
+                onReview={() => {
+                  if (draft.submission_id) {
+                    navigate(`/student/review/${draft.submission_id}`);
+                  } else {
+                    navigate(`/student/editor?draft=${draft.id}`);
+                  }
+                }}
                 onExportDocx={() => void handleExportDocx(draft)}
                 onExportPdf={() => { navigate(`/student/editor?draft=${draft.id}&print=1`); }}
                 onDelete={() => handleSoftDelete(draft)}
@@ -378,23 +451,26 @@ function TemplateCard({
   onDownloadPdf: () => void;
 }) {
   return (
-    <div className="flex flex-col gap-3 p-4 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl">
-      <div className="flex items-start gap-2">
-        <FileText className="w-4 h-4 text-zinc-400 mt-0.5 shrink-0" />
+    <div className="flex flex-col gap-3.5 p-4 sm:p-5 bg-card border border-border hover:border-zinc-400 dark:hover:border-zinc-700 rounded-2xl shadow-xs transition-all group">
+      <div className="flex items-start gap-3">
+        <div className="size-9 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center shrink-0 mt-0.5 group-hover:scale-105 transition-transform">
+          <FileText className="w-4 h-4" />
+        </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 leading-snug">{template.name}</p>
-          <p className="text-xs text-zinc-500 mt-0.5 line-clamp-2">{template.description}</p>
+          <p className="text-sm font-bold text-foreground leading-snug group-hover:text-foreground transition-colors truncate">
+            {template.name}
+          </p>
+          <p className="text-xs text-muted-foreground mt-1 line-clamp-2 leading-relaxed">
+            {template.description}
+          </p>
         </div>
       </div>
 
-      <div className="flex flex-col gap-1.5 mt-auto">
+      <div className="flex flex-col gap-1.5 mt-auto pt-2 border-t border-border/60">
         {template.editable ? (
           <button
             onClick={onEdit}
-            className={cn(
-              'flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium',
-              'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:opacity-90'
-            )}
+            className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:opacity-90 cursor-pointer"
           >
             <Edit3 className="w-3 h-3" />
             Edit in Editor
@@ -402,10 +478,7 @@ function TemplateCard({
         ) : (
           <button
             onClick={onEdit}
-            className={cn(
-              'flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium',
-              'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:opacity-90'
-            )}
+            className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:opacity-90 cursor-pointer"
           >
             <FilePlus2 className="w-3 h-3" />
             Open Workflow
@@ -414,14 +487,14 @@ function TemplateCard({
         <div className="flex gap-1.5">
           <button
             onClick={onDownloadDocx}
-            className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-md text-xs border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+            className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-md text-xs border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 cursor-pointer"
           >
             <Download className="w-3 h-3" />
             DOCX
           </button>
           <button
             onClick={onDownloadPdf}
-            className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-md text-xs border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+            className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-md text-xs border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 cursor-pointer"
           >
             <Download className="w-3 h-3" />
             PDF
@@ -437,12 +510,14 @@ function TemplateCard({
 function DraftCard({
   draft,
   onResume,
+  onReview,
   onExportDocx,
   onExportPdf,
   onDelete,
 }: {
   draft: DraftRow;
   onResume: () => void;
+  onReview: () => void;
   onExportDocx: () => void;
   onExportPdf: () => void;
   onDelete: () => void;
@@ -451,70 +526,74 @@ function DraftCard({
   const isSubmitted = draft.status === 'submitted';
 
   return (
-    <div className="flex flex-col gap-3 p-4 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl">
-      <div className="flex items-start justify-between gap-2">
+    <div className="flex flex-col justify-between gap-3.5 p-4 sm:p-5 bg-card border border-border hover:border-zinc-400 dark:hover:border-zinc-700 rounded-2xl shadow-xs transition-all group">
+      <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5">
-            {isLocked ? (
-              <Lock className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-            ) : (
-              <FileText className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-            )}
-            <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">{draft.title}</p>
+          <div className="flex items-center gap-2">
+            <div className="size-7 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center shrink-0">
+              {isLocked ? (
+                <Lock className="w-3.5 h-3.5" />
+              ) : (
+                <FileText className="w-3.5 h-3.5" />
+              )}
+            </div>
+            <p className="text-sm font-bold text-foreground truncate group-hover:text-foreground transition-colors">
+              {draft.title}
+            </p>
           </div>
-          <div className="flex items-center gap-2 mt-1">
+          <div className="flex items-center gap-2.5 mt-2">
             <span className={cn(
-              'text-xs px-1.5 py-0.5 rounded-full font-medium',
-              isLocked   ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500' :
-              isSubmitted ? 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400' :
-                           'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
+              'text-[10px] px-2 py-0.5 rounded-full font-bold border',
+              isLocked   ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 border-zinc-200 dark:border-zinc-700' :
+              isSubmitted ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700' :
+                           'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700'
             )}>
               {isLocked ? 'Locked' : isSubmitted ? 'Submitted' : 'Draft'}
             </span>
-            <span className="text-xs text-zinc-400">
+            <span className="text-xs text-muted-foreground">
               {draft.word_count.toLocaleString()} words
             </span>
           </div>
         </div>
-        <div className="flex items-center gap-1">
-          <Clock className="w-3 h-3 text-zinc-400" />
-          <span className="text-xs text-zinc-400">
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground shrink-0 mt-0.5">
+          <Clock className="w-3 h-3" />
+          <span>
             {format(new Date(draft.updated_at), 'MMM d')}
           </span>
         </div>
       </div>
 
-      <div className="flex gap-1.5">
+      <div className="flex gap-1.5 pt-2 border-t border-border/60">
         {!isLocked ? (
           <button
             onClick={onResume}
-            className={cn(
-              'flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium',
-              'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:opacity-90'
-            )}
+            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:opacity-90 cursor-pointer"
           >
             <Edit3 className="w-3 h-3" />
             Resume
           </button>
         ) : (
           <button
-            onClick={onResume}
-            className={cn(
-              'flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium',
-              'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:opacity-90'
-            )}
+            onClick={onReview}
+            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:opacity-90 cursor-pointer"
           >
-            <CheckCircle className="w-3 h-3" />
-            View
+            <Eye className="w-3 h-3" />
+            Review & Comments
           </button>
         )}
-        <button onClick={onExportDocx} title="Export as Word DOCX"
-          className="h-8 w-8 rounded-md flex items-center justify-center text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-700">
+        <button
+          onClick={onExportDocx}
+          title="Export as Word DOCX"
+          className="h-8 w-8 rounded-md flex items-center justify-center text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 cursor-pointer"
+        >
           <Download className="w-3.5 h-3.5" />
         </button>
         {!isLocked && (
-          <button onClick={onDelete} title="Delete draft"
-            className="h-8 w-8 rounded-md flex items-center justify-center text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 border border-zinc-200 dark:border-zinc-700">
+          <button
+            onClick={onDelete}
+            title="Delete draft"
+            className="h-8 w-8 rounded-md flex items-center justify-center text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 border border-zinc-200 dark:border-zinc-700 cursor-pointer"
+          >
             <Trash2 className="w-3.5 h-3.5" />
           </button>
         )}

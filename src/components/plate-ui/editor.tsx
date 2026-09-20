@@ -16,9 +16,9 @@ export const editorContainerVariants = cva(
     },
     variants: {
       variant: {
-        default: 'h-full bg-zinc-100/70 dark:bg-zinc-950 p-4 md:p-8 flex justify-center',
-        demo: 'min-h-[750px] bg-zinc-100/70 dark:bg-zinc-950 p-4 md:p-8 flex justify-center rounded-b-xl border-x border-b border-zinc-200 dark:border-zinc-800',
-        fullWidth: 'size-full px-6 md:px-12 py-8 bg-zinc-100/70 dark:bg-zinc-950',
+        default: 'h-full min-h-0 bg-zinc-100/70 dark:bg-zinc-950 p-4 md:p-8 flex justify-center',
+        demo: 'h-full min-h-0 bg-zinc-100/70 dark:bg-zinc-950 p-4 md:p-8 flex justify-center rounded-b-xl border-x border-b border-zinc-200 dark:border-zinc-800',
+        fullWidth: 'size-full min-h-0 px-6 md:px-12 py-8 bg-zinc-100/70 dark:bg-zinc-950',
         sheet: 'min-h-[850px] bg-zinc-100/80 dark:bg-zinc-950 p-6 md:p-10 flex justify-center',
       },
     },
@@ -49,7 +49,7 @@ export const editorVariants = cva(
     'rounded-md ring-offset-background focus-visible:outline-none',
     'placeholder:text-zinc-400 dark:placeholder:text-zinc-500',
     'caret-zinc-900 dark:caret-zinc-100',
-    'font-sans text-[15px] sm:text-base leading-normal text-zinc-900 dark:text-zinc-100',
+    'text-[11pt] leading-[1.15] font-[Arial,_Helvetica,_sans-serif] text-zinc-900 dark:text-zinc-100',
     '**:data-slate-placeholder:text-zinc-400 dark:**:data-slate-placeholder:text-zinc-500 **:data-slate-placeholder:opacity-100!',
     '**:data-slate-placeholder:!top-1/2 **:data-slate-placeholder:-translate-y-1/2',
     '[&_strong]:font-bold'

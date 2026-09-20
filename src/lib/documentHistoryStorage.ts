@@ -17,8 +17,58 @@
 
 import { get, set, del } from 'idb-keyval';
 import { supabase } from '@/src/lib/supabase';
+import type { DocumentHeaderFooterOptions } from '@/src/components/editor/serializers/docxSerializer';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
+
+export interface DocumentEnvelope {
+  schemaVersion: 1;
+  type: 'document_envelope';
+  body: object[];
+  headerFooter?: DocumentHeaderFooterOptions | null;
+  wordCount?: number;
+  updatedAt?: string;
+}
+
+/**
+ * Wrap rich content and header/footer settings into a versioned envelope for persistence.
+ */
+export function wrapContentEnvelope(
+  content: object[],
+  headerFooter?: DocumentHeaderFooterOptions | null,
+  wordCount?: number
+): object {
+  return {
+    schemaVersion: 1,
+    type: 'document_envelope',
+    body: content,
+    headerFooter: headerFooter ?? null,
+    wordCount: wordCount ?? 0,
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+/**
+ * Unwrap content that may be a versioned envelope or a legacy raw array of Slate nodes.
+ */
+export function unwrapContentEnvelope(raw: unknown): {
+  content: object[];
+  headerFooter?: DocumentHeaderFooterOptions;
+} {
+  if (Array.isArray(raw)) {
+    return { content: raw };
+  }
+  if (raw && typeof raw === 'object') {
+    const obj = raw as Record<string, unknown>;
+    if (obj.type === 'document_envelope' && Array.isArray(obj.body)) {
+      return {
+        content: obj.body as object[],
+        headerFooter: (obj.headerFooter as DocumentHeaderFooterOptions) || undefined,
+      };
+    }
+  }
+  return { content: [{ type: 'p', children: [{ text: '' }] }] };
+}
 
 export interface DraftState {
   id: string;
@@ -28,6 +78,7 @@ export interface DraftState {
   templateName?: string;
   phase?: string;
   content: object[];
+  headerFooter?: DocumentHeaderFooterOptions;
   wordCount: number;
   revision: number;
   status: 'draft' | 'submitted' | 'locked';
@@ -119,6 +170,7 @@ export class DocumentHistoryStorage {
   private tabId: string = Math.random().toString(36).slice(2);
   private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
   private onMultiTabConflict?: () => void;
+  private beforeUnloadHandler: ((e: BeforeUnloadEvent) => void) | null = null;
 
   /** Sync status change callback */
   private onStatusChange?: (status: SyncStatus) => void;
@@ -182,17 +234,39 @@ export class DocumentHistoryStorage {
   /**
    * Force an immediate cloud save (e.g., before navigating away).
    * Returns the updated draft revision or throws on conflict.
+   * Protects caller with a timeout against slow/offline network hangs while persisting to IDB immediately.
    */
-  async flushNow(): Promise<DraftState | null> {
+  async flushNow(timeoutMs: number = 1500): Promise<DraftState | null> {
     if (this.cloudSaveTimer) {
       clearTimeout(this.cloudSaveTimer);
       this.cloudSaveTimer = null;
     }
 
-    if (this.cloudSavePromise) await this.cloudSavePromise;
-    if (!this.pendingState) return null;
+    if (this.pendingState) {
+      try {
+        await writeCached(this.pendingState);
+      } catch {
+        /* non-fatal */
+      }
+    }
 
-    return this.doCloudSave();
+    const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), timeoutMs));
+
+    let inFlightResult: DraftState | null = null;
+    if (this.cloudSavePromise) {
+      try {
+        inFlightResult = await Promise.race([this.cloudSavePromise, timeoutPromise]);
+      } catch {
+        /* let subsequent operations handle */
+      }
+    }
+    if (!this.pendingState) return inFlightResult;
+
+    try {
+      return await Promise.race([this.doCloudSave(), timeoutPromise]);
+    } catch {
+      return null;
+    }
   }
 
   /**
@@ -284,13 +358,17 @@ export class DocumentHistoryStorage {
       await writeCached(resolution.cloudDraft);
     } else if (resolution.type === 'fork_local') {
       // Fork: create new draft with local content
+      const payloadContent = localState.headerFooter
+        ? wrapContentEnvelope(localState.content, localState.headerFooter, localState.wordCount)
+        : localState.content;
+
       await supabase.rpc('create_editor_draft', {
         p_id: resolution.newDraftId,
         p_title: `[Offline Copy] ${localState.title}`,
         p_template_id: localState.templateId ?? null,
         p_template_name: localState.templateName ?? null,
         p_phase: localState.phase ?? null,
-        p_content: localState.content,
+        p_content: payloadContent,
         p_word_count: localState.wordCount,
       });
     }
@@ -300,8 +378,22 @@ export class DocumentHistoryStorage {
    * Clean up timers and BroadcastChannel. Call on unmount or logout.
    */
   destroy(): void {
-    if (this.cloudSaveTimer) clearTimeout(this.cloudSaveTimer);
-    if (this.heartbeatTimer) clearInterval(this.heartbeatTimer);
+    if (this.beforeUnloadHandler && typeof window !== 'undefined') {
+      window.removeEventListener('beforeunload', this.beforeUnloadHandler);
+      this.beforeUnloadHandler = null;
+    }
+    if (this.cloudSaveTimer) {
+      clearTimeout(this.cloudSaveTimer);
+      this.cloudSaveTimer = null;
+    }
+    if (this.heartbeatTimer) {
+      clearInterval(this.heartbeatTimer);
+      this.heartbeatTimer = null;
+    }
+    if (this.pendingState) {
+      void writeCached(this.pendingState).catch(() => {});
+      void this.doCloudSave().catch(() => {});
+    }
     this.channel?.postMessage({ type: 'DOC_CLOSE', tabId: this.tabId, draftId: this.draftId });
     this.channel?.close();
     this.channel = null;
@@ -343,19 +435,62 @@ export class DocumentHistoryStorage {
 
     const save = async (): Promise<DraftState> => {
       this.onStatusChange?.('saving');
+      const payloadContent = state.headerFooter
+        ? wrapContentEnvelope(state.content, state.headerFooter, state.wordCount)
+        : state.content;
+
       const { data, error } = await supabase.rpc('save_editor_draft', {
         p_draft_id: this.draftId,
         p_expected_revision: this.cloudRevision,
         p_title: state.title,
-        p_content: state.content,
+        p_content: payloadContent,
         p_word_count: state.wordCount,
       });
       if (error) throw new Error(error.message);
 
-      const result = data as { conflict: boolean; draft?: DraftState; current?: DraftState };
+      const result = data as { conflict: boolean; draft?: any; current?: any };
 
       if (result.conflict) {
-        const remote = result.current!;
+        const rawRemote = result.current!;
+        const { content: remoteContent, headerFooter: remoteHF } = unwrapContentEnvelope(rawRemote.content);
+        const remote: DraftState = {
+          id: rawRemote.id,
+          userId: rawRemote.user_id,
+          title: rawRemote.title,
+          templateId: rawRemote.template_id,
+          templateName: rawRemote.template_name,
+          phase: rawRemote.phase,
+          content: remoteContent,
+          headerFooter: remoteHF,
+          wordCount: rawRemote.word_count,
+          revision: rawRemote.revision,
+          status: rawRemote.status,
+          submissionId: rawRemote.submission_id,
+          createdAt: rawRemote.created_at,
+          updatedAt: rawRemote.updated_at,
+        };
+
+        // Smart auto-reconciliation: Check if local and remote content & title are identical
+        const localContentJson = JSON.stringify(state.content);
+        const remoteContentJson = JSON.stringify(remote.content);
+        const isSameContent = localContentJson === remoteContentJson && state.title === remote.title;
+
+        if (isSameContent) {
+          // False conflict (e.g. multi-tab duplicate save or reload collision with identical state).
+          // Seamlessly adopt the newer remote revision without displaying the red conflict banner.
+          this.cloudRevision = remote.revision;
+          if (this.pendingState === state) this.pendingState = null;
+          this.onStatusChange?.('saved');
+          const acknowledged: DraftState = {
+            ...state,
+            revision: remote.revision,
+            updatedAt: remote.updatedAt || new Date().toISOString(),
+          };
+          await writeCached(acknowledged);
+          this.onSaved?.(acknowledged);
+          return acknowledged;
+        }
+
         this.onStatusChange?.('conflict');
         this.onConflict?.(state, remote);
         throw new Error('CONFLICT');
@@ -365,7 +500,11 @@ export class DocumentHistoryStorage {
       this.cloudRevision = saved.revision;
       if (this.pendingState === state) this.pendingState = null;
       this.onStatusChange?.('saved');
-      const acknowledged = { ...state, revision: saved.revision, updatedAt: saved.updatedAt };
+      const acknowledged: DraftState = {
+        ...state,
+        revision: saved.revision,
+        updatedAt: saved.updated_at || saved.updatedAt || new Date().toISOString(),
+      };
       await writeCached(acknowledged);
       this.onSaved?.(acknowledged);
       void this.maybeAutoVersion(state);
@@ -387,6 +526,21 @@ export class DocumentHistoryStorage {
   private presenceMap: Map<string, number> = new Map(); // tabId -> lastHeartbeat
 
   private initBroadcastChannel(): void {
+    if (typeof window !== 'undefined' && !this.beforeUnloadHandler) {
+      this.beforeUnloadHandler = () => {
+        if (this.pendingState) {
+          void writeCached(this.pendingState).catch(() => {});
+          void this.doCloudSave().catch(() => {});
+        }
+        try {
+          this.channel?.postMessage({ type: 'DOC_CLOSE', tabId: this.tabId, draftId: this.draftId });
+        } catch {
+          // BroadcastChannel may already be closed
+        }
+      };
+      window.addEventListener('beforeunload', this.beforeUnloadHandler);
+    }
+
     if (typeof BroadcastChannel === 'undefined') return;
     try {
       this.channel = new BroadcastChannel(BROADCAST_CHANNEL_NAME);

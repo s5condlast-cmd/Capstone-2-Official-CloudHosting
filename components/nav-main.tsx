@@ -67,38 +67,37 @@ export function NavMain({ groups }: NavMainProps) {
 
               return (
                 <SidebarMenuItem key={item.title}>
-                  <NavLink to={item.url} className="block w-full">
-                    <SidebarMenuButton
-                      tooltip={item.title}
-                      isActive={isActive}
-                      className={cn(
-                        "transition-all duration-150 group/btn text-[13.5px] font-medium cursor-pointer px-3 py-2 rounded-lg gap-3",
+                  <SidebarMenuButton
+                    render={<NavLink to={item.url} />}
+                    tooltip={item.title}
+                    isActive={isActive}
+                    className={cn(
+                      "transition-all duration-150 group/btn text-[13.5px] font-medium cursor-pointer px-3 py-2 rounded-lg gap-3",
+                      isActive
+                        ? "!bg-zinc-900 !text-white dark:!bg-zinc-100 dark:!text-zinc-950 font-semibold shadow-xs"
+                        : "text-sidebar-foreground/85 hover:text-sidebar-foreground hover:bg-sidebar-accent/80"
+                    )}
+                  >
+                    {Icon && (
+                      <Icon className={cn(
+                        "size-4.5 shrink-0 transition-colors",
                         isActive
-                          ? "bg-primary text-primary-foreground font-semibold shadow-xs"
-                          : "text-sidebar-foreground/85 hover:text-sidebar-foreground hover:bg-sidebar-accent/80"
-                      )}
-                    >
-                      {Icon && (
-                        <Icon className={cn(
-                          "size-4.5 shrink-0 transition-colors",
-                          isActive
-                            ? "text-primary-foreground"
-                            : "text-muted-foreground group-hover/btn:text-sidebar-foreground"
-                        )} />
-                      )}
-                      <span className="truncate">{item.title}</span>
-                      {item.badge !== undefined && (
-                        <SidebarMenuBadge className={cn(
-                          "ml-auto text-[11px] font-bold px-2 py-0.5 rounded-full tabular-nums",
-                          isActive
-                            ? "bg-primary-foreground/20 text-primary-foreground"
-                            : "bg-muted text-muted-foreground"
-                        )}>
-                          {item.badge}
-                        </SidebarMenuBadge>
-                      )}
-                    </SidebarMenuButton>
-                  </NavLink>
+                          ? "!text-white dark:!text-zinc-950"
+                          : "text-muted-foreground group-hover/btn:text-sidebar-foreground"
+                      )} />
+                    )}
+                    <span className="truncate">{item.title}</span>
+                    {item.badge !== undefined && (
+                      <SidebarMenuBadge className={cn(
+                        "ml-auto text-[11px] font-bold px-2 py-0.5 rounded-full tabular-nums",
+                        isActive
+                          ? "!bg-zinc-800 !text-white dark:!bg-zinc-200 dark:!text-zinc-950"
+                          : "bg-muted text-muted-foreground"
+                      )}>
+                        {item.badge}
+                      </SidebarMenuBadge>
+                    )}
+                  </SidebarMenuButton>
                 </SidebarMenuItem>
               )
             })}

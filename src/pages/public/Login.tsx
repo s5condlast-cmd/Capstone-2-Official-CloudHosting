@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { toast } from 'sonner';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { apiJson } from '@/src/lib/api';
+import { formatAuthError } from '@/src/lib/authErrors';
 import { supabase } from '@/src/lib/supabase';
 import { cn } from '@/src/lib/utils';
 
@@ -90,7 +91,7 @@ export function Login() {
       if (result.user.requiresPasswordChange) { setStep('change_initial_password'); return; }
       setPassword(''); await continueToMfa();
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'The password you entered is incorrect.');
+      setError(formatAuthError(caught));
     } finally { setBusy(false); }
   };
 
@@ -112,7 +113,7 @@ export function Login() {
       setPassword(''); setNewPassword(''); setConfirmPassword('');
       await refreshProfile(); await continueToMfa();
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Unable to change your password.');
+      setError(formatAuthError(caught));
     } finally { setBusy(false); }
   };
 
@@ -125,7 +126,7 @@ export function Login() {
       if (verified.error) throw verified.error;
       await refreshProfile();
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Incorrect authenticator code. Please try again.');
+      setError(formatAuthError(caught));
     } finally { setBusy(false); }
   };
 
@@ -136,7 +137,7 @@ export function Login() {
     } catch { toast.error('Clipboard access failed. Select and copy the key manually.'); }
   };
 
-  const displayedError = error || authError;
+  const displayedError = step === 'username' ? error : (error || authError);
 
   return (
     <div className="min-h-screen bg-[#f2f4f8] dark:bg-[#121212] flex flex-col justify-between items-center font-sans selection:bg-[#0067b8] selection:text-white relative">

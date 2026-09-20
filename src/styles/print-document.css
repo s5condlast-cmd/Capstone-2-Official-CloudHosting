@@ -3,10 +3,12 @@
   /* Hide all application chrome */
   [data-editor-toolbar],
   [data-editor-telemetry],
+  [data-document-ruler],
+  [data-document-statusbar],
   [data-sidebar],
   [data-site-header],
   nav,
-  header,
+  header:not([data-document-header="true"]),
   .editor-toolbar,
   .editor-telemetry-bar {
     display: none !important;
@@ -19,25 +21,75 @@
     background: white;
   }
 
+  html,
+  body,
+  #root {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  /* index.css also supports a separate preview workflow that hides body
+     descendants during printing. Explicitly reveal only this editor sheet. */
+  .plate-paper-sheet,
+  .plate-paper-sheet * {
+    visibility: visible !important;
+  }
+
+  [data-slot="sidebar-inset"],
+  [data-editor-page="true"],
+  .plate-editor-wrapper,
+  [data-editor-canvas="true"],
+  [data-editor-paper-scroll="true"],
+  [data-paper-zoom-stage="true"] {
+    position: static !important;
+    overflow: visible !important;
+    transform: none !important;
+  }
+
+  [data-slot="sidebar-inset"],
+  [data-editor-page="true"],
+  .plate-editor-wrapper,
+  [data-editor-canvas="true"],
+  [data-editor-paper-scroll="true"] {
+    width: auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    box-shadow: none !important;
+  }
+
+  [data-paper-zoom-stage="true"] {
+    width: 100% !important;
+    display: block !important;
+  }
+
   .plate-editor-content {
-    width: 8.5in;
-    min-height: 11in;
-    padding: 1in;
-    margin: 0 auto;
+    width: 100% !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
     box-sizing: border-box;
     background: white;
     color: black;
-    font-family: 'Times New Roman', Times, serif;
+    font-family: inherit;
     font-size: 12pt;
-    line-height: 1.5;
+    line-height: 1.15;
   }
 
   .plate-paper-sheet {
     width: 8.5in !important;
     max-width: 8.5in !important;
     min-height: 11in !important;
-    padding: 0 !important;
+    padding: 0 1in !important;
     margin: 0 auto !important;
+    box-sizing: border-box !important;
+    position: absolute !important;
+    inset: 0 auto auto 50% !important;
+    transform: translateX(-50%) !important;
     border: none !important;
     box-shadow: none !important;
     background: white !important;
@@ -69,6 +121,12 @@
     display: none !important;
   }
 
+  [data-document-header="true"],
+  [data-document-footer="true"] {
+    display: flex !important;
+    visibility: visible !important;
+  }
+
   /* Keep header and footer previews clean and crisp in print */
   .document-header-preview img,
   .document-footer-preview img {
@@ -93,7 +151,7 @@
   /* Page setup */
   @page {
     size: letter;
-    margin: 1in;
+    margin: 0;
   }
 }
 

@@ -13,13 +13,15 @@ Use these guides when you need the user workflow, main code locations, data flow
 | 5 | [Adviser and supervisor review](05_ADVISER_SUPERVISOR_REVIEW.md) | Review queues, revisions, and approvals |
 | 6 | [Administration](06_ADMIN_MANAGEMENT.md) | Users, templates, clearance, and companies |
 | 7 | [Calendar and events](07_CALENDAR_AND_EVENTS.md) | Scheduling, views, and event management |
-| 8 | [Authentication and OneDrive](08_AUTH_AND_ONEDRIVE_SYNC.md) | Identity, MFA, access, and archival |
+| 8 | [Authentication, roles & security](08_AUTHENTICATION_AND_SECURITY.md) | Identity, two-step login, TOTP MFA, RLS policies, and admin provisioning |
 
 ## Common paths
 
 - For system boundaries and dependencies, use the [architecture overview](../architecture/ARCHITECTURE.md).
 - For exact code locations, use the [system map](../architecture/SYSTEM_MAP.md).
 - For tables, policies, and backend routes, use [backend and database](../architecture/BACKEND_AND_DATABASE.md).
+- For institutional cloud archival, use [OneDrive integration summary](../architecture/ONEDRIVE_INTEGRATION_SUMMARY.md).
 - For current work, use [active tasks](../tasks/TASKS.md).
 
-Feature guides describe intended behavior. Confirm security-sensitive behavior against the current implementation handoff and tests before deployment.
+Feature guides describe intended behavior. Confirm security-sensitive behavior against the test suites before deployment.
+

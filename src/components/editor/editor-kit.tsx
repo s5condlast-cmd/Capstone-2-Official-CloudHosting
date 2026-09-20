@@ -66,6 +66,7 @@ export const MARK_BG_COLOR = 'backgroundColor';
 export const MARK_SUBSCRIPT = 'subscript';
 export const MARK_SUPERSCRIPT = 'superscript';
 export const MARK_KBD = 'kbd';
+export const MARK_FONT_FAMILY = 'fontFamily';
 
 // ---------------------------------------------------------------------------
 // Render components
@@ -73,11 +74,15 @@ export const MARK_KBD = 'kbd';
 
 function blockStyle(element: any): React.CSSProperties {
   const indent = Math.max(0, Number(element?.indent) || 0);
+  const spaceBefore = element?.spaceBefore !== undefined ? Number(element.spaceBefore) : undefined;
+  const spaceAfter = element?.spaceAfter !== undefined ? Number(element.spaceAfter) : undefined;
 
   return {
     lineHeight: element?.lineHeight || undefined,
     marginLeft: indent ? `${indent * 1.5}rem` : undefined,
     textAlign: element?.align || undefined,
+    marginTop: spaceBefore !== undefined ? `${Math.round(spaceBefore * 1.333)}px` : undefined,
+    marginBottom: spaceAfter !== undefined ? `${Math.round(spaceAfter * 1.333)}px` : undefined,
   };
 }
 
@@ -134,13 +139,64 @@ export {
 
 function ListElement({ element, style, className, ...props }: any) {
   const ordered = element?.type === ELEMENT_OL;
+  const listStyle = element?.listStyleType || (ordered ? 'decimal' : 'disc');
+
+  let resolvedListStyle = listStyle;
+  if (!ordered) {
+    if (listStyle === 'diamond') resolvedListStyle = '"❖ "';
+    else if (listStyle === 'shadow-square') resolvedListStyle = '"❏ "';
+    else if (listStyle === 'arrow') resolvedListStyle = '"➔ "';
+    else if (listStyle === 'star') resolvedListStyle = '"★ "';
+    else if (listStyle === 'chevron') resolvedListStyle = '"➢ "';
+    else if (listStyle === 'circle') resolvedListStyle = 'circle';
+    else if (listStyle === 'square') resolvedListStyle = 'square';
+    else resolvedListStyle = 'disc';
+  } else {
+    if (listStyle === 'upper-alpha') resolvedListStyle = 'upper-alpha';
+    else if (listStyle === 'lower-alpha') resolvedListStyle = 'lower-alpha';
+    else if (listStyle === 'upper-roman') resolvedListStyle = 'upper-roman';
+    else if (listStyle === 'lower-roman') resolvedListStyle = 'lower-roman';
+    else if (listStyle === 'decimal-leading-zero') resolvedListStyle = 'decimal-leading-zero';
+    else resolvedListStyle = 'decimal';
+  }
+
   return (
     <BlockDraggable element={element} handleTopOffset="top-1">
       <PlateElement
         as={ordered ? 'ol' : 'ul'}
         element={element}
-        style={{ listStyleType: element?.listStyleType || (ordered ? 'decimal' : 'disc'), ...style }}
-        className={cn('my-1 ml-6 space-y-0.5', ordered ? 'list-decimal' : 'list-disc', className)}
+        style={{ listStyleType: resolvedListStyle, ...style }}
+        className={cn(
+          'my-1 ml-6 space-y-0.5',
+          ordered
+            ? listStyle === 'upper-alpha'
+              ? 'list-[upper-alpha]'
+              : listStyle === 'lower-alpha'
+                ? 'list-[lower-alpha]'
+                : listStyle === 'upper-roman'
+                  ? 'list-[upper-roman]'
+                  : listStyle === 'lower-roman'
+                    ? 'list-[lower-roman]'
+                    : listStyle === 'decimal-leading-zero'
+                      ? 'list-[decimal-leading-zero]'
+                      : 'list-decimal'
+            : listStyle === 'circle'
+              ? 'list-[circle]'
+              : listStyle === 'square'
+                ? 'list-[square]'
+                : listStyle === 'diamond'
+                  ? 'list-["❖_"]'
+                  : listStyle === 'shadow-square'
+                    ? 'list-["❏_"]'
+                    : listStyle === 'arrow'
+                      ? 'list-["➔_"]'
+                      : listStyle === 'star'
+                        ? 'list-["★_"]'
+                        : listStyle === 'chevron'
+                          ? 'list-["➢_"]'
+                          : 'list-disc',
+          className
+        )}
         {...props}
       />
     </BlockDraggable>
@@ -167,24 +223,60 @@ function TodoElement({ children, element, style, ...props }: any) {
   const editor = useEditorRef();
   const path = usePath();
 
+  const handleToggle = (e: React.MouseEvent | React.ChangeEvent) => {
+    e.stopPropagation();
+    try {
+      const nodePath = editor?.api?.findPath ? editor.api.findPath(element) : path;
+      if (nodePath) {
+        editor?.tf?.setNodes?.({ checked: !element?.checked }, { at: nodePath });
+      } else {
+        editor?.tf?.setNodes?.({ checked: !element?.checked }, { at: path });
+      }
+    } catch {
+      editor?.tf?.setNodes?.({ checked: !element?.checked }, { at: path });
+    }
+  };
+
+  const isChecked = Boolean(element?.checked);
+  const strikeThrough = !element?.noStrikethrough && isChecked;
+
   return (
     <BlockDraggable element={element} handleTopOffset="top-1">
       <PlateElement
         as="div"
         element={element}
         style={{ ...blockStyle(element), ...style }}
-        className="my-1 flex items-start gap-2"
+        className="my-0.5 flex items-start gap-2 group/todo"
         {...props}
       >
-        <input
-          type="checkbox"
-          checked={Boolean(element?.checked)}
-          onChange={(event) => editor.tf.setNodes({ checked: event.target.checked }, { at: path })}
+        <button
+          type="button"
           contentEditable={false}
-          className="mt-1.5 cursor-pointer accent-primary"
-          aria-label="Mark task complete"
-        />
-        <div className={element?.checked ? 'flex-1 text-zinc-400 line-through' : 'flex-1'}>
+          onMouseDown={(e) => e.stopPropagation()}
+          onClick={handleToggle}
+          aria-label={isChecked ? 'Mark task incomplete' : 'Mark task complete'}
+          className={cn(
+            'w-[15px] h-[15px] mt-[2px] rounded-[3px] border flex items-center justify-center cursor-pointer transition-colors shrink-0 select-none',
+            isChecked
+              ? 'bg-primary border-primary text-primary-foreground'
+              : 'border-zinc-400 dark:border-zinc-500 hover:border-zinc-600 dark:hover:border-zinc-300 bg-white dark:bg-zinc-800'
+          )}
+        >
+          {isChecked && (
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="3.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="w-3 h-3 text-white"
+            >
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          )}
+        </button>
+        <div className={cn('flex-1 leading-[1.15] transition-colors', strikeThrough ? 'text-zinc-400 dark:text-zinc-500 line-through' : '')}>
           {children}
         </div>
       </PlateElement>
@@ -479,6 +571,17 @@ export const FontSizePlugin = createTSlatePlugin({
   },
 });
 
+export const FontFamilyPlugin = createTSlatePlugin({
+  key: MARK_FONT_FAMILY,
+  node: {
+    isLeaf: true,
+    type: MARK_FONT_FAMILY,
+    component: ({ leaf, style, ...props }: any) => (
+      <PlateLeaf style={{ fontFamily: leaf.fontFamily, ...style }} {...props} />
+    ),
+  },
+});
+
 export const FontColorPlugin = createTSlatePlugin({
   key: MARK_COLOR,
   node: {
@@ -612,6 +715,7 @@ export const editorPlugins = [
   CodePlugin,
   HighlightPlugin,
   FontSizePlugin,
+  FontFamilyPlugin,
   FontColorPlugin,
   BackgroundColorPlugin,
   SubscriptPlugin,

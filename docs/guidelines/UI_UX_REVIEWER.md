@@ -1,6 +1,6 @@
 # 🎨 UI / UX Reviewer & Design System Standards
 
-[← Back to Documentation Hub](../README.md) | [Refactoring Guidelines](REFACTORING_GUIDELINES.md) | [System Architecture](../architecture/ARCHITECTURE.md) | [Live UI Review](UI_REVIEW.md)
+[← Back to Guidelines Hub](README.md) | [Documentation Hub](../README.md) | [Refactoring Guidelines](REFACTORING_GUIDELINES.md) | [System Architecture](../architecture/ARCHITECTURE.md)
 
 This document establishes the official UI/UX review standards, aesthetic taste rules, and color palette architecture for the system. It also acts as the reference specification for the autonomous `ui_ux_reviewer` subagent and skill.
 
@@ -119,4 +119,32 @@ You can run an automated UI/UX review at any time:
 
 1. **Via Subagent**: Ask Antigravity to *"Run a UI review on [Component/Page] using the `ui_ux_reviewer` subagent"*.
 2. **Via Skill**: The `ui-ux-reviewer` skill is permanently located in `.agents/skills/ui-ux-reviewer/SKILL.md`.
-3. **Report Output**: Findings will follow the standard scorecard structure with exact file paths, before/after code fixes, and a prioritized action plan.
+3. **Report Output**: Findings follow the standard scorecard structure with exact file paths, before/after code fixes, and a prioritized action plan.
+
+---
+
+## 7. Baseline System UI Audit & Scorecard
+
+**Audit Baseline Score: 88 / 100**
+
+| Pillar | Score | Status | Key Highlights |
+| :--- | :---: | :---: | :--- |
+| **Theme & Color Fidelity** | **92 / 100** | 🟢 Exemplary | Monochrome core with Deep Sky Blue (`#3B82C4`) & Warm Amber (`#E8A33D`) tokens; strong `variant="primary"` adherence. |
+| **Typographic Craft** | **88 / 100** | 🟢 Strong | Geist Variable + Inter font stacks; upright confident headings; relaxed body leading. |
+| **Tactile Polish & Motion** | **85 / 100** | 🟡 Polished | `active:scale-[0.98]` tactile click physics; soft ambient shadows; minor duplicate transitions to clean up. |
+| **Layout & Grid Precision** | **90 / 100** | 🟢 Clean | 4pt/8pt rhythm; explicit PDF and DOCX container constraints preventing layout blowout. |
+| **Accessibility & Lifecycles** | **85 / 100** | 🟡 Good | Reusable `EmptyState.tsx` enforced; explicit focus rings; ARIA labels on dynamic modals can be enhanced. |
+
+### Targeted Findings & Recommendations
+
+1. **Redundant Animation Layering on Primitives**:
+   - Location: `src/components/ui/Button.tsx`
+   - Both Framer Motion's `whileTap` and Tailwind's `active:scale-[0.98]` should not be combined with `transition-all`. Use lightweight CSS transform transitions (`transition-transform duration-100 ease-out active:scale-[0.98]`) on base buttons, reserving Framer Motion for complex choreography.
+2. **Standardize Shadows with Design Tokens**:
+   - Location: `src/components/ui/Button.tsx`
+   - Replace arbitrary `shadow-[0_1px_2px_0_rgba(0,0,0,0.4)]` with centralized system tokens (`.soft-shadow` or CSS `--shadow-button-primary`).
+3. **Heading Tracking Uniformity**:
+   - Display headlines must consistently enforce `tracking-tight` (`-0.02em`) with upright posture (no italicization).
+4. **Zero-CLS Skeletons**:
+   - Ensure skeleton heights on async cards mirror exact rendered card dimensions.
+

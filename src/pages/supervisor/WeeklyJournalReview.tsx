@@ -26,6 +26,9 @@ import {
   PenTool
 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
+import { useAuth } from '@/src/contexts/AuthContext';
+import { getSupervisorSignature, saveSupervisorSignature } from '@/src/lib/signatureStorage';
+import { documentReviewService } from '@/src/lib/documentReviewService';
 
 interface JournalSubmission {
   id: string;
@@ -99,6 +102,7 @@ const mockJournalSubmissions: JournalSubmission[] = [
 ];
 
 export const WeeklyJournalReview: React.FC = () => {
+  const { user } = useAuth();
   const [journals, setJournals] = useState<JournalSubmission[]>(mockJournalSubmissions);
   const [selectedId, setSelectedId] = useState<string>('j-1');
   const [viewMode, setViewMode] = useState<'table' | 'review'>('table');
@@ -108,10 +112,46 @@ export const WeeklyJournalReview: React.FC = () => {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Persistent Saved Signature Store (stored in localStorage)
+  // User-scoped Persistent Saved Signature Store
   const [savedSignature, setSavedSignature] = useState<string | null>(() => {
-    return localStorage.getItem('supervisor_saved_signature') || null;
+    return getSupervisorSignature(user?.id);
   });
+
+  useEffect(() => {
+    if (user?.id) {
+      setSavedSignature(getSupervisorSignature(user.id));
+    }
+  }, [user?.id]);
+
+  // Load live journal cases from database
+  useEffect(() => {
+    async function loadLiveJournals() {
+      try {
+        const liveCases = await documentReviewService.listCases('supervisor', 'all');
+        const journalCases = liveCases.filter(c => c.document_type.toLowerCase().includes('journal'));
+        if (journalCases.length > 0) {
+          const mapped: JournalSubmission[] = journalCases.map(c => ({
+            id: c.id,
+            studentName: c.student_name || 'Student',
+            studentId: c.student_id.slice(0, 8),
+            course: c.student_course || 'Practicum',
+            milestone: 'Midterm',
+            period: `Revision ${c.current_revision_number || 1}`,
+            hoursLogged: 120,
+            submittedDate: new Date(c.created_at).toLocaleDateString(),
+            status: c.stage === 'approved' || c.stage === 'supervisor_approved' ? 'Approved' : c.stage === 'supervisor_revision_required' ? 'Revision Required' : 'Pending Review',
+            pdfUrl: '/templates/FT-CRD-167-00 Weekly Journal Template.pdf',
+            supervisorRemarks: '',
+          }));
+          setJournals(mapped);
+          setSelectedId(mapped[0].id);
+        }
+      } catch (e) {
+        console.warn('Could not load live journal cases:', e);
+      }
+    }
+    void loadLiveJournals();
+  }, []);
   const [showSignatureModal, setShowSignatureModal] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -213,11 +253,7 @@ export const WeeklyJournalReview: React.FC = () => {
     }
     const signatureUrl = canvas.toDataURL('image/png');
 
-    try {
-      localStorage.setItem('supervisor_saved_signature', signatureUrl);
-    } catch (err) {
-      console.warn('Could not save to localStorage:', err);
-    }
+    saveSupervisorSignature(user?.id, signatureUrl);
     setSavedSignature(signatureUrl);
 
     setJournals(prev => prev.map(j => {
@@ -285,6 +321,15 @@ export const WeeklyJournalReview: React.FC = () => {
       toast.success(`Approved weekly journal for ${selectedJournal.studentName}${attachedText} and returned to student.`);
     } else {
       toast.warning(`Requested revisions for ${selectedJournal.studentName}'s weekly journal.`);
+    }
+
+    if (selectedId && !selectedId.startsWith('j-')) {
+      void documentReviewService.submitDecision(
+        selectedId,
+        'submitted_to_supervisor',
+        newStatus === 'Approved' ? 'supervisor_approve' : 'supervisor_request_revision',
+        remarks || (newStatus === 'Approved' ? 'Weekly journal reviewed and approved.' : remarks)
+      ).catch(err => console.warn('Syncing review decision to database:', err));
     }
 
     setRemarks('');

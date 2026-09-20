@@ -12,7 +12,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -214,16 +214,18 @@ export function SiteHeader({ user, theme, onToggleTheme, onSearchClick, onLogout
 
         {/* Calendar Button */}
         {user && (
-          <Link to={getCalendarRoute(user.role)}>
-            <Button
-              variant="ghost"
-              size="icon"
-              title="Daily Time Record / Calendar"
-              className="size-8 text-muted-foreground hover:text-foreground cursor-pointer"
-            >
-              <CalendarIcon className="size-4" />
-              <span className="sr-only">Calendar</span>
-            </Button>
+          <Link
+            to={getCalendarRoute(user.role)}
+            title="Daily Time Record / Calendar"
+            aria-label="Daily Time Record / Calendar"
+            className={cn(
+              buttonVariants({ variant: "ghost", size: "icon" }),
+              "size-8 text-muted-foreground hover:text-foreground cursor-pointer transition-colors",
+              location.pathname.endsWith("/calendar") && "bg-accent text-foreground font-semibold"
+            )}
+          >
+            <CalendarIcon className="size-4" />
+            <span className="sr-only">Calendar</span>
           </Link>
         )}
 

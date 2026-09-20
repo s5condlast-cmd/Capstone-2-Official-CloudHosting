@@ -110,6 +110,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               { to: '/admin/users', icon: UsersIcon, label: 'Accounts', badge: 3 },
               { to: '/admin/companies', icon: BuildingIcon, label: 'Companies' },
               { to: '/admin/documents', icon: FileTextIcon, label: 'Documents', badge: 38 },
+              { to: '/admin/reviews', icon: ClipboardCheckIcon, label: 'Review Center' },
               { to: '/admin/documents?filter=dtr', icon: FileSpreadsheetIcon, label: 'DTR Audit' },
               { to: '/admin/templates', icon: ClipboardListIcon, label: 'Templates' },
               { to: '/admin/announcements', icon: BellIcon, label: 'Announcements' },
@@ -139,6 +140,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             group: 'Review Hub',
             items: [
               { to: '/adviser/review', icon: SearchIcon, label: 'Document Review', badge: 4 },
+              { to: '/adviser/reviews', icon: ClipboardCheckIcon, label: 'Review Center' },
               { to: '/adviser/review?type=dtr', icon: FileSpreadsheetIcon, label: 'DTR Verification' },
             ],
           },
@@ -154,6 +156,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             items: [
               { to: '/student', icon: LayoutDashboardIcon, label: 'Dashboard' },
               { to: '/student/documents', icon: FileTextIcon, label: 'Document Repository' },
+              { to: '/student/reviews', icon: ClipboardCheckIcon, label: 'Review Center' },
               { to: '/student/editor', icon: FilePlus2Icon, label: 'Document Editor' },
             ],
           },
@@ -173,6 +176,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             items: [
               { to: '/supervisor/dtr', icon: CalendarIcon, label: 'DTR Approval', badge: 5 },
               { to: '/supervisor/journal', icon: BookOpenIcon, label: 'Weekly Journal Review', badge: 2 },
+              { to: '/supervisor/reviews', icon: ClipboardCheckIcon, label: 'Review Center' },
             ],
           },
         ];

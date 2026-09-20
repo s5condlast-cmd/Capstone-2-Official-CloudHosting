@@ -72,6 +72,7 @@ export function AppSidebar({ user, onLogout, onSearchClick, ...props }: AppSideb
               { title: 'Accounts', url: '/admin/users', icon: UsersIcon, badge: 3 },
               { title: 'Companies', url: '/admin/companies', icon: BuildingIcon },
               { title: 'Documents', url: '/admin/documents', icon: FileTextIcon, badge: 38 },
+              { title: 'Review Center', url: '/admin/reviews', icon: ClipboardCheckIcon },
               { title: 'DTR Audit', url: '/admin/documents?filter=dtr', icon: FileSpreadsheetIcon },
               { title: 'Templates', url: '/admin/templates', icon: ClipboardListIcon },
               { title: 'Announcements', url: '/admin/announcements', icon: BellIcon },
@@ -106,6 +107,7 @@ export function AppSidebar({ user, onLogout, onSearchClick, ...props }: AppSideb
             group: 'Review Hub',
             items: [
               { title: 'Document Review', url: '/adviser/review', icon: SearchIcon, badge: 4 },
+              { title: 'Review Center', url: '/adviser/reviews', icon: ClipboardCheckIcon },
               { title: 'DTR Verification', url: '/adviser/review?type=dtr', icon: FileSpreadsheetIcon },
             ],
           },
@@ -124,7 +126,9 @@ export function AppSidebar({ user, onLogout, onSearchClick, ...props }: AppSideb
             items: [
               { title: 'Dashboard', url: '/student', icon: LayoutDashboardIcon },
               { title: 'Document Repository', url: '/student/documents', icon: FileTextIcon },
+              { title: 'Review Center', url: '/student/reviews', icon: ClipboardCheckIcon },
               { title: 'Document Editor', url: '/student/editor', icon: FilePlus2Icon },
+              { title: 'Practicum Calendar', url: '/student/calendar', icon: CalendarIcon },
             ],
           },
         ]
@@ -148,6 +152,7 @@ export function AppSidebar({ user, onLogout, onSearchClick, ...props }: AppSideb
             items: [
               { title: 'DTR Approval', url: '/supervisor/dtr', icon: CalendarIcon, badge: 5 },
               { title: 'Weekly Journal Review', url: '/supervisor/journal', icon: BookOpenIcon, badge: 2 },
+              { title: 'Review Center', url: '/supervisor/reviews', icon: ClipboardCheckIcon },
             ],
           },
         ]
@@ -162,19 +167,21 @@ export function AppSidebar({ user, onLogout, onSearchClick, ...props }: AppSideb
       <SidebarHeader className="p-2 border-b-0">
         <SidebarMenu>
           <SidebarMenuItem>
-            <NavLink to={getDashboardRoute()} className="block w-full">
-              <SidebarMenuButton size="lg" className="hover:bg-sidebar-accent cursor-pointer group/brand gap-2.5 px-2">
-                <img
-                  src="/images/Landing Page Icons/Logo.svg"
-                  alt="Web Practicum Logo"
-                  className="size-8 aspect-square object-contain shrink-0 transition-transform group-hover/brand:scale-105"
-                />
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-bold tracking-tight text-sidebar-foreground">Web Practicum</span>
-                  <span className="truncate text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">STI Marikina</span>
-                </div>
-              </SidebarMenuButton>
-            </NavLink>
+            <SidebarMenuButton
+              size="lg"
+              render={<NavLink to={getDashboardRoute()} />}
+              className="hover:bg-sidebar-accent cursor-pointer group/brand gap-2.5 px-2"
+            >
+              <img
+                src="/images/Landing Page Icons/Logo.svg"
+                alt="Web Practicum Logo"
+                className="size-8 aspect-square object-contain shrink-0 transition-transform group-hover/brand:scale-105"
+              />
+              <div className="grid flex-1 text-left text-sm leading-tight">
+                <span className="truncate font-bold tracking-tight text-sidebar-foreground">Web Practicum</span>
+                <span className="truncate text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">STI Marikina</span>
+              </div>
+            </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>

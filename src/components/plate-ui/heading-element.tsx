@@ -12,12 +12,12 @@ export const headingVariants = cva(
   {
     variants: {
       variant: {
-        h1: 'mt-7 mb-2.5 font-bold text-3xl sm:text-4xl text-zinc-900 dark:text-zinc-50 leading-tight',
-        h2: 'mt-6 mb-2 font-bold text-2xl text-zinc-900 dark:text-zinc-100 leading-snug',
-        h3: 'mt-4.5 mb-1.5 font-semibold text-xl text-zinc-900 dark:text-zinc-100',
-        h4: 'mt-3.5 mb-1 font-semibold text-lg text-zinc-900 dark:text-zinc-100',
-        h5: 'mt-2.5 mb-0.5 font-semibold text-base text-zinc-900 dark:text-zinc-100',
-        h6: 'mt-2 mb-0.5 font-semibold text-sm text-zinc-900 dark:text-zinc-100',
+        h1: 'mt-7 mb-2.5 font-bold text-[16pt] text-zinc-900 dark:text-zinc-50 leading-tight',
+        h2: 'mt-6 mb-2 font-bold text-[13pt] text-zinc-900 dark:text-zinc-100 leading-snug',
+        h3: 'mt-4.5 mb-1.5 font-semibold text-[12pt] text-zinc-900 dark:text-zinc-100',
+        h4: 'mt-3.5 mb-1 font-semibold text-[11pt] text-zinc-900 dark:text-zinc-100',
+        h5: 'mt-2.5 mb-0.5 font-semibold text-[11pt] text-zinc-900 dark:text-zinc-100',
+        h6: 'mt-2 mb-0.5 font-semibold text-[11pt] text-zinc-900 dark:text-zinc-100',
       },
     },
     defaultVariants: {
@@ -44,10 +44,15 @@ export function HeadingElement({
   ...props
 }: PlateElementProps & VariantProps<typeof headingVariants>) {
   const indent = Math.max(0, Number((element as any)?.indent) || 0);
+  const spaceBefore = (element as any)?.spaceBefore !== undefined ? Number((element as any).spaceBefore) : undefined;
+  const spaceAfter = (element as any)?.spaceAfter !== undefined ? Number((element as any).spaceAfter) : undefined;
+
   const elementStyle: React.CSSProperties = {
     lineHeight: (element as any)?.lineHeight || undefined,
     marginLeft: indent ? `${indent * 1.5}rem` : undefined,
     textAlign: (element as any)?.align || undefined,
+    marginTop: spaceBefore !== undefined ? `${Math.round(spaceBefore * 1.333)}px` : undefined,
+    marginBottom: spaceAfter !== undefined ? `${Math.round(spaceAfter * 1.333)}px` : undefined,
     ...style,
   };
 

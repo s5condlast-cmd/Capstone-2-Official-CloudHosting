@@ -90,7 +90,7 @@ Embedding raw signature drawings into Excel spreadsheets often causes alignment 
 
 | Component / Utility | File Location | Purpose |
 | :--- | :--- | :--- |
-| **Student DTR Page** | [`src/pages/student/DTR.tsx`](../../src/pages/student/DTR.tsx) | Daily time entry, punch logs, progress tracker |
+| **Student Documents & DTR Tracking** | [`src/pages/student/StudentDocumentRepository.tsx`](../../src/pages/student/StudentDocumentRepository.tsx) | Daily time entry, punch logs, progress tracker |
 | **Supervisor Approval** | [`src/pages/supervisor/DTRApproval.tsx`](../../src/pages/supervisor/DTRApproval.tsx) | Supervisor inspection and signature canvas |
 | **Excel Generation Engine** | [`src/lib/excelGenerator.ts`](../../src/lib/excelGenerator.ts) | ExcelJS workbook creation and signature fitting |
 
@@ -109,4 +109,5 @@ Embedding raw signature drawings into Excel spreadsheets often causes alignment 
 - [01. Student Portal & Checklist](01_STUDENT_PORTAL_CHECKLIST.md) — Student journey and requirements tracking
 - [05. Adviser & Supervisor Review Rooms](05_ADVISER_SUPERVISOR_REVIEW.md) — Supervisor approval workflow and sign-offs
 - [Document Workflows Architecture](../architecture/DOCUMENT_WORKFLOWS.md) — Excel DTR signature fitting protocol
-- [Cloudinary Document Storage Integration](../architecture/CLOUDINARY_INTEGRATION_SUMMARY.md) — Supervisor-signed DTR spreadsheet CDN storage
+- [OneDrive Integration Summary](../architecture/ONEDRIVE_INTEGRATION_SUMMARY.md) — Institutional Microsoft OneDrive cloud archival
+

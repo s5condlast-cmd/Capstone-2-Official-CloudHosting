@@ -53,13 +53,13 @@ export function FontFamilyToolbarButton() {
           title="Font Family"
           aria-label="Font Family"
           className={cn(
-            'flex h-8.5 items-center gap-1 rounded-md px-2 text-xs font-medium transition-colors',
+            'flex h-8.5 items-center gap-1.5 rounded-md px-2.5 text-[13px] font-medium transition-colors',
             'border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/60',
             'text-zinc-800 dark:text-zinc-200 hover:bg-zinc-200/60 dark:hover:bg-zinc-700/60',
             'max-w-[130px] sm:max-w-[150px]'
           )}
         >
-          <span className="truncate font-medium">{currentFamily.label}</span>
+          <span className="truncate font-medium text-[13px]" style={{ fontFamily: currentFamily.value }}>{currentFamily.label}</span>
           <ChevronDown className="h-3.5 w-3.5 shrink-0 text-zinc-500 dark:text-zinc-400" />
         </button>
       </DropdownMenuTrigger>

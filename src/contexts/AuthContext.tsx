@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { User } from '@/src/types';
 import { supabase } from '@/src/lib/supabase';
 import { apiJson } from '@/src/lib/api';
+import { formatAuthError } from '@/src/lib/authErrors';
+import { clearAllSupervisorSignatures } from '@/src/lib/signatureStorage';
 
 export interface PortalAuthResult {
   user: User;
@@ -47,7 +49,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (version !== generation.current) return;
       setUser(null);
       setPendingUser(null);
-      setAuthError(error instanceof Error ? error.message : 'Unable to verify your session.');
+      setAuthError(formatAuthError(error, true));
       return null;
     } finally { if (version === generation.current) setLoading(false); }
   }, []);
@@ -88,6 +90,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [refreshProfile]);
   const logout = useCallback(async () => {
     ++generation.current; setUser(null); setPendingUser(null);
+    clearAllSupervisorSignatures();
     const { error } = await supabase.auth.signOut({ scope: 'global' });
     if (error) { setAuthError('Sign-out could not reach the server. Retry to revoke all sessions.'); throw error; }
     setAuthError('');
