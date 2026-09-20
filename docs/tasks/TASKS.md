@@ -60,7 +60,7 @@ Student specification: [Simplified Student Dashboard Plan](STUDENT_DASHBOARD_SIM
 
 - [ ] **Role-Specific Dashboards (shadcn `dashboard-01` baseline)**:
   - [ ] **Admin Dashboard**: Section metrics, interactive area chart, recent student activity table, and API key configuration card.
-  - [x] **Student Dashboard**: Replace the dense widget grid with Bento-style layout (Overview with dual metrics & Next Priority Action, Active Checklist with 3D thumbnails, Attendance Activity with 7-day pill chart, and Adviser Remarks).
+  - [ ] **Student Dashboard**: Replace the dense widget grid with three status metrics, one authoritative Next Action, compact phase progress, Needs Attention, and Recent Activity.
   - [ ] **Adviser Dashboard**: Advisory section stats, pending review queue, and student roster table.
   - [ ] **Supervisor Dashboard**: Attendance metrics, DTR digital signature queue, and intern performance table.
 - [ ] **System-Wide UI Polish**:
@@ -70,9 +70,9 @@ Student specification: [Simplified Student Dashboard Plan](STUDENT_DASHBOARD_SIM
 
 ## 3. Student Experience & Portal Refinement
 
-- [x] **Student Dashboard Dynamic Database Sync**:
-  - [x] Derive requirements progress dynamically from Supabase `student_documents`, `profiles`, and `editor_drafts` rather than local mock state.
-  - [x] Synchronize real-time completed tasks between checklist, attendance metrics, and next priority action.
+- [ ] **Student Dashboard Dynamic Database Sync**:
+  - [ ] Derive requirements progress dynamically from Supabase `student_documents` and `user_profiles` rather than local mock state.
+  - [ ] Synchronize real-time completed tasks between To-do checklist, submissions table, and modal.
   - [ ] Responsive testing across mobile (375px), tablet (768px), and desktop (1024px–1536px).
 - [ ] **Document Workflow Component Standardization**:
   - [ ] Standardize all student document workflows via `StudentDocumentPage.tsx` (`src/components/compose/StudentDocumentPage.tsx`).
