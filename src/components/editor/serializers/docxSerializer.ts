@@ -22,6 +22,8 @@ import {
   TableCell,
   BorderStyle,
   WidthType,
+  TableLayoutType,
+  VerticalAlignTable,
   LevelFormat,
   UnderlineType,
   Header,
@@ -36,9 +38,11 @@ import { titleToFilename } from '@/src/lib/sanitizeDocumentFilename';
 export interface HeaderFooterItem {
   image?: {
     url: string;
+    originalUrl?: string;
     name?: string;
     align?: 'left' | 'center' | 'right';
     width?: number;
+    height?: number;
     offsetPercent?: number;
     cropZoom?: number;
   } | null;
@@ -77,6 +81,24 @@ interface PlateElement {
 }
 
 type PlateNode = PlateText | PlateElement;
+
+const DEFAULT_LINE_HEIGHT = 1.15;
+const DEFAULT_PARAGRAPH_AFTER_TWIPS = 0;
+const HEADER_CONTENT_WIDTH_PX = 624;
+const HEADER_IMAGE_MAX_HEIGHT_PX = 200;
+const HEADER_IMAGE_MAX_WIDTH_WITH_TEXT_PX = 360;
+const CSS_PX_TO_TWIPS = 15;
+
+const HEADING_LAYOUT: Record<string, { before: number; after: number; lineHeight: number }> = {
+  // Keep these values in step with heading-element.tsx. Tailwind spacing uses
+  // 4px units; at 96dpi each CSS pixel is 15 Word twips.
+  h1: { before: 420, after: 150, lineHeight: 1.25 },
+  h2: { before: 360, after: 120, lineHeight: 1.375 },
+  h3: { before: 270, after: 90, lineHeight: DEFAULT_LINE_HEIGHT },
+  h4: { before: 210, after: 60, lineHeight: DEFAULT_LINE_HEIGHT },
+  h5: { before: 150, after: 30, lineHeight: DEFAULT_LINE_HEIGHT },
+  h6: { before: 120, after: 30, lineHeight: DEFAULT_LINE_HEIGHT },
+};
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -217,6 +239,21 @@ function getImageDimensions(bytes: Uint8Array, type: string, defaultMaxW = 460):
   return { width: 320, height: 160 };
 }
 
+function fitImageToBox(
+  dimensions: { width: number; height: number },
+  maxWidth: number,
+  maxHeight: number
+): { width: number; height: number } {
+  const naturalWidth = Math.max(1, dimensions.width);
+  const naturalHeight = Math.max(1, dimensions.height);
+  const scale = Math.min(maxWidth / naturalWidth, maxHeight / naturalHeight);
+
+  return {
+    width: Math.max(1, Math.round(naturalWidth * scale)),
+    height: Math.max(1, Math.round(naturalHeight * scale)),
+  };
+}
+
 /** Convert Plate leaf nodes to docx TextRun(s) */
 export function leafToRuns(node: PlateText): TextRun[] {
   const text = node.text ?? '';
@@ -336,14 +373,19 @@ export function elementToParagraph(el: PlateElement): Paragraph {
   const alignment = toAlignmentType(el.align as string | undefined);
   const runs = collectParagraphChildren(el.children);
   const indent = Math.max(0, Number(el.indent) || 0);
-  const lineHeight = Number(el.lineHeight) || 1.5;
+  const headingLayout = HEADING_LAYOUT[el.type];
+  const lineHeight = Number(el.lineHeight) || headingLayout?.lineHeight || DEFAULT_LINE_HEIGHT;
 
   return new Paragraph({
     heading,
     alignment,
     children: runs as any,
     indent: indent ? { left: indent * 720 } : undefined,
-    spacing: { after: 120, line: Math.round(lineHeight * 240) },
+    spacing: {
+      before: headingLayout?.before ?? 0,
+      after: headingLayout?.after ?? DEFAULT_PARAGRAPH_AFTER_TWIPS,
+      line: Math.round(lineHeight * 240),
+    },
   });
 }
 
@@ -602,53 +644,118 @@ export async function serializeToDocx(
   const children = await nodesToDocxChildren(content);
 
   // ── Build Native Word Header ───────────────────────────────────────────────
-  const headerChildren: Paragraph[] = [];
-  if (headerFooter?.header?.image?.url) {
+  const headerChildren: (Paragraph | Table)[] = [];
+  const header = headerFooter?.header;
+  let resolvedHeaderImage: Awaited<ReturnType<typeof resolveImageBytes>> = null;
+
+  if (header?.image?.url) {
     try {
-      const resolved = await resolveImageBytes(headerFooter.header.image.url);
-      if (resolved) {
-        const dims = getImageDimensions(resolved.data, resolved.type);
-        const width = headerFooter.header.image.width || 180;
-        const height = Math.round(width * (dims.height / dims.width));
-        const headerImgAlign = headerFooter.header.image.align ||
-          (headerFooter.header.image.offsetPercent !== undefined
-            ? (headerFooter.header.image.offsetPercent <= 33 ? 'left' : headerFooter.header.image.offsetPercent >= 67 ? 'right' : 'center')
-            : 'center');
-        headerChildren.push(
-          new Paragraph({
-            alignment: toAlignmentType(headerImgAlign),
-            children: [
-              new ImageRun({
-                data: resolved.data,
-                transformation: { width, height },
-                type: resolved.type,
-              }),
-            ],
-            spacing: { after: 80 },
-          })
-        );
-      }
+      resolvedHeaderImage = await resolveImageBytes(header.image.url);
     } catch (err) {
       console.warn('[docxSerializer] Failed to resolve header image:', err);
     }
   }
-  if (headerFooter?.header?.text?.trim()) {
-    headerChildren.push(
-      new Paragraph({
-        alignment: toAlignmentType(headerFooter.header.textAlign || 'center'),
+
+  const headerText = header?.text?.trim() || '';
+  const headerTextParagraph = headerText
+    ? new Paragraph({
+        alignment: toAlignmentType(header?.textAlign || 'left'),
         children: [
           new TextRun({
-            text: headerFooter.header.text.trim(),
-            bold: headerFooter.header.bold,
-            italics: headerFooter.header.italic,
-            underline: headerFooter.header.underline ? { type: UnderlineType.SINGLE } : undefined,
-            color: headerFooter.header.color ? headerFooter.header.color.replace('#', '') : '666666',
-            size: headerFooter.header.fontSize ? headerFooter.header.fontSize * 2 : 18,
-            font: headerFooter.header.fontFamily,
+            text: headerText,
+            bold: header?.bold,
+            italics: header?.italic,
+            underline: header?.underline ? { type: UnderlineType.SINGLE } : undefined,
+            color: header?.color ? header.color.replace('#', '') : '666666',
+            size: header?.fontSize ? Math.round(header.fontSize * 1.5) : 21,
+            font: cleanFontFamily(header?.fontFamily) || 'Calibri',
           }),
         ],
-        spacing: { after: 120 },
+        spacing: { before: 0, after: 0, line: Math.round(DEFAULT_LINE_HEIGHT * 240) },
       })
+    : null;
+
+  if (resolvedHeaderImage && header?.image) {
+    const dimensions = getImageDimensions(resolvedHeaderImage.data, resolvedHeaderImage.type);
+    const hasInlineText = Boolean(headerTextParagraph);
+    const imageSlotWidth = Math.min(
+      header.image.width || 180,
+      hasInlineText ? HEADER_IMAGE_MAX_WIDTH_WITH_TEXT_PX : HEADER_CONTENT_WIDTH_PX
+    );
+    const targetHeight = header.image.height || HEADER_IMAGE_MAX_HEIGHT_PX;
+    const fittedImage = fitImageToBox(
+      dimensions,
+      imageSlotWidth,
+      targetHeight
+    );
+    const createHeaderImageRun = () => new ImageRun({
+      data: resolvedHeaderImage.data,
+      transformation: fittedImage,
+      type: resolvedHeaderImage.type,
+    });
+    const imageParagraph = new Paragraph({
+      alignment: AlignmentType.LEFT,
+      children: [createHeaderImageRun()],
+      spacing: { before: 0, after: 0 },
+    });
+
+    if (headerTextParagraph) {
+      const totalWidth = HEADER_CONTENT_WIDTH_PX * CSS_PX_TO_TWIPS;
+      const imageColumnWidth = Math.round(imageSlotWidth * CSS_PX_TO_TWIPS);
+      const textColumnWidth = totalWidth - imageColumnWidth;
+      const noBorder = { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' };
+
+      headerChildren.push(
+        new Table({
+          width: { size: totalWidth, type: WidthType.DXA },
+          columnWidths: [imageColumnWidth, textColumnWidth],
+          layout: TableLayoutType.FIXED,
+          borders: {
+            top: noBorder,
+            bottom: noBorder,
+            left: noBorder,
+            right: noBorder,
+            insideHorizontal: noBorder,
+            insideVertical: noBorder,
+          },
+          rows: [
+            new TableRow({
+              children: [
+                new TableCell({
+                  width: { size: imageColumnWidth, type: WidthType.DXA },
+                  verticalAlign: VerticalAlignTable.CENTER,
+                  margins: { top: 0, bottom: 0, left: 0, right: 180 },
+                  borders: { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder },
+                  children: [imageParagraph],
+                }),
+                new TableCell({
+                  width: { size: textColumnWidth, type: WidthType.DXA },
+                  verticalAlign: VerticalAlignTable.CENTER,
+                  margins: { top: 0, bottom: 0, left: 0, right: 0 },
+                  borders: { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder },
+                  children: [headerTextParagraph],
+                }),
+              ],
+            }),
+          ],
+        })
+      );
+    } else {
+      const headerImgAlign = header.image.align ||
+        (header.image.offsetPercent !== undefined
+          ? (header.image.offsetPercent <= 33 ? 'left' : header.image.offsetPercent >= 67 ? 'right' : 'center')
+          : 'center');
+      headerChildren.push(
+        new Paragraph({
+          alignment: toAlignmentType(headerImgAlign),
+          children: [createHeaderImageRun()],
+          spacing: { before: 0, after: 0 },
+        })
+      );
+    }
+  } else if (headerTextParagraph) {
+    headerChildren.push(
+      headerTextParagraph
     );
   }
 
@@ -660,7 +767,7 @@ export async function serializeToDocx(
       if (resolved) {
         const dims = getImageDimensions(resolved.data, resolved.type);
         const width = headerFooter.footer.image.width || 140;
-        const height = Math.round(width * (dims.height / dims.width));
+        const height = headerFooter.footer.image.height || Math.round(width * (dims.height / dims.width));
         const footerImgAlign = headerFooter.footer.image.align ||
           (headerFooter.footer.image.offsetPercent !== undefined
             ? (headerFooter.footer.image.offsetPercent <= 33 ? 'left' : headerFooter.footer.image.offsetPercent >= 67 ? 'right' : 'center')
@@ -755,6 +862,25 @@ export async function serializeToDocx(
     title,
     creator: 'STI Marikina Practicum Portal',
     description: 'Generated by Web Practicum',
+    styles: {
+      default: {
+        document: {
+          run: { font: 'Calibri', size: 22 },
+          paragraph: {
+            spacing: {
+              after: DEFAULT_PARAGRAPH_AFTER_TWIPS,
+              line: Math.round(DEFAULT_LINE_HEIGHT * 240),
+            },
+          },
+        },
+        heading1: { run: { font: 'Calibri', size: 32, bold: true } },
+        heading2: { run: { font: 'Calibri', size: 26, bold: true } },
+        heading3: { run: { font: 'Calibri', size: 24, bold: true } },
+        heading4: { run: { font: 'Calibri', size: 22, bold: true } },
+        heading5: { run: { font: 'Calibri', size: 22, bold: true } },
+        heading6: { run: { font: 'Calibri', size: 22, bold: true } },
+      },
+    },
     numbering: {
       config: [
         {

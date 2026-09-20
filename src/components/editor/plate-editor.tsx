@@ -543,16 +543,40 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
         const reader = new FileReader();
         reader.onload = () => {
           const dataUrl = reader.result as string;
-          setHeaderState((prev) => ({
-            ...prev,
-            image: {
-              url: dataUrl,
-              name: file.name,
-              align: prev.image?.align || 'center',
-              width: prev.image?.width || 180,
-              offsetPercent: prev.image?.offsetPercent ?? 50,
-            },
-          }));
+          const img = new Image();
+          img.onload = () => {
+            const aspect = (img.naturalWidth || 180) / Math.max(1, img.naturalHeight || 60);
+            const initialWidth = 180;
+            const initialHeight = Math.max(36, Math.min(160, Math.round(initialWidth / aspect)));
+
+            setHeaderState((prev) => ({
+              ...prev,
+              image: {
+                url: dataUrl,
+                originalUrl: dataUrl,
+                name: file.name,
+                align: prev.image?.align || 'left',
+                width: prev.image?.width || initialWidth,
+                height: prev.image?.height || initialHeight,
+                offsetPercent: prev.image?.offsetPercent ?? 0,
+              },
+            }));
+          };
+          img.onerror = () => {
+            setHeaderState((prev) => ({
+              ...prev,
+              image: {
+                url: dataUrl,
+                originalUrl: dataUrl,
+                name: file.name,
+                align: prev.image?.align || 'left',
+                width: prev.image?.width || 180,
+                height: prev.image?.height || 60,
+                offsetPercent: prev.image?.offsetPercent ?? 0,
+              },
+            }));
+          };
+          img.src = dataUrl;
         };
         reader.readAsDataURL(file);
         e.target.value = '';
@@ -568,16 +592,40 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
         const reader = new FileReader();
         reader.onload = () => {
           const dataUrl = reader.result as string;
-          setFooterState((prev) => ({
-            ...prev,
-            image: {
-              url: dataUrl,
-              name: file.name,
-              align: prev.image?.align || 'center',
-              width: prev.image?.width || 140,
-              offsetPercent: prev.image?.offsetPercent ?? 50,
-            },
-          }));
+          const img = new Image();
+          img.onload = () => {
+            const aspect = (img.naturalWidth || 140) / Math.max(1, img.naturalHeight || 48);
+            const initialWidth = 140;
+            const initialHeight = Math.max(24, Math.min(100, Math.round(initialWidth / aspect)));
+
+            setFooterState((prev) => ({
+              ...prev,
+              image: {
+                url: dataUrl,
+                originalUrl: dataUrl,
+                name: file.name,
+                align: prev.image?.align || 'left',
+                width: prev.image?.width || initialWidth,
+                height: prev.image?.height || initialHeight,
+                offsetPercent: prev.image?.offsetPercent ?? 0,
+              },
+            }));
+          };
+          img.onerror = () => {
+            setFooterState((prev) => ({
+              ...prev,
+              image: {
+                url: dataUrl,
+                originalUrl: dataUrl,
+                name: file.name,
+                align: prev.image?.align || 'left',
+                width: prev.image?.width || 140,
+                height: prev.image?.height || 48,
+                offsetPercent: prev.image?.offsetPercent ?? 0,
+              },
+            }));
+          };
+          img.src = dataUrl;
         };
         reader.readAsDataURL(file);
         e.target.value = '';
@@ -784,8 +832,13 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
             )}
 
             {/* Scrollable canvas containing the paper document sheet */}
-            <div ref={canvasRef} className="relative flex-1 flex flex-col min-h-0 overflow-hidden bg-[#f0f4f9] dark:bg-zinc-950">
+            <div
+              ref={canvasRef}
+              data-editor-canvas="true"
+              className="relative flex-1 flex flex-col min-h-0 overflow-hidden bg-[#f0f4f9] dark:bg-zinc-950"
+            >
               <EditorContainer
+                data-editor-paper-scroll="true"
                 variant="default"
                 className={cn(
                   'flex-1 min-h-0 overflow-y-auto editor-scrollbar bg-[#f0f4f9] dark:bg-zinc-950 p-4 md:p-8 pb-28 md:pb-36',
@@ -793,6 +846,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                 )}
               >
               <div
+                data-paper-zoom-stage="true"
                 style={{
                   transform: zoomLevel !== 100 ? `scale(${zoomLevel / 100})` : undefined,
                   transformOrigin: 'top center',

@@ -502,15 +502,19 @@ describe('Plate editor runtime wiring', () => {
     assert.ok(imageElSrc.includes('Math.min(624'), 'Body image must be bounded to 624px printable page track');
 
     // 4. Side-by-side text & image layout (cursor right next to image)
-    assert.ok(headerSrc.includes('overflow-hidden flex items-center gap-3 relative py-0.5 min-h-[36px]'), 'Header must have side-by-side inline row with overflow containment');
-    assert.ok(footerSrc.includes('overflow-hidden flex items-center gap-3 relative py-0.5 min-h-[36px]'), 'Footer must have side-by-side inline row with overflow containment');
+    assert.ok(headerSrc.includes('flex items-center gap-3 relative py-0.5'), 'Header must have side-by-side inline row');
+    assert.ok(footerSrc.includes('flex items-center gap-3 relative py-0.5 min-h-[36px]'), 'Footer must have side-by-side inline row');
     assert.ok(imageElSrc.includes("wrap === 'inline'"), 'Body image must support inline wrap next to text');
 
-    // 5. Crop Zoom buttons and popup completely removed
-    assert.ok(!headerSrc.includes('data-header-crop'), 'Header must not contain crop zoom popup');
-    assert.ok(!footerSrc.includes('data-footer-crop'), 'Footer must not contain crop zoom popup');
+    // 5. Crop Zoom buttons and popup completely removed, replaced by Google Docs L-bracket cropping
+    assert.ok(!headerSrc.includes('data-header-crop'), 'Header must not contain old crop zoom popup');
+    assert.ok(!footerSrc.includes('data-footer-crop'), 'Footer must not contain old crop zoom popup');
     assert.ok(!imageElSrc.includes('Crop Zoom:'), 'Body image element must not contain crop zoom controls');
     assert.ok(!imageElSrc.includes('handleApplyCrop'), 'Body image element must not contain handleApplyCrop');
+    assert.ok(headerSrc.includes('border-t-[3px] border-l-[3px] border-black'), 'Header must have Google Docs L-bracket corner crop handles');
+    assert.ok(headerSrc.includes('shadow-[0_0_0_9999px_rgba(0,0,0,0.55)]'), 'Header must have darkened backdrop mask for cropping');
+    assert.ok(headerSrc.includes('applyCrop'), 'Header must have canvas-based crop application');
+    assert.ok(footerSrc.includes('border-t-[3px] border-l-[3px] border-black'), 'Footer must have Google Docs L-bracket corner crop handles');
 
     // 6. Clean typing area (no placeholder="Header" or placeholder="Footer" text)
     assert.ok(!headerSrc.includes('placeholder="Header'), 'Header text input must be clean without placeholder="Header"');
@@ -520,14 +524,21 @@ describe('Plate editor runtime wiring', () => {
     assert.ok(toolbarSrc.includes('activeHeaderFooter'), 'FixedToolbarButtons must support activeHeaderFooter');
     assert.ok(toolbarSrc.includes('onFormatHeaderFooter'), 'FixedToolbarButtons must support onFormatHeaderFooter');
 
-    // 7. DOCX serializer rich header/footer text formatting
+    // 8. 8-handle free-form resizing (corners and side-edges for width and height enlargement)
+    assert.ok(headerSrc.includes("handleResizeStart(e, 'nw')"), 'Header must have corner resizing handles');
+    assert.ok(headerSrc.includes("handleResizeStart(e, 'n')"), 'Header must have top edge resizing handle');
+    assert.ok(headerSrc.includes("handleResizeStart(e, 'e')"), 'Header must have right edge resizing handle');
+    assert.ok(footerSrc.includes("handleResizeStart(e, 'nw')"), 'Footer must have corner resizing handles');
+    assert.ok(footerSrc.includes("handleResizeStart(e, 'n')"), 'Footer must have edge resizing handles');
+
+    // 9. DOCX serializer rich header/footer text formatting & enlarged logo export
     const tinyPng = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
     const blob = await serializeToDocx(
       [{ type: 'p', children: [{ text: 'Body text' }] }] as any,
       'Rich Header Footer Test',
       {
         header: {
-          image: { url: tinyPng, width: 250 },
+          image: { url: tinyPng, width: 320, height: 180 },
           text: 'Formatted Header',
           bold: true,
           italic: true,
@@ -538,6 +549,7 @@ describe('Plate editor runtime wiring', () => {
           textAlign: 'center',
         },
         footer: {
+          image: { url: tinyPng, width: 200, height: 80 },
           text: 'Formatted Footer',
           pageNumber: true,
           bold: true,
@@ -548,7 +560,7 @@ describe('Plate editor runtime wiring', () => {
         },
       }
     );
-    assert.ok(blob.size > 2_000, 'Serialized DOCX with rich formatted header and footer should be valid');
+    assert.ok(blob.size > 2_000, 'Serialized DOCX with enlarged header and footer images should be valid');
   });
 
   it('enforces full-margin header/footer box containers, default fullscreen, and elevated z-index popovers/menus', async () => {
@@ -563,9 +575,11 @@ describe('Plate editor runtime wiring', () => {
     const floatingToolbarSrc = fs.readFileSync(path.resolve('src/components/plate-ui/floating-toolbar.tsx'), 'utf8');
     const fixedToolbarSrc = fs.readFileSync(path.resolve('src/components/plate-ui/fixed-toolbar-buttons.tsx'), 'utf8');
 
-    // 1. Full-margin box containers for Header & Footer (span the entire 816px paper sheet width and 96px margins)
-    assert.ok(headerSrc.includes('w-[calc(100%+192px)] -mx-[96px] px-[96px] h-[96px] min-h-[96px] shrink-0'), 'Header container must span entire top 96px margin box with locked height');
-    assert.ok(footerSrc.includes('w-[calc(100%+192px)] -mx-[96px] px-[96px] h-[96px] min-h-[96px] shrink-0'), 'Footer container must span entire bottom 96px margin box with locked height');
+    // 1. Full-margin box containers for Header & Footer with dynamic expansion up to 240px / 180px
+    assert.ok(headerSrc.includes('w-[calc(100%+192px)] -mx-[96px] px-[96px] min-h-[96px] shrink-0'), 'Header container must span entire top 96px margin box with min-h 96px');
+    assert.ok(footerSrc.includes('w-[calc(100%+192px)] -mx-[96px] px-[96px] min-h-[96px] shrink-0'), 'Footer container must span entire bottom 96px margin box with min-h 96px');
+    assert.ok(headerSrc.includes('HEADER_MAX_HEIGHT = 240'), 'Header max height must be configured to 240px');
+    assert.ok(footerSrc.includes('FOOTER_MAX_HEIGHT = 180'), 'Footer max height must be configured to 180px');
     assert.ok(editorSrc.includes('plate-paper-sheet w-[816px] max-w-[816px] min-h-[1056px]') && editorSrc.includes('pt-0 pb-0'), 'Paper sheet must have pt-0 pb-0 so header and footer occupy the margin areas');
 
     // 2. Default Fullscreen state (must NOT be fullscreen already when user enters editor)
