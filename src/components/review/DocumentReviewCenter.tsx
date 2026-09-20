@@ -13,7 +13,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Search,
-  Filter,
   CheckCircle2,
   Clock,
   AlertTriangle,
@@ -26,23 +25,21 @@ import {
   MessageSquare,
   ShieldCheck,
   History,
-  ChevronDown,
   User,
-  Paperclip,
   ArrowLeft,
   Calendar,
   AlertCircle,
   FileCheck,
-  RotateCcw,
-  Sparkles,
   Loader2,
   X,
-  Building,
+  ExternalLink,
+  ChevronRight,
+  Sparkles,
+  Inbox,
+  FolderOpen,
 } from 'lucide-react';
-import { Card } from '@/src/components/ui/Card';
 import { Badge } from '@/src/components/ui/Badge';
 import { Button } from '@/src/components/ui/Button';
-import { EmptyState } from '@/src/components/ui/EmptyState';
 import { EmbedPdfWorkspace } from '@/src/components/review/EmbedPdfWorkspace';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { Role } from '@/src/types';
@@ -84,9 +81,10 @@ export const DocumentReviewCenter: React.FC<DocumentReviewCenterProps> = ({ role
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
 
   // ── Mobile/Tablet Tab State ──
-  const [activeMobileTab, setActiveMobileTab] = useState<'preview' | 'conversation' | 'activity'>('preview');
+  const [activeMobileTab, setActiveMobileTab] = useState<'inbox' | 'preview' | 'conversation'>('inbox');
 
   // ── Conversation & Decision State ──
+  const [activeDetailsTab, setActiveDetailsTab] = useState<'comments' | 'audit'>('comments');
   const [commentText, setCommentText] = useState('');
   const [isPostingComment, setIsPostingComment] = useState(false);
   const [decisionRemarks, setDecisionRemarks] = useState('');
@@ -180,6 +178,7 @@ export const DocumentReviewCenter: React.FC<DocumentReviewCenterProps> = ({ role
   const handleSelectCase = (caseId: string) => {
     setSelectedCaseId(caseId);
     navigate(`${baseRoute}/${caseId}`);
+    setActiveMobileTab('preview');
   };
 
   // ── Post Comment ──
@@ -197,7 +196,6 @@ export const DocumentReviewCenter: React.FC<DocumentReviewCenterProps> = ({ role
       );
       toast.success('Comment posted.');
       setCommentText('');
-      // Reload details to show comment
       const updated = await documentReviewService.getCaseDetails(selectedCaseId);
       setCaseDetails(updated);
     } catch (err: any) {
@@ -219,7 +217,6 @@ export const DocumentReviewCenter: React.FC<DocumentReviewCenterProps> = ({ role
 
     setIsSubmittingDecision(true);
     try {
-      // Optional signature for supervisor approval
       let sigBlob: Blob | undefined;
       if (role === 'supervisor' && decision === 'supervisor_approve') {
         const sigUrl = getSupervisorSignature(user?.id);
@@ -244,7 +241,6 @@ export const DocumentReviewCenter: React.FC<DocumentReviewCenterProps> = ({ role
       );
       setDecisionRemarks('');
 
-      // Refresh data
       const updated = await documentReviewService.getCaseDetails(selectedCaseId);
       setCaseDetails(updated);
       void loadInbox();
@@ -285,7 +281,6 @@ export const DocumentReviewCenter: React.FC<DocumentReviewCenterProps> = ({ role
       setRevisionRemarks('');
       if (revisionFileInputRef.current) revisionFileInputRef.current.value = '';
 
-      // Reload
       const updated = await documentReviewService.getCaseDetails(selectedCaseId);
       setCaseDetails(updated);
       void loadInbox();
@@ -300,102 +295,233 @@ export const DocumentReviewCenter: React.FC<DocumentReviewCenterProps> = ({ role
   const getStageBadge = (stage: ReviewStage) => {
     switch (stage) {
       case 'approved':
-        return <Badge variant="success" className="gap-1"><CheckCircle2 className="w-3 h-3" /> Approved</Badge>;
+        return (
+          <Badge variant="success" className="gap-1.5 py-0.5 text-[11px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+            <CheckCircle2 className="w-3.5 h-3.5" /> Approved
+          </Badge>
+        );
       case 'supervisor_approved':
-        return <Badge variant="warning" className="gap-1 bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800"><ShieldCheck className="w-3 h-3" /> Supervisor Approved</Badge>;
+        return (
+          <Badge variant="warning" className="gap-1.5 py-0.5 text-[11px] font-semibold bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20">
+            <ShieldCheck className="w-3.5 h-3.5" /> Supervisor Approved
+          </Badge>
+        );
       case 'submitted_to_supervisor':
-        return <Badge variant="outline" className="gap-1 border-amber-300 text-amber-700 bg-amber-50 dark:bg-amber-950/30 dark:text-amber-300"><Clock className="w-3 h-3" /> Needs Supervisor Review</Badge>;
+        return (
+          <Badge variant="outline" className="gap-1.5 py-0.5 text-[11px] font-semibold border-amber-500/30 text-amber-600 dark:text-amber-400 bg-amber-500/10">
+            <Clock className="w-3.5 h-3.5" /> Needs Supervisor
+          </Badge>
+        );
       case 'submitted_to_adviser':
-        return <Badge variant="outline" className="gap-1 border-purple-300 text-purple-700 bg-purple-50 dark:bg-purple-950/30 dark:text-purple-300"><Clock className="w-3 h-3" /> Needs Adviser Review</Badge>;
+        return (
+          <Badge variant="outline" className="gap-1.5 py-0.5 text-[11px] font-semibold border-purple-500/30 text-purple-600 dark:text-purple-400 bg-purple-500/10">
+            <Clock className="w-3.5 h-3.5" /> Needs Adviser
+          </Badge>
+        );
       case 'supervisor_revision_required':
       case 'adviser_revision_required':
-        return <Badge variant="destructive" className="gap-1"><AlertTriangle className="w-3 h-3" /> Revision Required</Badge>;
+        return (
+          <Badge variant="danger" className="gap-1.5 py-0.5 text-[11px] font-semibold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
+            <AlertTriangle className="w-3.5 h-3.5" /> Revision Required
+          </Badge>
+        );
       default:
-        return <Badge variant="secondary">{stage}</Badge>;
+        return <Badge variant="secondary" className="text-[11px]">{stage}</Badge>;
     }
   };
 
   const activeRevision = caseDetails?.revisions.find((r) => r.revision_number === selectedRevisionNumber);
 
   return (
-    <div className="flex-1 flex flex-col min-h-screen bg-zinc-50 dark:bg-zinc-950">
-      {/* ── Top Header ── */}
-      <div className="h-14 border-b border-zinc-200 dark:border-zinc-800 px-4 sm:px-6 flex items-center justify-between bg-white dark:bg-zinc-900 shrink-0">
-        <div className="flex items-center gap-2.5">
-          <FileText className="w-5 h-5 text-primary" />
-          <h1 className="text-base font-semibold text-zinc-900 dark:text-zinc-100 tracking-tight">
-            Document Review Center
-          </h1>
-          <span className="hidden sm:inline-block text-xs px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 capitalize font-medium">
-            {role} Portal
-          </span>
+    <div className="flex-1 flex flex-col min-h-0 h-full gap-4">
+      {/* ── Page Header ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0 pb-1">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 text-primary flex items-center justify-center shrink-0 shadow-2xs">
+            <FileCheck className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-xl font-bold tracking-tight text-foreground">
+                Document Review Center
+              </h1>
+              <span className="text-xs px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 capitalize font-semibold">
+                {role} Portal
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Inspect submitted practicum documents, review remarks across revision cycles, and collaborate with reviewers.
+            </p>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          {role === 'student' && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('/student/documents')}
+              className="h-8 text-xs gap-1.5 cursor-pointer rounded-lg border-border hover:bg-muted/80"
+            >
+              <FolderOpen className="w-3.5 h-3.5 text-muted-foreground" />
+              <span>Document Repository</span>
+            </Button>
+          )}
+
           <Button
             variant="outline"
             size="sm"
             onClick={() => { void loadInbox(); }}
-            className="h-8 text-xs gap-1.5 cursor-pointer"
+            className="h-8 text-xs gap-1.5 cursor-pointer rounded-lg border-border hover:bg-muted/80"
           >
-            <RefreshCw className={cn("w-3.5 h-3.5", isLoadingCases && "animate-spin")} />
-            <span className="hidden sm:inline">Refresh</span>
+            <RefreshCw className={cn("w-3.5 h-3.5", isLoadingCases && "animate-spin text-primary")} />
+            <span>Refresh</span>
           </Button>
         </div>
       </div>
 
-      {/* ── 3-Column Main Workspace ── */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-hidden">
+      {/* ── Mobile Tab Navigation (< lg) ── */}
+      <div className="lg:hidden flex items-center bg-muted/70 p-1 rounded-xl border border-border shrink-0">
+        <button
+          type="button"
+          onClick={() => setActiveMobileTab('inbox')}
+          className={cn(
+            "flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all",
+            activeMobileTab === 'inbox'
+              ? "bg-card text-foreground shadow-2xs"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          Inbox ({cases.length})
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveMobileTab('preview')}
+          className={cn(
+            "flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all",
+            activeMobileTab === 'preview'
+              ? "bg-card text-foreground shadow-2xs"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          Document Preview
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveMobileTab('conversation')}
+          className={cn(
+            "flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all",
+            activeMobileTab === 'conversation'
+              ? "bg-card text-foreground shadow-2xs"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          Notes & History
+        </button>
+      </div>
+
+      {/* ── 3-Column Unified Workspace Card ── */}
+      <div className="flex-1 min-h-0 bg-card border border-border rounded-2xl shadow-xs overflow-hidden flex flex-col lg:flex-row">
+        
         {/* ════════════════════════════════════════════════════════════════
-            COLUMN 1: INBOX (lg:col-span-3)
+            COLUMN 1: REVIEW INBOX
             ════════════════════════════════════════════════════════════════ */}
-        <div className="lg:col-span-3 border-r border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex flex-col h-[calc(100vh-3.5rem)] overflow-hidden">
-          {/* Search Box */}
-          <div className="p-3 border-b border-zinc-200 dark:border-zinc-800">
+        <div
+          className={cn(
+            "w-full lg:w-80 xl:w-92 shrink-0 border-r border-border bg-card flex flex-col overflow-hidden",
+            activeMobileTab !== 'inbox' && "hidden lg:flex"
+          )}
+        >
+          {/* Inbox Header & Search */}
+          <div className="p-3.5 border-b border-border space-y-3 bg-muted/20">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                <Inbox className="w-3.5 h-3.5 text-primary" />
+                Review Inbox
+              </span>
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                {cases.length} {cases.length === 1 ? 'case' : 'cases'}
+              </span>
+            </div>
+
+            {/* Search Input with Clear Button */}
             <div className="relative">
-              <Search className="w-4 h-4 text-zinc-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+              <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 placeholder="Search documents or students…"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') void loadInbox(); }}
-                className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg bg-zinc-100 dark:bg-zinc-800 border-none text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-primary"
+                className="w-full pl-9 pr-8 py-1.5 text-xs rounded-xl bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
               />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => { setSearchQuery(''); void loadInbox(); }}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
 
-            {/* Filter Tabs */}
-            <div className="flex items-center gap-1 mt-2.5 overflow-x-auto pb-0.5 no-scrollbar">
-              {(['all', 'needs_action', 'waiting', 'revision_required', 'approved'] as ReviewInboxFilter[]).map((f) => (
+            {/* Filter Segmented Control */}
+            <div className="flex items-center gap-1 bg-muted/80 p-1 rounded-xl overflow-x-auto no-scrollbar">
+              {[
+                { key: 'all', label: 'All' },
+                { key: 'needs_action', label: 'In Review' },
+                { key: 'revision_required', label: 'Revisions' },
+                { key: 'approved', label: 'Approved' },
+              ].map(({ key, label }) => (
                 <button
-                  key={f}
+                  key={key}
                   type="button"
-                  onClick={() => setFilter(f)}
+                  onClick={() => setFilter(key as ReviewInboxFilter)}
                   className={cn(
-                    "text-[11px] font-medium px-2 py-1 rounded-md shrink-0 transition-colors cursor-pointer capitalize",
-                    filter === f
-                      ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
-                      : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                    "flex-1 text-[11px] font-medium py-1 px-2 rounded-lg shrink-0 transition-all text-center cursor-pointer",
+                    filter === key
+                      ? "bg-card text-foreground shadow-2xs font-semibold"
+                      : "text-muted-foreground hover:text-foreground"
                   )}
                 >
-                  {f.replace('_', ' ')}
+                  {label}
                 </button>
               ))}
             </div>
           </div>
 
           {/* Cases List */}
-          <div className="flex-1 overflow-y-auto divide-y divide-zinc-100 dark:divide-zinc-800/60">
+          <div className="flex-1 overflow-y-auto divide-y divide-border/60 custom-scrollbar">
             {isLoadingCases ? (
-              <div className="p-8 flex flex-col items-center justify-center gap-2">
+              <div className="p-10 flex flex-col items-center justify-center gap-2.5 text-center">
                 <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                <span className="text-xs text-zinc-400">Loading cases…</span>
+                <span className="text-xs text-muted-foreground">Loading inbox cases…</span>
               </div>
             ) : cases.length === 0 ? (
-              <div className="p-8 text-center">
-                <FileText className="w-8 h-8 text-zinc-300 dark:text-zinc-600 mx-auto mb-2" />
-                <p className="text-xs font-medium text-zinc-600 dark:text-zinc-400">No review cases found</p>
-                <p className="text-[11px] text-zinc-400 mt-1">Cases will appear as documents are submitted</p>
+              <div className="p-8 flex flex-col items-center justify-center text-center gap-3 h-full">
+                <div className="w-12 h-12 rounded-2xl bg-muted/80 border border-border flex items-center justify-center text-muted-foreground">
+                  <Inbox className="w-6 h-6 opacity-60" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-foreground">No review cases found</p>
+                  <p className="text-[11px] text-muted-foreground mt-1 max-w-[200px] mx-auto leading-relaxed">
+                    {filter === 'all'
+                      ? 'Cases will appear here once official documents are submitted.'
+                      : `No cases currently match the "${filter.replace('_', ' ')}" filter.`}
+                  </p>
+                </div>
+                {role === 'student' && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => navigate('/student/documents')}
+                    className="text-xs h-7 gap-1 mt-1 rounded-lg"
+                  >
+                    <FolderOpen className="w-3 h-3" />
+                    <span>View Repository</span>
+                  </Button>
+                )}
               </div>
             ) : (
               cases.map((c) => {
@@ -406,31 +532,34 @@ export const DocumentReviewCenter: React.FC<DocumentReviewCenterProps> = ({ role
                     type="button"
                     onClick={() => handleSelectCase(c.id)}
                     className={cn(
-                      "w-full text-left p-3.5 transition-colors cursor-pointer flex flex-col gap-1.5",
+                      "w-full text-left p-3.5 transition-all cursor-pointer flex flex-col gap-2 relative group",
                       isSelected
-                        ? "bg-primary/5 dark:bg-primary/10 border-l-3 border-primary"
-                        : "hover:bg-zinc-50 dark:hover:bg-zinc-800/40"
+                        ? "bg-primary/5 dark:bg-primary/10 border-l-4 border-l-primary"
+                        : "hover:bg-muted/40 border-l-4 border-l-transparent"
                     )}
                   >
                     <div className="flex items-start justify-between gap-2">
-                      <span className="font-semibold text-xs text-zinc-900 dark:text-zinc-100 line-clamp-1">
-                        {c.title}
-                      </span>
-                      <span className="text-[10px] text-zinc-400 shrink-0">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <FileText className={cn("w-4 h-4 shrink-0", isSelected ? "text-primary" : "text-muted-foreground")} />
+                        <span className={cn("text-xs font-semibold truncate", isSelected ? "text-primary" : "text-foreground")}>
+                          {c.title}
+                        </span>
+                      </div>
+                      <span className="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground shrink-0 border border-border/80">
                         Rev {c.current_revision_number || 1}
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-1.5 text-[11px] text-zinc-500 dark:text-zinc-400">
-                      <User className="w-3 h-3 shrink-0 text-zinc-400" />
-                      <span className="truncate">{c.student_name}</span>
-                      <span>•</span>
+                    <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                      <User className="w-3 h-3 shrink-0 opacity-70" />
+                      <span className="truncate font-medium">{c.student_name}</span>
+                      <span className="opacity-40">•</span>
                       <span className="truncate">{c.student_course}</span>
                     </div>
 
-                    <div className="flex items-center justify-between gap-2 mt-0.5">
+                    <div className="flex items-center justify-between gap-2 pt-0.5">
                       {getStageBadge(c.stage)}
-                      <span className="text-[10px] text-zinc-400">
+                      <span className="text-[10px] text-muted-foreground font-mono">
                         {new Date(c.updated_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                       </span>
                     </div>
@@ -442,82 +571,125 @@ export const DocumentReviewCenter: React.FC<DocumentReviewCenterProps> = ({ role
         </div>
 
         {/* ════════════════════════════════════════════════════════════════
-            COLUMN 2: ACTIVE FILE PREVIEW (lg:col-span-5)
+            COLUMN 2: ACTIVE FILE PREVIEW
             ════════════════════════════════════════════════════════════════ */}
-        <div className="lg:col-span-5 border-r border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-950 flex flex-col h-[calc(100vh-3.5rem)] overflow-hidden">
+        <div
+          className={cn(
+            "flex-1 min-w-0 bg-muted/20 border-r border-border flex flex-col overflow-hidden relative",
+            activeMobileTab !== 'preview' && "hidden lg:flex"
+          )}
+        >
           {isLoadingDetails ? (
             <div className="flex-1 flex flex-col items-center justify-center gap-3">
               <Loader2 className="w-8 h-8 text-primary animate-spin" />
-              <span className="text-xs text-zinc-500">Loading document preview…</span>
+              <span className="text-xs text-muted-foreground font-medium">Loading document preview…</span>
             </div>
           ) : !caseDetails ? (
-            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-              <FileText className="w-12 h-12 text-zinc-300 dark:text-zinc-700 mb-3" />
-              <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Select a review case</h3>
-              <p className="text-xs text-zinc-400 mt-1 max-w-xs">
-                Pick a document from the inbox to inspect revisions, feedback, and audit history.
+            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-card/40">
+              <div className="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary mb-4 shadow-2xs">
+                <FileCheck className="w-8 h-8" />
+              </div>
+              <h3 className="text-base font-bold text-foreground tracking-tight">
+                Document Preview Workspace
+              </h3>
+              <p className="text-xs text-muted-foreground mt-1 max-w-sm leading-relaxed">
+                Select any review case from your inbox on the left to inspect submitted PDF or Word pages, view sequential revisions, and examine institutional remarks side-by-side.
               </p>
+              <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-2 text-left max-w-md w-full">
+                <div className="p-2.5 rounded-xl border border-border bg-card text-center">
+                  <span className="text-[11px] font-semibold text-foreground block">Multi-Version</span>
+                  <span className="text-[10px] text-muted-foreground">Rev 1, Rev 2, Rev 3...</span>
+                </div>
+                <div className="p-2.5 rounded-xl border border-border bg-card text-center">
+                  <span className="text-[11px] font-semibold text-foreground block">Signatures</span>
+                  <span className="text-[10px] text-muted-foreground">Digital validation</span>
+                </div>
+                <div className="p-2.5 rounded-xl border border-border bg-card text-center">
+                  <span className="text-[11px] font-semibold text-foreground block">Audit Trail</span>
+                  <span className="text-[10px] text-muted-foreground">Append-only history</span>
+                </div>
+              </div>
             </div>
           ) : (
             <>
               {/* Revision Selector Bar */}
-              <div className="p-2.5 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between gap-2 shrink-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-medium text-zinc-500">Revision:</span>
-                  <select
-                    value={selectedRevisionNumber}
-                    onChange={(e) => void handleSelectRevision(Number(e.target.value))}
-                    aria-label="Select document revision"
-                    className="text-xs font-semibold bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-md px-2 py-1 text-zinc-900 dark:text-zinc-100 focus:outline-none cursor-pointer"
-                  >
-                    {caseDetails.revisions.map((rev) => (
-                      <option key={rev.id} value={rev.revision_number}>
-                        Rev {rev.revision_number} {rev.revision_number === caseDetails.caseRecord.current_revision_number ? '(Latest)' : ''}
-                      </option>
-                    ))}
-                  </select>
+              <div className="p-2.5 bg-card border-b border-border flex items-center justify-between gap-3 shrink-0">
+                <div className="flex items-center gap-2 flex-wrap min-w-0">
+                  <span className="text-xs font-semibold text-muted-foreground shrink-0">Revision:</span>
+                  <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5">
+                    {caseDetails.revisions.map((rev) => {
+                      const isSelected = rev.revision_number === selectedRevisionNumber;
+                      const isLatest = rev.revision_number === caseDetails.caseRecord.current_revision_number;
+                      return (
+                        <button
+                          key={rev.id}
+                          type="button"
+                          onClick={() => void handleSelectRevision(rev.revision_number)}
+                          className={cn(
+                            "text-xs px-2.5 py-1 rounded-lg font-semibold transition-all flex items-center gap-1 cursor-pointer",
+                            isSelected
+                              ? "bg-primary text-primary-fg shadow-2xs"
+                              : "bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground"
+                          )}
+                        >
+                          <span>Rev {rev.revision_number}</span>
+                          {isLatest && (
+                            <span className={cn(
+                              "text-[9px] px-1 rounded font-bold uppercase",
+                              isSelected ? "bg-white/20 text-white" : "bg-primary/10 text-primary"
+                            )}>
+                              Latest
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
 
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 shrink-0">
                   {activeFileUrl && (
                     <a
                       href={activeFileUrl}
                       download={activeRevision?.original_filename || 'document.pdf'}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 rounded-md transition-colors"
-                      title="Download file"
+                      className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-lg bg-muted hover:bg-accent text-foreground transition-colors border border-border cursor-pointer"
+                      title="Download official file copy"
                     >
-                      <Download className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline">Download</span>
+                      <Download className="w-3.5 h-3.5 text-muted-foreground" />
+                      <span>Download</span>
                     </a>
                   )}
                 </div>
               </div>
 
               {/* Document Canvas Preview */}
-              <div className="flex-1 bg-zinc-200 dark:bg-zinc-900/60 overflow-hidden relative">
+              <div className="flex-1 bg-zinc-100 dark:bg-zinc-950/60 overflow-hidden relative">
                 {activeFileUrl ? (
                   <EmbedPdfWorkspace
-                    fileUrl={activeFileUrl}
-                    title={caseDetails.caseRecord.title}
+                    pdfUrl={activeFileUrl}
+                    studentName={caseDetails.caseRecord.student_name}
+                    docTitle={caseDetails.caseRecord.title}
                     readOnly={true}
-                    className="w-full h-full"
                   />
                 ) : (
                   <div className="w-full h-full flex flex-col items-center justify-center p-8 text-center">
-                    <FileText className="w-10 h-10 text-zinc-400 mb-2" />
-                    <p className="text-xs text-zinc-500">Preview not available for this revision file</p>
+                    <FileText className="w-10 h-10 text-muted-foreground mb-2 opacity-50" />
+                    <p className="text-xs text-muted-foreground">Document file not available for this revision</p>
                   </div>
                 )}
               </div>
 
-              {/* Metadata strip */}
+              {/* Bottom Metadata Strip */}
               {activeRevision && (
-                <div className="p-2 bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800 text-[11px] text-zinc-500 flex items-center justify-between shrink-0">
-                  <span className="truncate max-w-[200px]" title={activeRevision.original_filename}>
+                <div className="p-2.5 bg-card border-t border-border text-[11px] text-muted-foreground flex items-center justify-between shrink-0 font-mono">
+                  <span className="truncate max-w-[240px] font-medium" title={activeRevision.original_filename}>
                     {activeRevision.original_filename}
                   </span>
-                  <span>{formatDocumentFileSize(activeRevision.byte_size || 0)}</span>
-                  <span>{new Date(activeRevision.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                  <div className="flex items-center gap-3 shrink-0">
+                    <span>{formatDocumentFileSize(activeRevision.byte_size || 0)}</span>
+                    <span>•</span>
+                    <span>{new Date(activeRevision.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                  </div>
                 </div>
               )}
             </>
@@ -525,48 +697,54 @@ export const DocumentReviewCenter: React.FC<DocumentReviewCenterProps> = ({ role
         </div>
 
         {/* ════════════════════════════════════════════════════════════════
-            COLUMN 3: CONVERSATION & DECISIONS (lg:col-span-4)
+            COLUMN 3: CONVERSATION & DECISIONS
             ════════════════════════════════════════════════════════════════ */}
-        <div className="lg:col-span-4 bg-white dark:bg-zinc-900 flex flex-col h-[calc(100vh-3.5rem)] overflow-hidden">
+        <div
+          className={cn(
+            "w-full lg:w-96 xl:w-[420px] shrink-0 bg-card flex flex-col overflow-hidden",
+            activeMobileTab !== 'conversation' && "hidden lg:flex"
+          )}
+        >
           {caseDetails ? (
             <>
               {/* Review Case Header */}
-              <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 shrink-0">
-                <div className="flex items-center justify-between gap-2 mb-1">
-                  <h2 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 line-clamp-1">
+              <div className="p-4 border-b border-border shrink-0 space-y-2.5 bg-muted/10">
+                <div className="flex items-start justify-between gap-2">
+                  <h2 className="text-sm font-bold text-foreground line-clamp-1 leading-snug">
                     {caseDetails.caseRecord.title}
                   </h2>
                 </div>
-                <div className="flex items-center gap-2 mb-2">
+
+                <div className="flex items-center gap-2 flex-wrap">
                   {getStageBadge(caseDetails.caseRecord.stage)}
-                  <span className="text-xs text-zinc-500">
-                    Route: {caseDetails.caseRecord.review_route === 'supervisor_then_adviser' ? 'Supervisor → Adviser' : 'Adviser Only'}
+                  <span className="text-[11px] text-muted-foreground">
+                    Route: <span className="font-medium text-foreground">{caseDetails.caseRecord.review_route === 'supervisor_then_adviser' ? 'Supervisor → Adviser' : 'Adviser Only'}</span>
                   </span>
                 </div>
 
-                {/* Submitter details */}
-                <div className="text-xs text-zinc-600 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-800/50 p-2 rounded-lg space-y-1">
-                  <div className="flex justify-between">
-                    <span className="text-zinc-400">Student:</span>
-                    <span className="font-medium text-zinc-800 dark:text-zinc-200">{caseDetails.caseRecord.student_name}</span>
+                {/* Submitter details card */}
+                <div className="text-xs bg-muted/40 border border-border/80 p-2.5 rounded-xl space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Student:</span>
+                    <span className="font-semibold text-foreground">{caseDetails.caseRecord.student_name}</span>
                   </div>
                   {caseDetails.caseRecord.assigned_supervisor_name && (
-                    <div className="flex justify-between">
-                      <span className="text-zinc-400">Supervisor:</span>
-                      <span className="text-zinc-700 dark:text-zinc-300">{caseDetails.caseRecord.assigned_supervisor_name}</span>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Supervisor:</span>
+                      <span className="font-medium text-foreground">{caseDetails.caseRecord.assigned_supervisor_name}</span>
                     </div>
                   )}
                   {caseDetails.caseRecord.assigned_adviser_name && (
-                    <div className="flex justify-between">
-                      <span className="text-zinc-400">Adviser:</span>
-                      <span className="text-zinc-700 dark:text-zinc-300">{caseDetails.caseRecord.assigned_adviser_name}</span>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Adviser:</span>
+                      <span className="font-medium text-foreground">{caseDetails.caseRecord.assigned_adviser_name}</span>
                     </div>
                   )}
                 </div>
               </div>
 
               {/* Decision Action Bar (Role-Specific) */}
-              <div className="p-3 bg-zinc-50/80 dark:bg-zinc-800/30 border-b border-zinc-200 dark:border-zinc-800 shrink-0">
+              <div className="p-3 bg-muted/30 border-b border-border shrink-0">
                 {/* Supervisor Actions */}
                 {role === 'supervisor' && caseDetails.caseRecord.stage === 'submitted_to_supervisor' && (
                   <div className="space-y-2">
@@ -575,23 +753,23 @@ export const DocumentReviewCenter: React.FC<DocumentReviewCenterProps> = ({ role
                       value={decisionRemarks}
                       onChange={(e) => setDecisionRemarks(e.target.value)}
                       rows={2}
-                      className="w-full text-xs p-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 focus:outline-none focus:ring-1 focus:ring-primary"
+                      className="w-full text-xs p-2.5 rounded-xl bg-background border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-foreground placeholder:text-muted-foreground transition-all"
                     />
                     <div className="flex items-center gap-2">
                       <Button
                         size="sm"
                         onClick={() => void handleDecision('supervisor_approve')}
                         disabled={isSubmittingDecision}
-                        className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-8 cursor-pointer"
+                        className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-8 cursor-pointer font-semibold rounded-lg"
                       >
-                        Approve & Forward to Adviser
+                        Approve & Forward
                       </Button>
                       <Button
                         size="sm"
-                        variant="destructive"
+                        variant="danger"
                         onClick={() => void handleDecision('supervisor_request_revision')}
                         disabled={isSubmittingDecision || !decisionRemarks.trim()}
-                        className="text-xs h-8 cursor-pointer"
+                        className="text-xs h-8 cursor-pointer font-semibold rounded-lg"
                       >
                         Request Revision
                       </Button>
@@ -607,23 +785,23 @@ export const DocumentReviewCenter: React.FC<DocumentReviewCenterProps> = ({ role
                       value={decisionRemarks}
                       onChange={(e) => setDecisionRemarks(e.target.value)}
                       rows={2}
-                      className="w-full text-xs p-2 rounded-lg bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 focus:outline-none focus:ring-1 focus:ring-primary"
+                      className="w-full text-xs p-2.5 rounded-xl bg-background border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-foreground placeholder:text-muted-foreground transition-all"
                     />
                     <div className="flex items-center gap-2">
                       <Button
                         size="sm"
                         onClick={() => void handleDecision('adviser_approve')}
                         disabled={isSubmittingDecision}
-                        className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-8 cursor-pointer"
+                        className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-8 cursor-pointer font-semibold rounded-lg"
                       >
-                        Final Approval
+                        Final Institutional Approval
                       </Button>
                       <Button
                         size="sm"
-                        variant="destructive"
+                        variant="danger"
                         onClick={() => void handleDecision('adviser_request_revision')}
                         disabled={isSubmittingDecision || !decisionRemarks.trim()}
-                        className="text-xs h-8 cursor-pointer"
+                        className="text-xs h-8 cursor-pointer font-semibold rounded-lg"
                       >
                         Request Revision
                       </Button>
@@ -633,12 +811,15 @@ export const DocumentReviewCenter: React.FC<DocumentReviewCenterProps> = ({ role
 
                 {/* Student Actions */}
                 {role === 'student' && (caseDetails.caseRecord.stage === 'supervisor_revision_required' || caseDetails.caseRecord.stage === 'adviser_revision_required') && (
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs text-red-600 font-medium">Revision required by reviewer</span>
+                  <div className="flex flex-col gap-2 p-1">
+                    <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400 font-semibold text-xs">
+                      <AlertTriangle className="w-4 h-4 shrink-0" />
+                      <span>Action Required: Revision requested by reviewer</span>
+                    </div>
                     <Button
                       size="sm"
                       onClick={() => setShowRevisionModal(true)}
-                      className="text-xs h-8 gap-1.5 bg-primary text-white cursor-pointer"
+                      className="text-xs h-8 gap-1.5 bg-primary hover:bg-primary/90 text-primary-fg cursor-pointer font-semibold rounded-lg w-full"
                     >
                       <Upload className="w-3.5 h-3.5" />
                       Submit Revised Document
@@ -646,94 +827,149 @@ export const DocumentReviewCenter: React.FC<DocumentReviewCenterProps> = ({ role
                   </div>
                 )}
 
-                {/* Approved status notice */}
+                {/* Approved Status Notice */}
                 {caseDetails.caseRecord.stage === 'approved' && (
-                  <div className="flex items-center gap-2 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                  <div className="flex items-center gap-2 text-xs text-emerald-600 dark:text-emerald-400 font-semibold py-1">
                     <CheckCircle2 className="w-4 h-4 shrink-0" />
                     <span>This document has received final institutional approval.</span>
                   </div>
                 )}
               </div>
 
-              {/* Discussion & Audit Events Stream */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                  <MessageSquare className="w-3.5 h-3.5" /> Discussion & History
-                </h3>
+              {/* Tab Selector: Discussion vs Audit Trail */}
+              <div className="px-4 pt-3 pb-1 flex items-center gap-2 border-b border-border bg-card">
+                <button
+                  type="button"
+                  onClick={() => setActiveDetailsTab('comments')}
+                  className={cn(
+                    "text-xs font-semibold pb-2 border-b-2 transition-all flex items-center gap-1.5 cursor-pointer",
+                    activeDetailsTab === 'comments'
+                      ? "border-primary text-primary"
+                      : "border-transparent text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <MessageSquare className="w-3.5 h-3.5" />
+                  <span>Discussion</span>
+                  <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-muted text-muted-foreground">
+                    {caseDetails.comments.length}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveDetailsTab('audit')}
+                  className={cn(
+                    "text-xs font-semibold pb-2 border-b-2 transition-all flex items-center gap-1.5 cursor-pointer",
+                    activeDetailsTab === 'audit'
+                      ? "border-primary text-primary"
+                      : "border-transparent text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <Clock className="w-3.5 h-3.5" />
+                  <span>Audit Trail</span>
+                  <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-muted text-muted-foreground">
+                    {caseDetails.events.length}
+                  </span>
+                </button>
+              </div>
 
-                {caseDetails.comments.length === 0 && caseDetails.events.length === 0 ? (
-                  <div className="text-center py-8">
-                    <p className="text-xs text-zinc-400">No comments or activity yet</p>
-                  </div>
-                ) : (
-                  <>
-                    {caseDetails.comments.map((comment) => (
+              {/* Discussion & Audit Content Stream */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
+                {activeDetailsTab === 'comments' ? (
+                  caseDetails.comments.length === 0 ? (
+                    <div className="text-center py-12 flex flex-col items-center justify-center gap-2">
+                      <MessageSquare className="w-8 h-8 text-muted-foreground opacity-40" />
+                      <p className="text-xs font-semibold text-foreground">No discussion comments yet</p>
+                      <p className="text-[11px] text-muted-foreground max-w-[220px]">
+                        Type a message below to leave notes for your adviser or supervisor.
+                      </p>
+                    </div>
+                  ) : (
+                    caseDetails.comments.map((comment) => (
                       <div
                         key={comment.id}
-                        className="p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/60 text-xs space-y-1.5"
+                        className="p-3 rounded-xl bg-muted/40 border border-border text-xs space-y-1.5 transition-colors"
                       >
                         <div className="flex items-center justify-between">
-                          <span className="font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-1">
+                          <span className="font-semibold text-foreground flex items-center gap-1.5">
                             {comment.author_name}
-                            <span className="text-[10px] font-normal px-1.5 py-0.2 rounded bg-zinc-200 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 capitalize">
+                            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-primary/10 text-primary capitalize border border-primary/20">
                               {comment.author_role}
                             </span>
                           </span>
-                          <span className="text-[10px] text-zinc-400">
+                          <span className="text-[10px] text-muted-foreground font-mono">
                             {new Date(comment.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </span>
                         </div>
-                        <p className="text-zinc-700 dark:text-zinc-300 leading-relaxed whitespace-pre-wrap">
+                        <p className="text-foreground/90 leading-relaxed whitespace-pre-wrap">
                           {comment.message}
                         </p>
                       </div>
-                    ))}
-
-                    {/* Timeline Events */}
-                    <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800 space-y-2">
-                      <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
-                        Audit Trail
-                      </span>
-                      {caseDetails.events.map((event) => (
-                        <div key={event.id} className="flex items-start gap-2 text-[11px] text-zinc-500">
-                          <Clock className="w-3 h-3 mt-0.5 text-zinc-400 shrink-0" />
-                          <div className="flex-1">
-                            <span className="font-medium text-zinc-700 dark:text-zinc-300">{event.actor_name}:</span>{' '}
-                            <span>{event.remarks || event.action}</span>
-                            <span className="text-[10px] text-zinc-400 block">
-                              {new Date(event.created_at).toLocaleString()}
-                            </span>
+                    ))
+                  )
+                ) : (
+                  <div className="space-y-3">
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">
+                      Audit Trail
+                    </span>
+                    {caseDetails.events.length === 0 ? (
+                      <div className="text-center py-8 text-xs text-muted-foreground">
+                        No audit events recorded yet
+                      </div>
+                    ) : (
+                      caseDetails.events.map((event) => (
+                        <div key={event.id} className="flex items-start gap-2.5 text-xs p-2 rounded-lg hover:bg-muted/30 transition-colors">
+                          <div className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5">
+                            <Clock className="w-3 h-3" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-1">
+                              <span className="font-semibold text-foreground truncate">{event.actor_name}</span>
+                              <span className="text-[10px] text-muted-foreground shrink-0 font-mono">
+                                {new Date(event.created_at).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-muted-foreground mt-0.5">
+                              {event.remarks || event.action}
+                            </p>
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  </>
+                      ))
+                    )}
+                  </div>
                 )}
               </div>
 
               {/* Comment Input Footer */}
-              <form onSubmit={handlePostComment} className="p-3 border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex items-center gap-2 shrink-0">
+              <form onSubmit={handlePostComment} className="p-3 border-t border-border bg-card flex items-center gap-2 shrink-0">
                 <input
                   type="text"
-                  placeholder="Type a message or note…"
+                  placeholder="Type a note or reply…"
                   value={commentText}
                   onChange={(e) => setCommentText(e.target.value)}
-                  className="flex-1 text-xs px-3 py-2 rounded-lg bg-zinc-100 dark:bg-zinc-800 border-none text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-primary"
+                  className="flex-1 text-xs px-3.5 py-2 rounded-xl bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                 />
                 <Button
                   type="submit"
                   size="sm"
                   disabled={!commentText.trim() || isPostingComment}
-                  className="h-8 px-3 text-xs gap-1 cursor-pointer bg-primary text-white"
+                  className="h-8 px-3 text-xs gap-1.5 cursor-pointer bg-primary hover:bg-primary/90 text-primary-fg font-semibold rounded-lg shrink-0"
                 >
                   <Send className="w-3.5 h-3.5" />
-                  <span>Send</span>
+                  <span className="hidden sm:inline">Send</span>
                 </Button>
               </form>
             </>
           ) : (
-            <div className="flex-1 flex items-center justify-center p-8 text-center text-xs text-zinc-400">
-              No case active
+            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-muted/80 border border-border flex items-center justify-center text-muted-foreground">
+                <MessageSquare className="w-6 h-6 opacity-60" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-foreground">Review Details & Notes</p>
+                <p className="text-[11px] text-muted-foreground mt-1 max-w-[220px] mx-auto leading-relaxed">
+                  Select a document from your inbox to inspect feedback remarks and upload revisions.
+                </p>
+              </div>
             </div>
           )}
         </div>
@@ -741,55 +977,60 @@ export const DocumentReviewCenter: React.FC<DocumentReviewCenterProps> = ({ role
 
       {/* ── Revision Upload Modal (Student only) ── */}
       {showRevisionModal && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="w-full max-w-md bg-white dark:bg-zinc-900 rounded-xl shadow-2xl border border-zinc-200 dark:border-zinc-800 p-5 space-y-4">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-card rounded-2xl shadow-2xl border border-border p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
-                Upload Revised Document
-              </h3>
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                  <Upload className="w-4 h-4" />
+                </div>
+                <h3 className="text-sm font-bold text-foreground">
+                  Upload Revised Document
+                </h3>
+              </div>
               <button
                 type="button"
                 onClick={() => setShowRevisionModal(false)}
-                className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 cursor-pointer"
+                className="text-muted-foreground hover:text-foreground cursor-pointer p-1 rounded-lg hover:bg-muted"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleUploadRevisionSubmit} className="space-y-3">
+            <form onSubmit={handleUploadRevisionSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                  Select File (PDF or DOCX, max 10MB)
+                <label className="block text-xs font-semibold text-foreground mb-1.5">
+                  Select File (PDF, DOCX, XLSX — max 10MB)
                 </label>
                 <input
                   type="file"
                   ref={revisionFileInputRef}
                   accept=".pdf,.docx,.xlsx"
                   required
-                  className="w-full text-xs text-zinc-600 file:mr-2 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-white hover:file:bg-primary/90 cursor-pointer"
+                  className="w-full text-xs text-muted-foreground file:mr-2.5 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-primary-fg hover:file:bg-primary/90 cursor-pointer border border-border rounded-xl p-2 bg-background"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                  Revision Remarks (Optional)
+                <label className="block text-xs font-semibold text-foreground mb-1.5">
+                  Revision Notes (Optional)
                 </label>
                 <textarea
                   placeholder="Explain what changes were made according to the reviewer's feedback…"
                   value={revisionRemarks}
                   onChange={(e) => setRevisionRemarks(e.target.value)}
                   rows={3}
-                  className="w-full text-xs p-2 rounded-lg bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 focus:outline-none focus:ring-1 focus:ring-primary"
+                  className="w-full text-xs p-2.5 rounded-xl bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-2">
+              <div className="flex justify-end gap-2 pt-2 border-t border-border">
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   onClick={() => setShowRevisionModal(false)}
-                  className="text-xs h-8 cursor-pointer"
+                  className="text-xs h-8 cursor-pointer rounded-lg"
                 >
                   Cancel
                 </Button>
@@ -797,7 +1038,7 @@ export const DocumentReviewCenter: React.FC<DocumentReviewCenterProps> = ({ role
                   type="submit"
                   size="sm"
                   disabled={isUploadingRevision}
-                  className="text-xs h-8 bg-primary text-white cursor-pointer"
+                  className="text-xs h-8 bg-primary hover:bg-primary/90 text-primary-fg cursor-pointer font-semibold rounded-lg"
                 >
                   {isUploadingRevision ? 'Uploading…' : 'Submit Revision'}
                 </Button>
@@ -811,4 +1052,3 @@ export const DocumentReviewCenter: React.FC<DocumentReviewCenterProps> = ({ role
 };
 
 export default DocumentReviewCenter;
-

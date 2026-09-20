@@ -38,6 +38,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ user, onLogout }) => {
   if (!user) return <Navigate to="/login" replace />;
 
   const isEditorPage = location.pathname.startsWith('/student/editor') || location.pathname.endsWith('/edit');
+  const isReviewPage = location.pathname.includes('/reviews');
+  const isFullHeightPage = isEditorPage || isReviewPage;
 
   return (
     <SidebarProvider defaultOpen={true}>
@@ -65,7 +67,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ user, onLogout }) => {
 
         <div className={cn(
           "flex-1 bg-background transition-colors duration-200",
-          isEditorPage ? "overflow-hidden flex flex-col min-h-0" : "overflow-y-auto editor-scrollbar"
+          isFullHeightPage ? "overflow-hidden flex flex-col min-h-0" : "overflow-y-auto editor-scrollbar"
         )}>
           <motion.div
             key={location.pathname}
@@ -73,8 +75,12 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ user, onLogout }) => {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.1, ease: 'easeOut' }}
             className={cn(
-              "px-4 md:px-6 py-5 md:py-6 w-full max-w-[1720px] mx-auto",
-              isEditorPage && "flex-1 flex flex-col min-h-0 h-full"
+              "w-full max-w-[1720px] mx-auto",
+              isEditorPage
+                ? "flex-1 flex flex-col min-h-0 h-full px-0 py-0"
+                : isReviewPage
+                  ? "flex-1 flex flex-col min-h-0 h-full px-4 md:px-6 py-4 md:py-5"
+                  : "px-4 md:px-6 py-5 md:py-6"
             )}
           >
             <Outlet />
