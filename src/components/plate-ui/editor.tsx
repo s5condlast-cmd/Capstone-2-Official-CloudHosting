@@ -49,7 +49,7 @@ export const editorVariants = cva(
     'rounded-md ring-offset-background focus-visible:outline-none',
     'placeholder:text-zinc-400 dark:placeholder:text-zinc-500',
     'caret-zinc-900 dark:caret-zinc-100',
-    'text-[11pt] leading-[1.15] font-[Calibri,_Candara,_Segoe,_sans-serif] text-zinc-900 dark:text-zinc-100',
+    'text-[11pt] leading-[1.15] font-[Arial,_Helvetica,_sans-serif] text-zinc-900 dark:text-zinc-100',
     '**:data-slate-placeholder:text-zinc-400 dark:**:data-slate-placeholder:text-zinc-500 **:data-slate-placeholder:opacity-100!',
     '**:data-slate-placeholder:!top-1/2 **:data-slate-placeholder:-translate-y-1/2',
     '[&_strong]:font-bold'

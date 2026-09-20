@@ -628,9 +628,9 @@ function ZoomToolbarButton({
 // ─── Google Docs Font Family Toolbar Button ───────────────────────────────────
 
 const FONT_OPTIONS = [
+  { label: 'Arial', value: 'Arial, Helvetica, sans-serif' },
   { label: 'Inter', value: 'Inter, sans-serif' },
   { label: 'Geist Sans', value: 'Geist, sans-serif' },
-  { label: 'Arial', value: 'Arial, Helvetica, sans-serif' },
   { label: 'Times New Roman', value: '"Times New Roman", Times, serif' },
   { label: 'Calibri', value: 'Calibri, sans-serif' },
   { label: 'Georgia', value: 'Georgia, serif' },
@@ -824,7 +824,7 @@ function FontSizeToolbarButton({
   const containerRef = React.useRef<HTMLDivElement>(null);
 
   const markVal = targetSize !== undefined ? targetSize : getMarkValue(editor, 'fontSize');
-  let currentSize = 12;
+  let currentSize = 11;
   if (typeof markVal === 'string') {
     const num = parseInt(markVal, 10);
     if (!isNaN(num) && num > 0) currentSize = num;

@@ -602,20 +602,23 @@ describe('Plate editor runtime wiring', () => {
     assert.ok(fixedToolbarSrc.includes('tooltip={isFullscreen ? \'Exit full screen (Esc)\' : \'Enter full screen\'}'), 'Toolbar button must have fullscreen tooltip');
   });
 
-  it('enforces Microsoft Word and Google Docs typography and spacing (11pt font, 1.15 line height, 8pt paragraph spacing, Word heading point sizes)', async () => {
+  it('enforces Microsoft Word and Google Docs typography and spacing (11pt font, 1.15 line height, tight paragraph spacing, Word heading point sizes)', async () => {
     const fs = await import('node:fs');
     const path = await import('node:path');
     const editorUiSrc = fs.readFileSync(path.resolve('src/components/plate-ui/editor.tsx'), 'utf8');
     const paragraphSrc = fs.readFileSync(path.resolve('src/components/plate-ui/paragraph-element.tsx'), 'utf8');
     const headingSrc = fs.readFileSync(path.resolve('src/components/plate-ui/heading-element.tsx'), 'utf8');
+    const toolbarSrc = fs.readFileSync(path.resolve('src/components/plate-ui/fixed-toolbar-buttons.tsx'), 'utf8');
 
-    // 1. Editor base typography: 11pt, 1.15 line height, standard Word document fonts
+    // 1. Editor base typography: 11pt, 1.15 line height, standard Google Docs Arial typography
     assert.ok(editorUiSrc.includes('text-[11pt]'), 'Editor must have default 11pt font size');
     assert.ok(editorUiSrc.includes('leading-[1.15]'), 'Editor must have standard 1.15 line height');
-    assert.ok(editorUiSrc.includes('font-[Calibri,_Candara,_Segoe,_sans-serif]'), 'Editor must have standard Calibri typography');
+    assert.ok(editorUiSrc.includes('font-[Arial,_Helvetica,_sans-serif]'), 'Editor must have standard Arial typography');
+    assert.ok(toolbarSrc.includes("{ label: 'Arial'"), 'Font family dropdown must list Arial as default');
+    assert.ok(toolbarSrc.includes('let currentSize = 11;'), 'Font size dropdown must default to 11');
 
-    // 2. Paragraph spacing: 8pt margin-bottom (matching Word standard) and no overriding leading-relaxed
-    assert.ok(paragraphSrc.includes('mb-[8pt]'), 'ParagraphElement must have 8pt bottom spacing');
+    // 2. Paragraph spacing: 0pt default margin-bottom (matching Google Docs tight flow) and no overriding leading-relaxed
+    assert.ok(!paragraphSrc.includes('mb-[8pt]'), 'ParagraphElement must NOT have hardcoded 8pt bottom spacing');
     assert.ok(!paragraphSrc.includes('leading-relaxed'), 'ParagraphElement must not override editor 1.15 line height with leading-relaxed');
 
     // 3. Heading point sizes matching Word styles

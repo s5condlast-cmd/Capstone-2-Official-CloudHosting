@@ -33,7 +33,6 @@ export function ParagraphElement({
         style={elementStyle}
         className={cn(
           'relative m-0 px-0 py-0',
-          spaceAfter === undefined && 'mb-[8pt]',
           className
         )}
         {...props}
