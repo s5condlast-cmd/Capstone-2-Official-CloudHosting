@@ -321,7 +321,7 @@ export const DocumentReviewCenter: React.FC<DocumentReviewCenterProps> = ({ role
       case 'supervisor_revision_required':
       case 'adviser_revision_required':
         return (
-          <Badge variant="danger" className="gap-1.5 py-0.5 text-[11px] font-semibold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
+          <Badge variant="destructive" className="gap-1.5 py-0.5 text-[11px] font-semibold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
             <AlertTriangle className="w-3.5 h-3.5" /> Revision Required
           </Badge>
         );
@@ -416,7 +416,7 @@ export const DocumentReviewCenter: React.FC<DocumentReviewCenterProps> = ({ role
               : "text-muted-foreground hover:text-foreground"
           )}
         >
-          Notes & History
+          Review Details
         </button>
       </div>
 
@@ -586,29 +586,15 @@ export const DocumentReviewCenter: React.FC<DocumentReviewCenterProps> = ({ role
             </div>
           ) : !caseDetails ? (
             <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-card/40">
-              <div className="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary mb-4 shadow-2xs">
+              <div className="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary mb-3 shadow-2xs">
                 <FileCheck className="w-8 h-8" />
               </div>
               <h3 className="text-base font-bold text-foreground tracking-tight">
-                Document Preview Workspace
+                Document Preview
               </h3>
               <p className="text-xs text-muted-foreground mt-1 max-w-sm leading-relaxed">
-                Select any review case from your inbox on the left to inspect submitted PDF or Word pages, view sequential revisions, and examine institutional remarks side-by-side.
+                Select a document from the inbox to preview its content and track revisions.
               </p>
-              <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-2 text-left max-w-md w-full">
-                <div className="p-2.5 rounded-xl border border-border bg-card text-center">
-                  <span className="text-[11px] font-semibold text-foreground block">Multi-Version</span>
-                  <span className="text-[10px] text-muted-foreground">Rev 1, Rev 2, Rev 3...</span>
-                </div>
-                <div className="p-2.5 rounded-xl border border-border bg-card text-center">
-                  <span className="text-[11px] font-semibold text-foreground block">Signatures</span>
-                  <span className="text-[10px] text-muted-foreground">Digital validation</span>
-                </div>
-                <div className="p-2.5 rounded-xl border border-border bg-card text-center">
-                  <span className="text-[11px] font-semibold text-foreground block">Audit Trail</span>
-                  <span className="text-[10px] text-muted-foreground">Append-only history</span>
-                </div>
-              </div>
             </div>
           ) : (
             <>
@@ -965,9 +951,9 @@ export const DocumentReviewCenter: React.FC<DocumentReviewCenterProps> = ({ role
                 <MessageSquare className="w-6 h-6 opacity-60" />
               </div>
               <div>
-                <p className="text-xs font-bold text-foreground">Review Details & Notes</p>
+                <p className="text-xs font-bold text-foreground">Review Details</p>
                 <p className="text-[11px] text-muted-foreground mt-1 max-w-[220px] mx-auto leading-relaxed">
-                  Select a document from your inbox to inspect feedback remarks and upload revisions.
+                  Select a document from the inbox to view reviewer feedback and submit revisions.
                 </p>
               </div>
             </div>
