@@ -116,6 +116,7 @@ export function StudentDocumentEditor() {
   // ── Fullscreen Tracking & Safe Navigation ────────────────────────────────
   const isFullscreenRef = useRef(false);
   const exitFullscreenRef = useRef<(() => void) | null>(null);
+  const isDirtyRef = useRef(false);
 
   const getReturnRoute = useCallback(() => {
     const returnUrlParam = searchParams.get('returnUrl');
@@ -133,7 +134,7 @@ export function StudentDocumentEditor() {
   const handleSafeNavigate = useCallback(
     async (to: string) => {
       try {
-        if (storageRef.current) {
+        if (storageRef.current && isDirtyRef.current) {
           await Promise.race([
             storageRef.current.flushNow('Saved before exit', 1000),
             new Promise((resolve) => setTimeout(resolve, 400)),
@@ -369,7 +370,7 @@ export function StudentDocumentEditor() {
             setEditorEpoch((v) => v + 1);
           },
         });
-        await storage.load(loadedDraft.revision);
+        await storage.load(loadedDraft.revision, loadedDraft.content);
         storageRef.current = storage;
         void loadVersionCount(loadedDraft.id);
 
@@ -432,6 +433,7 @@ export function StudentDocumentEditor() {
   const handleEditorChange = useCallback(
     (content: object[], wc: number) => {
       if (!draftRef.current || !storageRef.current || !user) return;
+      isDirtyRef.current = true;
       const currentDraft = draftRef.current;
       setWordCount(wc);
       const updatedState: DraftState = {
@@ -459,6 +461,7 @@ export function StudentDocumentEditor() {
   const handleHeaderFooterChange = useCallback(
     (hf: DocumentHeaderFooterOptions) => {
       if (!draftRef.current || !storageRef.current || !user) return;
+      isDirtyRef.current = true;
       const currentDraft = draftRef.current;
       const content = editorRef.current?.getContent() ?? currentDraft.content;
       const updatedState: DraftState = {
@@ -491,6 +494,7 @@ export function StudentDocumentEditor() {
   const handleTitleChange = useCallback(
     (newTitle: string) => {
       setTitle(newTitle);
+      isDirtyRef.current = true;
       if (!draftRef.current || !storageRef.current || !editorRef.current || !user) return;
       const currentDraft = draftRef.current;
       const content = editorRef.current.getContent();

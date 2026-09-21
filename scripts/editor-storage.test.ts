@@ -453,3 +453,48 @@ describe('Smart conflict auto-reconciliation', () => {
   });
 });
 
+// ─── Strict 1-to-1 Draft Matching & Milestone-Only Versioning ─────────────────
+
+describe('Production Auto-Save & Strict 1-to-1 Document Isolation', () => {
+  test('matchesDraft strictly isolates templates and rejects substring cross-matching', async () => {
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+    const dashboardSrc = fs.readFileSync(path.resolve('src/pages/student/StudentDashboard.tsx'), 'utf8');
+
+    // Verify loose substring matching was removed
+    assert.ok(
+      !dashboardSrc.includes('if (dName.includes(tName) || tName.includes(dName)) return true;'),
+      'StudentDashboard must NOT use loose bidirectional substring matching for drafts'
+    );
+
+    // Verify exact template_id match is prioritized
+    assert.ok(
+      dashboardSrc.includes('dr.template_id.trim().toLowerCase() === tmpl.id.trim().toLowerCase()'),
+      'StudentDashboard must enforce exact template_id matching'
+    );
+  });
+
+  test('documentHistoryStorage separates draft saves from version snapshots and guards flushes', async () => {
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+    const storageSrc = fs.readFileSync(path.resolve('src/lib/documentHistoryStorage.ts'), 'utf8');
+
+    // Verify isFlushing guard exists
+    assert.ok(
+      storageSrc.includes('private isFlushing = false;'),
+      'DocumentHistoryStorage must define isFlushing guard'
+    );
+    assert.ok(
+      storageSrc.includes('if (this.isFlushing) return null;'),
+      'flushNow must check isFlushing to prevent duplicate concurrent snapshots'
+    );
+
+    // Verify unversioned changes check
+    assert.ok(
+      storageSrc.includes('const currentJson = JSON.stringify(state.content);'),
+      'onChange must serialize content to check for actual delta before setting hasUnversionedChanges'
+    );
+  });
+});
+
+

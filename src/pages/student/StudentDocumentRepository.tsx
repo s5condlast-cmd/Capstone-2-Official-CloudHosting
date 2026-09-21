@@ -146,7 +146,8 @@ export function StudentDocumentRepository() {
 
       // Re-use single active draft if it already exists for this template
       const existingDraft = drafts.find(d =>
-        (d.template_id === template.id || d.template_name === template.name) &&
+        ((d.template_id && d.template_id.trim().toLowerCase() === template.id.trim().toLowerCase()) ||
+         (d.template_name && d.template_name.trim().toLowerCase() === template.name.trim().toLowerCase())) &&
         d.status !== 'locked'
       );
       if (existingDraft) {

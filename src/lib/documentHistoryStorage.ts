@@ -160,6 +160,8 @@ export class DocumentHistoryStorage {
   private idbPending: DraftState | null = null;
   private idbFlushPending = false;
 
+  private isFlushing = false;
+
   /** Version tracking */
   private sessionStartMs: number = Date.now();
   private wordCountAtVersionStart: number = 0;
@@ -230,9 +232,15 @@ export class DocumentHistoryStorage {
    * Load the initial draft state. Returns cached (IndexedDB) version first,
    * then reconciles with the authoritative cloud version.
    */
-  async load(initialRevision: number): Promise<DraftState | undefined> {
+  async load(initialRevision: number, initialContent?: object[]): Promise<DraftState | undefined> {
     this.cloudRevision = initialRevision;
     const cached = await readCached(this.userId, this.draftId);
+    if (initialContent) {
+      this.lastSnapshotContentJson = JSON.stringify(initialContent);
+    } else if (cached?.content) {
+      this.lastSnapshotContentJson = JSON.stringify(cached.content);
+    }
+    this.hasUnversionedChanges = false;
     return cached;
   }
 
@@ -252,7 +260,11 @@ export class DocumentHistoryStorage {
    */
   onChange(state: DraftState): void {
     this.pendingState = { ...state };
-    this.hasUnversionedChanges = true;
+    // Only flag unversioned changes if content has actually diverged from last snapshot
+    const currentJson = JSON.stringify(state.content);
+    if (currentJson !== this.lastSnapshotContentJson) {
+      this.hasUnversionedChanges = true;
+    }
     this.scheduleIdbFlush(state);
     this.scheduleCloudSave();
     this.onStatusChange?.('saving');
@@ -265,53 +277,63 @@ export class DocumentHistoryStorage {
    * Protects caller with a timeout against slow/offline network hangs while persisting to IDB immediately.
    */
   async flushNow(exitLabel: string = 'Saved before exit', timeoutMs: number = 2000): Promise<DraftState | null> {
-    if (this.cloudSaveTimer) {
-      clearTimeout(this.cloudSaveTimer);
-      this.cloudSaveTimer = null;
-    }
+    if (this.isFlushing) return null;
+    this.isFlushing = true;
 
-    if (this.pendingState) {
-      try {
-        await writeCached(this.pendingState);
-      } catch {
-        /* non-fatal */
+    try {
+      if (this.cloudSaveTimer) {
+        clearTimeout(this.cloudSaveTimer);
+        this.cloudSaveTimer = null;
       }
-    }
 
-    const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), timeoutMs));
-
-    let inFlightResult: DraftState | null = null;
-    if (this.cloudSavePromise) {
-      try {
-        inFlightResult = await Promise.race([this.cloudSavePromise, timeoutPromise]);
-      } catch {
-        /* let subsequent operations handle */
+      if (this.pendingState) {
+        try {
+          await writeCached(this.pendingState);
+        } catch {
+          /* non-fatal */
+        }
       }
-    }
 
-    let saveResult: DraftState | null = inFlightResult;
-    if (this.pendingState) {
-      try {
-        saveResult = await Promise.race([this.doCloudSave(), timeoutPromise]);
-      } catch {
-        saveResult = null;
+      const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), timeoutMs));
+
+      let inFlightResult: DraftState | null = null;
+      if (this.cloudSavePromise) {
+        try {
+          inFlightResult = await Promise.race([this.cloudSavePromise, timeoutPromise]);
+        } catch {
+          /* let subsequent operations handle */
+        }
       }
-    }
 
-    if (this.hasUnversionedChanges) {
-      try {
-        await supabase.rpc('create_editor_version', {
-          p_draft_id: this.draftId,
-          p_label: exitLabel,
-        });
+      let saveResult: DraftState | null = inFlightResult;
+      if (this.pendingState) {
+        try {
+          saveResult = await Promise.race([this.doCloudSave(), timeoutPromise]);
+        } catch {
+          saveResult = null;
+        }
+      }
+
+      if (this.hasUnversionedChanges) {
         this.hasUnversionedChanges = false;
-        this.onVersionCreated?.();
-      } catch {
-        /* non-fatal */
+        try {
+          await supabase.rpc('create_editor_version', {
+            p_draft_id: this.draftId,
+            p_label: exitLabel,
+          });
+          if (this.pendingState) {
+            this.lastSnapshotContentJson = JSON.stringify(this.pendingState.content);
+          }
+          this.onVersionCreated?.();
+        } catch {
+          /* non-fatal */
+        }
       }
-    }
 
-    return saveResult;
+      return saveResult;
+    } finally {
+      this.isFlushing = false;
+    }
   }
 
   /**
@@ -325,25 +347,30 @@ export class DocumentHistoryStorage {
     });
     if (error) throw new Error(`Could not save version: ${error.message}`);
     this.lastVersionWordCount = this.pendingState?.wordCount ?? 0;
+    if (this.pendingState) {
+      this.lastSnapshotContentJson = JSON.stringify(this.pendingState.content);
+    }
     this.hasUnversionedChanges = false;
     this.onVersionCreated?.();
   }
 
   /**
    * Check whether automatic version criteria are met and create one if so.
-   * Triggered on 5-second inactivity save when content has changed.
+   * Triggered on session milestones (>= 10min active editing and >= 50 words changed).
    */
   private async maybeAutoVersion(state: DraftState): Promise<void> {
-    const currentContentJson = JSON.stringify(state.content);
-    if (currentContentJson !== this.lastSnapshotContentJson) {
+    const elapsedMs = Date.now() - this.sessionStartMs;
+    const wordDelta = Math.abs(state.wordCount - this.lastVersionWordCount);
+
+    if (elapsedMs >= VERSION_MIN_ACTIVE_MS && wordDelta >= VERSION_MIN_WORD_DELTA) {
       try {
         const timeStr = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
         const { error } = await supabase.rpc('create_editor_version', {
           p_draft_id: this.draftId,
-          p_label: `Auto-save (${timeStr})`,
+          p_label: `Session checkpoint (${timeStr})`,
         });
         if (!error) {
-          this.lastSnapshotContentJson = currentContentJson;
+          this.lastSnapshotContentJson = JSON.stringify(state.content);
           this.lastVersionWordCount = state.wordCount;
           this.sessionStartMs = Date.now();
           this.hasUnversionedChanges = false;

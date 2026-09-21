@@ -314,27 +314,32 @@ function matchesSubmission(docTypeRaw: string | undefined, tmpl: TemplateDefinit
   return false;
 }
 
-// Robust draft matcher
+// Strict 1-to-1 draft matcher (prevents cross-document contamination)
 function matchesDraft(dr: DraftRecord, tmpl: TemplateDefinition): boolean {
-  if (dr.template_id && dr.template_id.toLowerCase() === tmpl.id.toLowerCase()) return true;
+  // 1. Primary: Exact template_id match
+  if (dr.template_id && dr.template_id.trim().toLowerCase() === tmpl.id.trim().toLowerCase()) {
+    return true;
+  }
 
+  // 2. Secondary: Exact template_name or exact alias match
   if (dr.template_name) {
     const dName = dr.template_name.trim().toLowerCase();
     const tName = tmpl.name.trim().toLowerCase();
-    if (dName === tName) return true;
 
-    // Consent forms fee separation
+    // Strict fee distinction for consent forms (never cross-match)
     const isDraftWithoutFee = dName.includes('without fee');
     const isTmplWithoutFee = tmpl.id.includes('without-fee') || tName.includes('without fee');
-    if (isDraftWithoutFee !== isTmplWithoutFee && (dName.includes('consent') || tName.includes('consent'))) {
+    if ((dName.includes('consent') || tName.includes('consent')) && isDraftWithoutFee !== isTmplWithoutFee) {
       return false;
     }
 
-    if (tmpl.alias && (dName.includes(tmpl.alias.toLowerCase()) || tmpl.alias.toLowerCase().includes(dName))) {
+    // Exact full name match
+    if (dName === tName) return true;
+
+    // Exact alias match
+    if (tmpl.alias && dName === tmpl.alias.trim().toLowerCase()) {
       return true;
     }
-
-    if (dName.includes(tName) || tName.includes(dName)) return true;
   }
 
   return false;
