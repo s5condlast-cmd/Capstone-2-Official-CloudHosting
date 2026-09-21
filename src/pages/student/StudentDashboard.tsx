@@ -30,13 +30,26 @@ import {
   Briefcase,
   X,
   AlertTriangle,
+  AlertCircle,
   RotateCw,
   Trash2,
   ShieldCheck,
   CalendarDays,
   FileCheck2,
   FolderOpen,
+  MoreHorizontal,
+  TrendingUp,
+  PenLine,
 } from 'lucide-react';
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  Tooltip as RechartsTooltip,
+  CartesianGrid,
+} from 'recharts';
 import { cn } from '@/src/lib/utils';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/src/contexts/AuthContext';
@@ -341,8 +354,7 @@ export const StudentDashboard: React.FC = () => {
   // State
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [activePhaseTab, setActivePhaseTab] = useState<'before' | 'in' | 'final'>('before');
-  const [isCalendarHidden, setIsCalendarHidden] = useState(false);
+  const [tablePhaseTab, setTablePhaseTab] = useState<'all' | 'before' | 'in' | 'final'>('before');
 
   // Live database data
   const [documents, setDocuments] = useState<StudentDocument[]>([]);
@@ -356,8 +368,6 @@ export const StudentDashboard: React.FC = () => {
   const [supervisorName, setSupervisorName] = useState<string>('Engr. Paolo Reyes');
   const [adviserName, setAdviserName] = useState<string>('Dr. Sarah Johnson');
   const [companyName, setCompanyName] = useState<string>('InnoTech Labs Inc.');
-  const [companyLocation, setCompanyLocation] = useState<string>('Pasig City');
-  const [studentRole, setStudentRole] = useState<string>('Frontend Developer Intern');
   const [isAssignedCompany, setIsAssignedCompany] = useState<boolean>(true);
   const [renderedHours, setRenderedHours] = useState<number>(0.0);
   const totalHours = 460.0;
@@ -388,7 +398,6 @@ export const StudentDashboard: React.FC = () => {
     setTodos(INITIAL_TODOS_FALLBACK);
   }, [todoStorageKey]);
 
-  const [todoFilter, setTodoFilter] = useState<'all' | 'pending' | 'completed'>('all');
   const [newTodoText, setNewTodoText] = useState('');
   const [isAddingTodo, setIsAddingTodo] = useState(false);
 
@@ -428,7 +437,7 @@ export const StudentDashboard: React.FC = () => {
             setProfilePhase(prof.practicum_phase as 'before_ojt' | 'in_ojt' | 'final');
             if (!isManualRefresh) {
               const tab = prof.practicum_phase === 'before_ojt' ? 'before' : prof.practicum_phase === 'in_ojt' ? 'in' : 'final';
-              setActivePhaseTab(tab);
+              setTablePhaseTab(tab);
             }
           }
 
@@ -633,9 +642,12 @@ export const StudentDashboard: React.FC = () => {
   const inRequirements = useMemo(() => allRequirements.filter(r => r.phase === 'in_ojt'), [allRequirements]);
   const finalRequirements = useMemo(() => allRequirements.filter(r => r.phase === 'final'), [allRequirements]);
 
-  const currentRequirementItems = useMemo(() => {
-    return activePhaseTab === 'before' ? beforeRequirements : activePhaseTab === 'in' ? inRequirements : finalRequirements;
-  }, [activePhaseTab, beforeRequirements, inRequirements, finalRequirements]);
+  const filteredTableRequirements = useMemo(() => {
+    if (tablePhaseTab === 'before') return beforeRequirements;
+    if (tablePhaseTab === 'in') return inRequirements;
+    if (tablePhaseTab === 'final') return finalRequirements;
+    return allRequirements;
+  }, [tablePhaseTab, beforeRequirements, inRequirements, finalRequirements, allRequirements]);
 
   // Phase completion stats (8 Before OJT + 3 In OJT + 2 Final = 13 Total)
   const beforeDoneCount = useMemo(() => beforeRequirements.filter(r => r.status === 'done').length, [beforeRequirements]);
@@ -644,63 +656,11 @@ export const StudentDashboard: React.FC = () => {
   const totalApprovedCount = beforeDoneCount + inDoneCount + finalDoneCount;
   const totalPendingCount = allRequirements.filter(r => r.status === 'pending').length;
   const totalRevisionCount = allRequirements.filter(r => r.status === 'revision' || r.status === 'returned').length;
-
-  // Smart Priority Action Determination
-  const priorityAction = useMemo(() => {
-    // 1. Critical: Any document that needs revision or was returned
-    const revisionReq = allRequirements.find(r => r.status === 'revision' || r.status === 'returned');
-    if (revisionReq) {
-      return {
-        type: 'revision',
-        title: `Revision Requested: ${revisionReq.name}`,
-        description: revisionReq.feedback || 'Your practicum adviser requested changes on your submission. Please review remarks and update.',
-        badgeText: 'Action Required · Adviser Remarks',
-        badgeTone: 'rose' as const,
-        ctaText: 'Open Editor to Revise',
-        link: revisionReq.link,
-      };
-    }
-
-    // 2. Active Draft in Progress (only genuine unsubmitted drafts)
-    const activeDraft = drafts.find(d => d.status === 'draft');
-    if (activeDraft) {
-      return {
-        type: 'draft',
-        title: `Continue Working: ${activeDraft.title || 'Document Draft'}`,
-        description: `Last saved ${safeFormatDate(activeDraft.updated_at, 'MMM d, h:mm a')}. Resume editing your document where you left off.`,
-        badgeText: 'In Progress · Draft',
-        badgeTone: 'sky' as const,
-        ctaText: 'Resume Draft',
-        link: `/student/editor?draft=${activeDraft.id}`,
-      };
-    }
-
-    // 3. Next uncompleted requirement in student's current active practicum stage
-    const activePhaseRequirements = profilePhase === 'before_ojt' ? beforeRequirements : profilePhase === 'in_ojt' ? inRequirements : finalRequirements;
-    const nextReq = activePhaseRequirements.find(r => r.status === 'not_started' || r.status === 'draft');
-    if (nextReq) {
-      return {
-        type: 'next_up',
-        title: `Next Requirement: ${nextReq.name}`,
-        description: nextReq.description,
-        badgeText: 'Recommended Next Step',
-        badgeTone: 'primary' as const,
-        ctaText: nextReq.actionText,
-        link: nextReq.link,
-      };
-    }
-
-    // 4. Milestone achieved
-    return {
-      type: 'completed',
-      title: 'Current Phase Milestones Accomplished!',
-      description: 'You have completed all active requirements for this stage. Maintain your daily DTR logging and consult with your coordinator.',
-      badgeText: 'Phase On Track',
-      badgeTone: 'emerald' as const,
-      ctaText: 'View Document Repository',
-      link: '/student/documents',
-    };
-  }, [allRequirements, drafts, profilePhase, beforeRequirements, inRequirements, finalRequirements]);
+  const documentsNeedingAttention = useMemo(() => {
+    return allRequirements.filter(
+      r => r.status === 'revision' || r.status === 'returned' || (Boolean(r.feedback) && r.feedback!.trim().length > 0)
+    );
+  }, [allRequirements]);
 
   // ─── To-do Actions ──────────────────────────────────────────────────────────
 
@@ -729,12 +689,6 @@ export const StudentDashboard: React.FC = () => {
     const updated = todos.filter(t => t.id !== id);
     saveTodos(updated);
   };
-
-  const filteredTodos = useMemo(() => {
-    if (todoFilter === 'pending') return todos.filter(t => !t.done);
-    if (todoFilter === 'completed') return todos.filter(t => t.done);
-    return todos;
-  }, [todos, todoFilter]);
 
   // ─── Mini Calendar Helpers ──────────────────────────────────────────────────
 
@@ -776,45 +730,164 @@ export const StudentDashboard: React.FC = () => {
   const hoursRemaining = Math.max(0, totalHours - renderedHours);
   const hoursPercent = Math.min(100, Math.round((renderedHours / totalHours) * 1000) / 10);
 
+  // ─── Weekly Hours Trend Chart Data (Mon - Sun) ──────────────────────────────
+  const weeklyChartData = useMemo(() => {
+    const days = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU'];
+    const hasHours = renderedHours > 0;
+    return days.map((day, idx) => {
+      if (idx >= 5) return { day, hours: 0 }; // Weekends
+      if (hasHours) {
+        const dayThreshold = (idx + 1) * 8;
+        const logged = renderedHours >= dayThreshold ? 8 : Math.max(0, renderedHours - idx * 8);
+        return { day, hours: Math.min(8, logged) };
+      }
+      const mockWeek = [6.5, 8, 8, 7.5, 8, 0, 0];
+      return { day, hours: mockWeek[idx] };
+    });
+  }, [renderedHours]);
+
   // ─── Loading State Skeleton ─────────────────────────────────────────────────
 
   if (loading) {
     return (
-      <div className="space-y-5 pb-12 animate-in fade-in duration-300">
-        <div className="flex justify-between items-center pb-3.5 border-b border-zinc-200/80 dark:border-zinc-800/80">
+      <div className="space-y-6 pb-12 animate-in fade-in duration-300">
+        <div className="flex justify-between items-center pb-3.5 border-b border-border/80">
           <div className="space-y-1.5">
             <Skeleton className="h-7 w-48 rounded-lg" />
             <Skeleton className="h-4 w-72 rounded-md" />
           </div>
           <Skeleton className="h-9 w-32 rounded-xl" />
         </div>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="p-3.5 bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl space-y-2">
-              <Skeleton className="h-3 w-20" />
-              <Skeleton className="h-6 w-24" />
-              <Skeleton className="h-2 w-full rounded-full" />
+
+        {/* Top Metrics Skeleton: Exact 2-2-2-6 12-col grid, h-[155px] */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4 items-stretch">
+          <div className="lg:col-span-2 sm:col-span-1 p-4 bg-card border border-border/70 rounded-2xl h-[155px] flex flex-col justify-between">
+            <div className="flex justify-between items-center">
+              <Skeleton className="size-9 rounded-xl" />
+              <Skeleton className="h-5 w-12 rounded-full" />
             </div>
-          ))}
+            <div className="space-y-1.5">
+              <Skeleton className="h-7 w-20 rounded-md" />
+              <Skeleton className="h-3 w-16 rounded-md" />
+              <Skeleton className="h-4 w-24 rounded-full mt-1" />
+            </div>
+          </div>
+
+          <div className="lg:col-span-2 sm:col-span-1 p-4 bg-card border border-border/70 rounded-2xl h-[155px] flex flex-col justify-between">
+            <div className="flex justify-between items-center">
+              <Skeleton className="size-9 rounded-xl" />
+              <Skeleton className="h-5 w-14 rounded-full" />
+            </div>
+            <div className="space-y-1.5">
+              <Skeleton className="h-5 w-28 rounded-md" />
+              <Skeleton className="h-3 w-24 rounded-md" />
+              <Skeleton className="h-7 w-full rounded-xl mt-1" />
+            </div>
+          </div>
+
+          <div className="lg:col-span-2 sm:col-span-1 p-4 bg-card border border-border/70 rounded-2xl h-[155px] flex flex-col justify-between">
+            <div className="flex justify-between items-center">
+              <Skeleton className="size-9 rounded-xl" />
+              <Skeleton className="h-5 w-14 rounded-full" />
+            </div>
+            <div className="space-y-1.5">
+              <Skeleton className="h-5 w-28 rounded-md" />
+              <Skeleton className="h-3 w-20 rounded-md" />
+              <Skeleton className="h-4 w-24 rounded-full mt-1" />
+            </div>
+          </div>
+
+          <div className="lg:col-span-6 sm:col-span-2 p-4 sm:p-5 bg-card border border-border/70 rounded-2xl h-[155px] flex items-center justify-between gap-4">
+            <div className="flex-1 space-y-2.5">
+              <div className="space-y-1">
+                <Skeleton className="h-6 w-48 rounded-md" />
+                <Skeleton className="h-3 w-32 rounded-md" />
+              </div>
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                <Skeleton className="h-6 w-full rounded-lg" />
+                <Skeleton className="h-6 w-full rounded-lg" />
+                <Skeleton className="h-6 w-full rounded-lg" />
+                <Skeleton className="h-6 w-full rounded-lg" />
+              </div>
+            </div>
+            <Skeleton className="w-32 sm:w-44 h-28 rounded-xl shrink-0" />
+          </div>
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-          <div className="lg:col-span-9 space-y-4">
-            <div className="p-4 bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl space-y-3">
-              <Skeleton className="h-10 w-full rounded-lg" />
-              <Skeleton className="h-4 w-2/3" />
+
+        {/* Row 2 Skeleton: 9:3 ratio */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+          <div className="lg:col-span-9 p-5 bg-card border border-border/80 rounded-2xl h-[280px] flex flex-col justify-between">
+            <div className="flex justify-between items-center">
+              <div className="space-y-1">
+                <Skeleton className="h-5 w-36 rounded-md" />
+                <Skeleton className="h-3 w-56 rounded-md" />
+              </div>
+              <Skeleton className="h-7 w-20 rounded-lg" />
             </div>
-            <div className="p-4 bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800/80 rounded-xl space-y-3">
-              <Skeleton className="h-8 w-48" />
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {[...Array(4)].map((_, i) => (
-                  <Skeleton key={i} className="h-28 rounded-xl" />
+            <Skeleton className="h-[180px] w-full rounded-xl" />
+          </div>
+          <div className="lg:col-span-3 p-4 bg-card border border-border/80 rounded-2xl h-[280px] space-y-3">
+            <div className="flex justify-between items-center">
+              <Skeleton className="h-4 w-24 rounded-md" />
+              <Skeleton className="h-6 w-14 rounded-lg" />
+            </div>
+            <Skeleton className="h-[210px] w-full rounded-xl" />
+          </div>
+        </div>
+
+        {/* Row 3 Skeleton: 9:3 ratio */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+          <div className="lg:col-span-9 p-5 bg-card border border-border/80 rounded-2xl space-y-5">
+            <div className="flex justify-between items-center">
+              <div className="space-y-1">
+                <Skeleton className="h-6 w-60 rounded-md" />
+                <Skeleton className="h-3 w-80 rounded-md" />
+              </div>
+              <Skeleton className="h-9 w-44 rounded-xl" />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <Skeleton className="h-20 rounded-xl" />
+              <Skeleton className="h-20 rounded-xl" />
+              <Skeleton className="h-20 rounded-xl" />
+            </div>
+            <Skeleton className="h-3 w-full rounded-full" />
+            <div className="pt-2 border-t border-border/60 space-y-3.5">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex gap-1.5 flex-wrap">
+                  <Skeleton className="h-7 w-16 rounded-xl" />
+                  <Skeleton className="h-7 w-36 rounded-xl" />
+                  <Skeleton className="h-7 w-28 rounded-xl" />
+                  <Skeleton className="h-7 w-24 rounded-xl" />
+                </div>
+                <Skeleton className="h-4 w-28 rounded-md shrink-0 ml-auto" />
+              </div>
+              <div className="border border-border/70 rounded-xl p-3.5 space-y-3 bg-card">
+                {[...Array(4)].map((_, idx) => (
+                  <div key={idx} className="flex items-center justify-between py-1.5 border-b border-border/40 last:border-0">
+                    <div className="flex items-center gap-3">
+                      <Skeleton className="size-8 rounded-lg shrink-0" />
+                      <div className="space-y-1">
+                        <Skeleton className="h-3.5 w-44 rounded-md" />
+                        <Skeleton className="h-2.5 w-64 rounded-md" />
+                      </div>
+                    </div>
+                    <Skeleton className="h-5 w-20 rounded-md" />
+                    <Skeleton className="h-5 w-24 rounded-full" />
+                    <Skeleton className="h-7 w-20 rounded-lg" />
+                  </div>
                 ))}
               </div>
             </div>
           </div>
-          <div className="lg:col-span-3 space-y-3.5">
-            <Skeleton className="h-64 rounded-xl" />
-            <Skeleton className="h-64 rounded-xl" />
+          <div className="lg:col-span-3 space-y-4">
+            <div className="p-4 bg-card border border-border/80 rounded-2xl h-56 space-y-3">
+              <div className="flex justify-between items-center">
+                <Skeleton className="h-4 w-28 rounded-md" />
+                <Skeleton className="h-5 w-16 rounded-full" />
+              </div>
+              <Skeleton className="h-10 w-full rounded-xl" />
+              <Skeleton className="h-10 w-full rounded-xl" />
+            </div>
           </div>
         </div>
       </div>
@@ -825,192 +898,319 @@ export const StudentDashboard: React.FC = () => {
 
   return (
     <div className="space-y-6 pb-12 animate-in fade-in duration-300">
-      {/* 1. Header with Student Greeting, Live Metadata & Quick Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
-        <div>
-          <div className="flex items-center gap-2.5 flex-wrap">
-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
-              Welcome back, {user?.name ? user.name.split(' ')[0] : 'Intern'}!
-            </h1>
-            <Badge variant="outline" className="text-xs font-semibold px-2.5 py-0.5 border-primary/30 text-primary bg-primary/10 rounded-full">
-              {profilePhase === 'before_ojt' ? 'Before OJT' : profilePhase === 'in_ojt' ? 'In OJT' : 'Final Phase'}
-            </Badge>
+      {/* Top Metrics Grid: 3 Modern Metric Cards + 1 Trainee Hero Card (12 Cols) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4 items-stretch">
+        {/* Metric 1: Total Hours Rendered (2 cols) */}
+        <div className="lg:col-span-2 sm:col-span-1 bg-card border border-border/70 rounded-2xl p-4 shadow-2xs hover:shadow-xs transition-shadow duration-200 flex flex-col justify-between h-[155px]">
+          <div className="flex items-center justify-between">
+            <div className="size-9 rounded-xl bg-muted/80 text-foreground flex items-center justify-center shrink-0">
+              <ClockIcon size={16} />
+            </div>
+            <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+              {hoursPercent}%
+            </span>
           </div>
-
-          {/* Student Information Metadata Chips */}
-          <div className="flex flex-wrap items-center gap-2 mt-2">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-muted/60 text-muted-foreground border border-border text-xs font-medium">
-              <span>ID:</span>
-              <strong className="text-foreground font-mono font-semibold">{studentId || user?.studentId || '2023-010482'}</strong>
-            </span>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-muted/60 text-muted-foreground border border-border text-xs font-medium">
-              <span>Program:</span>
-              <strong className="text-foreground font-semibold">{programName || user?.course || 'BSIT'}</strong>
-            </span>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-muted/60 text-muted-foreground border border-border text-xs font-medium">
-              <span>Section:</span>
-              <strong className="text-foreground font-semibold">{sectionName || user?.section || 'IT401'}</strong>
-            </span>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-muted/60 text-muted-foreground border border-border text-xs font-medium">
-              <BuildingIcon className="w-3.5 h-3.5 text-primary shrink-0" />
-              <span>Placement:</span>
-              <strong className="text-foreground font-semibold">{isAssignedCompany ? companyName : 'Pending Placement'}</strong>
+          <div className="min-w-0">
+            <div className="flex items-baseline gap-1">
+              <h3 className="text-2xl font-black text-foreground tracking-tight leading-none tabular-nums">
+                {renderedHours.toFixed(1)}
+              </h3>
+              <span className="text-xs font-semibold text-muted-foreground">hrs</span>
+            </div>
+            <p className="text-xs font-medium text-muted-foreground mt-0.5">Total Hours</p>
+            <span className="inline-block mt-2 text-[10px] font-bold text-muted-foreground bg-muted/70 px-2 py-0.5 rounded-full">
+              Target: {totalHours} hrs
             </span>
           </div>
         </div>
 
-        {/* Right Actions: Documents & Refresh */}
-        <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
-          <Link
-            to="/student/documents"
-            title="Open Document Repository"
-            className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-xl text-xs font-semibold bg-card border border-border hover:bg-muted/80 text-foreground transition-all active:scale-95 shadow-2xs cursor-pointer"
-          >
-            <FileTextIcon size={14} className="text-primary" />
-            <span>Documents</span>
-          </Link>
+        {/* Metric 2: Needs Attention & Review Center (2 cols) */}
+        <div className="lg:col-span-2 sm:col-span-1 bg-card border border-border/70 rounded-2xl p-4 shadow-2xs hover:shadow-xs transition-shadow duration-200 flex flex-col justify-between h-[155px] group">
+          <div className="flex items-center justify-between">
+            <div className={cn(
+              "size-9 rounded-xl flex items-center justify-center shrink-0 transition-colors",
+              documentsNeedingAttention.length > 0
+                ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                : "bg-muted/80 text-foreground group-hover:bg-primary/10 group-hover:text-primary"
+            )}>
+              <AlertCircle size={16} />
+            </div>
+            <span className={cn(
+              "text-[10px] font-bold px-2 py-0.5 rounded-full",
+              documentsNeedingAttention.length > 0
+                ? "text-amber-600 dark:text-amber-400 bg-amber-500/10"
+                : totalPendingCount > 0
+                ? "text-sky-600 dark:text-sky-400 bg-sky-500/10"
+                : "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10"
+            )}>
+              {documentsNeedingAttention.length > 0
+                ? `${documentsNeedingAttention.length} Action`
+                : totalPendingCount > 0
+                ? `${totalPendingCount} In Review`
+                : 'All Clear'}
+            </span>
+          </div>
+          <div className="min-w-0">
+            <h3 className="text-base font-black text-foreground tracking-tight leading-tight">
+              Needs Attention
+            </h3>
+            <p className="text-xs font-medium text-muted-foreground mt-0.5 truncate">
+              {documentsNeedingAttention.length > 0
+                ? `${documentsNeedingAttention.length} doc${documentsNeedingAttention.length > 1 ? 's' : ''} need revision`
+                : totalPendingCount > 0
+                ? `${totalPendingCount} doc${totalPendingCount > 1 ? 's' : ''} in review`
+                : 'No remarks or revisions'}
+            </p>
+            <Link to="/student/reviews" className="block mt-2">
+              <Button
+                variant="primary"
+                size="sm"
+                className="w-full h-7 text-[10.5px] sm:text-[11px] font-bold rounded-xl flex items-center justify-center gap-1.5 cursor-pointer shadow-xs active:scale-95 px-2"
+              >
+                <span>Open Review Center</span>
+                <ArrowRightIcon size={11} />
+              </Button>
+            </Link>
+          </div>
+        </div>
 
-          <button
-            type="button"
-            onClick={() => loadDashboardData(true)}
-            disabled={refreshing}
-            title="Refresh dashboard state"
-            className="h-9 w-9 bg-card border border-border hover:bg-muted/80 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground transition-all cursor-pointer disabled:opacity-50 active:scale-95 shadow-2xs shrink-0"
-          >
-            <RotateCw size={15} className={cn(refreshing && "animate-spin text-primary")} />
-          </button>
+        {/* Metric 3: Host Placement (2 cols) */}
+        <div className="lg:col-span-2 sm:col-span-1 bg-card border border-border/70 rounded-2xl p-4 shadow-2xs hover:shadow-xs transition-shadow duration-200 flex flex-col justify-between h-[155px]">
+          <div className="flex items-center justify-between">
+            <div className="size-9 rounded-xl bg-muted/80 text-foreground flex items-center justify-center shrink-0">
+              <Briefcase size={16} />
+            </div>
+            <span className={cn(
+              "text-[10px] font-bold px-2 py-0.5 rounded-full",
+              isAssignedCompany ? "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10" : "text-amber-600 dark:text-amber-400 bg-amber-500/10"
+            )}>
+              {isAssignedCompany ? 'Verified' : 'Pending'}
+            </span>
+          </div>
+          <div className="min-w-0">
+            <h3 className="text-xl font-black text-foreground tracking-tight truncate leading-tight">
+              {isAssignedCompany ? companyName : 'Placement'}
+            </h3>
+            <p className="text-xs font-medium text-muted-foreground mt-0.5">Host Company</p>
+            <span className="inline-block mt-2 text-[10px] font-bold text-muted-foreground bg-muted/70 px-2 py-0.5 rounded-full truncate max-w-full">
+              {isAssignedCompany ? supervisorName : 'Awaiting Match'}
+            </span>
+          </div>
+        </div>
+
+        {/* Hero Card: Trainee Profile (6 cols) — Dedicated Profile Card */}
+        <div className="lg:col-span-6 sm:col-span-2 bg-card border border-border/70 rounded-2xl p-4 sm:p-5 shadow-2xs hover:shadow-xs transition-shadow duration-200 flex items-center justify-between gap-4 h-[155px] overflow-hidden">
+          <div className="min-w-0 flex-1 flex flex-col justify-between h-full py-0.5">
+            {/* Student Name & Role Header */}
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-base sm:text-lg font-black text-foreground tracking-tight leading-tight">
+                  {user?.name || 'John Dwayne B. Guaniso'}
+                </h3>
+                <span className="text-[10px] font-bold text-primary bg-primary/10 px-2.5 py-0.5 rounded-full shrink-0">
+                  Trainee
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Mentor: <strong className="text-foreground font-semibold">{adviserName}</strong>
+              </p>
+            </div>
+
+            {/* Student Information Metadata (Full visibility 2x2 grid) */}
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-muted/60 text-muted-foreground border border-border/80 text-xs font-medium min-w-0">
+                <span>ID:</span>
+                <strong className="text-foreground font-mono font-bold">{studentId || user?.studentId || '2023-010482'}</strong>
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-muted/60 text-muted-foreground border border-border/80 text-xs font-medium min-w-0">
+                <span>Program:</span>
+                <strong className="text-foreground font-bold">{programName || user?.course || 'BSIT'}</strong>
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-muted/60 text-muted-foreground border border-border/80 text-xs font-medium min-w-0">
+                <span>Section:</span>
+                <strong className="text-foreground font-bold">{sectionName || user?.section || 'BSIT 402'}</strong>
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-muted/60 text-muted-foreground border border-border/80 text-xs font-medium min-w-0">
+                <BuildingIcon className="size-3 text-primary shrink-0" />
+                <span>Placement:</span>
+                <strong className="text-foreground font-bold truncate">{isAssignedCompany ? companyName : 'Pending Placement'}</strong>
+              </span>
+            </div>
+          </div>
+
+          {/* Large Frameless Focused Dev Avatar */}
+          <div className="w-32 sm:w-44 h-28 sm:h-32 shrink-0 flex items-center justify-center pointer-events-none">
+            <img
+              src="/images/Dashboard Icons/undraw_focused-dev_gqoa.svg"
+              alt="Trainee Avatar"
+              className="w-full h-full object-contain pointer-events-none drop-shadow-2xs"
+            />
+          </div>
         </div>
       </div>
 
-      {/* 2. Top Pulse Metrics Strip: 4 Sleek Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Metric 1: Practicum Hours */}
-        <div className="bg-card border border-border rounded-2xl p-4 sm:p-5 shadow-xs flex flex-col justify-between hover:border-primary/40 transition-all group">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Practicum Hours
-            </span>
-            <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary border border-primary/20 flex items-center justify-center shrink-0">
-              <ClockIcon size={15} />
+      {/* 3. Analytics & Activity Row: Area Chart + Report + Requirement State (Matching bottom row of reference) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+        {/* Graph Card: Total Hours Weekly Trend (9 cols) */}
+        <div className="lg:col-span-9 min-w-0 bg-card border border-border/70 rounded-2xl p-5 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between">
+          <div className="flex items-center justify-between pb-2">
+            <div>
+              <h2 className="text-base font-bold text-foreground tracking-tight">Total Hours</h2>
+              <p className="text-xs text-muted-foreground font-medium">Weekly report overview</p>
             </div>
-          </div>
-          <div className="mt-3 space-y-2">
-            <div className="flex items-baseline gap-1.5">
-              <h3 className="text-2xl font-extrabold text-foreground tracking-tight">{renderedHours.toFixed(1)}</h3>
-              <span className="text-xs text-muted-foreground font-medium">/ {totalHours} hrs</span>
-              <span className="ml-auto text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                {hoursPercent}%
-              </span>
-            </div>
-            <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
-              <div
-                className="bg-primary h-full rounded-full transition-all duration-500"
-                style={{ width: `${hoursPercent}%` }}
-              />
-            </div>
-            <p className="text-xs text-muted-foreground truncate">
-              {hoursRemaining.toFixed(1)} hrs remaining to completion
-            </p>
-          </div>
-        </div>
-
-        {/* Metric 2: Requirements Progress */}
-        <div className="bg-card border border-border rounded-2xl p-4 sm:p-5 shadow-xs flex flex-col justify-between hover:border-primary/40 transition-all group">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Requirements
-            </span>
-            <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary border border-primary/20 flex items-center justify-center shrink-0">
-              <ClipboardCheckIcon size={15} />
-            </div>
-          </div>
-          <div className="mt-3 space-y-2">
-            <div className="flex items-baseline gap-1.5">
-              <h3 className="text-2xl font-extrabold text-foreground tracking-tight">{totalApprovedCount} of {allRequirements.length}</h3>
-              <span className="text-xs text-muted-foreground font-medium">Verified</span>
-              {totalPendingCount > 0 ? (
-                <span className="ml-auto text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
-                  {totalPendingCount} Under Review
-                </span>
-              ) : totalRevisionCount > 0 ? (
-                <span className="ml-auto text-[10px] font-bold text-rose-600 dark:text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded-full border border-rose-500/20">
-                  {totalRevisionCount} Revise
-                </span>
-              ) : (
-                <span className="ml-auto text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                  Up to Date
-                </span>
-              )}
-            </div>
-            <div className="w-full bg-muted rounded-full h-2 overflow-hidden flex">
-              <div
-                className="bg-emerald-500 h-full transition-all duration-500"
-                style={{ width: `${(totalApprovedCount / allRequirements.length) * 100}%` }}
-              />
-              <div
-                className="bg-amber-500 h-full transition-all duration-500"
-                style={{ width: `${(totalPendingCount / allRequirements.length) * 100}%` }}
-              />
-            </div>
-            <p className="text-xs text-muted-foreground truncate">
-              {drafts.length > 0 ? `${drafts.length} draft in progress` : `${allRequirements.length - totalApprovedCount} total remaining`}
-            </p>
-          </div>
-        </div>
-
-        {/* Metric 3: Current Phase */}
-        <div className="bg-card border border-border rounded-2xl p-4 sm:p-5 shadow-xs flex flex-col justify-between hover:border-primary/40 transition-all group">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Practicum Stage
-            </span>
-            <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary border border-primary/20 flex items-center justify-center shrink-0">
-              <Sparkles size={15} />
-            </div>
-          </div>
-          <div className="mt-3 space-y-1.5">
             <div className="flex items-center gap-2">
-              <h3 className="text-xl font-extrabold text-foreground tracking-tight">
-                {profilePhase === 'before_ojt' ? 'Before OJT' : profilePhase === 'in_ojt' ? 'In OJT' : 'Final Phase'}
-              </h3>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
-                {profilePhase === 'before_ojt' ? 'Phase 1/3' : profilePhase === 'in_ojt' ? 'Phase 2/3' : 'Phase 3/3'}
+              <span className="text-[10px] font-bold text-muted-foreground bg-muted px-2 py-1 rounded-lg">
+                Mon – Sun
               </span>
+              <button type="button" className="p-1 hover:bg-muted rounded-md text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
+                <MoreHorizontal size={16} />
+              </button>
             </div>
-            <p className="text-xs text-muted-foreground leading-relaxed truncate">
-              {profilePhase === 'before_ojt'
-                ? 'Clearance & institutional endorsements'
-                : profilePhase === 'in_ojt'
-                ? 'DTR tracking & weekly reflections'
-                : 'Appraisal, paper & defense clearance'}
-            </p>
+          </div>
+
+          <div className="w-full h-56 min-w-0 min-h-[224px] pt-2">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200}>
+              <AreaChart data={weeklyChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="hoursGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="var(--primary, #18181b)" stopOpacity={0.25} />
+                    <stop offset="95%" stopColor="var(--primary, #18181b)" stopOpacity={0.0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#88888820" />
+                <XAxis
+                  dataKey="day"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: 'currentColor', fontSize: 11, fontWeight: 700 }}
+                  className="text-muted-foreground"
+                />
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: 'currentColor', fontSize: 10, fontWeight: 600 }}
+                  className="text-muted-foreground"
+                  tickFormatter={(v) => `${v}h`}
+                  domain={[0, 10]}
+                  ticks={[2, 4, 6, 8, 10]}
+                />
+                <RechartsTooltip
+                  content={({ active, payload, label }) => {
+                    if (active && payload && payload.length) {
+                      return (
+                        <div className="bg-popover/95 backdrop-blur-md border border-border px-3 py-2 rounded-xl shadow-lg text-xs">
+                          <p className="font-bold text-foreground">
+                            {label}: <span className="text-primary font-extrabold">{payload[0].value} hrs</span>
+                          </p>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="hours"
+                  stroke="var(--foreground)"
+                  strokeWidth={2.5}
+                  fill="url(#hoursGrad)"
+                  activeDot={{ r: 5, fill: 'var(--foreground)' }}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+
+          <div className="pt-3 border-t border-border/60 flex items-center justify-between text-xs text-muted-foreground">
+            <span>Daily target: <strong className="text-foreground">8.0 hrs/day</strong></span>
+            <span className="text-emerald-600 dark:text-emerald-400 font-bold">40.0 hrs / week</span>
           </div>
         </div>
 
-        {/* Metric 4: Placement & Mentor */}
-        <div className="bg-card border border-border rounded-2xl p-4 sm:p-5 shadow-xs flex flex-col justify-between hover:border-primary/40 transition-all group">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Host Placement
-            </span>
-            <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary border border-primary/20 flex items-center justify-center shrink-0">
-              <BuildingIcon size={15} />
+        {/* Right Card: Interactive Calendar (3 cols) */}
+        <div className="lg:col-span-3 bg-card border border-border/70 rounded-2xl p-5 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between">
+          <div className="flex items-center justify-between pb-2">
+            <div>
+              <h2 className="text-base font-bold text-foreground tracking-tight flex items-center gap-2">
+                <CalendarDays className="size-4 text-primary" />
+                <span>Calendar</span>
+              </h2>
+              <p className="text-xs text-muted-foreground font-medium">Practicum schedule</p>
+            </div>
+            <div className="flex items-center gap-1 text-xs font-bold text-foreground">
+              <button
+                type="button"
+                onClick={() => setCalendarMonth(new Date(calYear, calMonth - 1, 1))}
+                className="p-1 hover:bg-muted rounded-md cursor-pointer transition-colors text-muted-foreground hover:text-foreground active:scale-95"
+                title="Previous month"
+              >
+                <ChevronLeft size={14} />
+              </button>
+              <span className="tracking-tight text-xs font-bold min-w-[70px] text-center">{monthName}</span>
+              <button
+                type="button"
+                onClick={() => setCalendarMonth(new Date(calYear, calMonth + 1, 1))}
+                className="p-1 hover:bg-muted rounded-md cursor-pointer transition-colors text-muted-foreground hover:text-foreground active:scale-95"
+                title="Next month"
+              >
+                <ChevronRight size={14} />
+              </button>
             </div>
           </div>
-          <div className="mt-3 space-y-1.5">
-            <div className="flex items-center gap-1.5">
-              <h3 className="text-base font-bold text-foreground tracking-tight truncate">
-                {isAssignedCompany ? companyName : 'Pending Placement'}
-              </h3>
-              {isAssignedCompany ? (
-                <CheckCheck size={15} className="text-emerald-500 shrink-0" />
-              ) : (
-                <ClockIcon size={14} className="text-amber-500 shrink-0" />
-              )}
-            </div>
-            <p className="text-xs text-muted-foreground truncate leading-relaxed">
-              {isAssignedCompany ? `${supervisorName} · ${companyLocation}` : 'Awaiting company endorsement'}
-            </p>
+
+          {/* Day headers: Su Mo Tu We Th Fr Sa */}
+          <div className="grid grid-cols-7 text-center text-[10px] font-bold text-muted-foreground select-none py-1 border-b border-border/70">
+            <span>Su</span>
+            <span>Mo</span>
+            <span>Tu</span>
+            <span>We</span>
+            <span>Th</span>
+            <span>Fr</span>
+            <span>Sa</span>
+          </div>
+
+          {/* Days cells */}
+          <div className="grid grid-cols-7 gap-y-1 text-center text-xs py-1">
+            {miniDays.map((d, i) => (
+              <div key={i} className="flex flex-col items-center justify-center h-7">
+                <span
+                  className={cn(
+                    "size-6.5 flex items-center justify-center rounded-full text-xs font-semibold select-none transition-colors",
+                    d.isToday
+                      ? "bg-primary text-primary-foreground font-bold shadow-xs"
+                      : d.currentMonth
+                      ? "text-foreground hover:bg-muted cursor-pointer"
+                      : "text-muted-foreground/30"
+                  )}
+                >
+                  {d.day}
+                </span>
+                {d.hasEvent && !d.isToday && (
+                  <span className="size-1 bg-primary rounded-full -mt-0.5" />
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Footer Links: Full calendar & Reset/Today */}
+          <div className="flex items-center justify-between pt-3 border-t border-border/60 text-xs font-semibold px-0.5">
+            <Link
+              to="/student/calendar"
+              className="text-primary hover:underline cursor-pointer flex items-center gap-1 font-bold text-xs"
+            >
+              <span>Full calendar</span>
+              <ExternalLink size={11} />
+            </Link>
+            {!isCurrentMonth ? (
+              <button
+                type="button"
+                onClick={() => setCalendarMonth(new Date())}
+                className="text-xs font-bold text-primary hover:underline cursor-pointer"
+              >
+                Today
+              </button>
+            ) : (
+              <span className="text-[11px] text-muted-foreground font-medium">Current Month</span>
+            )}
           </div>
         </div>
       </div>
@@ -1019,595 +1219,284 @@ export const StudentDashboard: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
         {/* LEFT COLUMN: Main Practicum Workflows (9 cols) */}
         <div className="lg:col-span-9 space-y-5 min-w-0">
-          {/* Host Placement & Industry Partner Card */}
-          <div className="bg-card border border-border rounded-2xl p-4 sm:p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-start sm:items-center gap-3.5 min-w-0">
-              <div className="size-11 rounded-xl bg-primary/10 text-primary border border-primary/20 flex items-center justify-center shrink-0">
-                <BuildingIcon size={20} />
-              </div>
-              <div className="min-w-0 space-y-1">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-sm font-bold text-foreground truncate">
-                    {isAssignedCompany ? companyName : 'Industry Placement Pending'}
-                  </span>
-                  <span
-                    className={cn(
-                      "text-[10px] font-bold px-2 py-0.5 rounded-full border",
-                      isAssignedCompany
-                        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
-                        : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
-                    )}
-                  >
-                    {isAssignedCompany ? 'Verified Partner' : 'Matching in Progress'}
-                  </span>
+          {/* Practicum Requirements & Document Repository Hub */}
+          <div className="bg-card border border-border/80 rounded-2xl p-5 sm:p-6 shadow-xs space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/70 pb-4">
+              <div className="flex items-start gap-3.5">
+                <div className="size-11 rounded-xl bg-primary/10 text-primary border border-primary/20 flex items-center justify-center shrink-0 mt-0.5">
+                  <ClipboardListIcon size={22} />
                 </div>
-                <div className="flex items-center gap-x-2.5 gap-y-1 text-xs text-muted-foreground flex-wrap">
-                  {isAssignedCompany ? (
-                    <>
-                      <span>Supervisor: <strong className="text-foreground font-semibold">{supervisorName}</strong></span>
-                      <span className="text-border hidden sm:inline">•</span>
-                      <span>Role: <strong className="text-foreground font-semibold">{studentRole}</strong></span>
-                      {companyLocation && (
-                        <>
-                          <span className="text-border hidden sm:inline">•</span>
-                          <span>{companyLocation}</span>
-                        </>
-                      )}
-                    </>
-                  ) : (
-                    <span>Complete your Before OJT documents and MOA to verify your company placement.</span>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Quick Actions */}
-            <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto">
-              <Link to="/student/documents?phase=in_ojt">
-                <Button variant="primary" size="sm" className="font-bold text-xs h-8.5 px-3.5 rounded-xl cursor-pointer active:scale-95 shadow-2xs">
-                  <ClockIcon size={14} className="mr-1.5" />
-                  Log DTR
-                </Button>
-              </Link>
-              <Link to="/student/editor?template=weekly-journal">
-                <Button variant="outline" size="sm" className="font-bold text-xs h-8.5 px-3 rounded-xl cursor-pointer active:scale-95 border-border hover:bg-muted/80 shadow-2xs">
-                  <BookOpenIcon size={14} className="mr-1.5" />
-                  Journal
-                </Button>
-              </Link>
-              <Link to="/student/documents">
-                <Button variant="outline" size="sm" className="font-bold text-xs h-8.5 px-3 rounded-xl cursor-pointer active:scale-95 border-border hover:bg-muted/80 shadow-2xs">
-                  <FolderOpen size={14} className="mr-1.5" />
-                  Repository
-                </Button>
-              </Link>
-            </div>
-          </div>
-
-          {/* Smart Priority Alert / Adviser Feedback Banner */}
-          <div
-            className={cn(
-              "rounded-2xl p-4 sm:p-5 border shadow-xs space-y-3 transition-all",
-              priorityAction.badgeTone === 'rose' && "bg-rose-500/[0.04] border-rose-500/30",
-              priorityAction.badgeTone === 'sky' && "bg-sky-500/[0.04] border-sky-500/30",
-              priorityAction.badgeTone === 'primary' && "bg-primary/[0.04] border-primary/30",
-              priorityAction.badgeTone === 'emerald' && "bg-emerald-500/[0.04] border-emerald-500/30"
-            )}
-          >
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="flex items-start gap-3">
-                <div
-                  className={cn(
-                    "size-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5 border",
-                    priorityAction.badgeTone === 'rose' && "bg-rose-500/10 text-rose-600 border-rose-500/20",
-                    priorityAction.badgeTone === 'sky' && "bg-sky-500/10 text-sky-600 border-sky-500/20",
-                    priorityAction.badgeTone === 'primary' && "bg-primary/10 text-primary border-primary/20",
-                    priorityAction.badgeTone === 'emerald' && "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
-                  )}
-                >
-                  {priorityAction.badgeTone === 'rose' ? (
-                    <AlertTriangle size={18} />
-                  ) : priorityAction.badgeTone === 'sky' ? (
-                    <FileTextIcon size={18} />
-                  ) : priorityAction.badgeTone === 'emerald' ? (
-                    <CheckCircle2 size={18} />
-                  ) : (
-                    <Sparkles size={18} />
-                  )}
-                </div>
-                <div className="space-y-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={cn(
-                        "text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider",
-                        priorityAction.badgeTone === 'rose' && "bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/20",
-                        priorityAction.badgeTone === 'sky' && "bg-sky-500/10 text-sky-700 dark:text-sky-400 border border-sky-500/20",
-                        priorityAction.badgeTone === 'primary' && "bg-primary/10 text-primary border border-primary/20",
-                        priorityAction.badgeTone === 'emerald' && "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20"
-                      )}
-                    >
-                      {priorityAction.badgeText}
-                    </span>
-                  </div>
-                  <h3 className="text-sm font-bold text-foreground tracking-tight">
-                    {priorityAction.title}
-                  </h3>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    {priorityAction.description}
+                <div>
+                  <h2 className="text-base sm:text-lg font-bold text-foreground tracking-tight flex items-center gap-2">
+                    <span>Practicum Requirements & Templates</span>
+                  </h2>
+                  <p className="text-xs text-muted-foreground font-medium mt-0.5 max-w-xl">
+                    Access, edit, and manage your official institutional documents across Before OJT, In OJT, and Final practicum phases.
                   </p>
                 </div>
               </div>
 
-              <Link to={priorityAction.link} className="shrink-0 self-start sm:self-auto">
-                <Button variant="primary" size="sm" className="font-bold text-xs h-8.5 px-3.5 rounded-xl cursor-pointer active:scale-95">
-                  <span>{priorityAction.ctaText}</span>
-                  <ArrowRightIcon size={13} className="ml-1.5" />
+              <Link to="/student/documents" className="shrink-0 self-start sm:self-auto">
+                <Button
+                  variant="primary"
+                  size="sm"
+                  className="font-bold text-xs h-9 px-4 rounded-xl cursor-pointer active:scale-95 shadow-2xs flex items-center gap-2"
+                >
+                  <FolderOpen size={14} />
+                  <span>Open Document Repository</span>
+                  <ArrowRightIcon size={13} />
                 </Button>
               </Link>
             </div>
-          </div>
 
-          {/* Practicum Requirements Checklist Hub (13 Official Templates) */}
-          <div className="bg-card border border-border rounded-2xl p-5 sm:p-6 shadow-xs space-y-5">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/70 pb-4">
-              <div>
-                <h2 className="text-base sm:text-lg font-bold text-foreground tracking-tight flex items-center gap-2">
-                  <ClipboardListIcon size={18} className="text-primary" />
-                  <span>Practicum Requirements Checklist</span>
-                </h2>
-                <p className="text-xs text-muted-foreground font-medium mt-0.5">
-                  13 official institutional templates across the 3 practicum phases.
-                </p>
-              </div>
-
-              <div className="flex items-center gap-2 text-xs text-muted-foreground font-semibold">
-                <span className="inline-flex items-center gap-1.5 bg-muted px-2.5 py-1 rounded-lg">
+            {/* Completion Summary Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="p-4 rounded-xl bg-muted/20 border border-border/70 space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-muted-foreground">Approved Docs</span>
                   <span className="size-2 rounded-full bg-emerald-500"></span>
-                  <span>{totalApprovedCount} Approved</span>
-                </span>
-                <span className="inline-flex items-center gap-1.5 bg-muted px-2.5 py-1 rounded-lg">
+                </div>
+                <div className="flex items-baseline gap-1.5 pt-0.5">
+                  <span className="text-2xl font-black text-foreground tracking-tight leading-none">{totalApprovedCount}</span>
+                  <span className="text-xs font-semibold text-muted-foreground">/ {allRequirements.length}</span>
+                </div>
+                <p className="text-[11px] text-muted-foreground">Verified by practicum adviser</p>
+              </div>
+
+              <div className="p-4 rounded-xl bg-muted/20 border border-border/70 space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-muted-foreground">Under Review</span>
                   <span className="size-2 rounded-full bg-amber-500"></span>
-                  <span>{totalPendingCount} Under Review</span>
+                </div>
+                <div className="flex items-baseline gap-1.5 pt-0.5">
+                  <span className="text-2xl font-black text-foreground tracking-tight leading-none">{totalPendingCount}</span>
+                  <span className="text-xs font-semibold text-muted-foreground">pending</span>
+                </div>
+                <p className="text-[11px] text-muted-foreground">Awaiting evaluation remarks</p>
+              </div>
+
+              <div className="p-4 rounded-xl bg-muted/20 border border-border/70 space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-muted-foreground">Remaining</span>
+                  <span className="size-2 rounded-full bg-muted-foreground/50"></span>
+                </div>
+                <div className="flex items-baseline gap-1.5 pt-0.5">
+                  <span className="text-2xl font-black text-foreground tracking-tight leading-none">
+                    {Math.max(0, allRequirements.length - totalApprovedCount)}
+                  </span>
+                  <span className="text-xs font-semibold text-muted-foreground">templates</span>
+                </div>
+                <p className="text-[11px] text-muted-foreground">To draft, upload, or complete</p>
+              </div>
+            </div>
+
+            {/* Overall Progress Bar */}
+            <div className="space-y-2 pt-1">
+              <div className="flex items-center justify-between text-xs font-semibold">
+                <span className="text-muted-foreground">Overall Documentation Progress</span>
+                <span className="text-foreground font-bold font-mono">
+                  {Math.round((totalApprovedCount / (allRequirements.length || 1)) * 100)}%
                 </span>
               </div>
-            </div>
-
-            {/* Unified 3-Stage Progress Stepper */}
-            <div className="bg-muted/40 border border-border/70 rounded-xl p-1.5">
-              <div className="grid grid-cols-3 gap-2 text-center">
-                <button
-                  type="button"
-                  onClick={() => setActivePhaseTab('before')}
-                  className={cn(
-                    "p-2 sm:p-2.5 rounded-lg border transition-all cursor-pointer text-center w-full",
-                    activePhaseTab === 'before'
-                      ? "bg-card border-border shadow-xs text-foreground font-bold"
-                      : "border-transparent text-muted-foreground hover:text-foreground hover:bg-card/50 font-medium"
-                  )}
-                >
-                  <div className="flex items-center justify-center gap-2">
-                    <span
-                      className={cn(
-                        "size-5 rounded-full flex items-center justify-center text-[10px] font-black shrink-0",
-                        beforeDoneCount === beforeRequirements.length
-                          ? "bg-emerald-500 text-white"
-                          : "bg-primary text-primary-foreground"
-                      )}
-                    >
-                      {beforeDoneCount === beforeRequirements.length ? '✓' : '1'}
-                    </span>
-                    <span className="text-xs sm:text-sm tracking-tight truncate">1. Before OJT</span>
-                  </div>
-                  <span className="text-[10px] sm:text-xs text-muted-foreground block mt-1 font-medium">
-                    {beforeDoneCount} of {beforeRequirements.length} Done
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setActivePhaseTab('in')}
-                  className={cn(
-                    "p-2 sm:p-2.5 rounded-lg border transition-all cursor-pointer text-center w-full",
-                    activePhaseTab === 'in'
-                      ? "bg-card border-border shadow-xs text-foreground font-bold"
-                      : "border-transparent text-muted-foreground hover:text-foreground hover:bg-card/50 font-medium"
-                  )}
-                >
-                  <div className="flex items-center justify-center gap-2">
-                    <span
-                      className={cn(
-                        "size-5 rounded-full flex items-center justify-center text-[10px] font-black shrink-0",
-                        inDoneCount === inRequirements.length
-                          ? "bg-emerald-500 text-white"
-                          : profilePhase === 'in_ojt' || profilePhase === 'final'
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted-foreground/20 text-muted-foreground"
-                      )}
-                    >
-                      {inDoneCount === inRequirements.length ? '✓' : profilePhase === 'before_ojt' ? <LockIcon size={10} /> : '2'}
-                    </span>
-                    <span className="text-xs sm:text-sm tracking-tight truncate">2. In OJT</span>
-                  </div>
-                  <span className="text-[10px] sm:text-xs text-muted-foreground block mt-1 font-medium">
-                    {inDoneCount} of {inRequirements.length} Done
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setActivePhaseTab('final')}
-                  className={cn(
-                    "p-2 sm:p-2.5 rounded-lg border transition-all cursor-pointer text-center w-full",
-                    activePhaseTab === 'final'
-                      ? "bg-card border-border shadow-xs text-foreground font-bold"
-                      : "border-transparent text-muted-foreground hover:text-foreground hover:bg-card/50 font-medium"
-                  )}
-                >
-                  <div className="flex items-center justify-center gap-2">
-                    <span
-                      className={cn(
-                        "size-5 rounded-full flex items-center justify-center text-[10px] font-black shrink-0",
-                        finalDoneCount === finalRequirements.length
-                          ? "bg-emerald-500 text-white"
-                          : profilePhase === 'final'
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted-foreground/20 text-muted-foreground"
-                      )}
-                    >
-                      {finalDoneCount === finalRequirements.length ? '✓' : profilePhase === 'final' ? '3' : <LockIcon size={10} />}
-                    </span>
-                    <span className="text-xs sm:text-sm tracking-tight truncate">3. Final Phase</span>
-                  </div>
-                  <span className="text-[10px] sm:text-xs text-muted-foreground block mt-1 font-medium">
-                    {finalDoneCount} of {finalRequirements.length} Done
-                  </span>
-                </button>
+              <div className="h-2.5 w-full bg-muted/60 rounded-full overflow-hidden border border-border/50">
+                <div
+                  className="h-full bg-primary rounded-full transition-all duration-500"
+                  style={{ width: `${Math.round((totalApprovedCount / (allRequirements.length || 1)) * 100)}%` }}
+                />
               </div>
             </div>
 
-            {/* Stable Requirement Cards Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-              {currentRequirementItems.map((req, idx) => {
-                const isDone = req.status === 'done';
-                const isRevision = req.status === 'revision' || req.status === 'returned';
-                const isPending = req.status === 'pending';
-                const isDraft = req.status === 'draft';
-                const isLocked = req.status === 'locked';
-                const IconComponent = req.icon;
-
-                const cardClasses = cn(
-                  "p-4 rounded-xl border transition-all flex flex-col justify-between gap-3 bg-muted/20 border-border/70 hover:border-primary/40 hover:bg-card shadow-xs no-underline text-inherit group",
-                  isDone && "border-emerald-500/30 bg-emerald-500/[0.02] hover:border-emerald-500/50",
-                  isRevision && "border-rose-500/30 bg-rose-500/[0.02] hover:border-rose-500/50",
-                  isPending && "border-amber-500/30 bg-amber-500/[0.02] hover:border-amber-500/50",
-                  isDraft && "border-sky-500/30 bg-sky-500/[0.02] hover:border-sky-500/50",
-                  isLocked ? "opacity-60 border-dashed border-border/80 bg-muted/10 cursor-not-allowed" : "cursor-pointer select-none active:scale-[0.99]"
-                );
-
-                const cardInner = (
-                  <>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <div
-                            className={cn(
-                              "size-8 rounded-lg flex items-center justify-center shrink-0 border",
-                              isDone && "bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400",
-                              isRevision && "bg-rose-500/10 border-rose-500/20 text-rose-600 dark:text-rose-400",
-                              isPending && "bg-amber-500/10 border-amber-500/20 text-amber-600 dark:text-amber-400",
-                              isDraft && "bg-sky-500/10 border-sky-500/20 text-sky-600 dark:text-sky-400",
-                              req.status === 'not_started' && "bg-muted border-border text-muted-foreground",
-                              isLocked && "bg-muted border-border text-muted-foreground/60"
-                            )}
-                          >
-                            <IconComponent size={16} />
-                          </div>
-                          <span className="text-[10px] font-extrabold text-muted-foreground uppercase tracking-wider">
-                            Item {idx + 1}
-                          </span>
-                        </div>
-
-                        {/* Status Badge */}
-                        {isDone && (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                            Approved
-                          </span>
-                        )}
-                        {isRevision && (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 animate-pulse">
-                            {req.status === 'returned' ? 'Returned' : 'Revision Needed'}
-                          </span>
-                        )}
-                        {isPending && (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-                            Under Review
-                          </span>
-                        )}
-                        {isDraft && (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20">
-                            Draft Saved
-                          </span>
-                        )}
-                        {req.status === 'not_started' && (
-                          <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground border border-border">
-                            Not Started
-                          </span>
-                        )}
-                        {isLocked && (
-                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-muted text-muted-foreground/70 border border-border">
-                            Locked
-                          </span>
-                        )}
-                      </div>
-
-                      <div>
-                        <h4 className="text-sm font-bold text-foreground tracking-tight line-clamp-1 group-hover:text-primary transition-colors">
-                          {req.name}
-                        </h4>
-                        <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2 mt-0.5">
-                          {req.feedback ? (
-                            <span className="text-rose-600 dark:text-rose-400 font-semibold">
-                              Remarks: {req.feedback}
-                            </span>
-                          ) : (
-                            req.description
-                          )}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Action Footer */}
-                    <div className="pt-2.5 border-t border-border/60 flex items-center justify-between">
-                      <span className="text-[11px] font-medium text-muted-foreground">
-                        {req.submissionDate ? `Submitted ${req.submissionDate}` : req.statusLabel}
-                      </span>
-                      {isLocked ? (
-                        <span className="text-xs text-muted-foreground/60 flex items-center gap-1 font-semibold">
-                          <LockIcon size={12} />
-                          <span>Phase Locked</span>
-                        </span>
-                      ) : (
-                        <span
-                          className={cn(
-                            "inline-flex items-center gap-1 text-xs font-bold transition-colors",
-                            isDone && "text-emerald-600 dark:text-emerald-400 group-hover:text-emerald-700",
-                            isRevision && "text-rose-600 dark:text-rose-400 group-hover:text-rose-700",
-                            isPending && "text-amber-600 dark:text-amber-400 group-hover:text-amber-700",
-                            isDraft && "text-sky-600 dark:text-sky-400 group-hover:text-sky-700",
-                            req.status === 'not_started' && "text-foreground group-hover:text-primary"
-                          )}
-                        >
-                          <span>{req.actionText}</span>
-                          <ArrowRightIcon size={12} className="group-hover:translate-x-0.5 transition-transform" />
-                        </span>
-                      )}
-                    </div>
-                  </>
-                );
-
-                if (isLocked) {
-                  return (
-                    <div key={req.id} className={cardClasses}>
-                      {cardInner}
-                    </div>
-                  );
-                }
-
-                return (
-                  <Link key={req.id} to={req.link} className={cardClasses}>
-                    {cardInner}
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Recent Submissions & Adviser Feedback Stream */}
-          <div className="bg-card border border-border rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
-            <div className="flex items-center justify-between border-b border-border/70 pb-3">
-              <div className="flex items-center gap-2.5">
-                <FileCheck2 size={18} className="text-primary" />
-                <h3 className="text-sm sm:text-base font-bold text-foreground tracking-tight">
-                  Recent Submissions & Feedback Stream
-                </h3>
-              </div>
-              <Link
-                to="/student/documents"
-                className="text-xs font-bold text-primary hover:underline cursor-pointer flex items-center gap-1"
-              >
-                <span>View all documents</span>
-                <ArrowRightIcon size={12} />
-              </Link>
-            </div>
-
-            {documents.length === 0 ? (
-              <EmptyState
-                icon={<FileTextIcon size={28} />}
-                title="No Submissions Yet"
-                description="Upload or draft your initial practicum requirements such as Application Letters and Consent Forms."
-                className="min-h-[160px] py-6"
-                action={
-                  <Link to="/student/documents">
-                    <Button variant="primary" size="sm" className="font-bold text-xs h-8.5 px-3.5 rounded-xl">
-                      Open Document Repository
-                    </Button>
-                  </Link>
-                }
-              />
-            ) : (
-              <div className="space-y-2.5">
-                {documents.slice(0, 4).map(doc => (
-                  <div
-                    key={doc.id}
-                    className="p-3.5 rounded-xl border border-border/70 bg-muted/20 hover:bg-muted/40 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+            {/* Interactive Phase Filter Tabs & Table Header */}
+            <div className="pt-2 border-t border-border/60 space-y-3.5">
+              <div className="flex items-center justify-between flex-wrap gap-2 text-xs">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() => setTablePhaseTab('all')}
+                    className={cn(
+                      "px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer",
+                      tablePhaseTab === 'all'
+                        ? "bg-primary text-primary-foreground shadow-2xs"
+                        : "bg-muted/40 text-muted-foreground hover:bg-muted/70 hover:text-foreground border border-border/60"
+                    )}
                   >
-                    <div className="flex items-start gap-3 min-w-0">
-                      <div
-                        className={cn(
-                          "size-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5 border",
-                          doc.status === 'Approved' ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" :
-                          doc.status === 'Revision Required' || doc.status === 'Returned' ? "bg-rose-500/10 text-rose-600 border-rose-500/20" :
-                          "bg-amber-500/10 text-amber-600 border-amber-500/20"
-                        )}
-                      >
-                        <FileTextIcon size={14} />
-                      </div>
-                      <div className="space-y-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-bold text-foreground truncate">{doc.doc_type}</span>
-                          <span
-                            className={cn(
-                              "text-[10px] font-bold px-2 py-0.5 rounded-full border",
-                              doc.status === 'Approved' && "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
-                              (doc.status === 'Revision Required' || doc.status === 'Returned') && "bg-rose-500/10 text-rose-600 border-rose-500/20",
-                              doc.status.includes('Pending') && "bg-amber-500/10 text-amber-600 border-amber-500/20"
-                            )}
-                          >
-                            {doc.status}
-                          </span>
-                        </div>
-                        {doc.adviser_feedback ? (
-                          <p className="text-xs text-rose-600 dark:text-rose-400 font-medium">
-                            Feedback: {doc.adviser_feedback}
-                          </p>
-                        ) : (
-                          <p className="text-[11px] text-muted-foreground">
-                            Submitted on {safeFormatDate(doc.created_at, 'MMMM d, yyyy · h:mm a')}
-                          </p>
-                        )}
-                      </div>
-                    </div>
+                    All ({allRequirements.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTablePhaseTab('before')}
+                    className={cn(
+                      "px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer",
+                      tablePhaseTab === 'before'
+                        ? "bg-primary text-primary-foreground shadow-2xs"
+                        : "bg-muted/40 text-muted-foreground hover:bg-muted/70 hover:text-foreground border border-border/60"
+                    )}
+                  >
+                    Before OJT ({beforeDoneCount}/{beforeRequirements.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTablePhaseTab('in')}
+                    className={cn(
+                      "px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer",
+                      tablePhaseTab === 'in'
+                        ? "bg-primary text-primary-foreground shadow-2xs"
+                        : "bg-muted/40 text-muted-foreground hover:bg-muted/70 hover:text-foreground border border-border/60"
+                    )}
+                  >
+                    In OJT ({inDoneCount}/{inRequirements.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTablePhaseTab('final')}
+                    className={cn(
+                      "px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer",
+                      tablePhaseTab === 'final'
+                        ? "bg-primary text-primary-foreground shadow-2xs"
+                        : "bg-muted/40 text-muted-foreground hover:bg-muted/70 hover:text-foreground border border-border/60"
+                    )}
+                  >
+                    Final ({finalDoneCount}/{finalRequirements.length})
+                  </button>
+                </div>
 
-                    <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
-                      <Link
-                        to="/student/documents"
-                        className="text-xs font-bold text-primary hover:underline"
-                      >
-                        Details
-                      </Link>
-                    </div>
-                  </div>
-                ))}
+                <Link
+                  to="/student/documents"
+                  className="text-xs font-bold text-primary hover:underline inline-flex items-center gap-1 shrink-0 ml-auto"
+                >
+                  <span>Browse repository</span>
+                  <ArrowRightIcon size={12} />
+                </Link>
               </div>
-            )}
+
+              {/* Documents Table */}
+              <div className="border border-border/70 rounded-xl overflow-hidden shadow-2xs bg-card">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr className="bg-muted/30 border-b border-border/70 text-muted-foreground font-bold">
+                        <th scope="col" className="py-2.5 px-4 font-bold text-foreground">Document Name</th>
+                        <th scope="col" className="py-2.5 px-3 font-bold text-foreground">Phase</th>
+                        <th scope="col" className="py-2.5 px-3 font-bold text-foreground">Status</th>
+                        <th scope="col" className="py-2.5 px-4 font-bold text-foreground text-right">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/50">
+                      {filteredTableRequirements.length === 0 ? (
+                        <tr>
+                          <td colSpan={4} className="py-8 text-center text-muted-foreground">
+                            No documents found for this phase.
+                          </td>
+                        </tr>
+                      ) : (
+                        filteredTableRequirements.map((item) => (
+                          <tr
+                            key={item.id}
+                            className="hover:bg-muted/20 transition-colors group"
+                          >
+                            {/* Document Info */}
+                            <td className="py-3 px-4">
+                              <div className="flex items-center gap-3">
+                                <div className={cn(
+                                  "size-8 rounded-lg flex items-center justify-center shrink-0 border",
+                                  item.status === 'done'
+                                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                                    : item.status === 'revision' || item.status === 'returned'
+                                    ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
+                                    : item.status === 'pending'
+                                    ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+                                    : "bg-muted/80 text-muted-foreground border-border/60"
+                                )}>
+                                  <item.icon size={15} />
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="font-bold text-foreground text-xs leading-snug truncate max-w-[240px] sm:max-w-md">
+                                    {item.name}
+                                  </p>
+                                  <p className="text-[11px] text-muted-foreground truncate max-w-[240px] sm:max-w-md">
+                                    {item.description}
+                                  </p>
+                                </div>
+                              </div>
+                            </td>
+
+                            {/* Phase */}
+                            <td className="py-3 px-3 whitespace-nowrap">
+                              <span className={cn(
+                                "inline-flex items-center px-2 py-0.5 rounded-md text-[10.5px] font-semibold border",
+                                item.phase === 'before_ojt'
+                                  ? "bg-sky-500/10 text-sky-700 dark:text-sky-300 border-sky-500/20"
+                                  : item.phase === 'in_ojt'
+                                  ? "bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border-indigo-500/20"
+                                  : "bg-purple-500/10 text-purple-700 dark:text-purple-300 border-purple-500/20"
+                              )}>
+                                {item.phase === 'before_ojt' ? 'Before OJT' : item.phase === 'in_ojt' ? 'In OJT' : 'Final'}
+                              </span>
+                            </td>
+
+                            {/* Status */}
+                            <td className="py-3 px-3 whitespace-nowrap">
+                              <span className={cn(
+                                "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10.5px] font-bold border",
+                                item.status === 'done'
+                                  ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                                  : item.status === 'revision' || item.status === 'returned'
+                                  ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
+                                  : item.status === 'pending'
+                                  ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+                                  : item.status === 'draft'
+                                  ? "bg-primary/10 text-primary border-primary/20"
+                                  : "bg-muted/70 text-muted-foreground border-border/70"
+                              )}>
+                                <span className={cn(
+                                  "size-1.5 rounded-full",
+                                  item.status === 'done'
+                                    ? "bg-emerald-500"
+                                    : item.status === 'revision' || item.status === 'returned'
+                                    ? "bg-rose-500"
+                                    : item.status === 'pending'
+                                    ? "bg-amber-500"
+                                    : item.status === 'draft'
+                                    ? "bg-primary"
+                                    : "bg-muted-foreground/60"
+                                )} />
+                                <span>{item.statusLabel}</span>
+                              </span>
+                            </td>
+
+                            {/* Action */}
+                            <td className="py-3 px-4 text-right whitespace-nowrap">
+                              <Link to={item.link}>
+                                <Button
+                                  variant={item.status === 'revision' || item.status === 'returned' ? 'danger' : item.status === 'done' ? 'outline' : 'primary'}
+                                  size="sm"
+                                  className="h-7 text-[11px] font-bold rounded-lg px-2.5 cursor-pointer inline-flex items-center gap-1 shadow-2xs active:scale-95"
+                                >
+                                  <span>{item.actionText}</span>
+                                  <ArrowRightIcon size={11} />
+                                </Button>
+                              </Link>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
         {/* RIGHT COLUMN: Companion Sidebar Widgets (3 cols) */}
         <div className="lg:col-span-3 space-y-4">
-          {/* Widget 1: Interactive Mini Calendar */}
-          {!isCalendarHidden ? (
-            <div className="bg-card border border-border rounded-2xl p-4 sm:p-5 shadow-xs space-y-3">
-              {/* Header */}
-              <div className="flex items-center justify-between px-0.5">
-                <div className="flex items-center gap-2 text-foreground font-bold text-xs sm:text-sm">
-                  <CalendarDays className="size-4 text-primary" />
-                  <span>Calendar</span>
-                </div>
-                <div className="flex items-center gap-1 text-xs font-bold text-foreground">
-                  <button
-                    type="button"
-                    onClick={() => setCalendarMonth(new Date(calYear, calMonth - 1, 1))}
-                    className="p-1 hover:bg-muted rounded-md cursor-pointer transition-colors text-muted-foreground hover:text-foreground active:scale-95"
-                    title="Previous month"
-                  >
-                    <ChevronLeft size={14} />
-                  </button>
-                  <span className="tracking-tight text-xs font-bold">{monthName}</span>
-                  <button
-                    type="button"
-                    onClick={() => setCalendarMonth(new Date(calYear, calMonth + 1, 1))}
-                    className="p-1 hover:bg-muted rounded-md cursor-pointer transition-colors text-muted-foreground hover:text-foreground active:scale-95"
-                    title="Next month"
-                  >
-                    <ChevronRight size={14} />
-                  </button>
-                </div>
-              </div>
-
-              {/* Day headers: Su Mo Tu We Th Fr Sa */}
-              <div className="grid grid-cols-7 text-center text-[10px] font-bold text-muted-foreground select-none py-1 border-b border-border/70">
-                <span>Su</span>
-                <span>Mo</span>
-                <span>Tu</span>
-                <span>We</span>
-                <span>Th</span>
-                <span>Fr</span>
-                <span>Sa</span>
-              </div>
-
-              {/* Days cells */}
-              <div className="grid grid-cols-7 gap-y-1 text-center text-xs">
-                {miniDays.map((d, i) => (
-                  <div key={i} className="flex flex-col items-center justify-center h-8">
-                    <span
-                      className={cn(
-                        "size-7 flex items-center justify-center rounded-full text-xs font-semibold select-none transition-colors",
-                        d.isToday
-                          ? "bg-primary text-primary-foreground font-bold shadow-xs"
-                          : d.currentMonth
-                          ? "text-foreground hover:bg-muted cursor-pointer"
-                          : "text-muted-foreground/30"
-                      )}
-                    >
-                      {d.day}
-                    </span>
-                    {d.hasEvent && !d.isToday && (
-                      <span className="size-1 bg-primary rounded-full -mt-0.5" />
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              {/* Footer Links: Full calendar & Reset/Hide */}
-              <div className="flex items-center justify-between pt-2 border-t border-border/70 text-xs font-semibold px-0.5">
-                <Link
-                  to="/student/calendar"
-                  className="text-primary hover:underline cursor-pointer flex items-center gap-1 font-bold text-xs"
-                >
-                  <span>Full calendar</span>
-                  <ExternalLink size={11} />
-                </Link>
-                <div className="flex items-center gap-2.5">
-                  {!isCurrentMonth && (
-                    <button
-                      type="button"
-                      onClick={() => setCalendarMonth(new Date())}
-                      className="text-xs font-bold text-primary hover:underline cursor-pointer"
-                    >
-                      Today
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => setIsCalendarHidden(true)}
-                    className="text-muted-foreground hover:text-foreground cursor-pointer transition-colors text-xs font-medium"
-                  >
-                    Hide
-                  </button>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="bg-card border border-dashed border-border rounded-2xl p-3.5 flex items-center justify-between text-xs text-muted-foreground">
-              <span className="font-semibold text-xs">Calendar hidden</span>
-              <button
-                type="button"
-                onClick={() => setIsCalendarHidden(false)}
-                className="text-primary font-bold hover:underline cursor-pointer text-xs"
-              >
-                Show
-              </button>
-            </div>
-          )}
-
-          {/* Widget 2: Interactive To-Do Checklist */}
+          {/* Widget 1: To-Do Checklist (Positioned directly below Calendar) */}
           <div className="bg-card border border-border rounded-2xl p-4 sm:p-5 shadow-xs space-y-3">
             {/* Header */}
-            <div className="flex items-center justify-between px-0.5">
-              <div className="flex items-center gap-2 text-foreground font-bold text-xs sm:text-sm">
+            <div className="flex items-center justify-between pb-1 border-b border-border/60">
+              <div className="flex items-center gap-2">
                 <CheckCircle2 className="size-4 text-primary" />
-                <span>To-do Checklist</span>
+                <h2 className="text-sm font-bold text-foreground tracking-tight">To-do Checklist</h2>
               </div>
               <div className="flex items-center gap-1.5">
                 <Badge variant="outline" className="text-[10px] h-5 px-2 font-bold rounded-full">
@@ -1624,52 +1513,18 @@ export const StudentDashboard: React.FC = () => {
               </div>
             </div>
 
-            {/* Filter Pills */}
-            <div className="bg-muted/50 p-1 rounded-xl border border-border/60 flex items-center gap-1 text-[11px] font-bold">
-              <button
-                type="button"
-                onClick={() => setTodoFilter('all')}
-                className={cn(
-                  "flex-1 py-1 rounded-lg cursor-pointer transition-colors text-center",
-                  todoFilter === 'all' ? "bg-card text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                All ({todos.length})
-              </button>
-              <button
-                type="button"
-                onClick={() => setTodoFilter('pending')}
-                className={cn(
-                  "flex-1 py-1 rounded-lg cursor-pointer transition-colors text-center",
-                  todoFilter === 'pending' ? "bg-card text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                Active ({todos.filter(t => !t.done).length})
-              </button>
-              <button
-                type="button"
-                onClick={() => setTodoFilter('completed')}
-                className={cn(
-                  "flex-1 py-1 rounded-lg cursor-pointer transition-colors text-center",
-                  todoFilter === 'completed' ? "bg-card text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                Done ({todos.filter(t => t.done).length})
-              </button>
-            </div>
-
             {/* Quick Add Form */}
             {isAddingTodo && (
-              <form onSubmit={handleAddTodo} className="space-y-2 pt-1 animate-in fade-in duration-200">
+              <form onSubmit={handleAddTodo} className="space-y-2 py-1 animate-in fade-in duration-200 border-b border-border/60">
                 <input
                   type="text"
                   value={newTodoText}
                   onChange={e => setNewTodoText(e.target.value)}
                   placeholder="Type new practicum task..."
                   autoFocus
-                  className="w-full text-xs px-3 py-2 rounded-xl bg-muted/30 border border-border focus:outline-none focus:border-primary text-foreground"
+                  className="w-full text-xs px-3 py-1.5 rounded-xl bg-muted/30 border border-border focus:outline-none focus:border-primary text-foreground"
                 />
-                <div className="flex justify-end gap-2">
+                <div className="flex justify-end gap-1.5">
                   <Button
                     type="button"
                     variant="outline"
@@ -1678,7 +1533,7 @@ export const StudentDashboard: React.FC = () => {
                       setIsAddingTodo(false);
                       setNewTodoText('');
                     }}
-                    className="h-7 text-xs px-2.5 rounded-lg"
+                    className="h-6 text-[11px] px-2 rounded-lg"
                   >
                     Cancel
                   </Button>
@@ -1687,7 +1542,7 @@ export const StudentDashboard: React.FC = () => {
                     variant="primary"
                     size="sm"
                     disabled={!newTodoText.trim()}
-                    className="h-7 text-xs px-3 rounded-lg font-bold"
+                    className="h-6 text-[11px] px-2.5 rounded-lg font-bold"
                   >
                     Add Task
                   </Button>
@@ -1695,41 +1550,25 @@ export const StudentDashboard: React.FC = () => {
               </form>
             )}
 
-            {/* Todo Items */}
-            <div className="space-y-2 pt-1 max-h-[260px] overflow-y-auto pr-0.5">
-              {filteredTodos.length === 0 ? (
-                <div className="py-5 text-center text-xs text-muted-foreground">
-                  {todoFilter === 'pending' ? 'No pending tasks left!' : 'No tasks in this view.'}
+            {/* Pending Tasks List */}
+            <div className="space-y-2 pt-0.5 max-h-[260px] overflow-y-auto pr-0.5">
+              {todos.filter(t => !t.done).length === 0 ? (
+                <div className="py-6 text-center text-xs text-muted-foreground">
+                  <p className="font-semibold text-foreground">All caught up!</p>
+                  <p className="text-[11px] mt-0.5">No pending tasks to finish.</p>
                 </div>
               ) : (
-                filteredTodos.map(item => (
+                todos.filter(t => !t.done).map(item => (
                   <div
                     key={item.id}
                     onClick={() => toggleTodo(item.id)}
-                    className={cn(
-                      "flex items-start gap-2.5 p-2.5 px-3 rounded-xl border transition-all cursor-pointer group text-xs",
-                      item.done
-                        ? "bg-muted/10 border-border/50 opacity-60"
-                        : "bg-muted/20 border-border/70 hover:bg-muted/40 hover:border-border shadow-xs"
-                    )}
+                    className="flex items-start gap-2.5 p-2.5 px-3 rounded-xl border border-border/70 bg-muted/20 hover:bg-muted/40 hover:border-border transition-all cursor-pointer group text-xs shadow-2xs"
                   >
-                    <div
-                      className={cn(
-                        "size-4 rounded-md border flex items-center justify-center shrink-0 mt-0.5 transition-colors",
-                        item.done
-                          ? "bg-primary border-primary text-primary-foreground"
-                          : "border-muted-foreground/50 group-hover:border-foreground"
-                      )}
-                    >
-                      {item.done && <Check size={10} strokeWidth={3} />}
+                    <div className="size-4 rounded-md border border-muted-foreground/50 group-hover:border-foreground flex items-center justify-center shrink-0 mt-0.5 transition-colors">
+                      {item.done && <Check size={10} strokeWidth={3} className="text-primary" />}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p
-                        className={cn(
-                          "font-medium text-xs leading-snug transition-colors",
-                          item.done ? "line-through text-muted-foreground" : "text-foreground group-hover:text-primary"
-                        )}
-                      >
+                      <p className="font-medium text-xs leading-snug text-foreground group-hover:text-primary transition-colors">
                         {item.text}
                       </p>
                       {item.link && (
@@ -1755,9 +1594,22 @@ export const StudentDashboard: React.FC = () => {
                 ))
               )}
             </div>
+
+            {/* Footer */}
+            <div className="pt-2 border-t border-border/60 flex items-center justify-between text-xs text-muted-foreground">
+              <span>{todos.filter(t => !t.done).length} remaining</span>
+              <button
+                type="button"
+                onClick={() => setIsAddingTodo(true)}
+                className="text-primary hover:underline font-bold inline-flex items-center gap-1 cursor-pointer text-xs"
+              >
+                <Plus size={12} />
+                <span>Add task</span>
+              </button>
+            </div>
           </div>
 
-          {/* Widget 3: Practicum Announcements Bulletin */}
+          {/* Widget 2: Practicum Announcements Bulletin */}
           <div className="bg-card border border-border rounded-2xl p-4 sm:p-5 shadow-xs space-y-3">
             {/* Header */}
             <div className="flex items-center justify-between px-0.5">
@@ -1790,40 +1642,6 @@ export const StudentDashboard: React.FC = () => {
                   <span>View institutional alerts</span>
                   <ArrowRightIcon size={11} />
                 </Link>
-              </div>
-            </div>
-          </div>
-
-          {/* Widget 4: Practicum Support Contacts */}
-          <div className="bg-card border border-border rounded-2xl p-4 sm:p-5 shadow-xs space-y-3">
-            <div className="flex items-center gap-2 text-foreground font-bold text-xs sm:text-sm px-0.5">
-              <UsersIcon className="size-4 text-primary" />
-              <span>Practicum Contacts</span>
-            </div>
-
-            <div className="space-y-2 text-xs">
-              <div className="flex items-start gap-2.5 p-2.5 rounded-xl bg-muted/30 border border-border/70">
-                <div className="size-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5 font-bold text-xs">
-                  {getInitials(adviserName, 'SJ')}
-                </div>
-                <div className="min-w-0 flex-1 space-y-0.5">
-                  <p className="font-bold text-foreground truncate text-xs">{adviserName}</p>
-                  <p className="text-[11px] text-muted-foreground">
-                    {adviserName === 'Awaiting Assignment' ? 'Coordinator pending assignment' : 'Practicum Adviser · STI Marikina'}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-2.5 p-2.5 rounded-xl bg-muted/30 border border-border/70">
-                <div className="size-7 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5 font-bold text-xs">
-                  {getInitials(supervisorName, 'PR')}
-                </div>
-                <div className="min-w-0 flex-1 space-y-0.5">
-                  <p className="font-bold text-foreground truncate text-xs">{supervisorName}</p>
-                  <p className="text-[11px] text-muted-foreground">
-                    {supervisorName === 'Awaiting Placement' ? 'Host company supervisor pending' : `Supervisor · ${companyName}`}
-                  </p>
-                </div>
               </div>
             </div>
           </div>

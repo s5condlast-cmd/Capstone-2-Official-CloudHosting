@@ -88,6 +88,21 @@ export function StudentDocumentEditor() {
   const [title, setTitle] = useState('Untitled Document');
   const [wordCount, setWordCount] = useState(0);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('saved');
+  const [versionCount, setVersionCount] = useState<number>(0);
+
+  const loadVersionCount = useCallback(async (draftId: string) => {
+    try {
+      const { count, error } = await supabase
+        .from('document_versions')
+        .select('*', { count: 'exact', head: true })
+        .eq('doc_id', draftId);
+      if (!error && typeof count === 'number') {
+        setVersionCount(count);
+      }
+    } catch {
+      // non-fatal
+    }
+  }, []);
 
   // ── UI state ─────────────────────────────────────────────────────────────
   const [showHistory, setShowHistory] = useState(false);
@@ -120,7 +135,7 @@ export function StudentDocumentEditor() {
       try {
         if (storageRef.current) {
           await Promise.race([
-            storageRef.current.flushNow(1000),
+            storageRef.current.flushNow('Saved before exit', 1000),
             new Promise((resolve) => setTimeout(resolve, 400)),
           ]);
         }
@@ -330,9 +345,33 @@ export function StudentDocumentEditor() {
               : current
             );
           },
+          onVersionCreated: () => {
+            if (loadedDraft) void loadVersionCount(loadedDraft.id);
+          },
+          onAutoReconciled: () => {
+            toast.info('Document synced with cloud. Previous version backed up to History.', {
+              duration: 4000,
+            });
+            if (loadedDraft) void loadVersionCount(loadedDraft.id);
+          },
+          onRemoteUpdate: (remoteContent, remoteRevision, remoteTitle, remoteHF, remoteWC) => {
+            toast.info('Updated with latest changes from another window.', { duration: 3000 });
+            setDraft((prev) => prev ? {
+              ...prev,
+              content: remoteContent,
+              revision: remoteRevision,
+              title: remoteTitle,
+              headerFooter: remoteHF ?? prev.headerFooter,
+              wordCount: remoteWC ?? prev.wordCount,
+            } : prev);
+            setTitle(remoteTitle);
+            if (typeof remoteWC === 'number') setWordCount(remoteWC);
+            setEditorEpoch((v) => v + 1);
+          },
         });
         await storage.load(loadedDraft.revision);
         storageRef.current = storage;
+        void loadVersionCount(loadedDraft.id);
 
         // Print on load if requested
         if (printOnLoad) {
@@ -483,10 +522,11 @@ export function StudentDocumentEditor() {
     try {
       await storageRef.current.saveVersion(label);
       toast.success('Version saved.');
+      if (draftRef.current) void loadVersionCount(draftRef.current.id);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Could not save version.');
     }
-  }, []);
+  }, [loadVersionCount]);
 
   // ── Restore from history ─────────────────────────────────────────────────
   const handleRestoreComplete = useCallback(
@@ -502,8 +542,9 @@ export function StudentDocumentEditor() {
       setTitle(newTitle);
       storageRef.current?.setCloudRevision(newRevision);
       setEditorEpoch((value) => value + 1);
+      void loadVersionCount(draft.id);
     },
-    [draft]
+    [draft, loadVersionCount]
   );
 
   // ── Export ───────────────────────────────────────────────────────────────
@@ -707,6 +748,11 @@ export function StudentDocumentEditor() {
                   >
                     <History className="w-4 h-4 text-primary" />
                     <span className="hidden sm:inline">History</span>
+                    {versionCount > 0 && (
+                      <span className="ml-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary border border-primary/20 leading-none">
+                        {versionCount}
+                      </span>
+                    )}
                   </button>
                 )}
 

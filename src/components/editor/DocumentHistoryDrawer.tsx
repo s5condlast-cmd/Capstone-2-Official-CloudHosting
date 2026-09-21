@@ -201,17 +201,23 @@ export function DocumentHistoryDrawer({
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5 mb-0.5">
-                    {version.label && (
-                      <Tag className="w-3 h-3 text-muted-foreground shrink-0" />
+                    {version.label?.startsWith('Auto-save') ? (
+                      <Clock className="w-3.5 h-3.5 text-primary shrink-0" />
+                    ) : version.label === 'Saved before exit' ? (
+                      <Tag className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                    ) : (
+                      <Tag className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                     )}
                     <span className="text-sm font-semibold text-foreground truncate">
                       {version.label ?? 'Auto-save'}
                     </span>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    {format(savedDate, 'MMM d, yyyy h:mm a')}
-                  </p>
-                  <p className="text-xs text-muted-foreground/80 mt-0.5">
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <span>{formatDistanceToNow(savedDate, { addSuffix: true })}</span>
+                    <span>·</span>
+                    <span>{format(savedDate, 'h:mm a')}</span>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground/80 mt-0.5">
                     {version.word_count.toLocaleString()} words · Rev {version.source_revision}
                   </p>
                 </div>
