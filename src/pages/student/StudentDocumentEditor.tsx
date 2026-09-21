@@ -356,18 +356,17 @@ export function StudentDocumentEditor() {
             if (loadedDraft) void loadVersionCount(loadedDraft.id);
           },
           onRemoteUpdate: (remoteContent, remoteRevision, remoteTitle, remoteHF, remoteWC) => {
-            toast.info('Updated with latest changes from another window.', { duration: 3000 });
+            // Quietly update cloud revision and state in memory without triggering editor re-mount or retaliatory save loop
+            if (storageRef.current) {
+              storageRef.current.setCloudRevision(remoteRevision);
+            }
             setDraft((prev) => prev ? {
               ...prev,
-              content: remoteContent,
               revision: remoteRevision,
               title: remoteTitle,
               headerFooter: remoteHF ?? prev.headerFooter,
               wordCount: remoteWC ?? prev.wordCount,
             } : prev);
-            setTitle(remoteTitle);
-            if (typeof remoteWC === 'number') setWordCount(remoteWC);
-            setEditorEpoch((v) => v + 1);
           },
         });
         await storage.load(loadedDraft.revision, loadedDraft.content);

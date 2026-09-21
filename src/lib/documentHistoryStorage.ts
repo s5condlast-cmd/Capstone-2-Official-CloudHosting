@@ -727,6 +727,10 @@ export class DocumentHistoryStorage {
         if (typeof msg.revision === 'number' && msg.revision > this.cloudRevision) {
           this.cloudRevision = msg.revision;
         }
+        if (msg.content) {
+          this.lastSnapshotContentJson = JSON.stringify(msg.content);
+          this.hasUnversionedChanges = false;
+        }
         if (!this.pendingState && msg.content) {
           this.onRemoteUpdate?.(
             msg.content as object[],
