@@ -175,6 +175,7 @@ export class DocumentHistoryStorage {
   private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
   private onMultiTabConflict?: () => void;
   private beforeUnloadHandler: ((e: BeforeUnloadEvent) => void) | null = null;
+  private visibilityChangeHandler: (() => void) | null = null;
 
   /** Sync status change callback */
   private onStatusChange?: (status: SyncStatus) => void;
@@ -459,6 +460,10 @@ export class DocumentHistoryStorage {
       window.removeEventListener('beforeunload', this.beforeUnloadHandler);
       this.beforeUnloadHandler = null;
     }
+    if (this.visibilityChangeHandler && typeof document !== 'undefined') {
+      document.removeEventListener('visibilitychange', this.visibilityChangeHandler);
+      this.visibilityChangeHandler = null;
+    }
     if (this.cloudSaveTimer) {
       clearTimeout(this.cloudSaveTimer);
       this.cloudSaveTimer = null;
@@ -679,6 +684,15 @@ export class DocumentHistoryStorage {
         }
       };
       window.addEventListener('beforeunload', this.beforeUnloadHandler);
+    }
+
+    if (typeof document !== 'undefined' && !this.visibilityChangeHandler) {
+      this.visibilityChangeHandler = () => {
+        if (document.visibilityState === 'hidden') {
+          void this.flushNow('Saved before exit');
+        }
+      };
+      document.addEventListener('visibilitychange', this.visibilityChangeHandler);
     }
 
     if (typeof BroadcastChannel === 'undefined') return;

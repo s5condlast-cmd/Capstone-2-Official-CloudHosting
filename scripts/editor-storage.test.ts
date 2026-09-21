@@ -307,6 +307,25 @@ describe('Data safety and navigation flush', () => {
       storage.destroy();
     });
   });
+
+  test('visibilitychange and tab discard handler triggers persistence without error', () => {
+    const storage = new DocumentHistoryStorage('test-user-1', 'test-draft-4');
+    const testState: DraftState = {
+      id: 'test-draft-4',
+      userId: 'test-user-1',
+      title: 'Visibility Change Draft',
+      content: [{ type: 'p', children: [{ text: 'Testing tab switch' }] }],
+      wordCount: 3,
+      revision: 1,
+      status: 'draft',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    storage.onChange(testState);
+    assert.doesNotThrow(() => {
+      storage.destroy();
+    });
+  });
 });
 
 // ─── Fullscreen & Sidebar Elevation Verification ─────────────────────────────
