@@ -38,7 +38,8 @@ import {
   PenLine,
   ChevronLeft,
   ChevronRight,
-  Lightbulb,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -680,6 +681,16 @@ export const StudentDashboard: React.FC = () => {
   const documentsNeedingAttention = useMemo(() => {
     return allRequirements.filter(
       r => r.status === 'revision' || r.status === 'returned' || (Boolean(r.feedback) && r.feedback!.trim().length > 0)
+    );
+  }, [allRequirements]);
+
+  // Collapsible Dropview State for Due Documents
+  const [isDueDocsExpanded, setIsDueDocsExpanded] = useState<boolean>(true);
+
+  // Accessible requirements that are due / in progress / needing action
+  const dueDocumentsList = useMemo(() => {
+    return allRequirements.filter(
+      r => r.status !== 'done' && r.status !== 'locked'
     );
   }, [allRequirements]);
 
@@ -1646,13 +1657,6 @@ export const StudentDashboard: React.FC = () => {
               >
                 {isAddingTodo ? <X size={14} /> : <Plus size={14} />}
               </button>
-              <button
-                type="button"
-                className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
-                title="More options"
-              >
-                <MoreHorizontal size={14} />
-              </button>
             </div>
           </div>
 
@@ -1695,27 +1699,82 @@ export const StudentDashboard: React.FC = () => {
 
           {/* Action Items List */}
           <div className="space-y-1.5 text-xs">
-            {/* Action Item 1: Set profile description */}
-            <Link
-              to="/student/profile"
-              className="flex items-center gap-2 py-0.5 text-primary hover:underline transition-colors font-semibold group cursor-pointer"
+            {/* Due Documents Dropview Header Toggle */}
+            <button
+              type="button"
+              onClick={() => setIsDueDocsExpanded(prev => !prev)}
+              className="flex items-center justify-between w-full py-1 text-primary hover:underline transition-colors font-semibold group cursor-pointer text-xs"
             >
-              <Lightbulb size={14} className="text-primary shrink-0 group-hover:scale-110 transition-transform" />
-              <span className="truncate text-xs">Set profile description</span>
-            </Link>
+              <div className="flex items-center gap-2 min-w-0">
+                <FileTextIcon size={14} className="text-primary shrink-0 group-hover:scale-110 transition-transform" />
+                <span className="truncate text-xs font-bold">
+                  {dueDocumentsList.length} assignments due
+                </span>
+              </div>
+              <ChevronDown
+                size={13}
+                className={cn(
+                  "text-muted-foreground transition-transform duration-200 shrink-0",
+                  isDueDocsExpanded && "rotate-180"
+                )}
+              />
+            </button>
 
-            {/* Action Item 2: Assignments due */}
-            <Link
-              to="/student/documents"
-              className="flex items-center gap-2 py-0.5 text-primary hover:underline transition-colors font-semibold group cursor-pointer border-t border-border/40 pt-1.5"
-            >
-              <FileTextIcon size={14} className="text-primary shrink-0 group-hover:scale-110 transition-transform" />
-              <span className="truncate text-xs">
-                {documentsNeedingAttention.length > 0
-                  ? `${documentsNeedingAttention.length} assignments due`
-                  : `${activePendingCount > 0 ? activePendingCount : 9} assignments due`}
-              </span>
-            </Link>
+            {/* Collapsible Due Documents Bullet List */}
+            {isDueDocsExpanded && (
+              <div className="space-y-1 pt-0.5 pb-1 animate-in fade-in duration-200">
+                <div className="border-t border-border/40 max-h-[160px] overflow-y-auto pr-0.5 divide-y divide-border/30">
+                  {dueDocumentsList.length > 0 ? (
+                    dueDocumentsList.map(req => (
+                      <Link
+                        key={req.id}
+                        to={req.link}
+                        className="flex items-center justify-between gap-2 py-1.5 px-1 rounded-md text-xs hover:bg-muted/40 transition-colors group cursor-pointer"
+                      >
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                          <span className="size-1 rounded-full bg-primary/70 shrink-0 group-hover:bg-primary group-hover:scale-125 transition-transform" />
+                          <span className="truncate text-xs font-semibold text-foreground group-hover:text-primary transition-colors">
+                            {req.name}
+                          </span>
+                        </div>
+                        <span className={cn(
+                          "text-[10px] font-bold px-1.5 py-0.2 rounded-full shrink-0 tabular-nums",
+                          req.status === 'revision' || req.status === 'returned'
+                            ? "bg-rose-500/10 text-rose-500"
+                            : req.status === 'draft'
+                            ? "bg-sky-500/10 text-sky-500"
+                            : req.status === 'pending'
+                            ? "bg-amber-500/10 text-amber-500"
+                            : "bg-muted text-muted-foreground"
+                        )}>
+                          {req.status === 'revision' || req.status === 'returned'
+                            ? 'Revise'
+                            : req.status === 'draft'
+                            ? 'Draft'
+                            : req.status === 'pending'
+                            ? 'Review'
+                            : 'Due'}
+                        </span>
+                      </Link>
+                    ))
+                  ) : (
+                    <div className="py-2 text-center text-[11px] text-muted-foreground italic">
+                      All required documents submitted!
+                    </div>
+                  )}
+                </div>
+
+                {/* Bottom Collapse Chevron Button */}
+                <button
+                  type="button"
+                  onClick={() => setIsDueDocsExpanded(false)}
+                  className="w-full flex items-center justify-center pt-1 text-muted-foreground hover:text-foreground transition-colors cursor-pointer group"
+                  title="Collapse due documents"
+                >
+                  <ChevronUp size={14} className="group-hover:-translate-y-0.5 transition-transform" />
+                </button>
+              </div>
+            )}
 
             {/* User Custom Todos if any */}
             {todos.length > 0 && (
