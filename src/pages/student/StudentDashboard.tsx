@@ -786,9 +786,9 @@ export const StudentDashboard: React.FC = () => {
     const inReview = Math.max(activePendingCount * 15, activeSubmissions.length > 0 ? 10 : 0.1);
     const remaining = Math.max(totalHours - renderedHours, 1);
     return [
-      { name: 'Logged', value: verified, color: '#0066f5' },
-      { name: 'In Review', value: inReview, color: '#f97316' },
-      { name: 'Remaining', value: remaining, color: '#10b981' },
+      { name: 'Logged', value: verified, color: '#2563eb' },
+      { name: 'In Review', value: inReview, color: '#ea580c' },
+      { name: 'Remaining', value: remaining, color: '#16a34a' },
     ];
   }, [renderedHours, activePendingCount, activeSubmissions.length, totalHours]);
 
@@ -941,28 +941,28 @@ export const StudentDashboard: React.FC = () => {
         {/* Right Column (Sidebar) Skeletons */}
         <div className="space-y-4 min-w-0 w-full lg:w-[300px] shrink-0">
           {/* Calendar Skeleton */}
-          <div className="p-4 bg-card border border-border/70 rounded-2xl space-y-3">
+          <div className="p-3.5 sm:p-4 bg-card border border-border/70 rounded-2xl space-y-2.5">
             <div className="flex justify-between items-center">
               <Skeleton className="h-4.5 w-24 rounded-md" />
               <Skeleton className="h-4 w-20 rounded-md" />
             </div>
-            <Skeleton className="h-44 w-full rounded-xl" />
+            <Skeleton className="h-38 w-full rounded-xl" />
           </div>
 
           {/* To-do Skeleton */}
-          <div className="p-4 bg-card border border-border/70 rounded-2xl space-y-2.5">
+          <div className="p-3.5 sm:p-4 bg-card border border-border/70 rounded-2xl space-y-2.5">
             <div className="flex justify-between items-center">
               <Skeleton className="h-4.5 w-20 rounded-md" />
               <Skeleton className="size-5 rounded-md" />
             </div>
-            <Skeleton className="h-6 w-full rounded-md" />
-            <Skeleton className="h-6 w-full rounded-md" />
+            <Skeleton className="h-5 w-full rounded-md" />
+            <Skeleton className="h-5 w-full rounded-md" />
           </div>
 
           {/* Announcements Skeleton */}
-          <div className="p-4 bg-card border border-border/70 rounded-2xl space-y-2">
+          <div className="p-3 sm:p-3.5 bg-card border border-border/70 rounded-2xl space-y-2">
             <Skeleton className="h-4 w-28 rounded-md" />
-            <Skeleton className="h-5 w-16 rounded-md" />
+            <Skeleton className="h-4.5 w-16 rounded-md" />
           </div>
         </div>
       </div>
@@ -1303,33 +1303,35 @@ export const StudentDashboard: React.FC = () => {
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Total</span>
-                  <span className="text-2xl font-black text-foreground tracking-tight">{hoursPercent}%</span>
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Hours Logged</span>
+                  <span className="text-xl sm:text-2xl font-black text-foreground tracking-tight">
+                    {renderedHours.toFixed(1)} <span className="text-xs font-bold text-muted-foreground">hrs</span>
+                  </span>
                 </div>
               </div>
 
-              {/* Legend 3-column Grid */}
+              {/* 3 Metrics: Approved, In Progress, Grade */}
               <div className="grid grid-cols-3 gap-1.5 pt-2 border-t border-border/60 text-center">
                 <div className="p-1 rounded-lg bg-muted/20">
                   <div className="flex items-center justify-center gap-1 text-[10.5px] text-muted-foreground">
-                    <span className="size-1.5 rounded-full bg-blue-600 shrink-0" />
-                    <span className="truncate">Progress</span>
+                    <span className="size-1.5 rounded-full bg-[#16a34a] shrink-0" />
+                    <span className="truncate">Approved</span>
                   </div>
-                  <span className="text-xs font-bold text-foreground mt-0.5 block tabular-nums">{hoursPercent}%</span>
+                  <span className="text-xs font-bold text-foreground mt-0.5 block tabular-nums">{activeApprovedCount}</span>
                 </div>
                 <div className="p-1 rounded-lg bg-muted/20">
                   <div className="flex items-center justify-center gap-1 text-[10.5px] text-muted-foreground">
-                    <span className="size-1.5 rounded-full bg-orange-500 shrink-0" />
-                    <span className="truncate">In Review</span>
+                    <span className="size-1.5 rounded-full bg-[#ea580c] shrink-0" />
+                    <span className="truncate">In Progress</span>
                   </div>
                   <span className="text-xs font-bold text-foreground mt-0.5 block tabular-nums">{activePendingCount}</span>
                 </div>
                 <div className="p-1 rounded-lg bg-muted/20">
                   <div className="flex items-center justify-center gap-1 text-[10.5px] text-muted-foreground">
-                    <span className="size-1.5 rounded-full bg-emerald-500 shrink-0" />
-                    <span className="truncate">Target</span>
+                    <span className="size-1.5 rounded-full bg-primary shrink-0" />
+                    <span className="truncate">Grade</span>
                   </div>
-                  <span className="text-xs font-bold text-foreground mt-0.5 block tabular-nums">{totalHours}h</span>
+                  <span className="text-xs font-bold text-foreground mt-0.5 block tabular-nums">Pending</span>
                 </div>
               </div>
             </div>
@@ -1568,61 +1570,61 @@ export const StudentDashboard: React.FC = () => {
       </div>
 
       {/* ─── RIGHT COLUMN: Dedicated Sidebar (Calendar, To-do, Announcements) ─── */}
-      <div className="space-y-4 min-w-0 w-full lg:w-[300px] shrink-0">
-        {/* 1. Calendar Widget */}
-        <div className="bg-card border border-border/70 rounded-2xl p-4 sm:p-4.5 shadow-2xs hover:shadow-xs transition-all space-y-3">
+      <div className="space-y-3.5 min-w-0 w-full lg:w-[300px] shrink-0">
+        {/* 1. Calendar Widget (Compact & Theme-Aware) */}
+        <div className="bg-card border border-border/70 rounded-2xl p-3.5 sm:p-4 shadow-2xs hover:shadow-xs transition-all space-y-2.5">
           {/* Header */}
           <div className="flex items-center gap-2 pb-0.5 border-b border-border/60">
-            <CalendarIcon size={16} className="text-sky-500 dark:text-sky-400 shrink-0" />
-            <h2 className="text-base font-bold text-foreground tracking-tight">Calendar</h2>
+            <CalendarIcon size={15} className="text-primary shrink-0" />
+            <h2 className="text-sm sm:text-base font-bold text-foreground tracking-tight">Calendar</h2>
           </div>
 
           {/* Month Navigation */}
-          <div className="flex items-center justify-between px-1">
+          <div className="flex items-center justify-between px-0.5">
             <button
               type="button"
               onClick={prevMonth}
               title="Previous month"
-              className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+              className="p-0.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
             >
-              <ChevronLeft size={16} />
+              <ChevronLeft size={15} />
             </button>
-            <span className="text-sm font-black text-foreground tracking-tight">
+            <span className="text-xs sm:text-sm font-bold text-foreground tracking-tight">
               {format(calendarDate, 'MMM yyyy')}
             </span>
             <button
               type="button"
               onClick={nextMonth}
               title="Next month"
-              className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+              className="p-0.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
             >
-              <ChevronRight size={16} />
+              <ChevronRight size={15} />
             </button>
           </div>
 
           {!isCalendarHidden && (
-            <div className="space-y-1.5 animate-in fade-in duration-200">
+            <div className="space-y-1 animate-in fade-in duration-200">
               {/* Day Headers (S M T W T F S) */}
-              <div className="grid grid-cols-7 text-center font-bold text-[11px] text-muted-foreground py-0.5 border-b border-border/40">
+              <div className="grid grid-cols-7 text-center font-bold text-[10.5px] text-muted-foreground py-0.5 border-b border-border/40">
                 {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
                   <span key={i} className="py-0.5">{d}</span>
                 ))}
               </div>
 
               {/* Days Grid */}
-              <div className="grid grid-cols-7 gap-y-1 text-center text-xs">
+              <div className="grid grid-cols-7 gap-y-0.5 text-center text-[11px]">
                 {calendarGrid.map((cell, idx) => (
                   <div key={idx} className="flex items-center justify-center py-0.5">
                     {cell.isToday ? (
-                      <span className="size-6.5 rounded-full bg-sky-500 dark:bg-sky-500 text-white font-bold flex items-center justify-center mx-auto shadow-xs text-xs">
+                      <span className="size-5.5 sm:size-6 rounded-full bg-primary text-primary-foreground font-bold flex items-center justify-center mx-auto shadow-xs text-[11px]">
                         {cell.day}
                       </span>
                     ) : cell.isCurrentMonth ? (
-                      <span className="size-6.5 flex items-center justify-center mx-auto font-medium text-foreground hover:bg-muted/60 rounded-full cursor-pointer transition-colors text-xs">
+                      <span className="size-5.5 sm:size-6 flex items-center justify-center mx-auto font-medium text-foreground hover:bg-muted/60 rounded-full cursor-pointer transition-colors text-[11px]">
                         {cell.day}
                       </span>
                     ) : (
-                      <span className="size-6.5 flex items-center justify-center mx-auto text-muted-foreground/35 font-normal text-xs">
+                      <span className="size-5.5 sm:size-6 flex items-center justify-center mx-auto text-muted-foreground/30 font-normal text-[11px]">
                         {cell.day}
                       </span>
                     )}
@@ -1633,29 +1635,29 @@ export const StudentDashboard: React.FC = () => {
           )}
 
           {/* Footer Links */}
-          <div className="pt-2 border-t border-border/60 flex items-center justify-between text-xs">
+          <div className="pt-1.5 border-t border-border/60 flex items-center justify-between text-[11px]">
             <Link
               to="/student/documents?phase=in_ojt"
-              className="text-sky-500 dark:text-sky-400 font-bold hover:underline cursor-pointer"
+              className="text-primary font-bold hover:underline cursor-pointer"
             >
               full calendar
             </Link>
             <button
               type="button"
               onClick={() => setIsCalendarHidden(prev => !prev)}
-              className="text-sky-500 dark:text-sky-400 font-bold hover:underline cursor-pointer"
+              className="text-primary font-bold hover:underline cursor-pointer"
             >
               {isCalendarHidden ? 'show' : 'hide'}
             </button>
           </div>
         </div>
 
-        {/* 2. To-do Widget */}
-        <div className="bg-card border border-border/70 rounded-2xl p-4 sm:p-4.5 shadow-2xs hover:shadow-xs transition-all space-y-3">
+        {/* 2. To-do Widget (Compact & Theme-Aware) */}
+        <div className="bg-card border border-border/70 rounded-2xl p-3.5 sm:p-4 shadow-2xs hover:shadow-xs transition-all space-y-2.5">
           <div className="flex items-center justify-between pb-0.5 border-b border-border/60">
             <div className="flex items-center gap-2">
-              <CheckCircle2 size={16} className="text-sky-500 dark:text-sky-400 shrink-0" />
-              <h2 className="text-base font-bold text-foreground tracking-tight">To-do</h2>
+              <CheckCircle2 size={15} className="text-primary shrink-0" />
+              <h2 className="text-sm sm:text-base font-bold text-foreground tracking-tight">To-do</h2>
             </div>
             <div className="flex items-center gap-1">
               <button
@@ -1664,7 +1666,7 @@ export const StudentDashboard: React.FC = () => {
                 title={isAddingTodo ? "Cancel" : "Add to-do"}
                 className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer active:scale-95"
               >
-                {isAddingTodo ? <X size={15} /> : <Plus size={15} />}
+                {isAddingTodo ? <X size={14} /> : <Plus size={14} />}
               </button>
               <button
                 type="button"
@@ -1714,23 +1716,23 @@ export const StudentDashboard: React.FC = () => {
           )}
 
           {/* Action Items List */}
-          <div className="space-y-2 text-xs">
+          <div className="space-y-1.5 text-xs">
             {/* Action Item 1: Set profile description */}
             <Link
               to="/student/profile"
-              className="flex items-center gap-2.5 py-1 text-sky-500 dark:text-sky-400 hover:underline transition-colors font-semibold group cursor-pointer"
+              className="flex items-center gap-2 py-0.5 text-primary hover:underline transition-colors font-semibold group cursor-pointer"
             >
-              <Lightbulb size={15} className="text-sky-500 dark:text-sky-400 shrink-0 group-hover:scale-110 transition-transform" />
-              <span className="truncate">Set profile description</span>
+              <Lightbulb size={14} className="text-primary shrink-0 group-hover:scale-110 transition-transform" />
+              <span className="truncate text-xs">Set profile description</span>
             </Link>
 
             {/* Action Item 2: Assignments due */}
             <Link
               to="/student/documents"
-              className="flex items-center gap-2.5 py-1 text-sky-500 dark:text-sky-400 hover:underline transition-colors font-semibold group cursor-pointer border-t border-border/40 pt-2"
+              className="flex items-center gap-2 py-0.5 text-primary hover:underline transition-colors font-semibold group cursor-pointer border-t border-border/40 pt-1.5"
             >
-              <FileTextIcon size={15} className="text-sky-500 dark:text-sky-400 shrink-0 group-hover:scale-110 transition-transform" />
-              <span className="truncate">
+              <FileTextIcon size={14} className="text-primary shrink-0 group-hover:scale-110 transition-transform" />
+              <span className="truncate text-xs">
                 {documentsNeedingAttention.length > 0
                   ? `${documentsNeedingAttention.length} assignments due`
                   : `${activePendingCount > 0 ? activePendingCount : 9} assignments due`}
@@ -1739,7 +1741,7 @@ export const StudentDashboard: React.FC = () => {
 
             {/* User Custom Todos if any */}
             {todos.length > 0 && (
-              <div className="pt-2 border-t border-border/40 space-y-1.5 max-h-[140px] overflow-y-auto pr-0.5">
+              <div className="pt-1.5 border-t border-border/40 space-y-1 max-h-[120px] overflow-y-auto pr-0.5">
                 {todos.map(item => (
                   <div
                     key={item.id}
@@ -1748,11 +1750,11 @@ export const StudentDashboard: React.FC = () => {
                   >
                     <div className="flex items-center gap-2 min-w-0 flex-1">
                       {item.done ? (
-                        <div className="size-4 rounded-full bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-2xs">
-                          <Check size={10} strokeWidth={3.5} />
+                        <div className="size-3.5 rounded-full bg-primary text-primary-foreground flex items-center justify-center shrink-0 shadow-2xs">
+                          <Check size={9} strokeWidth={3.5} />
                         </div>
                       ) : (
-                        <div className="size-4 rounded-full border-2 border-muted-foreground/40 group-hover:border-blue-500 shrink-0 transition-colors" />
+                        <div className="size-3.5 rounded-full border-2 border-muted-foreground/40 group-hover:border-primary shrink-0 transition-colors" />
                       )}
                       <span className={cn(
                         "truncate text-xs font-semibold",
@@ -1776,16 +1778,16 @@ export const StudentDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* 3. Announcements Widget */}
-        <div className="bg-card border border-border/70 rounded-2xl p-4 sm:p-4.5 shadow-2xs hover:shadow-xs transition-all space-y-2.5">
+        {/* 3. Announcements Widget (Compact & Theme-Aware) */}
+        <div className="bg-card border border-border/70 rounded-2xl p-3 sm:p-3.5 shadow-2xs hover:shadow-xs transition-all space-y-2">
           <div className="flex items-center gap-2 pb-0.5 border-b border-border/60">
-            <Megaphone size={16} className="text-sky-500 dark:text-sky-400 shrink-0" />
-            <h2 className="text-base font-bold text-foreground tracking-tight">Announcements</h2>
+            <Megaphone size={15} className="text-primary shrink-0" />
+            <h2 className="text-sm sm:text-base font-bold text-foreground tracking-tight">Announcements</h2>
           </div>
 
-          <div className="flex items-center gap-2.5 py-1 text-xs text-muted-foreground">
-            <Megaphone size={14} className="text-muted-foreground shrink-0" />
-            <span className="font-medium text-foreground">None</span>
+          <div className="flex items-center gap-2.5 py-0.5 text-xs text-muted-foreground">
+            <Megaphone size={13} className="text-muted-foreground shrink-0" />
+            <span className="font-medium text-foreground text-xs">None</span>
           </div>
         </div>
       </div>
