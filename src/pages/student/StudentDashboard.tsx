@@ -794,11 +794,12 @@ export const StudentDashboard: React.FC = () => {
   if (loading) {
     return (
       <div className="space-y-4 pb-10 animate-in fade-in duration-300">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
-          {/* Left Column Skeleton (8 cols) */}
-          <div className="lg:col-span-8 space-y-4 min-w-0">
+        {/* ─── ROW 1 SKELETON: Hero & Stats (8 cols) + Donut (4 cols) ────── */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+          {/* Left: Hero Banner + 3 Stat Cards */}
+          <div className="lg:col-span-8 flex flex-col justify-between gap-3.5 sm:gap-4 min-w-0">
             {/* Hero Banner Skeleton */}
-            <div className="rounded-2xl sm:rounded-3xl p-4 sm:p-5 bg-card border border-border/70 h-[145px] sm:h-[150px] flex items-center justify-between gap-4">
+            <div className="rounded-2xl sm:rounded-3xl p-4 sm:p-5 bg-card border border-border/70 h-[140px] flex items-center justify-between gap-4">
               <div className="space-y-2 flex-1">
                 <Skeleton className="h-6 w-48 rounded-lg" />
                 <Skeleton className="h-3.5 w-64 rounded-md" />
@@ -815,7 +816,7 @@ export const StudentDashboard: React.FC = () => {
             {/* 3 Metric Stat Cards Skeleton */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 sm:gap-4">
               {[...Array(3)].map((_, i) => (
-                <div key={i} className="p-3.5 sm:p-4 bg-card border border-border/70 rounded-2xl h-[105px] flex flex-col justify-between">
+                <div key={i} className="p-3.5 sm:p-4 bg-card border border-border/70 rounded-2xl h-[100px] flex flex-col justify-between">
                   <div className="flex items-center gap-3">
                     <Skeleton className="size-10 rounded-full shrink-0" />
                     <div className="space-y-1 flex-1">
@@ -827,9 +828,29 @@ export const StudentDashboard: React.FC = () => {
                 </div>
               ))}
             </div>
+          </div>
 
-            {/* Total Hours Chart Skeleton */}
-            <div className="p-4 sm:p-4.5 bg-card border border-border/70 rounded-2xl h-[250px] flex flex-col justify-between">
+          {/* Right: Donut Card Skeleton */}
+          <div className="lg:col-span-4 min-w-0 flex flex-col">
+            <div className="p-4 sm:p-4.5 bg-card border border-border/70 rounded-2xl h-full flex flex-col justify-between min-h-[250px]">
+              <div className="flex justify-between items-center">
+                <Skeleton className="h-4.5 w-32 rounded-md" />
+                <Skeleton className="size-5 rounded-md" />
+              </div>
+              <Skeleton className="size-28 sm:size-32 rounded-full mx-auto" />
+              <div className="grid grid-cols-3 gap-1.5 pt-1">
+                <Skeleton className="h-7 rounded-lg" />
+                <Skeleton className="h-7 rounded-lg" />
+                <Skeleton className="h-7 rounded-lg" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ─── ROW 2 SKELETON: Total Hours (8 cols) + To-do List (4 cols) ─── */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+          <div className="lg:col-span-8 min-w-0 flex flex-col">
+            <div className="p-4 sm:p-4.5 bg-card border border-border/70 rounded-2xl h-full flex flex-col justify-between min-h-[240px]">
               <div className="flex justify-between items-center">
                 <div className="space-y-1">
                   <Skeleton className="h-4.5 w-40 rounded-md" />
@@ -837,14 +858,31 @@ export const StudentDashboard: React.FC = () => {
                 </div>
                 <Skeleton className="h-7 w-28 rounded-lg" />
               </div>
-              <Skeleton className="h-[150px] w-full rounded-xl" />
+              <Skeleton className="h-[140px] w-full rounded-xl" />
               <div className="flex justify-between pt-1">
                 <Skeleton className="h-3 w-32 rounded-md" />
                 <Skeleton className="h-3 w-24 rounded-md" />
               </div>
             </div>
+          </div>
 
-            {/* Submissions Tracker Skeleton */}
+          <div className="lg:col-span-4 min-w-0 flex flex-col">
+            <div className="p-4 sm:p-4.5 bg-card border border-border/70 rounded-2xl h-full flex flex-col justify-between min-h-[240px] space-y-2.5">
+              <div className="flex justify-between items-center">
+                <Skeleton className="h-4.5 w-24 rounded-md" />
+                <Skeleton className="h-5 w-12 rounded-lg" />
+              </div>
+              <Skeleton className="h-8 w-full rounded-xl" />
+              <Skeleton className="h-8 w-full rounded-xl" />
+              <Skeleton className="h-8 w-full rounded-xl" />
+              <Skeleton className="h-5 w-20 rounded-full" />
+            </div>
+          </div>
+        </div>
+
+        {/* ─── ROW 3 SKELETON: Submissions Tracker ─────────────────────────── */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+          <div className="lg:col-span-8 min-w-0">
             <div className="p-4 sm:p-5 bg-card border border-border/70 rounded-2xl space-y-3.5">
               <div className="flex justify-between items-center">
                 <Skeleton className="h-5 w-52 rounded-md" />
@@ -858,35 +896,6 @@ export const StudentDashboard: React.FC = () => {
               <Skeleton className="h-28 w-full rounded-xl" />
             </div>
           </div>
-
-          {/* Right Column Skeleton (4 cols) */}
-          <div className="lg:col-span-4 space-y-4">
-            {/* Donut Card Skeleton */}
-            <div className="p-4 sm:p-4.5 bg-card border border-border/70 rounded-2xl h-[250px] flex flex-col justify-between">
-              <div className="flex justify-between items-center">
-                <Skeleton className="h-4.5 w-32 rounded-md" />
-                <Skeleton className="size-5 rounded-md" />
-              </div>
-              <Skeleton className="size-32 rounded-full mx-auto" />
-              <div className="grid grid-cols-3 gap-1.5 pt-1">
-                <Skeleton className="h-7 rounded-lg" />
-                <Skeleton className="h-7 rounded-lg" />
-                <Skeleton className="h-7 rounded-lg" />
-              </div>
-            </div>
-
-            {/* To-do List Skeleton */}
-            <div className="p-4 sm:p-4.5 bg-card border border-border/70 rounded-2xl h-[250px] space-y-2.5">
-              <div className="flex justify-between items-center">
-                <Skeleton className="h-4.5 w-24 rounded-md" />
-                <Skeleton className="h-5 w-12 rounded-lg" />
-              </div>
-              <Skeleton className="h-8 w-full rounded-xl" />
-              <Skeleton className="h-8 w-full rounded-xl" />
-              <Skeleton className="h-8 w-full rounded-xl" />
-              <Skeleton className="h-5 w-20 rounded-full" />
-            </div>
-          </div>
         </div>
       </div>
     );
@@ -896,10 +905,10 @@ export const StudentDashboard: React.FC = () => {
 
   return (
     <div className="space-y-4 pb-10 animate-in fade-in duration-300">
-      {/* ─── Master 2-Column Boxing Grid Layout (8:4 Desktop Ratio) ──────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
-        {/* ─── LEFT COLUMN: Main Track (8 cols / ~67% width) ───────────────── */}
-        <div className="lg:col-span-8 space-y-4 min-w-0">
+      {/* ─── ROW 1: Hero & Quick Stats (8 cols) + Practicum Progress Donut (4 cols) ─── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+        {/* Left: Hero Banner + 3 Stat Cards */}
+        <div className="lg:col-span-8 flex flex-col justify-between gap-3.5 sm:gap-4 min-w-0">
           {/* Card 1: Compact Hero Greeting Banner */}
           <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-r from-blue-600 via-blue-600 to-indigo-600 text-white p-4 sm:p-5 shadow-xs border border-blue-500/30">
             {/* Ambient Lighting Gradients */}
@@ -1032,9 +1041,79 @@ export const StudentDashboard: React.FC = () => {
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Card 3: Total Hours Overview Chart Card */}
-          <div className="bg-card border border-border/70 rounded-2xl p-4 sm:p-4.5 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between space-y-2.5">
+        {/* Right: Card 5: Practicum Progress Donut Card */}
+        <div className="lg:col-span-4 min-w-0 flex flex-col">
+          <div className="bg-card border border-border/70 rounded-2xl p-4 sm:p-4.5 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between h-full space-y-2.5">
+            <div className="flex items-center justify-between pb-0.5">
+              <h2 className="text-base font-bold text-foreground tracking-tight">Practicum Progress</h2>
+              <button
+                type="button"
+                className="p-1 hover:bg-muted rounded-md text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                title="Options"
+              >
+                <MoreHorizontal size={15} />
+              </button>
+            </div>
+
+            <div className="relative flex items-center justify-center my-0.5 flex-1 min-h-[120px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={donutData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={46}
+                    outerRadius={66}
+                    paddingAngle={4}
+                    dataKey="value"
+                    stroke="none"
+                  >
+                    {donutData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                <span className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Total</span>
+                <span className="text-2xl font-black text-foreground tracking-tight">{hoursPercent}%</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2 pt-2 border-t border-border/60 text-center">
+              <div>
+                <div className="flex items-center justify-center gap-1 text-[11px] text-muted-foreground">
+                  <span className="size-1.5 rounded-full bg-blue-600 shrink-0" />
+                  <span className="truncate">Progress</span>
+                </div>
+                <span className="text-sm font-bold text-foreground mt-0.5 block">{hoursPercent}%</span>
+              </div>
+              <div>
+                <div className="flex items-center justify-center gap-1 text-[11px] text-muted-foreground">
+                  <span className="size-1.5 rounded-full bg-orange-500 shrink-0" />
+                  <span className="truncate">In Review</span>
+                </div>
+                <span className="text-sm font-bold text-foreground mt-0.5 block">{activePendingCount} docs</span>
+              </div>
+              <div>
+                <div className="flex items-center justify-center gap-1 text-[11px] text-muted-foreground">
+                  <span className="size-1.5 rounded-full bg-emerald-500 shrink-0" />
+                  <span className="truncate">Target</span>
+                </div>
+                <span className="text-sm font-bold text-foreground mt-0.5 block">{totalHours}h</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ─── ROW 2: Total Hours Overview (8 cols) + To-do List (4 cols) ─────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+        {/* Left: Total Hours Overview Chart Card */}
+        <div className="lg:col-span-8 min-w-0 flex flex-col">
+          <div className="bg-card border border-border/70 rounded-2xl p-4 sm:p-4.5 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between h-full space-y-2.5">
             <div className="flex items-center justify-between pb-0.5">
               <div>
                 <h2 className="text-base font-bold text-foreground tracking-tight">Total Hours Overview</h2>
@@ -1119,7 +1198,142 @@ export const StudentDashboard: React.FC = () => {
               <span className="text-emerald-600 dark:text-emerald-400 font-bold">40.0 hrs / week</span>
             </div>
           </div>
+        </div>
 
+        {/* Right: Card 6: To-do List Card */}
+        <div className="lg:col-span-4 min-w-0 flex flex-col">
+          <div className="bg-card border border-border/70 rounded-2xl p-4 sm:p-4.5 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between h-full space-y-2.5">
+            <div className="flex items-center justify-between pb-0.5 border-b border-border/60">
+              <h2 className="text-base font-bold text-foreground tracking-tight">To do list</h2>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => setIsAddingTodo(prev => !prev)}
+                  title={isAddingTodo ? "Cancel" : "Add to-do"}
+                  className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer active:scale-95"
+                >
+                  {isAddingTodo ? <X size={14} /> : <Plus size={14} />}
+                </button>
+                <button
+                  type="button"
+                  className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+                  title="More options"
+                >
+                  <MoreHorizontal size={14} />
+                </button>
+              </div>
+            </div>
+
+            {/* Quick Add Input */}
+            {isAddingTodo && (
+              <form onSubmit={handleAddTodo} className="space-y-1.5 py-1 animate-in fade-in duration-200 border-b border-border/60">
+                <input
+                  type="text"
+                  value={newTodoText}
+                  onChange={e => setNewTodoText(e.target.value)}
+                  placeholder="Type new to-do..."
+                  autoFocus
+                  className="w-full text-xs px-2.5 py-1.5 rounded-lg bg-muted/30 border border-border focus:outline-none focus:border-primary text-foreground"
+                />
+                <div className="flex justify-end gap-1.5">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setIsAddingTodo(false);
+                      setNewTodoText('');
+                    }}
+                    className="h-6 text-[11px] px-2 rounded-lg"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    size="sm"
+                    disabled={!newTodoText.trim()}
+                    className="h-6 text-[11px] px-2.5 rounded-lg font-bold"
+                  >
+                    Add To-do
+                  </Button>
+                </div>
+              </form>
+            )}
+
+            {/* Task List styled like Reference screenshot */}
+            <div className="space-y-1.5 flex-1 overflow-y-auto min-h-[130px] max-h-[160px] pr-0.5">
+              {todos.length === 0 ? (
+                <div className="py-4 text-center text-xs text-muted-foreground">
+                  <p className="font-semibold text-foreground">All caught up!</p>
+                  <p className="text-[11px] mt-0.5">No pending to-dos.</p>
+                </div>
+              ) : (
+                todos.map((item, idx) => (
+                  <div
+                    key={item.id}
+                    onClick={() => toggleTodo(item.id)}
+                    className="flex items-start gap-2.5 p-1 rounded-xl hover:bg-muted/40 transition-colors cursor-pointer group text-xs"
+                  >
+                    {/* Round check indicator matching reference screenshot */}
+                    {item.done ? (
+                      <div className="size-4.5 rounded-full bg-blue-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
+                        <Check size={11} strokeWidth={3.5} />
+                      </div>
+                    ) : (
+                      <div className="size-4.5 rounded-full border-2 border-slate-300 dark:border-zinc-600 group-hover:border-blue-500 shrink-0 mt-0.5 transition-colors" />
+                    )}
+
+                    <div className="min-w-0 flex-1">
+                      <p className={cn(
+                        "text-xs font-bold leading-snug transition-colors",
+                        item.done ? "text-muted-foreground line-through font-medium" : "text-foreground group-hover:text-blue-600"
+                      )}>
+                        {item.text}
+                      </p>
+                      {!item.done && (
+                        <p className="text-[10px] text-muted-foreground font-medium mt-0.5">
+                          {idx === 0 ? 'P Aug 1 – Due tomorrow' : idx === 1 ? 'P Aug 2 – Due in 2 days' : 'In progress'}
+                        </p>
+                      )}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={e => deleteTodo(item.id, e)}
+                      title="Delete task"
+                      className="opacity-0 group-hover:opacity-100 p-1 text-muted-foreground hover:text-rose-500 transition-opacity cursor-pointer shrink-0"
+                    >
+                      <Trash2 size={11} />
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Footer Pill */}
+            <div className="pt-2 border-t border-border/60 flex items-center justify-between text-xs">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                <Check size={11} strokeWidth={3} />
+                <span>{todos.filter(t => t.done).length}/{todos.length} Complete</span>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setIsAddingTodo(true)}
+                className="text-xs font-bold text-primary hover:underline cursor-pointer inline-flex items-center gap-1"
+              >
+                <Plus size={12} />
+                <span>Add To-do</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ─── ROW 3: My Document Submissions & Reviews Active Tracker ─────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        <div className="lg:col-span-8 min-w-0">
           {/* Card 4: My Document Submissions & Reviews Active Tracker */}
           <div className="bg-card border border-border/70 rounded-2xl p-4 sm:p-5 shadow-2xs hover:shadow-xs transition-all space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/70 pb-3">
@@ -1350,200 +1564,6 @@ export const StudentDashboard: React.FC = () => {
                   </table>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-
-        {/* ─── RIGHT COLUMN: Companion Track (4 cols / ~33% width) ─────────── */}
-        <div className="lg:col-span-4 space-y-4">
-          {/* Card 5: Practicum Progress Donut Card (Top Performers equivalent) */}
-          <div className="bg-card border border-border/70 rounded-2xl p-4 sm:p-4.5 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between space-y-2.5">
-            <div className="flex items-center justify-between pb-0.5">
-              <h2 className="text-base font-bold text-foreground tracking-tight">Practicum Progress</h2>
-              <button
-                type="button"
-                className="p-1 hover:bg-muted rounded-md text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                title="Options"
-              >
-                <MoreHorizontal size={15} />
-              </button>
-            </div>
-
-            <div className="relative flex items-center justify-center my-0.5 h-36">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={donutData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={46}
-                    outerRadius={66}
-                    paddingAngle={4}
-                    dataKey="value"
-                    stroke="none"
-                  >
-                    {donutData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <span className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Total</span>
-                <span className="text-2xl font-black text-foreground tracking-tight">{hoursPercent}%</span>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-2 pt-2 border-t border-border/60 text-center">
-              <div>
-                <div className="flex items-center justify-center gap-1 text-[11px] text-muted-foreground">
-                  <span className="size-1.5 rounded-full bg-blue-600 shrink-0" />
-                  <span className="truncate">Progress</span>
-                </div>
-                <span className="text-sm font-bold text-foreground mt-0.5 block">{hoursPercent}%</span>
-              </div>
-              <div>
-                <div className="flex items-center justify-center gap-1 text-[11px] text-muted-foreground">
-                  <span className="size-1.5 rounded-full bg-orange-500 shrink-0" />
-                  <span className="truncate">In Review</span>
-                </div>
-                <span className="text-sm font-bold text-foreground mt-0.5 block">{activePendingCount} docs</span>
-              </div>
-              <div>
-                <div className="flex items-center justify-center gap-1 text-[11px] text-muted-foreground">
-                  <span className="size-1.5 rounded-full bg-emerald-500 shrink-0" />
-                  <span className="truncate">Target</span>
-                </div>
-                <span className="text-sm font-bold text-foreground mt-0.5 block">{totalHours}h</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Card 6: To-do List Card */}
-          <div className="bg-card border border-border/70 rounded-2xl p-4 sm:p-4.5 shadow-2xs hover:shadow-xs transition-all space-y-2.5">
-            <div className="flex items-center justify-between pb-0.5 border-b border-border/60">
-              <h2 className="text-base font-bold text-foreground tracking-tight">To do list</h2>
-              <div className="flex items-center gap-1">
-                <button
-                  type="button"
-                  onClick={() => setIsAddingTodo(prev => !prev)}
-                  title={isAddingTodo ? "Cancel" : "Add to-do"}
-                  className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer active:scale-95"
-                >
-                  {isAddingTodo ? <X size={14} /> : <Plus size={14} />}
-                </button>
-                <button
-                  type="button"
-                  className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
-                  title="More options"
-                >
-                  <MoreHorizontal size={14} />
-                </button>
-              </div>
-            </div>
-
-            {/* Quick Add Input */}
-            {isAddingTodo && (
-              <form onSubmit={handleAddTodo} className="space-y-1.5 py-1 animate-in fade-in duration-200 border-b border-border/60">
-                <input
-                  type="text"
-                  value={newTodoText}
-                  onChange={e => setNewTodoText(e.target.value)}
-                  placeholder="Type new to-do..."
-                  autoFocus
-                  className="w-full text-xs px-2.5 py-1.5 rounded-lg bg-muted/30 border border-border focus:outline-none focus:border-primary text-foreground"
-                />
-                <div className="flex justify-end gap-1.5">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setIsAddingTodo(false);
-                      setNewTodoText('');
-                    }}
-                    className="h-6 text-[11px] px-2 rounded-lg"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    size="sm"
-                    disabled={!newTodoText.trim()}
-                    className="h-6 text-[11px] px-2.5 rounded-lg font-bold"
-                  >
-                    Add To-do
-                  </Button>
-                </div>
-              </form>
-            )}
-
-            {/* Task List styled like Reference screenshot */}
-            <div className="space-y-2 max-h-[220px] overflow-y-auto pr-0.5">
-              {todos.length === 0 ? (
-                <div className="py-4 text-center text-xs text-muted-foreground">
-                  <p className="font-semibold text-foreground">All caught up!</p>
-                  <p className="text-[11px] mt-0.5">No pending to-dos.</p>
-                </div>
-              ) : (
-                todos.map((item, idx) => (
-                  <div
-                    key={item.id}
-                    onClick={() => toggleTodo(item.id)}
-                    className="flex items-start gap-2.5 p-1 rounded-xl hover:bg-muted/40 transition-colors cursor-pointer group text-xs"
-                  >
-                    {/* Round check indicator matching reference screenshot */}
-                    {item.done ? (
-                      <div className="size-4.5 rounded-full bg-blue-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
-                        <Check size={11} strokeWidth={3.5} />
-                      </div>
-                    ) : (
-                      <div className="size-4.5 rounded-full border-2 border-slate-300 dark:border-zinc-600 group-hover:border-blue-500 shrink-0 mt-0.5 transition-colors" />
-                    )}
-
-                    <div className="min-w-0 flex-1">
-                      <p className={cn(
-                        "text-xs font-bold leading-snug transition-colors",
-                        item.done ? "text-muted-foreground line-through font-medium" : "text-foreground group-hover:text-blue-600"
-                      )}>
-                        {item.text}
-                      </p>
-                      {!item.done && (
-                        <p className="text-[10px] text-muted-foreground font-medium mt-0.5">
-                          {idx === 0 ? 'P Aug 1 – Due tomorrow' : idx === 1 ? 'P Aug 2 – Due in 2 days' : 'In progress'}
-                        </p>
-                      )}
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={e => deleteTodo(item.id, e)}
-                      title="Delete task"
-                      className="opacity-0 group-hover:opacity-100 p-1 text-muted-foreground hover:text-rose-500 transition-opacity cursor-pointer shrink-0"
-                    >
-                      <Trash2 size={11} />
-                    </button>
-                  </div>
-                ))
-              )}
-            </div>
-
-            {/* Footer Pill */}
-            <div className="pt-2 border-t border-border/60 flex items-center justify-between text-xs">
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                <Check size={11} strokeWidth={3} />
-                <span>{todos.filter(t => t.done).length}/{todos.length} Complete</span>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setIsAddingTodo(true)}
-                className="text-xs font-bold text-primary hover:underline cursor-pointer inline-flex items-center gap-1"
-              >
-                <Plus size={12} />
-                <span>Add To-do</span>
-              </button>
             </div>
           </div>
         </div>
