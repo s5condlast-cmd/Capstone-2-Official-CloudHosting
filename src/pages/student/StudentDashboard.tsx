@@ -1535,16 +1535,7 @@ export const StudentDashboard: React.FC = () => {
                             {/* Document Info */}
                             <td className="py-2.5 px-3.5">
                               <div className="flex items-center gap-2.5">
-                                <div className={cn(
-                                  "size-7.5 rounded-lg flex items-center justify-center shrink-0 border transition-colors",
-                                  item.status === 'done'
-                                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25"
-                                    : item.status === 'revision' || item.status === 'returned'
-                                    ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/25"
-                                    : item.status === 'pending'
-                                    ? "bg-[#FBBF24]/10 text-amber-700 dark:text-[#FBBF24] border-[#FBBF24]/30"
-                                    : "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/25"
-                                )}>
+                                <div className="size-7.5 rounded-lg flex items-center justify-center shrink-0 border border-border/60 bg-muted/40 text-muted-foreground group-hover:text-foreground transition-colors">
                                   <item.icon size={14} />
                                 </div>
                                 <div className="min-w-0">
@@ -1566,30 +1557,16 @@ export const StudentDashboard: React.FC = () => {
                             {/* Status */}
                             <td className="py-2.5 px-3 whitespace-nowrap">
                               <span className={cn(
-                                "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10.5px] font-bold border",
+                                "inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold tracking-tight transition-colors",
                                 item.status === 'done'
-                                  ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25"
+                                  ? "bg-[#dcfce7] text-[#16a34a] dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-500/20"
                                   : item.status === 'revision' || item.status === 'returned'
-                                  ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/25"
+                                  ? "bg-[#fee2e2] text-[#dc2626] dark:bg-rose-950/60 dark:text-rose-300 border border-rose-500/20"
                                   : item.status === 'pending'
-                                  ? "bg-[#FBBF24]/10 text-amber-700 dark:text-[#FBBF24] border-[#FBBF24]/30"
-                                  : item.status === 'draft'
-                                  ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/25"
-                                  : "bg-muted/70 text-muted-foreground border-border/70"
+                                  ? "bg-[#ffedd5] text-[#ea580c] dark:bg-amber-950/60 dark:text-amber-300 border border-amber-500/20"
+                                  : "bg-[#dbeafe] text-[#2563eb] dark:bg-blue-950/60 dark:text-blue-300 border border-blue-500/20"
                               )}>
-                                <span className={cn(
-                                  "size-1.5 rounded-full",
-                                  item.status === 'done'
-                                    ? "bg-emerald-500"
-                                    : item.status === 'revision' || item.status === 'returned'
-                                    ? "bg-rose-500"
-                                    : item.status === 'pending'
-                                    ? "bg-[#FBBF24]"
-                                    : item.status === 'draft'
-                                    ? "bg-blue-500"
-                                    : "bg-muted-foreground/60"
-                                )} />
-                                <span>{item.statusLabel}</span>
+                                {item.statusLabel}
                               </span>
                             </td>
 
