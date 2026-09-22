@@ -895,17 +895,10 @@ export const StudentDashboard: React.FC = () => {
             {/* Total Hours Skeleton */}
             <div className="p-4 sm:p-4.5 bg-card border border-border/70 rounded-2xl min-h-[310px] flex flex-col justify-between">
               <div className="flex justify-between items-center">
-                <div className="space-y-1">
-                  <Skeleton className="h-4.5 w-40 rounded-md" />
-                  <Skeleton className="h-3 w-52 rounded-md" />
-                </div>
+                <Skeleton className="h-5 w-44 rounded-md" />
                 <Skeleton className="h-7 w-28 rounded-lg" />
               </div>
-              <Skeleton className="h-[168px] w-full rounded-xl" />
-              <div className="flex justify-between pt-1">
-                <Skeleton className="h-3 w-32 rounded-md" />
-                <Skeleton className="h-3 w-24 rounded-md" />
-              </div>
+              <Skeleton className="h-[220px] w-full rounded-xl" />
             </div>
 
             {/* Practicum Progress Skeleton */}
@@ -1116,40 +1109,32 @@ export const StudentDashboard: React.FC = () => {
               <div className="flex items-center justify-between pb-0.5">
                 <div>
                   <h2 className="text-base font-bold text-foreground tracking-tight">Total Hours Overview</h2>
-                  <p className="text-xs text-muted-foreground font-medium">
-                    {chartView === 'monthly' ? 'Monthly practicum hours logged' : 'Weekly practicum hours logged'}
-                  </p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold bg-primary/10 text-primary border border-primary/20">
-                    {renderedHours.toFixed(1)} / {totalHours}h
-                  </span>
-                  <div className="flex items-center bg-muted/70 p-0.5 rounded-lg border border-border/60 text-xs">
-                    <button
-                      type="button"
-                      onClick={() => setChartView('monthly')}
-                      className={cn(
-                        "px-2 py-0.5 rounded-md font-bold text-[11px] transition-colors cursor-pointer",
-                        chartView === 'monthly' ? "bg-card text-foreground shadow-2xs" : "text-muted-foreground hover:text-foreground"
-                      )}
-                    >
-                      Monthly
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setChartView('weekly')}
-                      className={cn(
-                        "px-2 py-0.5 rounded-md font-bold text-[11px] transition-colors cursor-pointer",
-                        chartView === 'weekly' ? "bg-card text-foreground shadow-2xs" : "text-muted-foreground hover:text-foreground"
-                      )}
-                    >
-                      Weekly
-                    </button>
-                  </div>
+                <div className="flex items-center bg-muted/70 p-0.5 rounded-lg border border-border/60 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setChartView('monthly')}
+                    className={cn(
+                      "px-2 py-0.5 rounded-md font-bold text-[11px] transition-colors cursor-pointer",
+                      chartView === 'monthly' ? "bg-card text-foreground shadow-2xs" : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    Monthly
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setChartView('weekly')}
+                    className={cn(
+                      "px-2 py-0.5 rounded-md font-bold text-[11px] transition-colors cursor-pointer",
+                      chartView === 'weekly' ? "bg-card text-foreground shadow-2xs" : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    Weekly
+                  </button>
                 </div>
               </div>
 
-              <div className="w-full h-[168px] min-w-0 min-h-[168px]">
+              <div className="w-full h-[215px] sm:h-[225px] min-w-0">
                 <ResponsiveContainer width="100%" height="100%">
                   {chartView === 'monthly' ? (
                     <AreaChart
@@ -1256,13 +1241,6 @@ export const StudentDashboard: React.FC = () => {
                     </BarChart>
                   )}
                 </ResponsiveContainer>
-              </div>
-
-              <div className="pt-2 border-t border-border/60 flex items-center justify-between text-xs text-muted-foreground">
-                <span>Daily target: <strong className="text-foreground font-semibold">8.0 hrs/day</strong></span>
-                <span className="text-emerald-600 dark:text-emerald-400 font-bold">
-                  {chartView === 'monthly' ? '160.0 hrs / month' : '40.0 hrs / week'}
-                </span>
               </div>
             </div>
           </div>
