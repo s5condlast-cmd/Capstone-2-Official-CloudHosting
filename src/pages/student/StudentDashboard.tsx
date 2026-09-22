@@ -1167,7 +1167,7 @@ export const StudentDashboard: React.FC = () => {
               <div className="mt-3 border-t border-border/60 dark:border-border/40 px-3.5 py-2 sm:px-4 sm:py-2.5">
                 <Link
                   to="/student/documents"
-                  className="flex items-center justify-end gap-1.5 text-xs sm:text-[13px] font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline transition-colors group/link cursor-pointer"
+                  className="flex items-center justify-end gap-1.5 text-xs sm:text-[13px] font-semibold text-muted-foreground hover:text-foreground hover:underline transition-colors group/link cursor-pointer"
                 >
                   <span>View approved docs</span>
                   <ArrowRightIcon size={12} className="group-hover/link:translate-x-0.5 transition-transform" />
@@ -1202,7 +1202,7 @@ export const StudentDashboard: React.FC = () => {
               <div className="mt-3 border-t border-border/60 dark:border-border/40 px-3.5 py-2 sm:px-4 sm:py-2.5">
                 <Link
                   to="/student/reviews"
-                  className="flex items-center justify-end gap-1.5 text-xs sm:text-[13px] font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline transition-colors group/link cursor-pointer"
+                  className="flex items-center justify-end gap-1.5 text-xs sm:text-[13px] font-semibold text-muted-foreground hover:text-foreground hover:underline transition-colors group/link cursor-pointer"
                 >
                   <span>Open Review Center</span>
                   <ArrowRightIcon size={12} className="group-hover/link:translate-x-0.5 transition-transform" />
@@ -1237,7 +1237,7 @@ export const StudentDashboard: React.FC = () => {
               <div className="mt-3 border-t border-border/60 dark:border-border/40 px-3.5 py-2 sm:px-4 sm:py-2.5">
                 <Link
                   to="/student/documents?phase=final"
-                  className="flex items-center justify-end gap-1.5 text-xs sm:text-[13px] font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline transition-colors group/link cursor-pointer"
+                  className="flex items-center justify-end gap-1.5 text-xs sm:text-[13px] font-semibold text-muted-foreground hover:text-foreground hover:underline transition-colors group/link cursor-pointer"
                 >
                   <span>View appraisal</span>
                   <ArrowRightIcon size={12} className="group-hover/link:translate-x-0.5 transition-transform" />
@@ -1462,10 +1462,10 @@ export const StudentDashboard: React.FC = () => {
               <div className="flex items-center gap-2 shrink-0">
                 <Link
                   to="/student/documents"
-                  className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline inline-flex items-center gap-1 transition-colors mr-1 cursor-pointer"
+                  className="text-xs font-semibold text-muted-foreground hover:text-foreground hover:underline inline-flex items-center gap-1 transition-colors mr-1 cursor-pointer group"
                 >
                   <span>Browse all templates</span>
-                  <ArrowRightIcon size={12} />
+                  <ArrowRightIcon size={12} className="group-hover:translate-x-0.5 transition-transform" />
                 </Link>
                 <Link to="/student/documents" className="shrink-0">
                   <Button
@@ -1683,14 +1683,14 @@ export const StudentDashboard: React.FC = () => {
           <div className="pt-1.5 border-t border-border/60 flex items-center justify-between text-[11px]">
             <Link
               to="/student/documents?phase=in_ojt"
-              className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-bold hover:underline cursor-pointer transition-colors"
+              className="text-muted-foreground hover:text-foreground font-bold hover:underline cursor-pointer transition-colors"
             >
               full calendar
             </Link>
             <button
               type="button"
               onClick={() => setIsCalendarHidden(prev => !prev)}
-              className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-bold hover:underline cursor-pointer transition-colors"
+              className="text-muted-foreground hover:text-foreground font-bold hover:underline cursor-pointer transition-colors"
             >
               {isCalendarHidden ? 'show' : 'hide'}
             </button>
@@ -1759,10 +1759,10 @@ export const StudentDashboard: React.FC = () => {
             <button
               type="button"
               onClick={() => setIsDueDocsExpanded(prev => !prev)}
-              className="flex items-center justify-between w-full py-1 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors font-semibold group cursor-pointer text-xs"
+              className="flex items-center justify-between w-full py-1 text-foreground hover:text-foreground/80 transition-colors font-semibold group cursor-pointer text-xs"
             >
               <div className="flex items-center gap-2 min-w-0">
-                <FileTextIcon size={14} className="text-blue-600 dark:text-blue-400 shrink-0 group-hover:scale-110 transition-transform" />
+                <FileTextIcon size={14} className="text-muted-foreground group-hover:text-foreground shrink-0 group-hover:scale-110 transition-transform" />
                 <span className="truncate text-xs font-bold group-hover:underline">
                   {dueDocumentsList.length} assignments due
                 </span>
@@ -1770,7 +1770,7 @@ export const StudentDashboard: React.FC = () => {
               <ChevronDown
                 size={13}
                 className={cn(
-                  "text-blue-600 dark:text-blue-400 transition-transform duration-200 shrink-0",
+                  "text-muted-foreground group-hover:text-foreground transition-transform duration-200 shrink-0",
                   isDueDocsExpanded && "rotate-180"
                 )}
               />
@@ -1798,7 +1798,7 @@ export const StudentDashboard: React.FC = () => {
                               ? "bg-blue-500"
                               : "bg-muted-foreground/60"
                           )} />
-                          <span className="truncate text-xs font-semibold text-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 group-hover:underline transition-colors">
+                          <span className="truncate text-xs font-semibold text-foreground group-hover:text-foreground group-hover:underline transition-colors">
                             {req.name}
                           </span>
                         </div>
