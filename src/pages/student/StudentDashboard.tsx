@@ -966,8 +966,8 @@ export const StudentDashboard: React.FC = () => {
         <div className="space-y-4 min-w-0 flex-1">
           {/* Hero Banner + 3 Stat Cards */}
           <div className="flex flex-col gap-3.5 sm:gap-4 min-w-0">
-            <div className="rounded-2xl sm:rounded-3xl p-4.5 sm:p-5 bg-card border border-border/70 min-h-[118px] flex flex-col justify-between gap-3 sm:gap-3.5">
-              <div className="flex items-center justify-between gap-4">
+            <div className="rounded-2xl sm:rounded-3xl p-4.5 sm:p-5 bg-card border border-border/70 min-h-[118px] flex items-center justify-between gap-4">
+              <div className="flex flex-col justify-between gap-3 sm:gap-3.5 min-w-0 flex-1">
                 <div className="flex items-center gap-3">
                   <Skeleton className="size-11 sm:size-12 rounded-full shrink-0" />
                   <div className="space-y-1.5 min-w-0">
@@ -975,14 +975,14 @@ export const StudentDashboard: React.FC = () => {
                     <Skeleton className="h-3.5 w-32 rounded-md" />
                   </div>
                 </div>
-                <Skeleton className="w-20 h-14 sm:w-28 sm:h-18 rounded-xl shrink-0 hidden sm:block" />
+                <div className="flex items-center gap-2 overflow-x-auto scrollbar-none pt-0.5 w-full">
+                  <Skeleton className="h-5 w-24 rounded-full shrink-0" />
+                  <Skeleton className="h-5 w-28 rounded-full shrink-0" />
+                  <Skeleton className="h-5 w-32 rounded-full shrink-0" />
+                  <Skeleton className="h-5 w-24 rounded-full shrink-0" />
+                </div>
               </div>
-              <div className="flex items-center gap-2 overflow-x-auto scrollbar-none pt-0.5 w-full">
-                <Skeleton className="h-5 w-24 rounded-full shrink-0" />
-                <Skeleton className="h-5 w-28 rounded-full shrink-0" />
-                <Skeleton className="h-5 w-32 rounded-full shrink-0" />
-                <Skeleton className="h-5 w-24 rounded-full shrink-0" />
-              </div>
+              <Skeleton className="w-32 h-24 sm:w-40 sm:h-28 md:w-48 md:h-32 rounded-xl shrink-0 hidden sm:block self-center" />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-3.5">
@@ -1079,8 +1079,9 @@ export const StudentDashboard: React.FC = () => {
             <div className="absolute -top-16 -right-16 size-48 rounded-full bg-primary/[0.07] blur-3xl pointer-events-none" />
             <div className="absolute -bottom-16 -left-16 size-48 rounded-full bg-blue-500/[0.04] blur-3xl pointer-events-none" />
 
-            <div className="relative z-10 flex flex-col justify-between gap-3 sm:gap-3.5">
-              <div className="flex items-center justify-between gap-3 sm:gap-4">
+            <div className="relative z-10 flex items-center justify-between gap-4">
+              {/* Left Column: Greeting & Badges */}
+              <div className="flex flex-col justify-between gap-3 sm:gap-3.5 min-w-0 flex-1">
                 <div className="flex items-center gap-3 sm:gap-3.5 min-w-0">
                   {/* Circular Avatar Badge */}
                   <div className="size-11 sm:size-12 rounded-full overflow-hidden border border-border/80 bg-primary/10 text-primary font-bold flex items-center justify-center text-sm shadow-xs shrink-0 select-none">
@@ -1104,34 +1105,34 @@ export const StudentDashboard: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Trainee Avatar Illustration */}
-                <div className="w-20 h-14 sm:w-28 sm:h-18 shrink-0 hidden sm:flex items-center justify-end pointer-events-none">
-                  <img
-                    src="/images/Dashboard Icons/undraw_focused-dev_gqoa.svg"
-                    alt="Trainee Avatar"
-                    className="w-full h-full object-contain pointer-events-none drop-shadow-md"
-                  />
+                {/* Trainee Information Badges (Single Row, Aligned next to ID & Section) */}
+                <div className="flex items-center gap-2 overflow-x-auto scrollbar-none pt-0.5 w-full">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[11px] font-semibold bg-muted/60 dark:bg-muted/40 border border-border/40 text-foreground shadow-2xs hover:bg-muted transition-colors shrink-0 whitespace-nowrap">
+                    <UserIcon size={11} className="text-muted-foreground shrink-0" />
+                    <span>ID: {studentId || user?.studentId || '2023-010482'}</span>
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[11px] font-semibold bg-muted/60 dark:bg-muted/40 border border-border/40 text-foreground shadow-2xs hover:bg-muted transition-colors shrink-0 whitespace-nowrap">
+                    <GraduationCapIcon size={11} className="text-muted-foreground shrink-0" />
+                    <span>{displayProgram} • {sectionName || user?.section || 'BSIT 402'}</span>
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[11px] font-semibold bg-muted/60 dark:bg-muted/40 border border-border/40 text-foreground shadow-2xs hover:bg-muted transition-colors shrink-0 whitespace-nowrap">
+                    <UserCheckIcon size={11} className="text-muted-foreground shrink-0" />
+                    <span>Mentor: {adviserName}</span>
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[11px] font-semibold bg-muted/60 dark:bg-muted/40 border border-border/40 text-foreground shadow-2xs hover:bg-muted transition-colors shrink-0 whitespace-nowrap">
+                    <Briefcase size={11} className="text-muted-foreground shrink-0" />
+                    <span>{isAssignedCompany ? companyName : 'Awaiting Match'}</span>
+                  </span>
                 </div>
               </div>
 
-              {/* Trainee Information Badges (Single Row, Aligned next to ID & Section) */}
-              <div className="flex items-center gap-2 overflow-x-auto scrollbar-none pt-0.5 w-full">
-                <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[11px] font-semibold bg-muted/60 dark:bg-muted/40 border border-border/40 text-foreground shadow-2xs hover:bg-muted transition-colors shrink-0 whitespace-nowrap">
-                  <UserIcon size={11} className="text-muted-foreground shrink-0" />
-                  <span>ID: {studentId || user?.studentId || '2023-010482'}</span>
-                </span>
-                <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[11px] font-semibold bg-muted/60 dark:bg-muted/40 border border-border/40 text-foreground shadow-2xs hover:bg-muted transition-colors shrink-0 whitespace-nowrap">
-                  <GraduationCapIcon size={11} className="text-muted-foreground shrink-0" />
-                  <span>{displayProgram} • {sectionName || user?.section || 'BSIT 402'}</span>
-                </span>
-                <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[11px] font-semibold bg-muted/60 dark:bg-muted/40 border border-border/40 text-foreground shadow-2xs hover:bg-muted transition-colors shrink-0 whitespace-nowrap">
-                  <UserCheckIcon size={11} className="text-muted-foreground shrink-0" />
-                  <span>Mentor: {adviserName}</span>
-                </span>
-                <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[11px] font-semibold bg-muted/60 dark:bg-muted/40 border border-border/40 text-foreground shadow-2xs hover:bg-muted transition-colors shrink-0 whitespace-nowrap">
-                  <Briefcase size={11} className="text-muted-foreground shrink-0" />
-                  <span>{isAssignedCompany ? companyName : 'Awaiting Match'}</span>
-                </span>
+              {/* Trainee Avatar Illustration (Spans Full Height of Card on Right) */}
+              <div className="w-32 h-24 sm:w-40 sm:h-28 md:w-48 md:h-32 shrink-0 hidden sm:flex items-center justify-end pointer-events-none self-center">
+                <img
+                  src="/images/Dashboard Icons/undraw_focused-dev_gqoa.svg"
+                  alt="Trainee Avatar"
+                  className="w-full h-full object-contain pointer-events-none drop-shadow-md"
+                />
               </div>
             </div>
           </div>
