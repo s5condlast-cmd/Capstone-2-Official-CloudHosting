@@ -124,6 +124,64 @@ function getInitials(name?: string, fallback = 'ST'): string {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
+// ─── ProgressCircle Component (Tremor-style Circular Metric Indicator) ─────────
+
+interface ProgressCircleProps {
+  value: number; // 0 to 100
+  size?: number;
+  strokeWidth?: number;
+  colorClass?: string;
+  trackClass?: string;
+  children?: React.ReactNode;
+}
+
+const ProgressCircle: React.FC<ProgressCircleProps> = ({
+  value,
+  size = 52,
+  strokeWidth = 4.5,
+  colorClass = "text-primary",
+  trackClass = "text-muted/20 dark:text-muted/15",
+  children,
+}) => {
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const clampedValue = Math.min(100, Math.max(0, value));
+  const strokeDashoffset = circumference - (clampedValue / 100) * circumference;
+
+  return (
+    <div className="relative inline-flex items-center justify-center shrink-0" style={{ width: size, height: size }}>
+      <svg className="size-full -rotate-90" viewBox={`0 0 ${size} ${size}`}>
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          stroke="currentColor"
+          strokeWidth={strokeWidth}
+          fill="none"
+          className={trackClass}
+        />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          stroke="currentColor"
+          strokeWidth={strokeWidth}
+          strokeDasharray={circumference}
+          strokeDashoffset={strokeDashoffset}
+          strokeLinecap={clampedValue > 0 ? "round" : "butt"}
+          fill="none"
+          className={cn(colorClass, "transition-all duration-500 ease-out", clampedValue === 0 && "opacity-0")}
+        />
+      </svg>
+      {children && (
+        <div className="absolute inset-0 flex items-center justify-center text-center pointer-events-none">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+};
+
 // ─── Official Institutional Templates (13 Templates per System Architecture) ───
 
 interface TemplateDefinition {
@@ -699,6 +757,28 @@ export const StudentDashboard: React.FC = () => {
     return null;
   }, [documents]);
 
+  const inReviewCount = useMemo(() => {
+    return activePendingCount > 0 ? activePendingCount : inProgressDocsCount;
+  }, [activePendingCount, inProgressDocsCount]);
+
+  const approvedPercent = useMemo(() => {
+    return accessibleRequirementsCount > 0
+      ? Math.round((approvedDocsCount / accessibleRequirementsCount) * 100)
+      : 0;
+  }, [approvedDocsCount, accessibleRequirementsCount]);
+
+  const inReviewPercent = useMemo(() => {
+    return accessibleRequirementsCount > 0
+      ? Math.min(100, Math.round((inReviewCount / accessibleRequirementsCount) * 100))
+      : 0;
+  }, [inReviewCount, accessibleRequirementsCount]);
+
+  const gradePercent = useMemo(() => {
+    return studentPracticumScore !== null
+      ? Math.min(100, Math.max(0, Math.round(studentPracticumScore)))
+      : 0;
+  }, [studentPracticumScore]);
+
   // Collapsible Dropview State for Due Documents
   const [isDueDocsExpanded, setIsDueDocsExpanded] = useState<boolean>(true);
 
@@ -907,15 +987,17 @@ export const StudentDashboard: React.FC = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 sm:gap-4">
               {[...Array(3)].map((_, i) => (
-                <div key={i} className="p-3.5 sm:p-4 bg-card border border-border/70 rounded-2xl h-[100px] flex flex-col justify-between">
-                  <div className="flex items-center gap-3">
-                    <Skeleton className="size-10 rounded-full shrink-0" />
-                    <div className="space-y-1 flex-1">
-                      <Skeleton className="h-5 w-16 rounded-md" />
-                      <Skeleton className="h-3 w-24 rounded-md" />
+                <div key={i} className="bg-card border border-border/70 rounded-2xl flex flex-col justify-between overflow-hidden">
+                  <div className="flex items-center gap-3.5 px-5 pt-5 sm:px-6 sm:pt-6">
+                    <Skeleton className="size-[52px] rounded-full shrink-0" />
+                    <div className="space-y-1.5 flex-1 min-w-0">
+                      <Skeleton className="h-5 w-24 rounded-md" />
+                      <Skeleton className="h-3.5 w-32 rounded-md" />
                     </div>
                   </div>
-                  <Skeleton className="h-2.5 w-full rounded-md pt-1" />
+                  <div className="mt-5 border-t border-border/70 px-5 py-3 sm:px-6 sm:py-3.5 flex justify-end">
+                    <Skeleton className="h-4 w-28 rounded-md" />
+                  </div>
                 </div>
               ))}
             </div>
@@ -1062,67 +1144,91 @@ export const StudentDashboard: React.FC = () => {
           {/* Card 2: 3 Metric Stat Cards in a row (Approved, In Progress, Grade) */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 sm:gap-4">
             {/* Card 2A: Approved Documents */}
-            <div className="bg-card border border-border/70 rounded-2xl p-3.5 sm:p-4 shadow-2xs hover:shadow-xs transition-all duration-200 flex flex-col justify-between group">
-              <div className="flex items-center gap-3">
-                <div className="size-10 rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/40 flex items-center justify-center shrink-0">
-                  <CheckCircle2 size={18} />
-                </div>
-                <div className="min-w-0">
-                  <div className="text-xl sm:text-2xl font-black text-foreground tracking-tight leading-none tabular-nums">
+            <div className="bg-card border border-border/70 rounded-2xl shadow-2xs hover:shadow-xs transition-all duration-200 flex flex-col justify-between overflow-hidden group">
+              <div className="flex items-center gap-3.5 px-5 pt-5 sm:px-6 sm:pt-6">
+                <ProgressCircle
+                  value={approvedPercent}
+                  size={52}
+                  strokeWidth={4.5}
+                  colorClass="text-emerald-500 dark:text-emerald-400"
+                  trackClass="text-emerald-100 dark:text-emerald-950/60"
+                >
+                  <span className="text-xs font-bold text-foreground tabular-nums">
+                    {approvedPercent}&#37;
+                  </span>
+                </ProgressCircle>
+                <div className="min-w-0 flex-1">
+                  <div className="text-xl sm:text-2xl font-bold text-foreground tracking-tight leading-none tabular-nums">
                     {approvedDocsCount} <span className="text-xs font-semibold text-muted-foreground">/ {accessibleRequirementsCount}</span>
                   </div>
-                  <p className="text-xs font-medium text-muted-foreground mt-0.5 truncate">
+                  <p className="text-xs font-medium text-muted-foreground mt-1 truncate">
                     Approved Documents
                   </p>
                 </div>
               </div>
 
-              <div className="pt-2 mt-2 border-t border-border/50">
+              <div className="mt-5 border-t border-border/70 px-5 py-3 sm:px-6 sm:py-3.5">
                 <Link
                   to="/student/documents"
-                  className="flex items-center justify-between text-xs font-semibold text-muted-foreground group-hover:text-primary transition-colors cursor-pointer"
+                  className="flex items-center justify-end gap-1.5 text-xs sm:text-[13px] font-semibold text-primary hover:text-primary/80 transition-colors group/link cursor-pointer"
                 >
                   <span>View approved docs</span>
-                  <ArrowRightIcon size={12} className="group-hover:translate-x-1 transition-transform" />
+                  <ArrowRightIcon size={12} className="group-hover/link:translate-x-0.5 transition-transform" />
                 </Link>
               </div>
             </div>
 
             {/* Card 2B: In Progress Documents */}
-            <div className="bg-card border border-border/70 rounded-2xl p-3.5 sm:p-4 shadow-2xs hover:shadow-xs transition-all duration-200 flex flex-col justify-between group">
-              <div className="flex items-center gap-3">
-                <div className="size-10 rounded-full bg-orange-50 text-orange-600 dark:bg-orange-950/50 dark:text-orange-400 border border-orange-100 dark:border-orange-900/40 flex items-center justify-center shrink-0">
-                  <ClockIcon size={18} />
-                </div>
-                <div className="min-w-0">
-                  <div className="text-xl sm:text-2xl font-black text-foreground tracking-tight leading-none tabular-nums">
-                    {activePendingCount > 0 ? activePendingCount : inProgressDocsCount} <span className="text-xs font-semibold text-muted-foreground">in review</span>
+            <div className="bg-card border border-border/70 rounded-2xl shadow-2xs hover:shadow-xs transition-all duration-200 flex flex-col justify-between overflow-hidden group">
+              <div className="flex items-center gap-3.5 px-5 pt-5 sm:px-6 sm:pt-6">
+                <ProgressCircle
+                  value={inReviewPercent}
+                  size={52}
+                  strokeWidth={4.5}
+                  colorClass="text-amber-500 dark:text-amber-400"
+                  trackClass="text-amber-100 dark:text-amber-950/60"
+                >
+                  <span className="text-xs font-bold text-foreground tabular-nums">
+                    {inReviewPercent}&#37;
+                  </span>
+                </ProgressCircle>
+                <div className="min-w-0 flex-1">
+                  <div className="text-xl sm:text-2xl font-bold text-foreground tracking-tight leading-none tabular-nums">
+                    {inReviewCount} <span className="text-xs font-semibold text-muted-foreground">in review</span>
                   </div>
-                  <p className="text-xs font-medium text-muted-foreground mt-0.5 truncate">
+                  <p className="text-xs font-medium text-muted-foreground mt-1 truncate">
                     Review in Progress
                   </p>
                 </div>
               </div>
 
-              <div className="pt-2 mt-2 border-t border-border/50">
+              <div className="mt-5 border-t border-border/70 px-5 py-3 sm:px-6 sm:py-3.5">
                 <Link
                   to="/student/reviews"
-                  className="flex items-center justify-between text-xs font-semibold text-muted-foreground group-hover:text-primary transition-colors cursor-pointer"
+                  className="flex items-center justify-end gap-1.5 text-xs sm:text-[13px] font-semibold text-primary hover:text-primary/80 transition-colors group/link cursor-pointer"
                 >
                   <span>Open Review Center</span>
-                  <ArrowRightIcon size={12} className="group-hover:translate-x-1 transition-transform" />
+                  <ArrowRightIcon size={12} className="group-hover/link:translate-x-0.5 transition-transform" />
                 </Link>
               </div>
             </div>
 
             {/* Card 2C: Practicum Grade */}
-            <div className="bg-card border border-border/70 rounded-2xl p-3.5 sm:p-4 shadow-2xs hover:shadow-xs transition-all duration-200 flex flex-col justify-between group">
-              <div className="flex items-center gap-3">
-                <div className="size-10 rounded-full bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400 border border-blue-100 dark:border-blue-900/40 flex items-center justify-center shrink-0">
-                  <AwardIcon size={18} />
-                </div>
+            <div className="bg-card border border-border/70 rounded-2xl shadow-2xs hover:shadow-xs transition-all duration-200 flex flex-col justify-between overflow-hidden group">
+              <div className="flex items-center gap-3.5 px-5 pt-5 sm:px-6 sm:pt-6">
+                <ProgressCircle
+                  value={gradePercent}
+                  size={52}
+                  strokeWidth={4.5}
+                  colorClass="text-blue-500 dark:text-blue-400"
+                  trackClass="text-blue-100 dark:text-blue-950/60"
+                >
+                  <span className="text-xs font-bold text-foreground tabular-nums">
+                    {studentPracticumScore !== null ? `${gradePercent}%` : '—'}
+                  </span>
+                </ProgressCircle>
                 <div className="min-w-0 flex-1">
-                  <div className="text-xl sm:text-2xl font-black text-foreground tracking-tight leading-none truncate">
+                  <div className="text-xl sm:text-2xl font-bold text-foreground tracking-tight leading-none tabular-nums">
                     {studentPracticumScore !== null ? (
                       <>
                         {studentPracticumScore.toFixed(1)} <span className="text-xs font-semibold text-muted-foreground">/ 100</span>
@@ -1131,19 +1237,19 @@ export const StudentDashboard: React.FC = () => {
                       'Pending'
                     )}
                   </div>
-                  <p className="text-xs font-medium text-muted-foreground mt-0.5 truncate">
+                  <p className="text-xs font-medium text-muted-foreground mt-1 truncate">
                     {studentPracticumScore !== null ? 'Practicum Grade' : 'Awaiting evaluation'}
                   </p>
                 </div>
               </div>
 
-              <div className="pt-2 mt-2 border-t border-border/50">
+              <div className="mt-5 border-t border-border/70 px-5 py-3 sm:px-6 sm:py-3.5">
                 <Link
                   to="/student/documents?phase=final"
-                  className="flex items-center justify-between text-xs font-semibold text-muted-foreground group-hover:text-primary transition-colors cursor-pointer"
+                  className="flex items-center justify-end gap-1.5 text-xs sm:text-[13px] font-semibold text-primary hover:text-primary/80 transition-colors group/link cursor-pointer"
                 >
                   <span>View appraisal</span>
-                  <ArrowRightIcon size={12} className="group-hover:translate-x-1 transition-transform" />
+                  <ArrowRightIcon size={12} className="group-hover/link:translate-x-0.5 transition-transform" />
                 </Link>
               </div>
             </div>
