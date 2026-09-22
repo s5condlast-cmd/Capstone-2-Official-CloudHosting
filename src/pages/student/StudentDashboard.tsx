@@ -712,7 +712,6 @@ export const StudentDashboard: React.FC = () => {
   };
 
   // Hours calculation
-  const hoursRemaining = Math.max(0, totalHours - renderedHours);
   const hoursPercent = Math.min(100, Math.round((renderedHours / totalHours) * 1000) / 10);
 
   // ─── Weekly Hours Trend Chart Data (Mon - Sun) ──────────────────────────────
@@ -734,42 +733,44 @@ export const StudentDashboard: React.FC = () => {
   // ─── Chart View & Datasets for Reference Boxing Cards ──────────────────────
   const [chartView, setChartView] = useState<'monthly' | 'weekly'>('monthly');
 
-  // Monthly Hours Progression (Jan - Dec) matching reference chart
+  // Monthly Hours Progression (Jan - Dec) with actual hours logged
   const monthlyChartData = useMemo(() => {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const curMonthIndex = new Date().getMonth();
-    return months.map((month, idx) => {
-      const isCurrent = idx === curMonthIndex;
-      let value = 0;
-      if (idx < curMonthIndex) {
-        value = Math.min(100, Math.round((idx + 1) * 14 + 10));
-      } else if (idx === curMonthIndex) {
-        value = hoursPercent > 0 ? hoursPercent : 85;
-      } else {
-        value = Math.max(15, Math.round(Math.sin(idx * 0.9) * 22 + 45));
-      }
-      return {
-        label: month,
-        value,
-        isCurrent,
-      };
-    });
-  }, [hoursPercent]);
 
-  // Weekly Daily Hours (Mon - Sun)
+    // Map approved DTRs by creation month
+    const dtrDocs = documents.filter(d => (d.doc_type || '').toLowerCase().includes('dtr') && d.status === 'Approved');
+    const hoursByMonth = new Array(12).fill(0);
+
+    if (dtrDocs.length > 0) {
+      dtrDocs.forEach(d => {
+        const m = new Date(d.created_at).getMonth();
+        if (m >= 0 && m < 12) {
+          hoursByMonth[m] += 40; // 40h per approved weekly DTR
+        }
+      });
+    } else if (renderedHours > 0) {
+      hoursByMonth[curMonthIndex] = Math.min(160, renderedHours);
+    }
+
+    return months.map((month, idx) => ({
+      label: month,
+      value: hoursByMonth[idx],
+      isCurrent: idx === curMonthIndex,
+    }));
+  }, [documents, renderedHours]);
+
+  // Weekly Daily Hours (Mon - Sun) with actual hours logged
   const weeklyBarData = useMemo(() => {
     const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     const curDayIndex = (new Date().getDay() + 6) % 7;
     return days.map((day, idx) => {
       const isCurrent = idx === curDayIndex;
       let hours = 0;
-      if (idx < 5) {
-        if (renderedHours > 0) {
-          const logged = renderedHours >= (idx + 1) * 8 ? 8 : Math.max(0, renderedHours - idx * 8);
-          hours = Math.min(8, logged);
-        } else {
-          hours = [7.5, 8.0, 8.0, 7.5, 8.0, 0, 0][idx] || 0;
-        }
+      if (idx < 5 && renderedHours > 0) {
+        const dayThreshold = (idx + 1) * 8;
+        const logged = renderedHours >= dayThreshold ? 8 : Math.max(0, renderedHours - idx * 8);
+        hours = Math.min(8, logged);
       }
       return {
         label: day,
@@ -922,14 +923,13 @@ export const StudentDashboard: React.FC = () => {
 
         {/* Right Column (Sidebar) Skeletons */}
         <div className="space-y-4 min-w-0 w-full lg:w-[276px] shrink-0">
-          {/* Practicum Progress Skeleton (Elongated) */}
-          <div className="p-4 sm:p-4.5 bg-card border border-border/70 rounded-2xl min-h-[350px] flex flex-col justify-between">
+          {/* Practicum Progress Skeleton */}
+          <div className="p-4 sm:p-4.5 bg-card border border-border/70 rounded-2xl min-h-[290px] flex flex-col justify-between">
             <div className="flex justify-between items-center">
-              <Skeleton className="h-4.5 w-32 rounded-md" />
+              <Skeleton className="h-5 w-36 rounded-md" />
               <Skeleton className="size-5 rounded-md" />
             </div>
             <Skeleton className="size-32 rounded-full mx-auto" />
-            <Skeleton className="h-2.5 w-full rounded-md" />
             <div className="grid grid-cols-3 gap-1.5 pt-1">
               <Skeleton className="h-7 rounded-lg" />
               <Skeleton className="h-7 rounded-lg" />
@@ -1111,7 +1111,9 @@ export const StudentDashboard: React.FC = () => {
             <div className="flex items-center justify-between pb-0.5">
               <div>
                 <h2 className="text-base font-bold text-foreground tracking-tight">Total Hours Overview</h2>
-                <p className="text-xs text-muted-foreground font-medium">Practicum hours completion rates</p>
+                <p className="text-xs text-muted-foreground font-medium">
+                  {chartView === 'monthly' ? 'Monthly practicum hours logged' : 'Weekly practicum hours logged'}
+                </p>
               </div>
               <div className="flex items-center gap-2">
                 <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold bg-primary/10 text-primary border border-primary/20">
@@ -1164,11 +1166,13 @@ export const StudentDashboard: React.FC = () => {
                       className="text-muted-foreground"
                     />
                     <YAxis
+                      domain={[0, 160]}
+                      ticks={[0, 40, 80, 120, 160]}
                       axisLine={false}
                       tickLine={false}
                       tick={{ fill: 'currentColor', fontSize: 9, fontWeight: 600 }}
                       className="text-muted-foreground"
-                      tickFormatter={(v) => `${v}%`}
+                      tickFormatter={(v) => `${v}h`}
                     />
                     <RechartsTooltip
                       content={({ active, payload, label }) => {
@@ -1177,8 +1181,9 @@ export const StudentDashboard: React.FC = () => {
                             <div className="bg-popover/95 backdrop-blur-md border border-border px-3 py-1.5 rounded-xl shadow-lg text-xs space-y-0.5">
                               <p className="font-bold text-foreground">{label}</p>
                               <p className="text-xs text-muted-foreground">
-                                Progress: <span className="text-primary font-black">{payload[0].value}% complete</span>
+                                Hours Logged: <span className="text-primary font-black">{payload[0].value} hrs</span>
                               </p>
+                              <p className="text-[10px] text-muted-foreground font-medium">Monthly Target: 160 hrs</p>
                             </div>
                           );
                         }
@@ -1210,6 +1215,8 @@ export const StudentDashboard: React.FC = () => {
                       className="text-muted-foreground"
                     />
                     <YAxis
+                      domain={[0, 8]}
+                      ticks={[0, 2, 4, 6, 8]}
                       axisLine={false}
                       tickLine={false}
                       tick={{ fill: 'currentColor', fontSize: 9, fontWeight: 600 }}
@@ -1225,6 +1232,7 @@ export const StudentDashboard: React.FC = () => {
                               <p className="text-xs text-muted-foreground">
                                 Hours Logged: <span className="text-primary font-black">{payload[0].value} hrs</span>
                               </p>
+                              <p className="text-[10px] text-muted-foreground font-medium">Daily Target: 8.0 hrs</p>
                             </div>
                           );
                         }
@@ -1247,7 +1255,9 @@ export const StudentDashboard: React.FC = () => {
 
             <div className="pt-2 border-t border-border/60 flex items-center justify-between text-xs text-muted-foreground">
               <span>Daily target: <strong className="text-foreground font-semibold">8.0 hrs/day</strong></span>
-              <span className="text-emerald-600 dark:text-emerald-400 font-bold">40.0 hrs / week</span>
+              <span className="text-emerald-600 dark:text-emerald-400 font-bold">
+                {chartView === 'monthly' ? '160.0 hrs / month' : '40.0 hrs / week'}
+              </span>
             </div>
           </div>
         </div>
@@ -1485,12 +1495,11 @@ export const StudentDashboard: React.FC = () => {
 
       {/* ─── RIGHT COLUMN: Dedicated Sidebar (Practicum Progress, Calendar, To-do, Announcements) ─── */}
       <div className="space-y-4 min-w-0 w-full lg:w-[276px] shrink-0">
-        {/* 1. Practicum Progress Card (Elongated & Polished) */}
-        <div className="bg-card border border-border/70 rounded-2xl p-4 sm:p-4.5 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between min-h-[350px] space-y-3">
+        {/* 1. Practicum Progress Card (Clean & Focused) */}
+        <div className="bg-card border border-border/70 rounded-2xl p-4 sm:p-4.5 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between min-h-[290px] space-y-3">
           <div className="flex items-center justify-between pb-0.5">
             <div>
               <h2 className="text-base font-bold text-foreground tracking-tight">Practicum Progress</h2>
-              <p className="text-[11px] text-muted-foreground font-medium">Internship hours breakdown</p>
             </div>
             <button
               type="button"
@@ -1526,22 +1535,6 @@ export const StudentDashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Progress Pacing Bar */}
-          <div className="space-y-1.5 px-0.5 pt-1">
-            <div className="flex items-center justify-between text-xs">
-              <span className="font-semibold text-muted-foreground text-[11px]">Logged vs Goal</span>
-              <span className="font-bold text-foreground tabular-nums text-xs">
-                {renderedHours.toFixed(1)} / {totalHours}h
-              </span>
-            </div>
-            <div className="h-2 w-full rounded-full bg-muted/60 overflow-hidden">
-              <div
-                className="h-full rounded-full bg-blue-600 dark:bg-blue-500 transition-all duration-500"
-                style={{ width: `${Math.min(100, hoursPercent)}%` }}
-              />
-            </div>
-          </div>
-
           {/* Legend 3-column Grid */}
           <div className="grid grid-cols-3 gap-1.5 pt-2 border-t border-border/60 text-center">
             <div className="p-1 rounded-lg bg-muted/20">
@@ -1565,12 +1558,6 @@ export const StudentDashboard: React.FC = () => {
               </div>
               <span className="text-xs font-bold text-foreground mt-0.5 block tabular-nums">{totalHours}h</span>
             </div>
-          </div>
-
-          <div className="pt-0.5 text-center">
-            <span className="text-[11px] font-medium text-muted-foreground">
-              {hoursRemaining > 0 ? `${hoursRemaining.toFixed(1)} hrs remaining to clearance` : 'All practicum hours completed!'}
-            </span>
           </div>
         </div>
 
