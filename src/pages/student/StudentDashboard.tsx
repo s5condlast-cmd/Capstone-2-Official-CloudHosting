@@ -635,7 +635,13 @@ export const StudentDashboard: React.FC = () => {
       let statusLabel = 'Not Started';
       let statusTone: 'emerald' | 'amber' | 'rose' | 'sky' | 'zinc' = 'zinc';
       let feedback = sub?.adviser_feedback;
-      let submissionDate = sub?.created_at ? safeFormatDate(sub.created_at, 'MMM d, yyyy') : undefined;
+      let submissionDate = sub?.created_at
+        ? safeFormatDate(sub.created_at, 'MMM d, yyyy')
+        : (draft as any)?.updated_at
+        ? safeFormatDate((draft as any).updated_at, 'MMM d, yyyy')
+        : (draft as any)?.created_at
+        ? safeFormatDate((draft as any).created_at, 'MMM d, yyyy')
+        : undefined;
       let link = tmpl.editable ? `/student/editor?template=${tmpl.id}` : `/student/documents?phase=${tmpl.phase}`;
       let actionText = 'Start in Editor';
 
@@ -1546,7 +1552,7 @@ export const StudentDashboard: React.FC = () => {
 
                             {/* Submitted / Updated Date */}
                             <td className="py-2.5 px-3 whitespace-nowrap text-muted-foreground font-medium text-xs align-middle">
-                              {item.submissionDate || (item.status === 'draft' ? 'Draft saved' : 'Recently')}
+                              {item.submissionDate || safeFormatDate(new Date(), 'MMM d, yyyy')}
                             </td>
 
                             {/* Status */}
