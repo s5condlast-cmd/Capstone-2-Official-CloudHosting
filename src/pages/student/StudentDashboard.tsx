@@ -1153,8 +1153,8 @@ export const StudentDashboard: React.FC = () => {
                   colorClass="text-emerald-500 dark:text-emerald-400"
                   trackClass="text-emerald-100 dark:text-emerald-950/60"
                 >
-                  <span className="text-xs font-bold text-foreground tabular-nums">
-                    {approvedPercent}&#37;
+                  <span className="text-sm sm:text-[15px] font-bold text-foreground tabular-nums">
+                    {approvedDocsCount}
                   </span>
                 </ProgressCircle>
                 <div className="min-w-0 flex-1">
@@ -1188,8 +1188,8 @@ export const StudentDashboard: React.FC = () => {
                   colorClass="text-amber-500 dark:text-amber-400"
                   trackClass="text-amber-100 dark:text-amber-950/60"
                 >
-                  <span className="text-xs font-bold text-foreground tabular-nums">
-                    {inReviewPercent}&#37;
+                  <span className="text-sm sm:text-[15px] font-bold text-foreground tabular-nums">
+                    {inReviewCount}
                   </span>
                 </ProgressCircle>
                 <div className="min-w-0 flex-1">
@@ -1223,8 +1223,8 @@ export const StudentDashboard: React.FC = () => {
                   colorClass="text-blue-500 dark:text-blue-400"
                   trackClass="text-blue-100 dark:text-blue-950/60"
                 >
-                  <span className="text-xs font-bold text-foreground tabular-nums">
-                    {studentPracticumScore !== null ? `${gradePercent}%` : '—'}
+                  <span className="text-sm sm:text-[15px] font-bold text-foreground tabular-nums">
+                    {studentPracticumScore !== null ? Math.round(studentPracticumScore) : '—'}
                   </span>
                 </ProgressCircle>
                 <div className="min-w-0 flex-1">
