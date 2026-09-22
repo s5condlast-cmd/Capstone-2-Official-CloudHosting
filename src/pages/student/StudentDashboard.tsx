@@ -1084,11 +1084,6 @@ export const StudentDashboard: React.FC = () => {
         <div className="flex flex-col gap-3.5 sm:gap-4 min-w-0">
           {/* Card 1: Compact Hero Greeting Banner (Theme-Aware, High-Contrast & Readable) */}
           <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-card border border-border/60 dark:border-border/40 p-4.5 sm:p-5 shadow-sm hover:shadow-md transition-all duration-200">
-            {/* Ambient Lighting Gradients */}
-            <div className="absolute -top-16 -right-16 size-52 rounded-full bg-blue-500/[0.12] dark:bg-blue-500/[0.15] blur-3xl pointer-events-none" />
-            <div className="absolute top-4 right-12 size-36 rounded-full bg-[#FBBF24]/[0.08] blur-2xl pointer-events-none" />
-            <div className="absolute -bottom-16 -left-16 size-48 rounded-full bg-emerald-500/[0.06] blur-3xl pointer-events-none" />
-
             <div className="relative z-10 flex items-center justify-between gap-4">
               {/* Left Column: Greeting & Badges */}
               <div className="flex flex-col justify-between gap-3 sm:gap-3.5 min-w-0 flex-1">
