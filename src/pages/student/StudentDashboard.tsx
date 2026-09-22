@@ -650,7 +650,7 @@ export const StudentDashboard: React.FC = () => {
           statusLabel = 'Approved';
           statusTone = 'emerald';
           link = `/student/documents/${sub.id}`;
-          actionText = 'View Submission';
+          actionText = 'View';
         } else if (sub.status === 'Revision Required') {
           status = 'revision';
           statusLabel = 'Revision Required';
@@ -658,7 +658,7 @@ export const StudentDashboard: React.FC = () => {
           link = tmpl.editable
             ? (draft ? `/student/editor?draft=${draft.id}` : `/student/editor?template=${tmpl.id}`)
             : `/student/documents/${sub.id}`;
-          actionText = 'Revise Document';
+          actionText = 'Revise';
         } else if (sub.status === 'Returned') {
           status = 'returned';
           statusLabel = 'Returned';
@@ -666,20 +666,20 @@ export const StudentDashboard: React.FC = () => {
           link = tmpl.editable
             ? (draft ? `/student/editor?draft=${draft.id}` : `/student/editor?template=${tmpl.id}`)
             : `/student/documents/${sub.id}`;
-          actionText = 'Revise Document';
+          actionText = 'Revise';
         } else if (sub.status.includes('Pending')) {
           status = 'pending';
           statusLabel = 'Under Review';
           statusTone = 'amber';
           link = `/student/documents/${sub.id}`;
-          actionText = 'View Status';
+          actionText = 'View';
         }
       } else if (draft) {
         status = 'draft';
         statusLabel = 'Draft in Progress';
         statusTone = 'sky';
         link = `/student/editor?draft=${draft.id}`;
-        actionText = 'Resume Draft';
+        actionText = 'Resume';
       } else if (!tmpl.editable) {
         link = `/student/documents?phase=${tmpl.phase}`;
         actionText = 'View Workflow';
@@ -723,7 +723,7 @@ export const StudentDashboard: React.FC = () => {
         statusTone: 'sky',
         submissionDate: safeFormatDate(dr.updated_at, 'MMM d, yyyy'),
         link: `/student/editor?draft=${dr.id}`,
-        actionText: 'Resume Draft',
+        actionText: 'Resume',
         draftId: dr.id,
       }));
 
@@ -1534,18 +1534,13 @@ export const StudentDashboard: React.FC = () => {
                           >
                             {/* Document Info */}
                             <td className="py-2.5 px-3.5">
-                              <div className="flex items-center gap-2.5">
-                                <div className="size-7.5 rounded-lg flex items-center justify-center shrink-0 border border-border/60 bg-muted/40 text-muted-foreground group-hover:text-foreground transition-colors">
-                                  <item.icon size={14} />
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <div className="size-7 rounded-lg flex items-center justify-center shrink-0 border border-border/60 bg-muted/40 text-muted-foreground group-hover:text-foreground transition-colors">
+                                  <item.icon size={13} />
                                 </div>
-                                <div className="min-w-0">
-                                  <p className="font-bold text-foreground text-xs leading-snug truncate max-w-[220px] sm:max-w-sm">
-                                    {item.name}
-                                  </p>
-                                  <p className="text-[10.5px] text-muted-foreground truncate max-w-[220px] sm:max-w-sm">
-                                    {item.description}
-                                  </p>
-                                </div>
+                                <span className="font-bold text-foreground text-xs leading-normal truncate max-w-[260px] sm:max-w-md">
+                                  {item.name}
+                                </span>
                               </div>
                             </td>
 
@@ -1557,14 +1552,14 @@ export const StudentDashboard: React.FC = () => {
                             {/* Status */}
                             <td className="py-2.5 px-3 whitespace-nowrap">
                               <span className={cn(
-                                "inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold tracking-tight transition-colors",
+                                "inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold tracking-tight shadow-2xs transition-colors",
                                 item.status === 'done'
-                                  ? "bg-[#dcfce7] text-[#16a34a] dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-500/20"
+                                  ? "bg-[#dcfce7] text-[#166534]"
                                   : item.status === 'revision' || item.status === 'returned'
-                                  ? "bg-[#fee2e2] text-[#dc2626] dark:bg-rose-950/60 dark:text-rose-300 border border-rose-500/20"
+                                  ? "bg-[#fee2e2] text-[#991b1b]"
                                   : item.status === 'pending'
-                                  ? "bg-[#ffedd5] text-[#ea580c] dark:bg-amber-950/60 dark:text-amber-300 border border-amber-500/20"
-                                  : "bg-[#dbeafe] text-[#2563eb] dark:bg-blue-950/60 dark:text-blue-300 border border-blue-500/20"
+                                  ? "bg-[#ffedd5] text-[#9a3412]"
+                                  : "bg-[#dbeafe] text-[#1e40af]"
                               )}>
                                 {item.statusLabel}
                               </span>
