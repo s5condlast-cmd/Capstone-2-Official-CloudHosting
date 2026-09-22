@@ -785,10 +785,10 @@ export const StudentDashboard: React.FC = () => {
   // Collapsible Dropview State for Due Documents
   const [isDueDocsExpanded, setIsDueDocsExpanded] = useState<boolean>(true);
 
-  // Accessible requirements that are due / in progress / needing action
+  // Accessible requirements that are due / needing action (excludes approved and documents currently under review)
   const dueDocumentsList = useMemo(() => {
     return allRequirements.filter(
-      r => r.status !== 'done' && r.status !== 'locked'
+      r => r.status !== 'done' && r.status !== 'locked' && r.status !== 'pending'
     );
   }, [allRequirements]);
 
@@ -1814,38 +1814,16 @@ export const StudentDashboard: React.FC = () => {
                         className="flex items-center justify-between gap-2 py-1.5 px-1 rounded-md text-xs hover:bg-muted/40 transition-colors group cursor-pointer"
                       >
                         <div className="flex items-center gap-2 min-w-0 flex-1">
-                          <span className={cn(
-                            "size-1.5 rounded-full shrink-0 transition-transform group-hover:scale-125",
-                            req.status === 'revision' || req.status === 'returned'
-                              ? "bg-rose-500"
-                              : req.status === 'pending'
-                              ? "bg-[#FBBF24]"
-                              : req.status === 'draft'
-                              ? "bg-blue-500"
-                              : "bg-muted-foreground/60"
-                          )} />
+                          <span className="size-1.5 rounded-full bg-muted-foreground/60 shrink-0 group-hover:bg-foreground group-hover:scale-125 transition-all" />
                           <span className="truncate text-xs font-semibold text-foreground group-hover:text-foreground group-hover:underline transition-colors">
                             {req.name}
                           </span>
                         </div>
-                        <span className={cn(
-                          "text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 tabular-nums border",
-                          req.status === 'revision' || req.status === 'returned'
-                            ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/25"
-                            : req.status === 'pending'
-                            ? "bg-[#FBBF24]/10 text-amber-700 dark:text-[#FBBF24] border-[#FBBF24]/30"
-                            : req.status === 'draft'
-                            ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/25"
-                            : "bg-muted/80 dark:bg-muted/50 text-muted-foreground border-border/40"
-                        )}>
-                          {req.status === 'revision' || req.status === 'returned'
-                            ? 'Revise'
-                            : req.status === 'draft'
-                            ? 'Draft'
-                            : req.status === 'pending'
-                            ? 'Review'
-                            : 'Due'}
-                        </span>
+                        {(req.status === 'draft' || req.status === 'revision' || req.status === 'returned') && (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 tabular-nums border bg-muted/80 dark:bg-muted/50 text-muted-foreground border-border/40">
+                            {req.status === 'draft' ? 'Draft' : 'Revise'}
+                          </span>
+                        )}
                       </Link>
                     ))
                   ) : (
