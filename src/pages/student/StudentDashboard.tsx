@@ -649,7 +649,7 @@ export const StudentDashboard: React.FC = () => {
           status = 'done';
           statusLabel = 'Approved';
           statusTone = 'emerald';
-          link = `/student/documents?phase=${tmpl.phase}`;
+          link = `/student/documents/${sub.id}`;
           actionText = 'View Submission';
         } else if (sub.status === 'Revision Required') {
           status = 'revision';
@@ -657,7 +657,7 @@ export const StudentDashboard: React.FC = () => {
           statusTone = 'rose';
           link = tmpl.editable
             ? (draft ? `/student/editor?draft=${draft.id}` : `/student/editor?template=${tmpl.id}`)
-            : `/student/documents?phase=${tmpl.phase}`;
+            : `/student/documents/${sub.id}`;
           actionText = 'Revise Document';
         } else if (sub.status === 'Returned') {
           status = 'returned';
@@ -665,13 +665,13 @@ export const StudentDashboard: React.FC = () => {
           statusTone = 'rose';
           link = tmpl.editable
             ? (draft ? `/student/editor?draft=${draft.id}` : `/student/editor?template=${tmpl.id}`)
-            : `/student/documents?phase=${tmpl.phase}`;
+            : `/student/documents/${sub.id}`;
           actionText = 'Revise Document';
         } else if (sub.status.includes('Pending')) {
           status = 'pending';
           statusLabel = 'Under Review';
           statusTone = 'amber';
-          link = `/student/documents?phase=${tmpl.phase}`;
+          link = `/student/documents/${sub.id}`;
           actionText = 'View Status';
         }
       } else if (draft) {
@@ -748,14 +748,17 @@ export const StudentDashboard: React.FC = () => {
     ).length;
   }, [allRequirements]);
 
+  const appraisalDoc = useMemo(() => {
+    return documents.find(d => (d.doc_type || '').toLowerCase().includes('appraisal'));
+  }, [documents]);
+
   const studentPracticumScore = useMemo<number | null>(() => {
-    const appraisalDoc = documents.find(d => (d.doc_type || '').toLowerCase().includes('appraisal'));
     if (appraisalDoc?.ai_findings && typeof appraisalDoc.ai_findings === 'object' && 'score' in appraisalDoc.ai_findings) {
       const parsed = Number((appraisalDoc.ai_findings as any).score);
       if (Number.isFinite(parsed)) return parsed;
     }
     return null;
-  }, [documents]);
+  }, [appraisalDoc]);
 
   const inReviewCount = useMemo(() => {
     return activePendingCount > 0 ? activePendingCount : inProgressDocsCount;
@@ -1236,7 +1239,7 @@ export const StudentDashboard: React.FC = () => {
 
               <div className="mt-3 border-t border-border/60 dark:border-border/40 px-3.5 py-2 sm:px-4 sm:py-2.5">
                 <Link
-                  to="/student/documents?phase=final"
+                  to={appraisalDoc ? `/student/documents/${appraisalDoc.id}` : "/student/documents?phase=final"}
                   className="flex items-center justify-end gap-1.5 text-xs sm:text-[13px] font-semibold text-muted-foreground hover:text-foreground hover:underline transition-colors group/link cursor-pointer"
                 >
                   <span>View appraisal</span>
@@ -1619,9 +1622,20 @@ export const StudentDashboard: React.FC = () => {
         {/* 1. Calendar Widget (Compact & Theme-Aware) */}
         <div className="bg-card border border-border/60 dark:border-border/40 rounded-2xl p-3.5 sm:p-4 shadow-sm hover:shadow-md transition-all duration-200 space-y-2.5">
           {/* Header */}
-          <div className="flex items-center gap-2 pb-0.5 border-b border-border/60">
-            <CalendarIcon size={15} className="text-muted-foreground shrink-0" />
-            <h2 className="text-sm sm:text-base font-bold text-foreground tracking-tight">Calendar</h2>
+          <div className="flex items-center justify-between pb-0.5 border-b border-border/60">
+            <Link
+              to="/student/calendar"
+              className="flex items-center gap-2 group cursor-pointer"
+            >
+              <CalendarIcon size={15} className="text-muted-foreground group-hover:text-foreground transition-colors shrink-0" />
+              <h2 className="text-sm sm:text-base font-bold text-foreground tracking-tight group-hover:underline">Calendar</h2>
+            </Link>
+            <Link
+              to="/student/calendar"
+              className="text-[11px] font-semibold text-muted-foreground hover:text-foreground hover:underline transition-colors"
+            >
+              Open Full
+            </Link>
           </div>
 
           {/* Month Navigation */}
@@ -1634,9 +1648,13 @@ export const StudentDashboard: React.FC = () => {
             >
               <ChevronLeft size={15} />
             </button>
-            <span className="text-xs sm:text-sm font-bold text-foreground tracking-tight">
+            <Link
+              to="/student/calendar"
+              className="text-xs sm:text-sm font-bold text-foreground hover:underline tracking-tight cursor-pointer"
+              title="Open calendar"
+            >
               {format(calendarDate, 'MMM yyyy')}
-            </span>
+            </Link>
             <button
               type="button"
               onClick={nextMonth}
@@ -1661,13 +1679,21 @@ export const StudentDashboard: React.FC = () => {
                 {calendarGrid.map((cell, idx) => (
                   <div key={idx} className="flex items-center justify-center py-0.5">
                     {cell.isToday ? (
-                      <span className="size-5.5 sm:size-6 rounded-full bg-primary text-primary-foreground font-bold flex items-center justify-center mx-auto shadow-xs text-[11px]">
+                      <Link
+                        to="/student/calendar"
+                        className="size-5.5 sm:size-6 rounded-full bg-primary text-primary-foreground font-bold flex items-center justify-center mx-auto shadow-xs text-[11px] hover:opacity-90 transition-opacity"
+                        title="Today — Open in Calendar"
+                      >
                         {cell.day}
-                      </span>
+                      </Link>
                     ) : cell.isCurrentMonth ? (
-                      <span className="size-5.5 sm:size-6 flex items-center justify-center mx-auto font-medium text-foreground hover:bg-muted/60 rounded-full cursor-pointer transition-colors text-[11px]">
+                      <Link
+                        to="/student/calendar"
+                        className="size-5.5 sm:size-6 flex items-center justify-center mx-auto font-medium text-foreground hover:bg-muted/60 rounded-full cursor-pointer transition-colors text-[11px]"
+                        title="Open in Calendar"
+                      >
                         {cell.day}
-                      </span>
+                      </Link>
                     ) : (
                       <span className="size-5.5 sm:size-6 flex items-center justify-center mx-auto text-muted-foreground/30 font-normal text-[11px]">
                         {cell.day}
@@ -1682,7 +1708,7 @@ export const StudentDashboard: React.FC = () => {
           {/* Footer Links */}
           <div className="pt-1.5 border-t border-border/60 flex items-center justify-between text-[11px]">
             <Link
-              to="/student/documents?phase=in_ojt"
+              to="/student/calendar"
               className="text-muted-foreground hover:text-foreground font-bold hover:underline cursor-pointer transition-colors"
             >
               full calendar
