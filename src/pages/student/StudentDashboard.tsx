@@ -32,7 +32,6 @@ import {
   RotateCw,
   Trash2,
   ShieldCheck,
-  FileCheck2,
   FolderOpen,
   MoreHorizontal,
   TrendingUp,
@@ -794,8 +793,8 @@ export const StudentDashboard: React.FC = () => {
   if (loading) {
     return (
       <div className="space-y-4 pb-10 animate-in fade-in duration-300">
-        {/* ─── ROW 1 SKELETON: Hero & Stats (1fr) + Donut (300px) ────────────── */}
-        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_300px] gap-4 items-stretch">
+        {/* ─── ROW 1 SKELETON: Hero & Stats (1fr) + Donut (272px) ────────────── */}
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_272px] gap-4 items-stretch">
           {/* Left: Hero Banner + 3 Stat Cards */}
           <div className="flex flex-col justify-between gap-3.5 sm:gap-4 min-w-0">
             {/* Hero Banner Skeleton */}
@@ -846,10 +845,10 @@ export const StudentDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* ─── ROW 2 SKELETON: Total Hours (1fr) + To-do List (300px) ──────────── */}
-        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_300px] gap-4 items-stretch">
+        {/* ─── ROW 2 SKELETON: Total Hours (1fr) + To-do List (272px) ──────────── */}
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_272px] gap-4 items-stretch">
           <div className="min-w-0 flex flex-col">
-            <div className="p-4 sm:p-4.5 bg-card border border-border/70 rounded-2xl h-full flex flex-col justify-between min-h-[308px]">
+            <div className="p-4 sm:p-4.5 bg-card border border-border/70 rounded-2xl h-full flex flex-col justify-between min-h-[323px]">
               <div className="flex justify-between items-center">
                 <div className="space-y-1">
                   <Skeleton className="h-4.5 w-40 rounded-md" />
@@ -866,7 +865,7 @@ export const StudentDashboard: React.FC = () => {
           </div>
 
           <div className="min-w-0 flex flex-col">
-            <div className="p-4 sm:p-4.5 bg-card border border-border/70 rounded-2xl h-full flex flex-col justify-between min-h-[308px] space-y-2.5">
+            <div className="p-4 sm:p-4.5 bg-card border border-border/70 rounded-2xl h-full flex flex-col justify-between min-h-[323px] space-y-2.5">
               <div className="flex justify-between items-center">
                 <Skeleton className="h-4.5 w-24 rounded-md" />
                 <Skeleton className="h-5 w-12 rounded-lg" />
@@ -880,7 +879,7 @@ export const StudentDashboard: React.FC = () => {
         </div>
 
         {/* ─── ROW 3 SKELETON: Submissions Tracker ─────────────────────────── */}
-        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_300px] gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_272px] gap-4">
           <div className="min-w-0">
             <div className="p-4 sm:p-5 bg-card border border-border/70 rounded-2xl space-y-3.5">
               <div className="flex justify-between items-center">
@@ -904,8 +903,8 @@ export const StudentDashboard: React.FC = () => {
 
   return (
     <div className="space-y-4 pb-10 animate-in fade-in duration-300">
-      {/* ─── ROW 1: Hero & Quick Stats (1fr) + Practicum Progress Donut (300px) ─── */}
-      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_300px] gap-4 items-stretch">
+      {/* ─── ROW 1: Hero & Quick Stats (1fr) + Practicum Progress Donut (272px) ─── */}
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_272px] gap-4 items-stretch">
         {/* Left: Hero Banner + 3 Stat Cards */}
         <div className="flex flex-col justify-between gap-3.5 sm:gap-4 min-w-0">
           {/* Card 1: Compact Hero Greeting Banner (Theme-Aware, High-Contrast & Readable) */}
@@ -1105,11 +1104,11 @@ export const StudentDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* ─── ROW 2: Total Hours Overview (1fr) + To-do List (300px) ─────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_300px] gap-4 items-stretch">
+      {/* ─── ROW 2: Total Hours Overview (1fr) + To-do List (272px) ─────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_272px] gap-4 items-stretch">
         {/* Left: Total Hours Overview Chart Card */}
         <div className="min-w-0 flex flex-col">
-          <div className="bg-card border border-border/70 rounded-2xl p-4 sm:p-4.5 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between h-full min-h-[308px] space-y-2.5">
+          <div className="bg-card border border-border/70 rounded-2xl p-4 sm:p-4.5 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between h-full min-h-[323px] space-y-2.5">
             <div className="flex items-center justify-between pb-0.5">
               <div>
                 <h2 className="text-base font-bold text-foreground tracking-tight">Total Hours Overview</h2>
@@ -1144,7 +1143,7 @@ export const StudentDashboard: React.FC = () => {
               </div>
             </div>
 
-            <div className="w-full h-40 min-w-0 min-h-[160px]">
+            <div className="w-full h-[168px] min-w-0 min-h-[168px]">
               <ResponsiveContainer width="100%" height="100%">
                 {chartView === 'monthly' ? (
                   <AreaChart
@@ -1256,7 +1255,7 @@ export const StudentDashboard: React.FC = () => {
 
         {/* Right: Card 6: To-do List Card */}
         <div className="min-w-0 flex flex-col">
-          <div className="bg-card border border-border/70 rounded-2xl p-4 sm:p-4.5 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between h-full min-h-[308px] space-y-2.5">
+          <div className="bg-card border border-border/70 rounded-2xl p-4 sm:p-4.5 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between h-full min-h-[323px] space-y-2.5">
             <div className="flex items-center justify-between pb-0.5 border-b border-border/60">
               <h2 className="text-base font-bold text-foreground tracking-tight">To do list</h2>
               <div className="flex items-center gap-1">
@@ -1316,7 +1315,7 @@ export const StudentDashboard: React.FC = () => {
             )}
 
             {/* Task List styled like Reference screenshot */}
-            <div className="space-y-1.5 flex-1 overflow-y-auto min-h-[130px] max-h-[160px] pr-0.5">
+            <div className="space-y-1.5 flex-1 overflow-y-auto min-h-[145px] max-h-[175px] pr-0.5">
               {todos.length === 0 ? (
                 <div className="py-4 text-center text-xs text-muted-foreground">
                   <p className="font-semibold text-foreground">All caught up!</p>
@@ -1386,26 +1385,16 @@ export const StudentDashboard: React.FC = () => {
       </div>
 
       {/* ─── ROW 3: My Document Submissions & Reviews Active Tracker ─────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_300px] gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_272px] gap-4">
         <div className="min-w-0">
           {/* Card 4: My Document Submissions & Reviews Active Tracker */}
           <div className="bg-card border border-border/70 rounded-2xl p-4 sm:p-5 shadow-2xs hover:shadow-xs transition-all space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/70 pb-3">
-              <div className="flex items-start gap-3">
-                <div className="size-10 rounded-xl bg-primary/10 text-primary border border-primary/20 flex items-center justify-center shrink-0 mt-0.5">
-                  <FileCheck2 size={20} />
-                </div>
-                <div>
-                  <h2 className="text-base font-bold text-foreground tracking-tight flex items-center gap-2">
-                    <span>My Document Submissions & Reviews</span>
-                  </h2>
-                  <p className="text-xs text-muted-foreground font-medium mt-0.5 max-w-xl">
-                    Track and manage your submitted practicum requirements, adviser evaluations, and approval statuses.
-                  </p>
-                </div>
-              </div>
+            <div className="flex items-center justify-between gap-3 border-b border-border/70 pb-3">
+              <h2 className="text-base font-bold text-foreground tracking-tight">
+                My Document Submissions & Reviews
+              </h2>
 
-              <Link to="/student/documents" className="shrink-0 self-start sm:self-auto">
+              <Link to="/student/documents" className="shrink-0">
                 <Button
                   variant="primary"
                   size="sm"
@@ -1450,18 +1439,22 @@ export const StudentDashboard: React.FC = () => {
                 <p className="text-[10.5px] text-muted-foreground">Currently awaiting evaluation</p>
               </div>
 
-              {/* Card 3: Action Needed */}
+              {/* Card 3: Complete / Action Needed */}
               <div className="p-3 rounded-xl bg-muted/20 border border-border/70 space-y-0.5">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-muted-foreground">Action Needed</span>
-                  <span className={cn("size-2 rounded-full", activeRevisionCount > 0 ? "bg-rose-500" : "bg-emerald-500")}></span>
+                  <span className="text-xs font-semibold text-muted-foreground">
+                    {activeRevisionCount > 0 ? 'Action Needed' : 'Complete'}
+                  </span>
+                  {activeRevisionCount > 0 && (
+                    <span className="size-2 rounded-full bg-rose-500"></span>
+                  )}
                 </div>
                 <div className="flex items-baseline gap-1.5 pt-0.5">
                   <span className="text-xl sm:text-2xl font-black text-foreground tracking-tight leading-none tabular-nums">
                     {activeRevisionCount}
                   </span>
                   <span className="text-xs font-semibold text-muted-foreground">
-                    {activeRevisionCount === 1 ? 'requires action' : activeRevisionCount > 1 ? 'require action' : 'all clear'}
+                    {activeRevisionCount === 0 ? 'Complete' : activeRevisionCount === 1 ? 'requires action' : 'require action'}
                   </span>
                 </div>
                 <p className="text-[10.5px] text-muted-foreground">
