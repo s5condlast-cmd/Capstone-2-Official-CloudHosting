@@ -36,6 +36,9 @@ import {
   MoreHorizontal,
   TrendingUp,
   PenLine,
+  ChevronLeft,
+  ChevronRight,
+  Lightbulb,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -788,16 +791,75 @@ export const StudentDashboard: React.FC = () => {
     ];
   }, [renderedHours, activePendingCount, activeSubmissions.length, totalHours]);
 
+  // ─── Mini Calendar State & Grid ─────────────────────────────────────────────
+  const [calendarDate, setCalendarDate] = useState<Date>(() => new Date());
+  const [isCalendarHidden, setIsCalendarHidden] = useState<boolean>(false);
+
+  const prevMonth = useCallback(() => {
+    setCalendarDate(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
+  }, []);
+
+  const nextMonth = useCallback(() => {
+    setCalendarDate(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
+  }, []);
+
+  const calendarGrid = useMemo(() => {
+    const year = calendarDate.getFullYear();
+    const month = calendarDate.getMonth();
+
+    const firstDay = new Date(year, month, 1);
+    const startingDayOfWeek = firstDay.getDay(); // 0 = Sunday
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const daysInPrevMonth = new Date(year, month, 0).getDate();
+
+    const days: { day: number; isCurrentMonth: boolean; isToday: boolean }[] = [];
+    const today = new Date();
+
+    // Previous month tail days
+    for (let i = startingDayOfWeek - 1; i >= 0; i--) {
+      days.push({
+        day: daysInPrevMonth - i,
+        isCurrentMonth: false,
+        isToday: false,
+      });
+    }
+
+    // Current month days
+    for (let i = 1; i <= daysInMonth; i++) {
+      const isToday =
+        today.getDate() === i &&
+        today.getMonth() === month &&
+        today.getFullYear() === year;
+      days.push({
+        day: i,
+        isCurrentMonth: true,
+        isToday,
+      });
+    }
+
+    // Next month head days to fill 35 or 42 cells
+    const totalCells = days.length > 35 ? 42 : 35;
+    const remainingCells = totalCells - days.length;
+    for (let i = 1; i <= remainingCells; i++) {
+      days.push({
+        day: i,
+        isCurrentMonth: false,
+        isToday: false,
+      });
+    }
+
+    return days;
+  }, [calendarDate]);
+
   // ─── Loading State Skeleton ─────────────────────────────────────────────────
 
   if (loading) {
     return (
-      <div className="space-y-4 pb-10 animate-in fade-in duration-300">
-        {/* ─── ROW 1 SKELETON: Hero & Stats (1fr) + Donut (272px) ────────────── */}
-        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_272px] gap-4 items-stretch">
-          {/* Left: Hero Banner + 3 Stat Cards */}
-          <div className="flex flex-col justify-between gap-3.5 sm:gap-4 min-w-0">
-            {/* Hero Banner Skeleton */}
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_276px] gap-4 items-start pb-10 animate-in fade-in duration-300">
+        {/* Left Column Skeletons */}
+        <div className="space-y-4 min-w-0 flex-1">
+          {/* Hero Banner + 3 Stat Cards */}
+          <div className="flex flex-col gap-3.5 sm:gap-4 min-w-0">
             <div className="rounded-2xl sm:rounded-3xl p-4 sm:p-5 bg-card border border-border/70 h-[112px] sm:h-[118px] flex items-center justify-between gap-4">
               <div className="space-y-3 flex-1">
                 <Skeleton className="h-6 w-48 rounded-lg" />
@@ -811,7 +873,6 @@ export const StudentDashboard: React.FC = () => {
               <Skeleton className="w-24 h-18 sm:w-28 sm:h-20 rounded-xl shrink-0 hidden sm:block" />
             </div>
 
-            {/* 3 Metric Stat Cards Skeleton */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 sm:gap-4">
               {[...Array(3)].map((_, i) => (
                 <div key={i} className="p-3.5 sm:p-4 bg-card border border-border/70 rounded-2xl h-[100px] flex flex-col justify-between">
@@ -828,71 +889,77 @@ export const StudentDashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Right: Donut Card Skeleton */}
-          <div className="min-w-0 flex flex-col">
-            <div className="p-4 sm:p-4.5 bg-card border border-border/70 rounded-2xl h-full flex flex-col justify-between min-h-[250px]">
-              <div className="flex justify-between items-center">
-                <Skeleton className="h-4.5 w-32 rounded-md" />
-                <Skeleton className="size-5 rounded-md" />
+          {/* Total Hours Skeleton */}
+          <div className="p-4 sm:p-4.5 bg-card border border-border/70 rounded-2xl min-h-[323px] flex flex-col justify-between">
+            <div className="flex justify-between items-center">
+              <div className="space-y-1">
+                <Skeleton className="h-4.5 w-40 rounded-md" />
+                <Skeleton className="h-3 w-52 rounded-md" />
               </div>
-              <Skeleton className="size-28 sm:size-32 rounded-full mx-auto" />
-              <div className="grid grid-cols-3 gap-1.5 pt-1">
-                <Skeleton className="h-7 rounded-lg" />
-                <Skeleton className="h-7 rounded-lg" />
-                <Skeleton className="h-7 rounded-lg" />
-              </div>
+              <Skeleton className="h-7 w-28 rounded-lg" />
             </div>
+            <Skeleton className="h-[168px] w-full rounded-xl" />
+            <div className="flex justify-between pt-1">
+              <Skeleton className="h-3 w-32 rounded-md" />
+              <Skeleton className="h-3 w-24 rounded-md" />
+            </div>
+          </div>
+
+          {/* Submissions Tracker Skeleton */}
+          <div className="p-4 sm:p-5 bg-card border border-border/70 rounded-2xl space-y-3.5">
+            <div className="flex justify-between items-center">
+              <Skeleton className="h-5 w-52 rounded-md" />
+              <Skeleton className="h-7 w-36 rounded-xl" />
+            </div>
+            <div className="grid grid-cols-3 gap-2.5">
+              <Skeleton className="h-14 rounded-xl" />
+              <Skeleton className="h-14 rounded-xl" />
+              <Skeleton className="h-14 rounded-xl" />
+            </div>
+            <Skeleton className="h-28 w-full rounded-xl" />
           </div>
         </div>
 
-        {/* ─── ROW 2 SKELETON: Total Hours (1fr) + To-do List (272px) ──────────── */}
-        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_272px] gap-4 items-stretch">
-          <div className="min-w-0 flex flex-col">
-            <div className="p-4 sm:p-4.5 bg-card border border-border/70 rounded-2xl h-full flex flex-col justify-between min-h-[323px]">
-              <div className="flex justify-between items-center">
-                <div className="space-y-1">
-                  <Skeleton className="h-4.5 w-40 rounded-md" />
-                  <Skeleton className="h-3 w-52 rounded-md" />
-                </div>
-                <Skeleton className="h-7 w-28 rounded-lg" />
-              </div>
-              <Skeleton className="h-[140px] w-full rounded-xl" />
-              <div className="flex justify-between pt-1">
-                <Skeleton className="h-3 w-32 rounded-md" />
-                <Skeleton className="h-3 w-24 rounded-md" />
-              </div>
+        {/* Right Column (Sidebar) Skeletons */}
+        <div className="space-y-4 min-w-0 w-full lg:w-[276px] shrink-0">
+          {/* Practicum Progress Skeleton (Elongated) */}
+          <div className="p-4 sm:p-4.5 bg-card border border-border/70 rounded-2xl min-h-[350px] flex flex-col justify-between">
+            <div className="flex justify-between items-center">
+              <Skeleton className="h-4.5 w-32 rounded-md" />
+              <Skeleton className="size-5 rounded-md" />
+            </div>
+            <Skeleton className="size-32 rounded-full mx-auto" />
+            <Skeleton className="h-2.5 w-full rounded-md" />
+            <div className="grid grid-cols-3 gap-1.5 pt-1">
+              <Skeleton className="h-7 rounded-lg" />
+              <Skeleton className="h-7 rounded-lg" />
+              <Skeleton className="h-7 rounded-lg" />
             </div>
           </div>
 
-          <div className="min-w-0 flex flex-col">
-            <div className="p-4 sm:p-4.5 bg-card border border-border/70 rounded-2xl h-full flex flex-col justify-between min-h-[323px] space-y-2.5">
-              <div className="flex justify-between items-center">
-                <Skeleton className="h-4.5 w-24 rounded-md" />
-                <Skeleton className="h-5 w-12 rounded-lg" />
-              </div>
-              <Skeleton className="h-8 w-full rounded-xl" />
-              <Skeleton className="h-8 w-full rounded-xl" />
-              <Skeleton className="h-8 w-full rounded-xl" />
-              <Skeleton className="h-5 w-20 rounded-full" />
+          {/* Calendar Skeleton */}
+          <div className="p-4 bg-card border border-border/70 rounded-2xl space-y-3">
+            <div className="flex justify-between items-center">
+              <Skeleton className="h-4.5 w-24 rounded-md" />
+              <Skeleton className="h-4 w-20 rounded-md" />
             </div>
+            <Skeleton className="h-44 w-full rounded-xl" />
           </div>
-        </div>
 
-        {/* ─── ROW 3 SKELETON: Submissions Tracker ─────────────────────────── */}
-        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_272px] gap-4">
-          <div className="min-w-0">
-            <div className="p-4 sm:p-5 bg-card border border-border/70 rounded-2xl space-y-3.5">
-              <div className="flex justify-between items-center">
-                <Skeleton className="h-5 w-52 rounded-md" />
-                <Skeleton className="h-7 w-36 rounded-xl" />
-              </div>
-              <div className="grid grid-cols-3 gap-2.5">
-                <Skeleton className="h-14 rounded-xl" />
-                <Skeleton className="h-14 rounded-xl" />
-                <Skeleton className="h-14 rounded-xl" />
-              </div>
-              <Skeleton className="h-28 w-full rounded-xl" />
+          {/* To-do Skeleton */}
+          <div className="p-4 bg-card border border-border/70 rounded-2xl space-y-2.5">
+            <div className="flex justify-between items-center">
+              <Skeleton className="h-4.5 w-20 rounded-md" />
+              <Skeleton className="size-5 rounded-md" />
             </div>
+            <Skeleton className="h-6 w-full rounded-md" />
+            <Skeleton className="h-6 w-full rounded-md" />
+          </div>
+
+          {/* Announcements Skeleton */}
+          <div className="p-4 bg-card border border-border/70 rounded-2xl space-y-2">
+            <Skeleton className="h-4 w-28 rounded-md" />
+            <Skeleton className="h-5 w-16 rounded-md" />
           </div>
         </div>
       </div>
@@ -902,11 +969,11 @@ export const StudentDashboard: React.FC = () => {
   // ─── Main Render ────────────────────────────────────────────────────────────
 
   return (
-    <div className="space-y-4 pb-10 animate-in fade-in duration-300">
-      {/* ─── ROW 1: Hero & Quick Stats (1fr) + Practicum Progress Donut (272px) ─── */}
-      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_272px] gap-4 items-stretch">
-        {/* Left: Hero Banner + 3 Stat Cards */}
-        <div className="flex flex-col justify-between gap-3.5 sm:gap-4 min-w-0">
+    <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_276px] gap-4 items-start pb-10 animate-in fade-in duration-300">
+      {/* ─── LEFT COLUMN: Main Stream (Hero + Stats, Total Hours Chart, Submissions Tracker) ─── */}
+      <div className="space-y-4 min-w-0 flex-1">
+        {/* Section 1: Hero Banner + 3 Stat Cards */}
+        <div className="flex flex-col gap-3.5 sm:gap-4 min-w-0">
           {/* Card 1: Compact Hero Greeting Banner (Theme-Aware, High-Contrast & Readable) */}
           <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-card border border-border/80 p-4.5 sm:p-5 shadow-2xs hover:shadow-xs transition-all">
             {/* Ambient Lighting Gradients */}
@@ -1038,75 +1105,7 @@ export const StudentDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Right: Card 5: Practicum Progress Donut Card */}
-        <div className="min-w-0 flex flex-col">
-          <div className="bg-card border border-border/70 rounded-2xl p-4 sm:p-4.5 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between h-full space-y-2.5">
-            <div className="flex items-center justify-between pb-0.5">
-              <h2 className="text-base font-bold text-foreground tracking-tight">Practicum Progress</h2>
-              <button
-                type="button"
-                className="p-1 hover:bg-muted rounded-md text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                title="Options"
-              >
-                <MoreHorizontal size={15} />
-              </button>
-            </div>
-
-            <div className="relative flex items-center justify-center my-0.5 flex-1 min-h-[120px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={donutData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={46}
-                    outerRadius={66}
-                    paddingAngle={4}
-                    dataKey="value"
-                    stroke="none"
-                  >
-                    {donutData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <span className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Total</span>
-                <span className="text-2xl font-black text-foreground tracking-tight">{hoursPercent}%</span>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-2 pt-2 border-t border-border/60 text-center">
-              <div>
-                <div className="flex items-center justify-center gap-1 text-[11px] text-muted-foreground">
-                  <span className="size-1.5 rounded-full bg-blue-600 shrink-0" />
-                  <span className="truncate">Progress</span>
-                </div>
-                <span className="text-sm font-bold text-foreground mt-0.5 block">{hoursPercent}%</span>
-              </div>
-              <div>
-                <div className="flex items-center justify-center gap-1 text-[11px] text-muted-foreground">
-                  <span className="size-1.5 rounded-full bg-orange-500 shrink-0" />
-                  <span className="truncate">In Review</span>
-                </div>
-                <span className="text-sm font-bold text-foreground mt-0.5 block">{activePendingCount}</span>
-              </div>
-              <div>
-                <div className="flex items-center justify-center gap-1 text-[11px] text-muted-foreground">
-                  <span className="size-1.5 rounded-full bg-emerald-500 shrink-0" />
-                  <span className="truncate">Target</span>
-                </div>
-                <span className="text-sm font-bold text-foreground mt-0.5 block">{totalHours}h</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ─── ROW 2: Total Hours Overview (1fr) + To-do List (272px) ─────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_272px] gap-4 items-stretch">
-        {/* Left: Total Hours Overview Chart Card */}
+        {/* Section 2: Total Hours Overview Chart Card */}
         <div className="min-w-0 flex flex-col">
           <div className="bg-card border border-border/70 rounded-2xl p-4 sm:p-4.5 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between h-full min-h-[323px] space-y-2.5">
             <div className="flex items-center justify-between pb-0.5">
@@ -1253,139 +1252,7 @@ export const StudentDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Right: Card 6: To-do List Card */}
-        <div className="min-w-0 flex flex-col">
-          <div className="bg-card border border-border/70 rounded-2xl p-4 sm:p-4.5 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between h-full min-h-[323px] space-y-2.5">
-            <div className="flex items-center justify-between pb-0.5 border-b border-border/60">
-              <h2 className="text-base font-bold text-foreground tracking-tight">To do list</h2>
-              <div className="flex items-center gap-1">
-                <button
-                  type="button"
-                  onClick={() => setIsAddingTodo(prev => !prev)}
-                  title={isAddingTodo ? "Cancel" : "Add to-do"}
-                  className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer active:scale-95"
-                >
-                  {isAddingTodo ? <X size={14} /> : <Plus size={14} />}
-                </button>
-                <button
-                  type="button"
-                  className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
-                  title="More options"
-                >
-                  <MoreHorizontal size={14} />
-                </button>
-              </div>
-            </div>
-
-            {/* Quick Add Input */}
-            {isAddingTodo && (
-              <form onSubmit={handleAddTodo} className="space-y-1.5 py-1 animate-in fade-in duration-200 border-b border-border/60">
-                <input
-                  type="text"
-                  value={newTodoText}
-                  onChange={e => setNewTodoText(e.target.value)}
-                  placeholder="Type new to-do..."
-                  autoFocus
-                  className="w-full text-xs px-2.5 py-1.5 rounded-lg bg-muted/30 border border-border focus:outline-none focus:border-primary text-foreground"
-                />
-                <div className="flex justify-end gap-1.5">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setIsAddingTodo(false);
-                      setNewTodoText('');
-                    }}
-                    className="h-6 text-[11px] px-2 rounded-lg"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    size="sm"
-                    disabled={!newTodoText.trim()}
-                    className="h-6 text-[11px] px-2.5 rounded-lg font-bold"
-                  >
-                    Add To-do
-                  </Button>
-                </div>
-              </form>
-            )}
-
-            {/* Task List styled like Reference screenshot */}
-            <div className="space-y-1.5 flex-1 overflow-y-auto min-h-[145px] max-h-[175px] pr-0.5">
-              {todos.length === 0 ? (
-                <div className="py-4 text-center text-xs text-muted-foreground">
-                  <p className="font-semibold text-foreground">All caught up!</p>
-                  <p className="text-[11px] mt-0.5">No pending to-dos.</p>
-                </div>
-              ) : (
-                todos.map((item, idx) => (
-                  <div
-                    key={item.id}
-                    onClick={() => toggleTodo(item.id)}
-                    className="flex items-start gap-2.5 p-1 rounded-xl hover:bg-muted/40 transition-colors cursor-pointer group text-xs"
-                  >
-                    {/* Round check indicator matching reference screenshot */}
-                    {item.done ? (
-                      <div className="size-4.5 rounded-full bg-blue-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
-                        <Check size={11} strokeWidth={3.5} />
-                      </div>
-                    ) : (
-                      <div className="size-4.5 rounded-full border-2 border-slate-300 dark:border-zinc-600 group-hover:border-blue-500 shrink-0 mt-0.5 transition-colors" />
-                    )}
-
-                    <div className="min-w-0 flex-1">
-                      <p className={cn(
-                        "text-xs font-bold leading-snug transition-colors",
-                        item.done ? "text-muted-foreground line-through font-medium" : "text-foreground group-hover:text-blue-600"
-                      )}>
-                        {item.text}
-                      </p>
-                      {!item.done && (
-                        <p className="text-[10px] text-muted-foreground font-medium mt-0.5">
-                          {idx === 0 ? 'P Aug 1 – Due tomorrow' : idx === 1 ? 'P Aug 2 – Due in 2 days' : 'In progress'}
-                        </p>
-                      )}
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={e => deleteTodo(item.id, e)}
-                      title="Delete task"
-                      className="opacity-0 group-hover:opacity-100 p-1 text-muted-foreground hover:text-rose-500 transition-opacity cursor-pointer shrink-0"
-                    >
-                      <Trash2 size={11} />
-                    </button>
-                  </div>
-                ))
-              )}
-            </div>
-
-            {/* Footer Pill */}
-            <div className="pt-2 border-t border-border/60 flex items-center justify-between text-xs">
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                <Check size={11} strokeWidth={3} />
-                <span>{todos.filter(t => t.done).length}/{todos.length} Complete</span>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setIsAddingTodo(true)}
-                className="text-xs font-bold text-primary hover:underline cursor-pointer inline-flex items-center gap-1"
-              >
-                <Plus size={12} />
-                <span>Add To-do</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ─── ROW 3: My Document Submissions & Reviews Active Tracker ─────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_272px] gap-4">
+        {/* Section 3: My Document Submissions & Reviews Active Tracker */}
         <div className="min-w-0">
           {/* Card 4: My Document Submissions & Reviews Active Tracker */}
           <div className="bg-card border border-border/70 rounded-2xl p-4 sm:p-5 shadow-2xs hover:shadow-xs transition-all space-y-4">
@@ -1612,6 +1479,318 @@ export const StudentDashboard: React.FC = () => {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ─── RIGHT COLUMN: Dedicated Sidebar (Practicum Progress, Calendar, To-do, Announcements) ─── */}
+      <div className="space-y-4 min-w-0 w-full lg:w-[276px] shrink-0">
+        {/* 1. Practicum Progress Card (Elongated & Polished) */}
+        <div className="bg-card border border-border/70 rounded-2xl p-4 sm:p-4.5 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between min-h-[350px] space-y-3">
+          <div className="flex items-center justify-between pb-0.5">
+            <div>
+              <h2 className="text-base font-bold text-foreground tracking-tight">Practicum Progress</h2>
+              <p className="text-[11px] text-muted-foreground font-medium">Internship hours breakdown</p>
+            </div>
+            <button
+              type="button"
+              className="p-1 hover:bg-muted rounded-md text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+              title="Options"
+            >
+              <MoreHorizontal size={15} />
+            </button>
+          </div>
+
+          <div className="relative flex items-center justify-center my-0.5 min-h-[140px]">
+            <ResponsiveContainer width="100%" height={140}>
+              <PieChart>
+                <Pie
+                  data={donutData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={48}
+                  outerRadius={68}
+                  paddingAngle={4}
+                  dataKey="value"
+                  stroke="none"
+                >
+                  {donutData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+              <span className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Total</span>
+              <span className="text-2xl font-black text-foreground tracking-tight">{hoursPercent}%</span>
+            </div>
+          </div>
+
+          {/* Progress Pacing Bar */}
+          <div className="space-y-1.5 px-0.5 pt-1">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-semibold text-muted-foreground text-[11px]">Logged vs Goal</span>
+              <span className="font-bold text-foreground tabular-nums text-xs">
+                {renderedHours.toFixed(1)} / {totalHours}h
+              </span>
+            </div>
+            <div className="h-2 w-full rounded-full bg-muted/60 overflow-hidden">
+              <div
+                className="h-full rounded-full bg-blue-600 dark:bg-blue-500 transition-all duration-500"
+                style={{ width: `${Math.min(100, hoursPercent)}%` }}
+              />
+            </div>
+          </div>
+
+          {/* Legend 3-column Grid */}
+          <div className="grid grid-cols-3 gap-1.5 pt-2 border-t border-border/60 text-center">
+            <div className="p-1 rounded-lg bg-muted/20">
+              <div className="flex items-center justify-center gap-1 text-[10.5px] text-muted-foreground">
+                <span className="size-1.5 rounded-full bg-blue-600 shrink-0" />
+                <span className="truncate">Progress</span>
+              </div>
+              <span className="text-xs font-bold text-foreground mt-0.5 block tabular-nums">{hoursPercent}%</span>
+            </div>
+            <div className="p-1 rounded-lg bg-muted/20">
+              <div className="flex items-center justify-center gap-1 text-[10.5px] text-muted-foreground">
+                <span className="size-1.5 rounded-full bg-orange-500 shrink-0" />
+                <span className="truncate">In Review</span>
+              </div>
+              <span className="text-xs font-bold text-foreground mt-0.5 block tabular-nums">{activePendingCount}</span>
+            </div>
+            <div className="p-1 rounded-lg bg-muted/20">
+              <div className="flex items-center justify-center gap-1 text-[10.5px] text-muted-foreground">
+                <span className="size-1.5 rounded-full bg-emerald-500 shrink-0" />
+                <span className="truncate">Target</span>
+              </div>
+              <span className="text-xs font-bold text-foreground mt-0.5 block tabular-nums">{totalHours}h</span>
+            </div>
+          </div>
+
+          <div className="pt-0.5 text-center">
+            <span className="text-[11px] font-medium text-muted-foreground">
+              {hoursRemaining > 0 ? `${hoursRemaining.toFixed(1)} hrs remaining to clearance` : 'All practicum hours completed!'}
+            </span>
+          </div>
+        </div>
+
+        {/* 2. Calendar Widget */}
+        <div className="bg-card border border-border/70 rounded-2xl p-4 sm:p-4.5 shadow-2xs hover:shadow-xs transition-all space-y-3">
+          {/* Header */}
+          <div className="flex items-center gap-2 pb-0.5 border-b border-border/60">
+            <CalendarIcon size={16} className="text-sky-500 dark:text-sky-400 shrink-0" />
+            <h2 className="text-base font-bold text-foreground tracking-tight">Calendar</h2>
+          </div>
+
+          {/* Month Navigation */}
+          <div className="flex items-center justify-between px-1">
+            <button
+              type="button"
+              onClick={prevMonth}
+              title="Previous month"
+              className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <span className="text-sm font-black text-foreground tracking-tight">
+              {format(calendarDate, 'MMM yyyy')}
+            </span>
+            <button
+              type="button"
+              onClick={nextMonth}
+              title="Next month"
+              className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
+
+          {!isCalendarHidden && (
+            <div className="space-y-1.5 animate-in fade-in duration-200">
+              {/* Day Headers (S M T W T F S) */}
+              <div className="grid grid-cols-7 text-center font-bold text-[11px] text-muted-foreground py-0.5 border-b border-border/40">
+                {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
+                  <span key={i} className="py-0.5">{d}</span>
+                ))}
+              </div>
+
+              {/* Days Grid */}
+              <div className="grid grid-cols-7 gap-y-1 text-center text-xs">
+                {calendarGrid.map((cell, idx) => (
+                  <div key={idx} className="flex items-center justify-center py-0.5">
+                    {cell.isToday ? (
+                      <span className="size-6.5 rounded-full bg-sky-500 dark:bg-sky-500 text-white font-bold flex items-center justify-center mx-auto shadow-xs text-xs">
+                        {cell.day}
+                      </span>
+                    ) : cell.isCurrentMonth ? (
+                      <span className="size-6.5 flex items-center justify-center mx-auto font-medium text-foreground hover:bg-muted/60 rounded-full cursor-pointer transition-colors text-xs">
+                        {cell.day}
+                      </span>
+                    ) : (
+                      <span className="size-6.5 flex items-center justify-center mx-auto text-muted-foreground/35 font-normal text-xs">
+                        {cell.day}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Footer Links */}
+          <div className="pt-2 border-t border-border/60 flex items-center justify-between text-xs">
+            <Link
+              to="/student/documents?phase=in_ojt"
+              className="text-sky-500 dark:text-sky-400 font-bold hover:underline cursor-pointer"
+            >
+              full calendar
+            </Link>
+            <button
+              type="button"
+              onClick={() => setIsCalendarHidden(prev => !prev)}
+              className="text-sky-500 dark:text-sky-400 font-bold hover:underline cursor-pointer"
+            >
+              {isCalendarHidden ? 'show' : 'hide'}
+            </button>
+          </div>
+        </div>
+
+        {/* 3. To-do Widget */}
+        <div className="bg-card border border-border/70 rounded-2xl p-4 sm:p-4.5 shadow-2xs hover:shadow-xs transition-all space-y-3">
+          <div className="flex items-center justify-between pb-0.5 border-b border-border/60">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 size={16} className="text-sky-500 dark:text-sky-400 shrink-0" />
+              <h2 className="text-base font-bold text-foreground tracking-tight">To-do</h2>
+            </div>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setIsAddingTodo(prev => !prev)}
+                title={isAddingTodo ? "Cancel" : "Add to-do"}
+                className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer active:scale-95"
+              >
+                {isAddingTodo ? <X size={15} /> : <Plus size={15} />}
+              </button>
+              <button
+                type="button"
+                className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+                title="More options"
+              >
+                <MoreHorizontal size={14} />
+              </button>
+            </div>
+          </div>
+
+          {/* Quick Add Form */}
+          {isAddingTodo && (
+            <form onSubmit={handleAddTodo} className="space-y-1.5 py-1 animate-in fade-in duration-200 border-b border-border/60">
+              <input
+                type="text"
+                value={newTodoText}
+                onChange={e => setNewTodoText(e.target.value)}
+                placeholder="Type new to-do..."
+                autoFocus
+                className="w-full text-xs px-2.5 py-1.5 rounded-lg bg-muted/30 border border-border focus:outline-none focus:border-primary text-foreground"
+              />
+              <div className="flex justify-end gap-1.5">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setIsAddingTodo(false);
+                    setNewTodoText('');
+                  }}
+                  className="h-6 text-[11px] px-2 rounded-lg"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="sm"
+                  disabled={!newTodoText.trim()}
+                  className="h-6 text-[11px] px-2.5 rounded-lg font-bold"
+                >
+                  Add To-do
+                </Button>
+              </div>
+            </form>
+          )}
+
+          {/* Action Items List */}
+          <div className="space-y-2 text-xs">
+            {/* Action Item 1: Set profile description */}
+            <Link
+              to="/student/profile"
+              className="flex items-center gap-2.5 py-1 text-sky-500 dark:text-sky-400 hover:underline transition-colors font-semibold group cursor-pointer"
+            >
+              <Lightbulb size={15} className="text-sky-500 dark:text-sky-400 shrink-0 group-hover:scale-110 transition-transform" />
+              <span className="truncate">Set profile description</span>
+            </Link>
+
+            {/* Action Item 2: Assignments due */}
+            <Link
+              to="/student/documents"
+              className="flex items-center gap-2.5 py-1 text-sky-500 dark:text-sky-400 hover:underline transition-colors font-semibold group cursor-pointer border-t border-border/40 pt-2"
+            >
+              <FileTextIcon size={15} className="text-sky-500 dark:text-sky-400 shrink-0 group-hover:scale-110 transition-transform" />
+              <span className="truncate">
+                {documentsNeedingAttention.length > 0
+                  ? `${documentsNeedingAttention.length} assignments due`
+                  : `${activePendingCount > 0 ? activePendingCount : 9} assignments due`}
+              </span>
+            </Link>
+
+            {/* User Custom Todos if any */}
+            {todos.length > 0 && (
+              <div className="pt-2 border-t border-border/40 space-y-1.5 max-h-[140px] overflow-y-auto pr-0.5">
+                {todos.map(item => (
+                  <div
+                    key={item.id}
+                    onClick={() => toggleTodo(item.id)}
+                    className="flex items-center justify-between gap-2 p-1 rounded-lg hover:bg-muted/40 transition-colors cursor-pointer group"
+                  >
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      {item.done ? (
+                        <div className="size-4 rounded-full bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-2xs">
+                          <Check size={10} strokeWidth={3.5} />
+                        </div>
+                      ) : (
+                        <div className="size-4 rounded-full border-2 border-muted-foreground/40 group-hover:border-blue-500 shrink-0 transition-colors" />
+                      )}
+                      <span className={cn(
+                        "truncate text-xs font-semibold",
+                        item.done ? "text-muted-foreground line-through font-normal" : "text-foreground"
+                      )}>
+                        {item.text}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={e => deleteTodo(item.id, e)}
+                      title="Delete"
+                      className="opacity-0 group-hover:opacity-100 p-0.5 text-muted-foreground hover:text-rose-500 transition-opacity"
+                    >
+                      <Trash2 size={11} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* 4. Announcements Widget */}
+        <div className="bg-card border border-border/70 rounded-2xl p-4 sm:p-4.5 shadow-2xs hover:shadow-xs transition-all space-y-2.5">
+          <div className="flex items-center gap-2 pb-0.5 border-b border-border/60">
+            <Megaphone size={16} className="text-sky-500 dark:text-sky-400 shrink-0" />
+            <h2 className="text-base font-bold text-foreground tracking-tight">Announcements</h2>
+          </div>
+
+          <div className="flex items-center gap-2.5 py-1 text-xs text-muted-foreground">
+            <Megaphone size={14} className="text-muted-foreground shrink-0" />
+            <span className="font-medium text-foreground">None</span>
           </div>
         </div>
       </div>
