@@ -806,27 +806,14 @@ export const StudentDashboard: React.FC = () => {
     });
   }, [renderedHours]);
 
-  // Donut Segments for Practicum Progress (Top Performers card equivalent)
-  // Strictly renders supervisor-validated logged hours vs remaining target hours
+  // Donut Segments for Practicum Progress (Strictly Logged Hours vs Remaining Target)
+  // Maintains segment gap separating logged progress from remaining clearance target
   const donutData = useMemo(() => {
-    const verified = Math.max(0, renderedHours);
-    const remaining = Math.max(0, totalHours - renderedHours);
-
-    if (verified <= 0) {
-      return [
-        { name: 'Remaining', value: totalHours, color: '#10b981' },
-      ];
-    }
-
-    if (remaining <= 0) {
-      return [
-        { name: 'Logged', value: verified, color: '#0066f5' },
-      ];
-    }
-
+    const verified = Math.max(renderedHours, 0.1);
+    const remaining = Math.max(totalHours - renderedHours, 1);
     return [
-      { name: 'Logged', value: verified, color: '#0066f5' },
-      { name: 'Remaining', value: remaining, color: '#10b981' },
+      { name: 'Logged Hours', value: verified, color: '#0066f5' },
+      { name: 'Remaining Target', value: remaining, color: '#10b981' },
     ];
   }, [renderedHours, totalHours]);
 
@@ -1332,7 +1319,7 @@ export const StudentDashboard: React.FC = () => {
                       cy="50%"
                       innerRadius={54}
                       outerRadius={76}
-                      paddingAngle={donutData.length > 1 ? 4 : 0}
+                      paddingAngle={4}
                       dataKey="value"
                       stroke="none"
                     >
