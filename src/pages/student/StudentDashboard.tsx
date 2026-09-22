@@ -1025,17 +1025,12 @@ export const StudentDashboard: React.FC = () => {
           </div>
 
           {/* Submissions Tracker Skeleton */}
-          <div className="p-4 sm:p-5 bg-card border border-border/70 rounded-2xl space-y-3.5">
+          <div className="p-4 sm:p-5 bg-card border border-border/35 rounded-2xl space-y-3.5">
             <div className="flex justify-between items-center">
-              <Skeleton className="h-5 w-52 rounded-md" />
+              <Skeleton className="h-5 w-44 rounded-md" />
               <Skeleton className="h-7 w-36 rounded-xl" />
             </div>
-            <div className="grid grid-cols-3 gap-2.5">
-              <Skeleton className="h-14 rounded-xl" />
-              <Skeleton className="h-14 rounded-xl" />
-              <Skeleton className="h-14 rounded-xl" />
-            </div>
-            <Skeleton className="h-28 w-full rounded-xl" />
+            <Skeleton className="h-36 w-full rounded-xl" />
           </div>
         </div>
 
@@ -1451,102 +1446,41 @@ export const StudentDashboard: React.FC = () => {
         {/* Section 3: My Document Submissions & Reviews Active Tracker */}
         <div className="min-w-0">
           {/* Card 4: My Document Submissions & Reviews Active Tracker */}
-          <div className="bg-card border border-border/70 rounded-2xl p-4 sm:p-5 shadow-2xs hover:shadow-xs transition-all space-y-4">
-            <div className="flex items-center justify-between gap-3 border-b border-border/70 pb-3">
-              <h2 className="text-base font-bold text-foreground tracking-tight">
-                My Document Submissions & Reviews
-              </h2>
-
-              <Link to="/student/documents" className="shrink-0">
-                <Button
-                  variant="primary"
-                  size="sm"
-                  className="font-bold text-xs h-8 px-3.5 rounded-xl cursor-pointer active:scale-95 shadow-2xs flex items-center gap-1.5"
-                >
-                  <FolderOpen size={13} />
-                  <span>Open Repository</span>
-                  <ArrowRightIcon size={12} />
-                </Button>
-              </Link>
-            </div>
-
-            {/* Active Submissions Summary Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-              {/* Card 1: Approved */}
-              <div className="p-3 rounded-xl bg-muted/20 border border-border/70 space-y-0.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-muted-foreground">Approved</span>
-                  <span className="size-2 rounded-full bg-emerald-500"></span>
-                </div>
-                <div className="flex items-baseline gap-1.5 pt-0.5">
-                  <span className="text-xl sm:text-2xl font-black text-foreground tracking-tight leading-none tabular-nums">
-                    {activeApprovedCount}
-                  </span>
-                  <span className="text-xs font-semibold text-muted-foreground">verified</span>
-                </div>
-                <p className="text-[10.5px] text-muted-foreground">Approved by practicum adviser</p>
+          <div className="bg-card border border-border/35 rounded-2xl p-4 sm:p-5 shadow-2xs hover:shadow-xs transition-all space-y-3.5">
+            <div className="flex items-center justify-between gap-3 border-b border-border/35 pb-3">
+              <div className="flex items-center gap-2.5">
+                <h2 className="text-base font-bold text-foreground tracking-tight">
+                  Submitted Documents
+                </h2>
+                <span className="text-[11px] font-bold text-muted-foreground bg-muted/60 px-2 py-0.5 rounded-full border border-border/40">
+                  {activeSubmissions.length} active
+                </span>
               </div>
 
-              {/* Card 2: Under Review */}
-              <div className="p-3 rounded-xl bg-muted/20 border border-border/70 space-y-0.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-muted-foreground">Under Review</span>
-                  <span className={cn("size-2 rounded-full", activePendingCount > 0 ? "bg-amber-500 animate-pulse" : "bg-muted-foreground/40")}></span>
-                </div>
-                <div className="flex items-baseline gap-1.5 pt-0.5">
-                  <span className="text-xl sm:text-2xl font-black text-foreground tracking-tight leading-none tabular-nums">
-                    {activePendingCount}
-                  </span>
-                  <span className="text-xs font-semibold text-muted-foreground">pending</span>
-                </div>
-                <p className="text-[10.5px] text-muted-foreground">Currently awaiting evaluation</p>
-              </div>
-
-              {/* Card 3: Complete / Action Needed */}
-              <div className="p-3 rounded-xl bg-muted/20 border border-border/70 space-y-0.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-muted-foreground">
-                    {activeRevisionCount > 0 ? 'Action Needed' : 'Complete'}
-                  </span>
-                  {activeRevisionCount > 0 && (
-                    <span className="size-2 rounded-full bg-rose-500"></span>
-                  )}
-                </div>
-                <div className="flex items-baseline gap-1.5 pt-0.5">
-                  <span className="text-xl sm:text-2xl font-black text-foreground tracking-tight leading-none tabular-nums">
-                    {activeRevisionCount}
-                  </span>
-                  <span className="text-xs font-semibold text-muted-foreground">
-                    {activeRevisionCount === 0 ? 'Complete' : activeRevisionCount === 1 ? 'requires action' : 'require action'}
-                  </span>
-                </div>
-                <p className="text-[10.5px] text-muted-foreground">
-                  {activeRevisionCount > 0 ? 'Document returned for revisions' : 'No revisions required'}
-                </p>
-              </div>
-            </div>
-
-            {/* Submissions Section Header & Table */}
-            <div className="pt-2 border-t border-border/60 space-y-3">
-              <div className="flex items-center justify-between gap-2 text-xs">
-                <div className="flex items-center gap-2">
-                  <span className="font-bold text-foreground text-sm">Submitted Documents</span>
-                  <span className="text-[11px] font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-                    {activeSubmissions.length} active
-                  </span>
-                </div>
-
+              <div className="flex items-center gap-2 shrink-0">
                 <Link
                   to="/student/documents"
-                  className="text-xs font-bold text-primary hover:underline inline-flex items-center gap-1 shrink-0 ml-auto"
+                  className="text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1 transition-colors mr-1 cursor-pointer"
                 >
                   <span>Browse all templates</span>
                   <ArrowRightIcon size={12} />
                 </Link>
+                <Link to="/student/documents" className="shrink-0">
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    className="font-bold text-xs h-8 px-3.5 rounded-xl cursor-pointer active:scale-95 shadow-2xs flex items-center gap-1.5"
+                  >
+                    <FolderOpen size={13} />
+                    <span>Open Repository</span>
+                    <ArrowRightIcon size={12} />
+                  </Button>
+                </Link>
               </div>
+            </div>
 
-              {/* Documents Table */}
-              <div className="border border-border/70 rounded-xl overflow-hidden shadow-2xs bg-card">
+            {/* Documents Table */}
+            <div className="border border-border/35 rounded-xl overflow-hidden shadow-2xs bg-card">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse text-xs">
                     <thead>
@@ -1677,7 +1611,6 @@ export const StudentDashboard: React.FC = () => {
             </div>
           </div>
         </div>
-      </div>
 
       {/* ─── RIGHT COLUMN: Dedicated Sidebar (Calendar, To-do, Announcements) ─── */}
       <div className="space-y-3.5 min-w-0 w-full lg:w-[300px] shrink-0">
