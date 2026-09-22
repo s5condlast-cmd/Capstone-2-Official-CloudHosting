@@ -786,9 +786,9 @@ export const StudentDashboard: React.FC = () => {
     const inReview = Math.max(activePendingCount * 15, activeSubmissions.length > 0 ? 10 : 0.1);
     const remaining = Math.max(totalHours - renderedHours, 1);
     return [
-      { name: 'Logged', value: verified, color: '#2563eb' },
-      { name: 'In Review', value: inReview, color: '#ea580c' },
-      { name: 'Remaining', value: remaining, color: '#16a34a' },
+      { name: 'Logged', value: verified, color: '#0066f5' },
+      { name: 'In Review', value: inReview, color: '#f97316' },
+      { name: 'Remaining', value: remaining, color: '#10b981' },
     ];
   }, [renderedHours, activePendingCount, activeSubmissions.length, totalHours]);
 
@@ -1302,10 +1302,10 @@ export const StudentDashboard: React.FC = () => {
                     </Pie>
                   </PieChart>
                 </ResponsiveContainer>
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Hours Logged</span>
-                  <span className="text-xl sm:text-2xl font-black text-foreground tracking-tight">
-                    {renderedHours.toFixed(1)} <span className="text-xs font-bold text-muted-foreground">hrs</span>
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Total Hours</span>
+                  <span className="text-lg sm:text-xl font-black text-foreground tracking-tight leading-tight mt-0.5">
+                    {renderedHours.toFixed(1)} <span className="text-xs font-bold text-muted-foreground">/ {totalHours}h</span>
                   </span>
                 </div>
               </div>
@@ -1314,21 +1314,21 @@ export const StudentDashboard: React.FC = () => {
               <div className="grid grid-cols-3 gap-1.5 pt-2 border-t border-border/60 text-center">
                 <div className="p-1 rounded-lg bg-muted/20">
                   <div className="flex items-center justify-center gap-1 text-[10.5px] text-muted-foreground">
-                    <span className="size-1.5 rounded-full bg-[#16a34a] shrink-0" />
+                    <span className="size-1.5 rounded-full bg-[#10b981] shrink-0" />
                     <span className="truncate">Approved</span>
                   </div>
                   <span className="text-xs font-bold text-foreground mt-0.5 block tabular-nums">{activeApprovedCount}</span>
                 </div>
                 <div className="p-1 rounded-lg bg-muted/20">
                   <div className="flex items-center justify-center gap-1 text-[10.5px] text-muted-foreground">
-                    <span className="size-1.5 rounded-full bg-[#ea580c] shrink-0" />
+                    <span className="size-1.5 rounded-full bg-[#f97316] shrink-0" />
                     <span className="truncate">In Progress</span>
                   </div>
                   <span className="text-xs font-bold text-foreground mt-0.5 block tabular-nums">{activePendingCount}</span>
                 </div>
                 <div className="p-1 rounded-lg bg-muted/20">
                   <div className="flex items-center justify-center gap-1 text-[10.5px] text-muted-foreground">
-                    <span className="size-1.5 rounded-full bg-primary shrink-0" />
+                    <span className="size-1.5 rounded-full bg-[#0066f5] shrink-0" />
                     <span className="truncate">Grade</span>
                   </div>
                   <span className="text-xs font-bold text-foreground mt-0.5 block tabular-nums">Pending</span>
