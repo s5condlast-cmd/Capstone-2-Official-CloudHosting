@@ -1150,8 +1150,8 @@ export const StudentDashboard: React.FC = () => {
                   value={approvedPercent}
                   size={46}
                   strokeWidth={4.5}
-                  colorClass="text-emerald-500 dark:text-emerald-400"
-                  trackClass="text-emerald-100 dark:text-emerald-950/60"
+                  colorClass="text-foreground"
+                  trackClass="text-muted/25 dark:text-muted/15"
                 >
                   <span className="text-sm font-bold text-foreground tabular-nums">
                     {approvedDocsCount}
@@ -1170,7 +1170,7 @@ export const StudentDashboard: React.FC = () => {
               <div className="mt-3 border-t border-border/35 px-3.5 py-2 sm:px-4 sm:py-2.5">
                 <Link
                   to="/student/documents"
-                  className="flex items-center justify-end gap-1.5 text-xs sm:text-[13px] font-semibold text-primary hover:text-primary/80 transition-colors group/link cursor-pointer"
+                  className="flex items-center justify-end gap-1.5 text-xs sm:text-[13px] font-semibold text-muted-foreground hover:text-foreground transition-colors group/link cursor-pointer"
                 >
                   <span>View approved docs</span>
                   <ArrowRightIcon size={12} className="group-hover/link:translate-x-0.5 transition-transform" />
@@ -1185,8 +1185,8 @@ export const StudentDashboard: React.FC = () => {
                   value={inReviewPercent}
                   size={46}
                   strokeWidth={4.5}
-                  colorClass="text-amber-500 dark:text-amber-400"
-                  trackClass="text-amber-100 dark:text-amber-950/60"
+                  colorClass="text-foreground"
+                  trackClass="text-muted/25 dark:text-muted/15"
                 >
                   <span className="text-sm font-bold text-foreground tabular-nums">
                     {inReviewCount}
@@ -1205,7 +1205,7 @@ export const StudentDashboard: React.FC = () => {
               <div className="mt-3 border-t border-border/35 px-3.5 py-2 sm:px-4 sm:py-2.5">
                 <Link
                   to="/student/reviews"
-                  className="flex items-center justify-end gap-1.5 text-xs sm:text-[13px] font-semibold text-primary hover:text-primary/80 transition-colors group/link cursor-pointer"
+                  className="flex items-center justify-end gap-1.5 text-xs sm:text-[13px] font-semibold text-muted-foreground hover:text-foreground transition-colors group/link cursor-pointer"
                 >
                   <span>Open Review Center</span>
                   <ArrowRightIcon size={12} className="group-hover/link:translate-x-0.5 transition-transform" />
@@ -1220,8 +1220,8 @@ export const StudentDashboard: React.FC = () => {
                   value={gradePercent}
                   size={46}
                   strokeWidth={4.5}
-                  colorClass="text-blue-500 dark:text-blue-400"
-                  trackClass="text-blue-100 dark:text-blue-950/60"
+                  colorClass="text-foreground"
+                  trackClass="text-muted/25 dark:text-muted/15"
                 >
                   <span className="text-sm font-bold text-foreground tabular-nums">
                     {studentPracticumScore !== null ? Math.round(studentPracticumScore) : '—'}
@@ -1240,7 +1240,7 @@ export const StudentDashboard: React.FC = () => {
               <div className="mt-3 border-t border-border/35 px-3.5 py-2 sm:px-4 sm:py-2.5">
                 <Link
                   to="/student/documents?phase=final"
-                  className="flex items-center justify-end gap-1.5 text-xs sm:text-[13px] font-semibold text-primary hover:text-primary/80 transition-colors group/link cursor-pointer"
+                  className="flex items-center justify-end gap-1.5 text-xs sm:text-[13px] font-semibold text-muted-foreground hover:text-foreground transition-colors group/link cursor-pointer"
                 >
                   <span>View appraisal</span>
                   <ArrowRightIcon size={12} className="group-hover/link:translate-x-0.5 transition-transform" />
