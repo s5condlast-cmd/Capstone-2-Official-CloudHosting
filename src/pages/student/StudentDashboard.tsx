@@ -1111,21 +1111,21 @@ export const StudentDashboard: React.FC = () => {
                 </div>
 
                 {/* Trainee Information Badges (Single Row, Aligned next to ID & Section) */}
-                <div className="flex items-center gap-2 overflow-x-auto scrollbar-none pt-0.5 w-full">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[11px] font-semibold bg-blue-500/10 dark:bg-blue-500/15 border border-blue-500/25 text-foreground shadow-2xs hover:bg-blue-500/20 transition-colors shrink-0 whitespace-nowrap">
-                    <UserIcon size={11} className="text-blue-500 dark:text-blue-400 shrink-0" />
+                <div className="flex items-center gap-2 sm:gap-2.5 overflow-x-auto scrollbar-none pt-1 w-full">
+                  <span className="inline-flex items-center gap-2 px-3 sm:px-3.5 py-1.5 rounded-full text-xs sm:text-[12.5px] font-semibold bg-blue-500/10 dark:bg-blue-500/15 border border-blue-500/25 text-foreground shadow-2xs hover:bg-blue-500/20 transition-colors shrink-0 whitespace-nowrap">
+                    <UserIcon size={13} className="text-blue-500 dark:text-blue-400 shrink-0" />
                     <span>ID: {studentId || user?.studentId || '2023-010482'}</span>
                   </span>
-                  <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[11px] font-semibold bg-sky-500/10 dark:bg-sky-500/15 border border-sky-500/25 text-foreground shadow-2xs hover:bg-sky-500/20 transition-colors shrink-0 whitespace-nowrap">
-                    <GraduationCapIcon size={11} className="text-sky-500 dark:text-sky-400 shrink-0" />
+                  <span className="inline-flex items-center gap-2 px-3 sm:px-3.5 py-1.5 rounded-full text-xs sm:text-[12.5px] font-semibold bg-sky-500/10 dark:bg-sky-500/15 border border-sky-500/25 text-foreground shadow-2xs hover:bg-sky-500/20 transition-colors shrink-0 whitespace-nowrap">
+                    <GraduationCapIcon size={13} className="text-sky-500 dark:text-sky-400 shrink-0" />
                     <span>{displayProgram} • {sectionName || user?.section || 'BSIT 402'}</span>
                   </span>
-                  <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/10 dark:bg-emerald-500/15 border border-emerald-500/25 text-foreground shadow-2xs hover:bg-emerald-500/20 transition-colors shrink-0 whitespace-nowrap">
-                    <UserCheckIcon size={11} className="text-emerald-500 dark:text-emerald-400 shrink-0" />
+                  <span className="inline-flex items-center gap-2 px-3 sm:px-3.5 py-1.5 rounded-full text-xs sm:text-[12.5px] font-semibold bg-emerald-500/10 dark:bg-emerald-500/15 border border-emerald-500/25 text-foreground shadow-2xs hover:bg-emerald-500/20 transition-colors shrink-0 whitespace-nowrap">
+                    <UserCheckIcon size={13} className="text-emerald-500 dark:text-emerald-400 shrink-0" />
                     <span>Mentor: {adviserName}</span>
                   </span>
-                  <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[11px] font-semibold bg-[#FBBF24]/10 dark:bg-[#FBBF24]/15 border border-[#FBBF24]/30 text-foreground shadow-2xs hover:bg-[#FBBF24]/20 transition-colors shrink-0 whitespace-nowrap">
-                    <Briefcase size={11} className="text-amber-500 dark:text-[#FBBF24] shrink-0" />
+                  <span className="inline-flex items-center gap-2 px-3 sm:px-3.5 py-1.5 rounded-full text-xs sm:text-[12.5px] font-semibold bg-[#FBBF24]/10 dark:bg-[#FBBF24]/15 border border-[#FBBF24]/30 text-foreground shadow-2xs hover:bg-[#FBBF24]/20 transition-colors shrink-0 whitespace-nowrap">
+                    <Briefcase size={13} className="text-amber-500 dark:text-[#FBBF24] shrink-0" />
                     <span>{isAssignedCompany ? companyName : 'Awaiting Match'}</span>
                   </span>
                 </div>
