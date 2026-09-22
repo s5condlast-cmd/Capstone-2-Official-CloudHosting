@@ -887,9 +887,15 @@ export const StudentDashboard: React.FC = () => {
         <div className="space-y-4 min-w-0 flex-1">
           {/* Hero Banner + 3 Stat Cards */}
           <div className="flex flex-col gap-3.5 sm:gap-4 min-w-0">
-            <div className="rounded-2xl sm:rounded-3xl p-4 sm:p-5 bg-card border border-border/70 h-[112px] sm:h-[118px] flex items-center justify-between gap-4">
+            <div className="rounded-2xl sm:rounded-3xl p-4.5 sm:p-5 bg-card border border-border/70 min-h-[118px] flex items-center justify-between gap-4">
               <div className="space-y-3 flex-1">
-                <Skeleton className="h-6 w-48 rounded-lg" />
+                <div className="flex items-center gap-3">
+                  <Skeleton className="size-11 sm:size-12 rounded-full shrink-0" />
+                  <div className="space-y-1.5 min-w-0">
+                    <Skeleton className="h-6 w-48 rounded-lg" />
+                    <Skeleton className="h-3.5 w-32 rounded-md" />
+                  </div>
+                </div>
                 <div className="flex gap-2 flex-wrap">
                   <Skeleton className="h-5 w-24 rounded-full" />
                   <Skeleton className="h-5 w-28 rounded-full" />
@@ -999,10 +1005,27 @@ export const StudentDashboard: React.FC = () => {
 
             <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
               <div className="space-y-3 sm:space-y-3.5 min-w-0 flex-1">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h1 className="text-xl sm:text-2xl font-black tracking-tight text-foreground leading-tight">
-                    Welcome back, {user?.name ? user.name.split(' ')[0] : 'Darrel'} 👋
-                  </h1>
+                <div className="flex items-center gap-3 sm:gap-3.5">
+                  {/* Circular Avatar Badge */}
+                  <div className="size-11 sm:size-12 rounded-full overflow-hidden border border-border/80 bg-primary/10 text-primary font-bold flex items-center justify-center text-sm shadow-xs shrink-0 select-none">
+                    {(user as any)?.avatar_url || (user as any)?.avatarUrl ? (
+                      <img
+                        src={(user as any)?.avatar_url || (user as any)?.avatarUrl}
+                        alt={user?.name || "Student Avatar"}
+                        className="size-full object-cover"
+                      />
+                    ) : (
+                      <span>{getInitials(user?.name, 'JD')}</span>
+                    )}
+                  </div>
+                  <div className="space-y-0.5 min-w-0">
+                    <h1 className="text-xl sm:text-2xl font-black tracking-tight text-foreground leading-tight truncate">
+                      Welcome back, {user?.name ? user.name.split(' ')[0] : 'Darrel'}
+                    </h1>
+                    <p className="text-xs sm:text-[13px] font-medium text-muted-foreground">
+                      {format(new Date(), 'd MMMM, yyyy')}
+                    </p>
+                  </div>
                 </div>
 
                 {/* Trainee Information Badges (Crisp, High-Contrast & Tactile with generous spacing) */}
