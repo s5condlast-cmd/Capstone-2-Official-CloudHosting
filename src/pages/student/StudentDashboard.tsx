@@ -909,39 +909,39 @@ export const StudentDashboard: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_316px] gap-4 items-stretch">
         {/* Left: Hero Banner + 3 Stat Cards */}
         <div className="flex flex-col justify-between gap-3.5 sm:gap-4 min-w-0">
-          {/* Card 1: Compact Hero Greeting Banner */}
-          <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-r from-blue-600 via-blue-600 to-indigo-600 text-white p-4 sm:p-5 shadow-xs border border-blue-500/30">
+          {/* Card 1: Compact Hero Greeting Banner (Theme-Aware, High-Contrast & Readable) */}
+          <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-card border border-border/80 p-4 sm:p-5 shadow-2xs hover:shadow-xs transition-all">
             {/* Ambient Lighting Gradients */}
-            <div className="absolute -top-16 -right-16 size-48 rounded-full bg-white/10 blur-2xl pointer-events-none" />
-            <div className="absolute -bottom-16 -left-16 size-48 rounded-full bg-indigo-500/20 blur-2xl pointer-events-none" />
+            <div className="absolute -top-16 -right-16 size-48 rounded-full bg-primary/[0.07] blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-16 -left-16 size-48 rounded-full bg-blue-500/[0.04] blur-3xl pointer-events-none" />
 
             <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
               <div className="space-y-1.5 min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white leading-tight">
+                  <h1 className="text-xl sm:text-2xl font-black tracking-tight text-foreground leading-tight">
                     Welcome back, {user?.name ? user.name.split(' ')[0] : 'Darrel'} 👋
                   </h1>
                 </div>
-                <p className="text-xs sm:text-[13px] text-blue-50/90 font-medium max-w-xl leading-relaxed">
-                  You've completed <strong className="font-extrabold text-white">{hoursPercent}%</strong> of your practicum goal this term! Keep submitting your records to reach completion.
+                <p className="text-xs sm:text-[13px] text-muted-foreground font-medium max-w-xl leading-relaxed">
+                  You've completed <strong className="font-extrabold text-primary">{hoursPercent}%</strong> of your practicum goal this term! Keep submitting your records to reach completion.
                 </p>
 
-                {/* Trainee Information Badges (Single-Line Streamlined Strip) */}
+                {/* Trainee Information Badges (Crisp, High-Contrast & Tactile) */}
                 <div className="flex items-center gap-1.5 flex-wrap pt-1">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-white/15 backdrop-blur-xs border border-white/20 text-white shadow-2xs">
-                    <UserIcon size={11} className="text-blue-200" />
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-muted/60 dark:bg-muted/40 border border-border/70 text-foreground shadow-2xs hover:bg-muted transition-colors">
+                    <UserIcon size={11} className="text-primary shrink-0" />
                     <span>ID: {studentId || user?.studentId || '2023-010482'}</span>
                   </span>
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-white/15 backdrop-blur-xs border border-white/20 text-white shadow-2xs">
-                    <GraduationCapIcon size={11} className="text-blue-200" />
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-muted/60 dark:bg-muted/40 border border-border/70 text-foreground shadow-2xs hover:bg-muted transition-colors">
+                    <GraduationCapIcon size={11} className="text-blue-500 dark:text-blue-400 shrink-0" />
                     <span>{displayProgram} • {sectionName || user?.section || 'BSIT 402'}</span>
                   </span>
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-white/15 backdrop-blur-xs border border-white/20 text-white shadow-2xs">
-                    <UserCheckIcon size={11} className="text-blue-200" />
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-muted/60 dark:bg-muted/40 border border-border/70 text-foreground shadow-2xs hover:bg-muted transition-colors">
+                    <UserCheckIcon size={11} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
                     <span>Mentor: {adviserName}</span>
                   </span>
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-white/15 backdrop-blur-xs border border-white/20 text-white shadow-2xs">
-                    <Briefcase size={11} className="text-blue-200" />
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-muted/60 dark:bg-muted/40 border border-border/70 text-foreground shadow-2xs hover:bg-muted transition-colors">
+                    <Briefcase size={11} className="text-amber-600 dark:text-amber-400 shrink-0" />
                     <span>{isAssignedCompany ? companyName : 'Awaiting Match'}</span>
                   </span>
                 </div>
@@ -1095,7 +1095,7 @@ export const StudentDashboard: React.FC = () => {
                   <span className="size-1.5 rounded-full bg-orange-500 shrink-0" />
                   <span className="truncate">In Review</span>
                 </div>
-                <span className="text-sm font-bold text-foreground mt-0.5 block">{activePendingCount} docs</span>
+                <span className="text-sm font-bold text-foreground mt-0.5 block">{activePendingCount}</span>
               </div>
               <div>
                 <div className="flex items-center justify-center gap-1 text-[11px] text-muted-foreground">
@@ -1120,6 +1120,9 @@ export const StudentDashboard: React.FC = () => {
                 <p className="text-xs text-muted-foreground font-medium">Practicum hours completion rates</p>
               </div>
               <div className="flex items-center gap-2">
+                <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold bg-primary/10 text-primary border border-primary/20">
+                  {renderedHours.toFixed(1)} / {totalHours}h
+                </span>
                 <div className="flex items-center bg-muted/70 p-0.5 rounded-lg border border-border/60 text-xs">
                   <button
                     type="button"
@@ -1147,49 +1150,104 @@ export const StudentDashboard: React.FC = () => {
 
             <div className="w-full h-40 min-w-0 min-h-[160px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={chartView === 'monthly' ? monthlyChartData : weeklyBarData}
-                  margin={{ top: 12, right: 10, left: -22, bottom: 0 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#88888820" />
-                  <XAxis
-                    dataKey="label"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fill: 'currentColor', fontSize: 10, fontWeight: 600 }}
-                    className="text-muted-foreground"
-                  />
-                  <YAxis
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fill: 'currentColor', fontSize: 9, fontWeight: 600 }}
-                    className="text-muted-foreground"
-                    tickFormatter={(v) => `${v}${chartView === 'monthly' ? '%' : 'h'}`}
-                  />
-                  <RechartsTooltip
-                    content={({ active, payload, label }) => {
-                      if (active && payload && payload.length) {
-                        return (
-                          <div className="bg-popover/95 backdrop-blur-md border border-border px-2.5 py-1.5 rounded-xl shadow-lg text-xs">
-                            <p className="font-bold text-foreground">
-                              {label}: <span className="text-primary font-extrabold">{payload[0].value}{chartView === 'monthly' ? '% complete' : ' hrs'}</span>
-                            </p>
-                          </div>
-                        );
-                      }
-                      return null;
-                    }}
-                  />
-                  <Bar dataKey="value" radius={[5, 5, 0, 0]}>
-                    {(chartView === 'monthly' ? monthlyChartData : weeklyBarData).map((entry, index) => (
-                      <Cell
-                        key={`bar-${index}`}
-                        fill={entry.isCurrent ? '#0066f5' : 'currentColor'}
-                        className={entry.isCurrent ? 'fill-blue-600 dark:fill-blue-500' : 'fill-muted-foreground/20 dark:fill-muted-foreground/15'}
-                      />
-                    ))}
-                  </Bar>
-                </BarChart>
+                {chartView === 'monthly' ? (
+                  <AreaChart
+                    data={monthlyChartData}
+                    margin={{ top: 12, right: 12, left: -22, bottom: 0 }}
+                  >
+                    <defs>
+                      <linearGradient id="hoursAreaGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#2563eb" stopOpacity={0.4} />
+                        <stop offset="100%" stopColor="#2563eb" stopOpacity={0.0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" className="text-border/40" />
+                    <XAxis
+                      dataKey="label"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: 'currentColor', fontSize: 10, fontWeight: 600 }}
+                      className="text-muted-foreground"
+                    />
+                    <YAxis
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: 'currentColor', fontSize: 9, fontWeight: 600 }}
+                      className="text-muted-foreground"
+                      tickFormatter={(v) => `${v}%`}
+                    />
+                    <RechartsTooltip
+                      content={({ active, payload, label }) => {
+                        if (active && payload && payload.length) {
+                          return (
+                            <div className="bg-popover/95 backdrop-blur-md border border-border px-3 py-1.5 rounded-xl shadow-lg text-xs space-y-0.5">
+                              <p className="font-bold text-foreground">{label}</p>
+                              <p className="text-xs text-muted-foreground">
+                                Progress: <span className="text-primary font-black">{payload[0].value}% complete</span>
+                              </p>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="value"
+                      stroke="#2563eb"
+                      strokeWidth={2.5}
+                      fillOpacity={1}
+                      fill="url(#hoursAreaGradient)"
+                      dot={{ r: 3.5, fill: '#2563eb', stroke: 'var(--color-card, #fff)', strokeWidth: 1.5 }}
+                      activeDot={{ r: 5.5, fill: '#1d4ed8', stroke: 'var(--color-card, #fff)', strokeWidth: 2 }}
+                    />
+                  </AreaChart>
+                ) : (
+                  <BarChart
+                    data={weeklyBarData}
+                    margin={{ top: 12, right: 12, left: -22, bottom: 0 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" className="text-border/40" />
+                    <XAxis
+                      dataKey="label"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: 'currentColor', fontSize: 10, fontWeight: 600 }}
+                      className="text-muted-foreground"
+                    />
+                    <YAxis
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: 'currentColor', fontSize: 9, fontWeight: 600 }}
+                      className="text-muted-foreground"
+                      tickFormatter={(v) => `${v}h`}
+                    />
+                    <RechartsTooltip
+                      content={({ active, payload, label }) => {
+                        if (active && payload && payload.length) {
+                          return (
+                            <div className="bg-popover/95 backdrop-blur-md border border-border px-3 py-1.5 rounded-xl shadow-lg text-xs space-y-0.5">
+                              <p className="font-bold text-foreground">{label}</p>
+                              <p className="text-xs text-muted-foreground">
+                                Hours Logged: <span className="text-primary font-black">{payload[0].value} hrs</span>
+                              </p>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                    <Bar dataKey="value" radius={[6, 6, 0, 0]}>
+                      {weeklyBarData.map((entry, index) => (
+                        <Cell
+                          key={`bar-${index}`}
+                          fill={entry.isCurrent ? '#2563eb' : entry.value > 0 ? '#60a5fa' : '#94a3b840'}
+                          className={entry.isCurrent ? 'fill-blue-600 dark:fill-blue-500' : entry.value > 0 ? 'fill-blue-400 dark:fill-blue-400' : 'fill-muted-foreground/20 dark:fill-muted-foreground/15'}
+                        />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                )}
               </ResponsiveContainer>
             </div>
 
