@@ -1452,7 +1452,7 @@ export const StudentDashboard: React.FC = () => {
         <div className="min-w-0">
           {/* Card 4: My Document Submissions & Reviews Active Tracker */}
           <div className="bg-card border border-border/60 dark:border-border/40 rounded-2xl p-4 sm:p-5 shadow-sm hover:shadow-md transition-all duration-200 space-y-3.5">
-            <div className="flex items-center justify-between gap-3 border-b border-border/60 dark:border-border/40 pb-3">
+            <div className="flex items-center justify-between gap-3 pb-0.5">
               <div className="flex items-center gap-2.5">
                 <h2 className="text-base font-bold text-foreground tracking-tight">
                   Submitted Documents
@@ -1492,7 +1492,7 @@ export const StudentDashboard: React.FC = () => {
                       <tr className="bg-muted/30 border-b border-border/70 text-muted-foreground font-bold">
                         <th scope="col" className="py-2.5 px-3.5 font-bold text-foreground">Document Name</th>
                         <th scope="col" className="py-2.5 px-3 font-bold text-foreground">Submitted / Updated</th>
-                        <th scope="col" className="py-2.5 px-3 font-bold text-foreground">Status</th>
+                        <th scope="col" className="py-2.5 px-3 font-bold text-foreground text-center">Status</th>
                         <th scope="col" className="py-2.5 px-3.5 font-bold text-foreground text-right">Action</th>
                       </tr>
                     </thead>
@@ -1533,40 +1533,40 @@ export const StudentDashboard: React.FC = () => {
                             className="hover:bg-muted/20 transition-colors group"
                           >
                             {/* Document Info */}
-                            <td className="py-2.5 px-3.5">
+                            <td className="py-2.5 px-3.5 align-middle">
                               <div className="flex items-center gap-2.5 min-w-0">
                                 <div className="size-7 rounded-lg flex items-center justify-center shrink-0 border border-border/60 bg-muted/40 text-muted-foreground group-hover:text-foreground transition-colors">
                                   <item.icon size={13} />
                                 </div>
-                                <span className="font-bold text-foreground text-xs leading-normal truncate max-w-[260px] sm:max-w-md">
+                                <span className="font-bold text-foreground text-xs leading-none truncate max-w-[260px] sm:max-w-md">
                                   {item.name}
                                 </span>
                               </div>
                             </td>
 
                             {/* Submitted / Updated Date */}
-                            <td className="py-2.5 px-3 whitespace-nowrap text-muted-foreground font-medium text-xs">
+                            <td className="py-2.5 px-3 whitespace-nowrap text-muted-foreground font-medium text-xs align-middle">
                               {item.submissionDate || (item.status === 'draft' ? 'Draft saved' : 'Recently')}
                             </td>
 
                             {/* Status */}
-                            <td className="py-2.5 px-3 whitespace-nowrap">
+                            <td className="py-2.5 px-3 whitespace-nowrap text-center align-middle">
                               <span className={cn(
                                 "inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold tracking-tight shadow-2xs transition-colors",
                                 item.status === 'done'
-                                  ? "bg-[#dcfce7] text-[#166534]"
+                                  ? "bg-[#dcfce7] text-[#166534] dark:bg-emerald-500/15 dark:border dark:border-emerald-500/30 dark:text-emerald-400"
                                   : item.status === 'revision' || item.status === 'returned'
-                                  ? "bg-[#fee2e2] text-[#991b1b]"
+                                  ? "bg-[#fee2e2] text-[#991b1b] dark:bg-rose-500/15 dark:border dark:border-rose-500/30 dark:text-rose-400"
                                   : item.status === 'pending'
-                                  ? "bg-[#ffedd5] text-[#9a3412]"
-                                  : "bg-[#dbeafe] text-[#1e40af]"
+                                  ? "bg-[#ffedd5] text-[#9a3412] dark:bg-amber-500/15 dark:border dark:border-amber-500/30 dark:text-[#fbbf24]"
+                                  : "bg-[#dbeafe] text-[#1e40af] dark:bg-sky-500/15 dark:border dark:border-sky-500/30 dark:text-sky-400"
                               )}>
                                 {item.statusLabel}
                               </span>
                             </td>
 
                             {/* Action */}
-                            <td className="py-2.5 px-3.5 text-right whitespace-nowrap">
+                            <td className="py-2.5 px-3.5 text-right whitespace-nowrap align-middle">
                               <Link to={item.link}>
                                 <Button
                                   variant={item.status === 'revision' || item.status === 'returned' ? 'danger' : item.status === 'done' ? 'outline' : 'primary'}
