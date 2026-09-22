@@ -1116,20 +1116,20 @@ export const StudentDashboard: React.FC = () => {
 
               {/* Trainee Information Badges (Single Row, Aligned next to ID & Section) */}
               <div className="flex items-center gap-2 overflow-x-auto scrollbar-none pt-0.5 w-full">
-                <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[11px] font-semibold bg-muted/60 dark:bg-muted/40 border border-border/70 text-foreground shadow-2xs hover:bg-muted transition-colors shrink-0 whitespace-nowrap">
-                  <UserIcon size={11} className="text-primary shrink-0" />
+                <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[11px] font-semibold bg-muted/60 dark:bg-muted/40 border border-border/40 text-foreground shadow-2xs hover:bg-muted transition-colors shrink-0 whitespace-nowrap">
+                  <UserIcon size={11} className="text-muted-foreground shrink-0" />
                   <span>ID: {studentId || user?.studentId || '2023-010482'}</span>
                 </span>
-                <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[11px] font-semibold bg-muted/60 dark:bg-muted/40 border border-border/70 text-foreground shadow-2xs hover:bg-muted transition-colors shrink-0 whitespace-nowrap">
-                  <GraduationCapIcon size={11} className="text-blue-500 dark:text-blue-400 shrink-0" />
+                <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[11px] font-semibold bg-muted/60 dark:bg-muted/40 border border-border/40 text-foreground shadow-2xs hover:bg-muted transition-colors shrink-0 whitespace-nowrap">
+                  <GraduationCapIcon size={11} className="text-muted-foreground shrink-0" />
                   <span>{displayProgram} • {sectionName || user?.section || 'BSIT 402'}</span>
                 </span>
-                <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[11px] font-semibold bg-muted/60 dark:bg-muted/40 border border-border/70 text-foreground shadow-2xs hover:bg-muted transition-colors shrink-0 whitespace-nowrap">
-                  <UserCheckIcon size={11} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+                <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[11px] font-semibold bg-muted/60 dark:bg-muted/40 border border-border/40 text-foreground shadow-2xs hover:bg-muted transition-colors shrink-0 whitespace-nowrap">
+                  <UserCheckIcon size={11} className="text-muted-foreground shrink-0" />
                   <span>Mentor: {adviserName}</span>
                 </span>
-                <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[11px] font-semibold bg-muted/60 dark:bg-muted/40 border border-border/70 text-foreground shadow-2xs hover:bg-muted transition-colors shrink-0 whitespace-nowrap">
-                  <Briefcase size={11} className="text-amber-600 dark:text-amber-400 shrink-0" />
+                <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[11px] font-semibold bg-muted/60 dark:bg-muted/40 border border-border/40 text-foreground shadow-2xs hover:bg-muted transition-colors shrink-0 whitespace-nowrap">
+                  <Briefcase size={11} className="text-muted-foreground shrink-0" />
                   <span>{isAssignedCompany ? companyName : 'Awaiting Match'}</span>
                 </span>
               </div>
@@ -1530,16 +1530,7 @@ export const StudentDashboard: React.FC = () => {
                             {/* Document Info */}
                             <td className="py-2.5 px-3.5">
                               <div className="flex items-center gap-2.5">
-                                <div className={cn(
-                                  "size-7.5 rounded-lg flex items-center justify-center shrink-0 border",
-                                  item.status === 'done'
-                                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
-                                    : item.status === 'revision' || item.status === 'returned'
-                                    ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
-                                    : item.status === 'pending'
-                                    ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
-                                    : "bg-muted/80 text-muted-foreground border-border/60"
-                                )}>
+                                <div className="size-7.5 rounded-lg flex items-center justify-center shrink-0 bg-muted/60 dark:bg-muted/40 border border-border/40 text-muted-foreground group-hover:text-foreground transition-colors">
                                   <item.icon size={14} />
                                 </div>
                                 <div className="min-w-0">
@@ -1560,30 +1551,8 @@ export const StudentDashboard: React.FC = () => {
 
                             {/* Status */}
                             <td className="py-2.5 px-3 whitespace-nowrap">
-                              <span className={cn(
-                                "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10.5px] font-bold border",
-                                item.status === 'done'
-                                  ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
-                                  : item.status === 'revision' || item.status === 'returned'
-                                  ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
-                                  : item.status === 'pending'
-                                  ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
-                                  : item.status === 'draft'
-                                  ? "bg-primary/10 text-primary border-primary/20"
-                                  : "bg-muted/70 text-muted-foreground border-border/70"
-                              )}>
-                                <span className={cn(
-                                  "size-1.5 rounded-full",
-                                  item.status === 'done'
-                                    ? "bg-emerald-500"
-                                    : item.status === 'revision' || item.status === 'returned'
-                                    ? "bg-rose-500"
-                                    : item.status === 'pending'
-                                    ? "bg-amber-500"
-                                    : item.status === 'draft'
-                                    ? "bg-primary"
-                                    : "bg-muted-foreground/60"
-                                )} />
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10.5px] font-bold bg-muted/60 dark:bg-muted/40 text-foreground/90 border border-border/40">
+                                <span className="size-1.5 rounded-full bg-foreground/70" />
                                 <span>{item.statusLabel}</span>
                               </span>
                             </td>
@@ -1618,7 +1587,7 @@ export const StudentDashboard: React.FC = () => {
         <div className="bg-card border border-border/70 rounded-2xl p-3.5 sm:p-4 shadow-2xs hover:shadow-xs transition-all space-y-2.5">
           {/* Header */}
           <div className="flex items-center gap-2 pb-0.5 border-b border-border/60">
-            <CalendarIcon size={15} className="text-primary shrink-0" />
+            <CalendarIcon size={15} className="text-muted-foreground shrink-0" />
             <h2 className="text-sm sm:text-base font-bold text-foreground tracking-tight">Calendar</h2>
           </div>
 
@@ -1681,14 +1650,14 @@ export const StudentDashboard: React.FC = () => {
           <div className="pt-1.5 border-t border-border/60 flex items-center justify-between text-[11px]">
             <Link
               to="/student/documents?phase=in_ojt"
-              className="text-primary font-bold hover:underline cursor-pointer"
+              className="text-muted-foreground hover:text-foreground font-bold hover:underline cursor-pointer transition-colors"
             >
               full calendar
             </Link>
             <button
               type="button"
               onClick={() => setIsCalendarHidden(prev => !prev)}
-              className="text-primary font-bold hover:underline cursor-pointer"
+              className="text-muted-foreground hover:text-foreground font-bold hover:underline cursor-pointer transition-colors"
             >
               {isCalendarHidden ? 'show' : 'hide'}
             </button>
@@ -1699,7 +1668,7 @@ export const StudentDashboard: React.FC = () => {
         <div className="bg-card border border-border/70 rounded-2xl p-3.5 sm:p-4 shadow-2xs hover:shadow-xs transition-all space-y-2.5">
           <div className="flex items-center justify-between pb-0.5 border-b border-border/60">
             <div className="flex items-center gap-2">
-              <CheckCircle2 size={15} className="text-primary shrink-0" />
+              <CheckCircle2 size={15} className="text-muted-foreground shrink-0" />
               <h2 className="text-sm sm:text-base font-bold text-foreground tracking-tight">To-do</h2>
             </div>
             <div className="flex items-center gap-1">
@@ -1757,10 +1726,10 @@ export const StudentDashboard: React.FC = () => {
             <button
               type="button"
               onClick={() => setIsDueDocsExpanded(prev => !prev)}
-              className="flex items-center justify-between w-full py-1 text-primary hover:underline transition-colors font-semibold group cursor-pointer text-xs"
+              className="flex items-center justify-between w-full py-1 text-foreground hover:text-foreground/80 transition-colors font-semibold group cursor-pointer text-xs"
             >
               <div className="flex items-center gap-2 min-w-0">
-                <FileTextIcon size={14} className="text-primary shrink-0 group-hover:scale-110 transition-transform" />
+                <FileTextIcon size={14} className="text-muted-foreground group-hover:text-foreground shrink-0 group-hover:scale-110 transition-transform" />
                 <span className="truncate text-xs font-bold">
                   {dueDocumentsList.length} assignments due
                 </span>
@@ -1786,21 +1755,12 @@ export const StudentDashboard: React.FC = () => {
                         className="flex items-center justify-between gap-2 py-1.5 px-1 rounded-md text-xs hover:bg-muted/40 transition-colors group cursor-pointer"
                       >
                         <div className="flex items-center gap-2 min-w-0 flex-1">
-                          <span className="size-1 rounded-full bg-primary/70 shrink-0 group-hover:bg-primary group-hover:scale-125 transition-transform" />
-                          <span className="truncate text-xs font-semibold text-foreground group-hover:text-primary transition-colors">
+                          <span className="size-1 rounded-full bg-muted-foreground/60 shrink-0 group-hover:bg-foreground group-hover:scale-125 transition-transform" />
+                          <span className="truncate text-xs font-semibold text-foreground group-hover:text-foreground transition-colors">
                             {req.name}
                           </span>
                         </div>
-                        <span className={cn(
-                          "text-[10px] font-bold px-1.5 py-0.2 rounded-full shrink-0 tabular-nums",
-                          req.status === 'revision' || req.status === 'returned'
-                            ? "bg-rose-500/10 text-rose-500"
-                            : req.status === 'draft'
-                            ? "bg-sky-500/10 text-sky-500"
-                            : req.status === 'pending'
-                            ? "bg-amber-500/10 text-amber-500"
-                            : "bg-muted text-muted-foreground"
-                        )}>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 tabular-nums bg-muted/80 dark:bg-muted/50 text-muted-foreground border border-border/40">
                           {req.status === 'revision' || req.status === 'returned'
                             ? 'Revise'
                             : req.status === 'draft'
@@ -1872,7 +1832,7 @@ export const StudentDashboard: React.FC = () => {
         {/* 3. Announcements Widget (Compact & Theme-Aware) */}
         <div className="bg-card border border-border/70 rounded-2xl p-3 sm:p-3.5 shadow-2xs hover:shadow-xs transition-all space-y-2">
           <div className="flex items-center gap-2 pb-0.5 border-b border-border/60">
-            <Megaphone size={15} className="text-primary shrink-0" />
+            <Megaphone size={15} className="text-muted-foreground shrink-0" />
             <h2 className="text-sm sm:text-base font-bold text-foreground tracking-tight">Announcements</h2>
           </div>
 
