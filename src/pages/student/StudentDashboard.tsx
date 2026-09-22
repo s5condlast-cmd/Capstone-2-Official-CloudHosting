@@ -985,18 +985,18 @@ export const StudentDashboard: React.FC = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 sm:gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-3.5">
               {[...Array(3)].map((_, i) => (
-                <div key={i} className="bg-card border border-border/70 rounded-2xl flex flex-col justify-between overflow-hidden">
-                  <div className="flex items-center gap-3.5 px-5 pt-5 sm:px-6 sm:pt-6">
-                    <Skeleton className="size-[52px] rounded-full shrink-0" />
+                <div key={i} className="bg-card border border-border/35 rounded-2xl flex flex-col justify-between overflow-hidden">
+                  <div className="flex items-center gap-3 px-3.5 pt-3.5 sm:px-4 sm:pt-4">
+                    <Skeleton className="size-11 rounded-full shrink-0" />
                     <div className="space-y-1.5 flex-1 min-w-0">
-                      <Skeleton className="h-5 w-24 rounded-md" />
-                      <Skeleton className="h-3.5 w-32 rounded-md" />
+                      <Skeleton className="h-4 w-28 rounded-md" />
+                      <Skeleton className="h-3 w-20 rounded-md" />
                     </div>
                   </div>
-                  <div className="mt-5 border-t border-border/70 px-5 py-3 sm:px-6 sm:py-3.5 flex justify-end">
-                    <Skeleton className="h-4 w-28 rounded-md" />
+                  <div className="mt-3 border-t border-border/35 px-3.5 py-2 sm:px-4 sm:py-2.5 flex justify-end">
+                    <Skeleton className="h-3.5 w-24 rounded-md" />
                   </div>
                 </div>
               ))}
@@ -1142,32 +1142,32 @@ export const StudentDashboard: React.FC = () => {
           </div>
 
           {/* Card 2: 3 Metric Stat Cards in a row (Approved, In Progress, Grade) */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 sm:gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-3.5">
             {/* Card 2A: Approved Documents */}
-            <div className="bg-card border border-border/70 rounded-2xl shadow-2xs hover:shadow-xs transition-all duration-200 flex flex-col justify-between overflow-hidden group">
-              <div className="flex items-center gap-3.5 px-5 pt-5 sm:px-6 sm:pt-6">
+            <div className="bg-card border border-border/35 rounded-2xl shadow-2xs hover:shadow-xs transition-all duration-200 flex flex-col justify-between overflow-hidden group">
+              <div className="flex items-center gap-3 px-3.5 pt-3.5 sm:px-4 sm:pt-4">
                 <ProgressCircle
                   value={approvedPercent}
-                  size={52}
+                  size={46}
                   strokeWidth={4.5}
                   colorClass="text-emerald-500 dark:text-emerald-400"
                   trackClass="text-emerald-100 dark:text-emerald-950/60"
                 >
-                  <span className="text-sm sm:text-[15px] font-bold text-foreground tabular-nums">
+                  <span className="text-sm font-bold text-foreground tabular-nums">
                     {approvedDocsCount}
                   </span>
                 </ProgressCircle>
                 <div className="min-w-0 flex-1">
-                  <div className="text-xl sm:text-2xl font-bold text-foreground tracking-tight leading-none tabular-nums">
-                    {approvedDocsCount} <span className="text-xs font-semibold text-muted-foreground">/ {accessibleRequirementsCount}</span>
-                  </div>
-                  <p className="text-xs font-medium text-muted-foreground mt-1 truncate">
+                  <h3 className="text-sm sm:text-[15px] font-bold text-foreground tracking-tight leading-tight truncate">
                     Approved Documents
+                  </h3>
+                  <p className="text-xs font-medium text-muted-foreground mt-0.5 truncate">
+                    / {accessibleRequirementsCount} required
                   </p>
                 </div>
               </div>
 
-              <div className="mt-5 border-t border-border/70 px-5 py-3 sm:px-6 sm:py-3.5">
+              <div className="mt-3 border-t border-border/35 px-3.5 py-2 sm:px-4 sm:py-2.5">
                 <Link
                   to="/student/documents"
                   className="flex items-center justify-end gap-1.5 text-xs sm:text-[13px] font-semibold text-primary hover:text-primary/80 transition-colors group/link cursor-pointer"
@@ -1179,30 +1179,30 @@ export const StudentDashboard: React.FC = () => {
             </div>
 
             {/* Card 2B: In Progress Documents */}
-            <div className="bg-card border border-border/70 rounded-2xl shadow-2xs hover:shadow-xs transition-all duration-200 flex flex-col justify-between overflow-hidden group">
-              <div className="flex items-center gap-3.5 px-5 pt-5 sm:px-6 sm:pt-6">
+            <div className="bg-card border border-border/35 rounded-2xl shadow-2xs hover:shadow-xs transition-all duration-200 flex flex-col justify-between overflow-hidden group">
+              <div className="flex items-center gap-3 px-3.5 pt-3.5 sm:px-4 sm:pt-4">
                 <ProgressCircle
                   value={inReviewPercent}
-                  size={52}
+                  size={46}
                   strokeWidth={4.5}
                   colorClass="text-amber-500 dark:text-amber-400"
                   trackClass="text-amber-100 dark:text-amber-950/60"
                 >
-                  <span className="text-sm sm:text-[15px] font-bold text-foreground tabular-nums">
+                  <span className="text-sm font-bold text-foreground tabular-nums">
                     {inReviewCount}
                   </span>
                 </ProgressCircle>
                 <div className="min-w-0 flex-1">
-                  <div className="text-xl sm:text-2xl font-bold text-foreground tracking-tight leading-none tabular-nums">
-                    {inReviewCount} <span className="text-xs font-semibold text-muted-foreground">in review</span>
-                  </div>
-                  <p className="text-xs font-medium text-muted-foreground mt-1 truncate">
+                  <h3 className="text-sm sm:text-[15px] font-bold text-foreground tracking-tight leading-tight truncate">
                     Review in Progress
+                  </h3>
+                  <p className="text-xs font-medium text-muted-foreground mt-0.5 truncate">
+                    Awaiting mentor review
                   </p>
                 </div>
               </div>
 
-              <div className="mt-5 border-t border-border/70 px-5 py-3 sm:px-6 sm:py-3.5">
+              <div className="mt-3 border-t border-border/35 px-3.5 py-2 sm:px-4 sm:py-2.5">
                 <Link
                   to="/student/reviews"
                   className="flex items-center justify-end gap-1.5 text-xs sm:text-[13px] font-semibold text-primary hover:text-primary/80 transition-colors group/link cursor-pointer"
@@ -1214,36 +1214,30 @@ export const StudentDashboard: React.FC = () => {
             </div>
 
             {/* Card 2C: Practicum Grade */}
-            <div className="bg-card border border-border/70 rounded-2xl shadow-2xs hover:shadow-xs transition-all duration-200 flex flex-col justify-between overflow-hidden group">
-              <div className="flex items-center gap-3.5 px-5 pt-5 sm:px-6 sm:pt-6">
+            <div className="bg-card border border-border/35 rounded-2xl shadow-2xs hover:shadow-xs transition-all duration-200 flex flex-col justify-between overflow-hidden group">
+              <div className="flex items-center gap-3 px-3.5 pt-3.5 sm:px-4 sm:pt-4">
                 <ProgressCircle
                   value={gradePercent}
-                  size={52}
+                  size={46}
                   strokeWidth={4.5}
                   colorClass="text-blue-500 dark:text-blue-400"
                   trackClass="text-blue-100 dark:text-blue-950/60"
                 >
-                  <span className="text-sm sm:text-[15px] font-bold text-foreground tabular-nums">
+                  <span className="text-sm font-bold text-foreground tabular-nums">
                     {studentPracticumScore !== null ? Math.round(studentPracticumScore) : '—'}
                   </span>
                 </ProgressCircle>
                 <div className="min-w-0 flex-1">
-                  <div className="text-xl sm:text-2xl font-bold text-foreground tracking-tight leading-none tabular-nums">
-                    {studentPracticumScore !== null ? (
-                      <>
-                        {studentPracticumScore.toFixed(1)} <span className="text-xs font-semibold text-muted-foreground">/ 100</span>
-                      </>
-                    ) : (
-                      'Pending'
-                    )}
-                  </div>
-                  <p className="text-xs font-medium text-muted-foreground mt-1 truncate">
-                    {studentPracticumScore !== null ? 'Practicum Grade' : 'Awaiting evaluation'}
+                  <h3 className="text-sm sm:text-[15px] font-bold text-foreground tracking-tight leading-tight truncate">
+                    Practicum Grade
+                  </h3>
+                  <p className="text-xs font-medium text-muted-foreground mt-0.5 truncate">
+                    {studentPracticumScore !== null ? `${studentPracticumScore.toFixed(1)} / 100` : 'Awaiting evaluation'}
                   </p>
                 </div>
               </div>
 
-              <div className="mt-5 border-t border-border/70 px-5 py-3 sm:px-6 sm:py-3.5">
+              <div className="mt-3 border-t border-border/35 px-3.5 py-2 sm:px-4 sm:py-2.5">
                 <Link
                   to="/student/documents?phase=final"
                   className="flex items-center justify-end gap-1.5 text-xs sm:text-[13px] font-semibold text-primary hover:text-primary/80 transition-colors group/link cursor-pointer"
@@ -1260,7 +1254,7 @@ export const StudentDashboard: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_300px] gap-4 items-stretch">
           {/* Total Hours Overview Chart Card */}
           <div className="min-w-0 flex flex-col h-full">
-            <div className="bg-card border border-border/70 rounded-2xl p-4 sm:p-4.5 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between h-full min-h-[310px] space-y-2.5">
+            <div className="bg-card border border-border/35 rounded-2xl p-4 sm:p-4.5 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between h-full min-h-[310px] space-y-2.5">
               <div className="flex items-center justify-between pb-0.5">
                 <div>
                   <h2 className="text-base font-bold text-foreground tracking-tight">Total Hours Overview</h2>
@@ -1295,11 +1289,12 @@ export const StudentDashboard: React.FC = () => {
                     <AreaChart
                       data={monthlyChartData}
                       margin={{ top: 12, right: 12, left: -22, bottom: 0 }}
+                      className="text-foreground"
                     >
                       <defs>
                         <linearGradient id="hoursAreaGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#2563eb" stopOpacity={0.4} />
-                          <stop offset="100%" stopColor="#2563eb" stopOpacity={0.0} />
+                          <stop offset="0%" stopColor="currentColor" stopOpacity={0.25} />
+                          <stop offset="100%" stopColor="currentColor" stopOpacity={0.0} />
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" className="text-border/40" />
@@ -1326,7 +1321,7 @@ export const StudentDashboard: React.FC = () => {
                               <div className="bg-popover/95 backdrop-blur-md border border-border px-3 py-1.5 rounded-xl shadow-lg text-xs space-y-0.5">
                                 <p className="font-bold text-foreground">{label}</p>
                                 <p className="text-xs text-muted-foreground">
-                                  Hours Logged: <span className="text-primary font-black">{payload[0].value} hrs</span>
+                                  Hours Logged: <span className="text-foreground font-black">{payload[0].value} hrs</span>
                                 </p>
                                 <p className="text-[10px] text-muted-foreground font-medium">Monthly Target: 160 hrs</p>
                               </div>
@@ -1338,12 +1333,13 @@ export const StudentDashboard: React.FC = () => {
                       <Area
                         type="monotone"
                         dataKey="value"
-                        stroke="#2563eb"
+                        stroke="currentColor"
                         strokeWidth={2.5}
                         fillOpacity={1}
                         fill="url(#hoursAreaGradient)"
-                        dot={{ r: 3.5, fill: '#2563eb', stroke: 'var(--color-card, #fff)', strokeWidth: 1.5 }}
-                        activeDot={{ r: 5.5, fill: '#1d4ed8', stroke: 'var(--color-card, #fff)', strokeWidth: 2 }}
+                        dot={{ r: 3.5, fill: 'currentColor', stroke: 'var(--color-card, #000)', strokeWidth: 1.5 }}
+                        activeDot={{ r: 5.5, fill: 'currentColor', stroke: 'var(--color-card, #000)', strokeWidth: 2 }}
+                        className="text-foreground"
                       />
                     </AreaChart>
                   ) : (
@@ -1375,7 +1371,7 @@ export const StudentDashboard: React.FC = () => {
                               <div className="bg-popover/95 backdrop-blur-md border border-border px-3 py-1.5 rounded-xl shadow-lg text-xs space-y-0.5">
                                 <p className="font-bold text-foreground">{label}</p>
                                 <p className="text-xs text-muted-foreground">
-                                  Hours Logged: <span className="text-primary font-black">{payload[0].value} hrs</span>
+                                  Hours Logged: <span className="text-foreground font-black">{payload[0].value} hrs</span>
                                 </p>
                                 <p className="text-[10px] text-muted-foreground font-medium">Daily Target: 8.0 hrs</p>
                               </div>
@@ -1388,8 +1384,14 @@ export const StudentDashboard: React.FC = () => {
                         {weeklyBarData.map((entry, index) => (
                           <Cell
                             key={`bar-${index}`}
-                            fill={entry.isCurrent ? '#2563eb' : entry.value > 0 ? '#60a5fa' : '#94a3b840'}
-                            className={entry.isCurrent ? 'fill-blue-600 dark:fill-blue-500' : entry.value > 0 ? 'fill-blue-400 dark:fill-blue-400' : 'fill-muted-foreground/20 dark:fill-muted-foreground/15'}
+                            fill="currentColor"
+                            className={
+                              entry.isCurrent
+                                ? 'text-foreground fill-current'
+                                : entry.value > 0
+                                ? 'text-muted-foreground fill-current'
+                                : 'text-muted-foreground/20 dark:text-muted-foreground/15 fill-current'
+                            }
                           />
                         ))}
                       </Bar>
@@ -1402,7 +1404,7 @@ export const StudentDashboard: React.FC = () => {
 
           {/* Practicum Progress Card */}
           <div className="min-w-0 flex flex-col h-full">
-            <div className="bg-card border border-border/70 rounded-2xl p-4 sm:p-4.5 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between h-full min-h-[310px] space-y-3">
+            <div className="bg-card border border-border/35 rounded-2xl p-4 sm:p-4.5 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between h-full min-h-[310px] space-y-3">
               <div className="flex items-center justify-between pb-0.5">
                 <div>
                   <h2 className="text-base font-bold text-foreground tracking-tight">Practicum Progress</h2>
