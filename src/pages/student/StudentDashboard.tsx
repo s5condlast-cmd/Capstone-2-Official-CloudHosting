@@ -794,10 +794,10 @@ export const StudentDashboard: React.FC = () => {
   if (loading) {
     return (
       <div className="space-y-4 pb-10 animate-in fade-in duration-300">
-        {/* ─── ROW 1 SKELETON: Hero & Stats (8 cols) + Donut (4 cols) ────── */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+        {/* ─── ROW 1 SKELETON: Hero & Stats (1fr) + Donut (316px) ────────────── */}
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_316px] gap-4 items-stretch">
           {/* Left: Hero Banner + 3 Stat Cards */}
-          <div className="lg:col-span-8 flex flex-col justify-between gap-3.5 sm:gap-4 min-w-0">
+          <div className="flex flex-col justify-between gap-3.5 sm:gap-4 min-w-0">
             {/* Hero Banner Skeleton */}
             <div className="rounded-2xl sm:rounded-3xl p-4 sm:p-5 bg-card border border-border/70 h-[140px] flex items-center justify-between gap-4">
               <div className="space-y-2 flex-1">
@@ -831,7 +831,7 @@ export const StudentDashboard: React.FC = () => {
           </div>
 
           {/* Right: Donut Card Skeleton */}
-          <div className="lg:col-span-4 min-w-0 flex flex-col">
+          <div className="min-w-0 flex flex-col">
             <div className="p-4 sm:p-4.5 bg-card border border-border/70 rounded-2xl h-full flex flex-col justify-between min-h-[250px]">
               <div className="flex justify-between items-center">
                 <Skeleton className="h-4.5 w-32 rounded-md" />
@@ -847,10 +847,10 @@ export const StudentDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* ─── ROW 2 SKELETON: Total Hours (8 cols) + To-do List (4 cols) ─── */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
-          <div className="lg:col-span-8 min-w-0 flex flex-col">
-            <div className="p-4 sm:p-4.5 bg-card border border-border/70 rounded-2xl h-full flex flex-col justify-between min-h-[240px]">
+        {/* ─── ROW 2 SKELETON: Total Hours (1fr) + To-do List (316px) ──────────── */}
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_316px] gap-4 items-stretch">
+          <div className="min-w-0 flex flex-col">
+            <div className="p-4 sm:p-4.5 bg-card border border-border/70 rounded-2xl h-full flex flex-col justify-between min-h-[308px]">
               <div className="flex justify-between items-center">
                 <div className="space-y-1">
                   <Skeleton className="h-4.5 w-40 rounded-md" />
@@ -866,8 +866,8 @@ export const StudentDashboard: React.FC = () => {
             </div>
           </div>
 
-          <div className="lg:col-span-4 min-w-0 flex flex-col">
-            <div className="p-4 sm:p-4.5 bg-card border border-border/70 rounded-2xl h-full flex flex-col justify-between min-h-[240px] space-y-2.5">
+          <div className="min-w-0 flex flex-col">
+            <div className="p-4 sm:p-4.5 bg-card border border-border/70 rounded-2xl h-full flex flex-col justify-between min-h-[308px] space-y-2.5">
               <div className="flex justify-between items-center">
                 <Skeleton className="h-4.5 w-24 rounded-md" />
                 <Skeleton className="h-5 w-12 rounded-lg" />
@@ -881,8 +881,8 @@ export const StudentDashboard: React.FC = () => {
         </div>
 
         {/* ─── ROW 3 SKELETON: Submissions Tracker ─────────────────────────── */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-          <div className="lg:col-span-8 min-w-0">
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_316px] gap-4">
+          <div className="min-w-0">
             <div className="p-4 sm:p-5 bg-card border border-border/70 rounded-2xl space-y-3.5">
               <div className="flex justify-between items-center">
                 <Skeleton className="h-5 w-52 rounded-md" />
@@ -905,10 +905,10 @@ export const StudentDashboard: React.FC = () => {
 
   return (
     <div className="space-y-4 pb-10 animate-in fade-in duration-300">
-      {/* ─── ROW 1: Hero & Quick Stats (8 cols) + Practicum Progress Donut (4 cols) ─── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+      {/* ─── ROW 1: Hero & Quick Stats (1fr) + Practicum Progress Donut (316px) ─── */}
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_316px] gap-4 items-stretch">
         {/* Left: Hero Banner + 3 Stat Cards */}
-        <div className="lg:col-span-8 flex flex-col justify-between gap-3.5 sm:gap-4 min-w-0">
+        <div className="flex flex-col justify-between gap-3.5 sm:gap-4 min-w-0">
           {/* Card 1: Compact Hero Greeting Banner */}
           <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-r from-blue-600 via-blue-600 to-indigo-600 text-white p-4 sm:p-5 shadow-xs border border-blue-500/30">
             {/* Ambient Lighting Gradients */}
@@ -1044,7 +1044,7 @@ export const StudentDashboard: React.FC = () => {
         </div>
 
         {/* Right: Card 5: Practicum Progress Donut Card */}
-        <div className="lg:col-span-4 min-w-0 flex flex-col">
+        <div className="min-w-0 flex flex-col">
           <div className="bg-card border border-border/70 rounded-2xl p-4 sm:p-4.5 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between h-full space-y-2.5">
             <div className="flex items-center justify-between pb-0.5">
               <h2 className="text-base font-bold text-foreground tracking-tight">Practicum Progress</h2>
@@ -1109,11 +1109,11 @@ export const StudentDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* ─── ROW 2: Total Hours Overview (8 cols) + To-do List (4 cols) ─────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+      {/* ─── ROW 2: Total Hours Overview (1fr) + To-do List (316px) ─────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_316px] gap-4 items-stretch">
         {/* Left: Total Hours Overview Chart Card */}
-        <div className="lg:col-span-8 min-w-0 flex flex-col">
-          <div className="bg-card border border-border/70 rounded-2xl p-4 sm:p-4.5 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between h-full space-y-2.5">
+        <div className="min-w-0 flex flex-col">
+          <div className="bg-card border border-border/70 rounded-2xl p-4 sm:p-4.5 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between h-full min-h-[308px] space-y-2.5">
             <div className="flex items-center justify-between pb-0.5">
               <div>
                 <h2 className="text-base font-bold text-foreground tracking-tight">Total Hours Overview</h2>
@@ -1201,8 +1201,8 @@ export const StudentDashboard: React.FC = () => {
         </div>
 
         {/* Right: Card 6: To-do List Card */}
-        <div className="lg:col-span-4 min-w-0 flex flex-col">
-          <div className="bg-card border border-border/70 rounded-2xl p-4 sm:p-4.5 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between h-full space-y-2.5">
+        <div className="min-w-0 flex flex-col">
+          <div className="bg-card border border-border/70 rounded-2xl p-4 sm:p-4.5 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between h-full min-h-[308px] space-y-2.5">
             <div className="flex items-center justify-between pb-0.5 border-b border-border/60">
               <h2 className="text-base font-bold text-foreground tracking-tight">To do list</h2>
               <div className="flex items-center gap-1">
@@ -1332,8 +1332,8 @@ export const StudentDashboard: React.FC = () => {
       </div>
 
       {/* ─── ROW 3: My Document Submissions & Reviews Active Tracker ─────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        <div className="lg:col-span-8 min-w-0">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_316px] gap-4">
+        <div className="min-w-0">
           {/* Card 4: My Document Submissions & Reviews Active Tracker */}
           <div className="bg-card border border-border/70 rounded-2xl p-4 sm:p-5 shadow-2xs hover:shadow-xs transition-all space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/70 pb-3">
