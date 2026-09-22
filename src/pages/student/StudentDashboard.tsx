@@ -676,13 +676,28 @@ export const StudentDashboard: React.FC = () => {
   const activePendingCount = useMemo(() => activeSubmissions.filter(r => r.status === 'pending').length, [activeSubmissions]);
   const activeRevisionCount = useMemo(() => activeSubmissions.filter(r => r.status === 'revision' || r.status === 'returned').length, [activeSubmissions]);
 
-  const totalPendingCount = allRequirements.filter(r => r.status === 'pending').length;
-  const totalRevisionCount = allRequirements.filter(r => r.status === 'revision' || r.status === 'returned').length;
-  const documentsNeedingAttention = useMemo(() => {
-    return allRequirements.filter(
-      r => r.status === 'revision' || r.status === 'returned' || (Boolean(r.feedback) && r.feedback!.trim().length > 0)
-    );
+  const accessibleRequirementsCount = useMemo(() => {
+    return allRequirements.filter(r => r.status !== 'locked').length;
   }, [allRequirements]);
+
+  const approvedDocsCount = useMemo(() => {
+    return allRequirements.filter(r => r.status === 'done').length;
+  }, [allRequirements]);
+
+  const inProgressDocsCount = useMemo(() => {
+    return allRequirements.filter(
+      r => r.status === 'pending' || r.status === 'revision' || r.status === 'returned' || r.status === 'draft'
+    ).length;
+  }, [allRequirements]);
+
+  const studentPracticumScore = useMemo<number | null>(() => {
+    const appraisalDoc = documents.find(d => (d.doc_type || '').toLowerCase().includes('appraisal'));
+    if (appraisalDoc?.ai_findings && typeof appraisalDoc.ai_findings === 'object' && 'score' in appraisalDoc.ai_findings) {
+      const parsed = Number((appraisalDoc.ai_findings as any).score);
+      if (Number.isFinite(parsed)) return parsed;
+    }
+    return null;
+  }, [documents]);
 
   // Collapsible Dropview State for Due Documents
   const [isDueDocsExpanded, setIsDueDocsExpanded] = useState<boolean>(true);
@@ -1022,47 +1037,47 @@ export const StudentDashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Card 2: 3 Metric Stat Cards in a row */}
+          {/* Card 2: 3 Metric Stat Cards in a row (Approved, In Progress, Grade) */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 sm:gap-4">
-            {/* Card 2A: Total Hours Logged */}
+            {/* Card 2A: Approved Documents */}
             <div className="bg-card border border-border/70 rounded-2xl p-3.5 sm:p-4 shadow-2xs hover:shadow-xs transition-all duration-200 flex flex-col justify-between group">
               <div className="flex items-center gap-3">
-                <div className="size-10 rounded-full bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400 border border-blue-100 dark:border-blue-900/40 flex items-center justify-center shrink-0">
-                  <ClockIcon size={18} />
+                <div className="size-10 rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/40 flex items-center justify-center shrink-0">
+                  <CheckCircle2 size={18} />
                 </div>
                 <div className="min-w-0">
                   <div className="text-xl sm:text-2xl font-black text-foreground tracking-tight leading-none tabular-nums">
-                    {renderedHours.toFixed(1)} <span className="text-xs font-semibold text-muted-foreground">/ {totalHours}h</span>
+                    {approvedDocsCount} <span className="text-xs font-semibold text-muted-foreground">/ {accessibleRequirementsCount}</span>
                   </div>
                   <p className="text-xs font-medium text-muted-foreground mt-0.5 truncate">
-                    Total Hours Logged
+                    Approved Documents
                   </p>
                 </div>
               </div>
 
               <div className="pt-2 mt-2 border-t border-border/50">
                 <Link
-                  to="/student/documents?phase=in_ojt"
+                  to="/student/documents"
                   className="flex items-center justify-between text-xs font-semibold text-muted-foreground group-hover:text-primary transition-colors cursor-pointer"
                 >
-                  <span>View DTR log</span>
+                  <span>View approved docs</span>
                   <ArrowRightIcon size={12} className="group-hover:translate-x-1 transition-transform" />
                 </Link>
               </div>
             </div>
 
-            {/* Card 2B: Pending Evaluations */}
+            {/* Card 2B: In Progress Documents */}
             <div className="bg-card border border-border/70 rounded-2xl p-3.5 sm:p-4 shadow-2xs hover:shadow-xs transition-all duration-200 flex flex-col justify-between group">
               <div className="flex items-center gap-3">
                 <div className="size-10 rounded-full bg-orange-50 text-orange-600 dark:bg-orange-950/50 dark:text-orange-400 border border-orange-100 dark:border-orange-900/40 flex items-center justify-center shrink-0">
-                  <AlertCircle size={18} />
+                  <ClockIcon size={18} />
                 </div>
                 <div className="min-w-0">
                   <div className="text-xl sm:text-2xl font-black text-foreground tracking-tight leading-none tabular-nums">
-                    {activePendingCount} <span className="text-xs font-semibold text-muted-foreground">/ {activeSubmissions.length} active</span>
+                    {activePendingCount > 0 ? activePendingCount : inProgressDocsCount} <span className="text-xs font-semibold text-muted-foreground">in review</span>
                   </div>
                   <p className="text-xs font-medium text-muted-foreground mt-0.5 truncate">
-                    Pending Evaluations
+                    Review in Progress
                   </p>
                 </div>
               </div>
@@ -1078,28 +1093,34 @@ export const StudentDashboard: React.FC = () => {
               </div>
             </div>
 
-            {/* Card 2C: Host Placement */}
+            {/* Card 2C: Practicum Grade */}
             <div className="bg-card border border-border/70 rounded-2xl p-3.5 sm:p-4 shadow-2xs hover:shadow-xs transition-all duration-200 flex flex-col justify-between group">
               <div className="flex items-center gap-3">
-                <div className="size-10 rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/40 flex items-center justify-center shrink-0">
-                  <BuildingIcon size={18} />
+                <div className="size-10 rounded-full bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400 border border-blue-100 dark:border-blue-900/40 flex items-center justify-center shrink-0">
+                  <AwardIcon size={18} />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="text-base sm:text-lg font-black text-foreground tracking-tight leading-tight truncate" title={isAssignedCompany ? companyName : 'Awaiting Match'}>
-                    {isAssignedCompany ? companyName : 'Awaiting Match'}
+                  <div className="text-xl sm:text-2xl font-black text-foreground tracking-tight leading-none truncate">
+                    {studentPracticumScore !== null ? (
+                      <>
+                        {studentPracticumScore.toFixed(1)} <span className="text-xs font-semibold text-muted-foreground">/ 100</span>
+                      </>
+                    ) : (
+                      'Pending'
+                    )}
                   </div>
                   <p className="text-xs font-medium text-muted-foreground mt-0.5 truncate">
-                    {isAssignedCompany ? `Supervisor: ${supervisorName}` : 'Matching in progress'}
+                    {studentPracticumScore !== null ? 'Practicum Grade' : 'Awaiting evaluation'}
                   </p>
                 </div>
               </div>
 
               <div className="pt-2 mt-2 border-t border-border/50">
                 <Link
-                  to="/student/profile"
+                  to="/student/documents?phase=final"
                   className="flex items-center justify-between text-xs font-semibold text-muted-foreground group-hover:text-primary transition-colors cursor-pointer"
                 >
-                  <span>View placement</span>
+                  <span>View appraisal</span>
                   <ArrowRightIcon size={12} className="group-hover:translate-x-1 transition-transform" />
                 </Link>
               </div>
