@@ -1791,11 +1791,6 @@ export const StudentDashboard: React.FC = () => {
                             {req.name}
                           </span>
                         </div>
-                        {(req.status === 'draft' || req.status === 'revision' || req.status === 'returned') && (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 tabular-nums border bg-muted/80 dark:bg-muted/50 text-muted-foreground border-border/40">
-                            {req.status === 'draft' ? 'Draft' : 'Revise'}
-                          </span>
-                        )}
                       </Link>
                     ))
                   ) : (
