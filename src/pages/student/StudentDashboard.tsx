@@ -836,106 +836,107 @@ export const StudentDashboard: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="space-y-6 pb-12 animate-in fade-in duration-300">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+      <div className="space-y-4 pb-10 animate-in fade-in duration-300">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
           {/* Left Column Skeleton (8 cols) */}
-          <div className="lg:col-span-8 space-y-5 min-w-0">
+          <div className="lg:col-span-8 space-y-4 min-w-0">
             {/* Hero Banner Skeleton */}
-            <div className="rounded-3xl p-6 sm:p-7 bg-card border border-border/70 h-[180px] flex items-center justify-between gap-4">
-              <div className="space-y-2.5 flex-1">
-                <Skeleton className="h-7 w-56 rounded-lg" />
-                <Skeleton className="h-4 w-72 rounded-md" />
-                <div className="flex gap-2 pt-2 flex-wrap">
-                  <Skeleton className="h-6 w-28 rounded-full" />
-                  <Skeleton className="h-6 w-32 rounded-full" />
-                  <Skeleton className="h-6 w-36 rounded-full" />
+            <div className="rounded-2xl sm:rounded-3xl p-4 sm:p-5 bg-card border border-border/70 h-[145px] sm:h-[150px] flex items-center justify-between gap-4">
+              <div className="space-y-2 flex-1">
+                <Skeleton className="h-6 w-48 rounded-lg" />
+                <Skeleton className="h-3.5 w-64 rounded-md" />
+                <div className="flex gap-1.5 pt-1.5 flex-wrap">
+                  <Skeleton className="h-5 w-24 rounded-full" />
+                  <Skeleton className="h-5 w-28 rounded-full" />
+                  <Skeleton className="h-5 w-32 rounded-full" />
+                  <Skeleton className="h-5 w-24 rounded-full" />
                 </div>
               </div>
-              <Skeleton className="w-36 h-28 rounded-2xl shrink-0 hidden sm:block" />
+              <Skeleton className="w-28 h-20 sm:w-36 sm:h-24 rounded-xl shrink-0 hidden sm:block" />
             </div>
 
             {/* 3 Metric Stat Cards Skeleton */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 sm:gap-4">
               {[...Array(3)].map((_, i) => (
-                <div key={i} className="p-5 bg-card border border-border/70 rounded-2xl h-[125px] flex flex-col justify-between">
+                <div key={i} className="p-3.5 sm:p-4 bg-card border border-border/70 rounded-2xl h-[105px] flex flex-col justify-between">
                   <div className="flex items-center gap-3">
-                    <Skeleton className="size-11 rounded-full shrink-0" />
-                    <div className="space-y-1.5 flex-1">
-                      <Skeleton className="h-6 w-20 rounded-md" />
-                      <Skeleton className="h-3 w-28 rounded-md" />
+                    <Skeleton className="size-10 rounded-full shrink-0" />
+                    <div className="space-y-1 flex-1">
+                      <Skeleton className="h-5 w-16 rounded-md" />
+                      <Skeleton className="h-3 w-24 rounded-md" />
                     </div>
                   </div>
-                  <Skeleton className="h-3 w-full rounded-md pt-1" />
+                  <Skeleton className="h-2.5 w-full rounded-md pt-1" />
                 </div>
               ))}
             </div>
 
             {/* Total Hours Chart Skeleton */}
-            <div className="p-5 sm:p-6 bg-card border border-border/70 rounded-2xl h-[310px] flex flex-col justify-between">
+            <div className="p-4 sm:p-4.5 bg-card border border-border/70 rounded-2xl h-[250px] flex flex-col justify-between">
               <div className="flex justify-between items-center">
                 <div className="space-y-1">
-                  <Skeleton className="h-5 w-44 rounded-md" />
-                  <Skeleton className="h-3 w-60 rounded-md" />
+                  <Skeleton className="h-4.5 w-40 rounded-md" />
+                  <Skeleton className="h-3 w-52 rounded-md" />
                 </div>
-                <Skeleton className="h-8 w-32 rounded-xl" />
+                <Skeleton className="h-7 w-28 rounded-lg" />
               </div>
-              <Skeleton className="h-[200px] w-full rounded-xl" />
-              <div className="flex justify-between pt-2">
-                <Skeleton className="h-4 w-36 rounded-md" />
-                <Skeleton className="h-4 w-28 rounded-md" />
+              <Skeleton className="h-[150px] w-full rounded-xl" />
+              <div className="flex justify-between pt-1">
+                <Skeleton className="h-3 w-32 rounded-md" />
+                <Skeleton className="h-3 w-24 rounded-md" />
               </div>
             </div>
 
             {/* Submissions Tracker Skeleton */}
-            <div className="p-5 sm:p-6 bg-card border border-border/70 rounded-2xl space-y-4">
+            <div className="p-4 sm:p-5 bg-card border border-border/70 rounded-2xl space-y-3.5">
               <div className="flex justify-between items-center">
-                <Skeleton className="h-6 w-56 rounded-md" />
-                <Skeleton className="h-8 w-40 rounded-xl" />
+                <Skeleton className="h-5 w-52 rounded-md" />
+                <Skeleton className="h-7 w-36 rounded-xl" />
               </div>
-              <div className="grid grid-cols-3 gap-3">
-                <Skeleton className="h-16 rounded-xl" />
-                <Skeleton className="h-16 rounded-xl" />
-                <Skeleton className="h-16 rounded-xl" />
+              <div className="grid grid-cols-3 gap-2.5">
+                <Skeleton className="h-14 rounded-xl" />
+                <Skeleton className="h-14 rounded-xl" />
+                <Skeleton className="h-14 rounded-xl" />
               </div>
-              <Skeleton className="h-32 w-full rounded-xl" />
+              <Skeleton className="h-28 w-full rounded-xl" />
             </div>
           </div>
 
           {/* Right Column Skeleton (4 cols) */}
-          <div className="lg:col-span-4 space-y-5">
+          <div className="lg:col-span-4 space-y-4">
             {/* Donut Card Skeleton */}
-            <div className="p-5 bg-card border border-border/70 rounded-2xl h-[280px] flex flex-col justify-between">
+            <div className="p-4 sm:p-4.5 bg-card border border-border/70 rounded-2xl h-[250px] flex flex-col justify-between">
               <div className="flex justify-between items-center">
-                <Skeleton className="h-5 w-36 rounded-md" />
-                <Skeleton className="size-6 rounded-md" />
+                <Skeleton className="h-4.5 w-32 rounded-md" />
+                <Skeleton className="size-5 rounded-md" />
               </div>
-              <Skeleton className="size-36 rounded-full mx-auto" />
-              <div className="grid grid-cols-3 gap-2 pt-2">
-                <Skeleton className="h-8 rounded-lg" />
-                <Skeleton className="h-8 rounded-lg" />
-                <Skeleton className="h-8 rounded-lg" />
+              <Skeleton className="size-32 rounded-full mx-auto" />
+              <div className="grid grid-cols-3 gap-1.5 pt-1">
+                <Skeleton className="h-7 rounded-lg" />
+                <Skeleton className="h-7 rounded-lg" />
+                <Skeleton className="h-7 rounded-lg" />
               </div>
             </div>
 
             {/* Assignments Skeleton */}
-            <div className="p-5 bg-card border border-border/70 rounded-2xl h-[290px] space-y-3">
+            <div className="p-4 sm:p-4.5 bg-card border border-border/70 rounded-2xl h-[250px] space-y-2.5">
               <div className="flex justify-between items-center">
-                <Skeleton className="h-5 w-28 rounded-md" />
-                <Skeleton className="h-6 w-14 rounded-lg" />
+                <Skeleton className="h-4.5 w-24 rounded-md" />
+                <Skeleton className="h-5 w-12 rounded-lg" />
               </div>
-              <Skeleton className="h-9 w-full rounded-xl" />
-              <Skeleton className="h-9 w-full rounded-xl" />
-              <Skeleton className="h-9 w-full rounded-xl" />
-              <Skeleton className="h-6 w-24 rounded-full" />
+              <Skeleton className="h-8 w-full rounded-xl" />
+              <Skeleton className="h-8 w-full rounded-xl" />
+              <Skeleton className="h-8 w-full rounded-xl" />
+              <Skeleton className="h-5 w-20 rounded-full" />
             </div>
 
             {/* Calendar Skeleton */}
-            <div className="p-5 bg-card border border-border/70 rounded-2xl h-[280px] space-y-3">
+            <div className="p-4 sm:p-4.5 bg-card border border-border/70 rounded-2xl h-[250px] space-y-2.5">
               <div className="flex justify-between items-center">
-                <Skeleton className="h-5 w-28 rounded-md" />
-                <Skeleton className="h-6 w-20 rounded-md" />
+                <Skeleton className="h-4.5 w-24 rounded-md" />
+                <Skeleton className="h-5 w-16 rounded-md" />
               </div>
-              <Skeleton className="h-44 w-full rounded-xl" />
+              <Skeleton className="h-36 w-full rounded-xl" />
             </div>
           </div>
         </div>
@@ -946,51 +947,51 @@ export const StudentDashboard: React.FC = () => {
   // ─── Main Render ────────────────────────────────────────────────────────────
 
   return (
-    <div className="space-y-6 pb-12 animate-in fade-in duration-300">
+    <div className="space-y-4 pb-10 animate-in fade-in duration-300">
       {/* ─── Master 2-Column Boxing Grid Layout (8:4 Desktop Ratio) ──────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
         {/* ─── LEFT COLUMN: Main Track (8 cols / ~67% width) ───────────────── */}
-        <div className="lg:col-span-8 space-y-5 min-w-0">
-          {/* Card 1: Vibrant Hero Greeting Banner */}
-          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-600 via-blue-600 to-indigo-600 text-white p-6 sm:p-7 shadow-xs border border-blue-500/30">
+        <div className="lg:col-span-8 space-y-4 min-w-0">
+          {/* Card 1: Compact Hero Greeting Banner */}
+          <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-r from-blue-600 via-blue-600 to-indigo-600 text-white p-4 sm:p-5 shadow-xs border border-blue-500/30">
             {/* Ambient Lighting Gradients */}
             <div className="absolute -top-16 -right-16 size-48 rounded-full bg-white/10 blur-2xl pointer-events-none" />
             <div className="absolute -bottom-16 -left-16 size-48 rounded-full bg-indigo-500/20 blur-2xl pointer-events-none" />
 
-            <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div className="space-y-2 min-w-0 flex-1">
-                <div className="flex items-center gap-2.5 flex-wrap">
-                  <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white leading-tight">
+            <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+              <div className="space-y-1.5 min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white leading-tight">
                     Welcome back, {user?.name ? user.name.split(' ')[0] : 'Darrel'} 👋
                   </h1>
                 </div>
-                <p className="text-xs sm:text-sm text-blue-50/90 font-medium max-w-xl leading-relaxed">
+                <p className="text-xs sm:text-[13px] text-blue-50/90 font-medium max-w-xl leading-relaxed">
                   You've completed <strong className="font-extrabold text-white">{hoursPercent}%</strong> of your practicum goal this term! Keep submitting your records to reach completion.
                 </p>
 
-                {/* Trainee Information Badges */}
-                <div className="flex items-center gap-2 flex-wrap pt-2">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-white/15 backdrop-blur-xs border border-white/20 text-white shadow-2xs">
-                    <UserIcon size={12} className="text-blue-200" />
+                {/* Trainee Information Badges (Single-Line Streamlined Strip) */}
+                <div className="flex items-center gap-1.5 flex-wrap pt-1">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-white/15 backdrop-blur-xs border border-white/20 text-white shadow-2xs">
+                    <UserIcon size={11} className="text-blue-200" />
                     <span>ID: {studentId || user?.studentId || '2023-010482'}</span>
                   </span>
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-white/15 backdrop-blur-xs border border-white/20 text-white shadow-2xs">
-                    <GraduationCapIcon size={12} className="text-blue-200" />
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-white/15 backdrop-blur-xs border border-white/20 text-white shadow-2xs">
+                    <GraduationCapIcon size={11} className="text-blue-200" />
                     <span>{displayProgram} • {sectionName || user?.section || 'BSIT 402'}</span>
                   </span>
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-white/15 backdrop-blur-xs border border-white/20 text-white shadow-2xs">
-                    <UserCheckIcon size={12} className="text-blue-200" />
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-white/15 backdrop-blur-xs border border-white/20 text-white shadow-2xs">
+                    <UserCheckIcon size={11} className="text-blue-200" />
                     <span>Mentor: {adviserName}</span>
                   </span>
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-white/15 backdrop-blur-xs border border-white/20 text-white shadow-2xs">
-                    <Briefcase size={12} className="text-blue-200" />
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-white/15 backdrop-blur-xs border border-white/20 text-white shadow-2xs">
+                    <Briefcase size={11} className="text-blue-200" />
                     <span>{isAssignedCompany ? companyName : 'Awaiting Match'}</span>
                   </span>
                 </div>
               </div>
 
               {/* Trainee Avatar Illustration */}
-              <div className="w-36 h-28 sm:w-44 sm:h-32 shrink-0 hidden sm:flex items-center justify-center pointer-events-none self-end sm:self-center">
+              <div className="w-28 h-20 sm:w-36 sm:h-24 shrink-0 hidden sm:flex items-center justify-center pointer-events-none self-end sm:self-center">
                 <img
                   src="/images/Dashboard Icons/undraw_focused-dev_gqoa.svg"
                   alt="Trainee Avatar"
@@ -1001,92 +1002,92 @@ export const StudentDashboard: React.FC = () => {
           </div>
 
           {/* Card 2: 3 Metric Stat Cards in a row */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 sm:gap-4">
             {/* Card 2A: Total Hours Logged */}
-            <div className="bg-card border border-border/70 rounded-2xl p-5 shadow-2xs hover:shadow-xs transition-all duration-200 flex flex-col justify-between group">
-              <div className="flex items-center gap-3.5">
-                <div className="size-11 rounded-full bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400 border border-blue-100 dark:border-blue-900/40 flex items-center justify-center shrink-0">
-                  <ClockIcon size={20} />
+            <div className="bg-card border border-border/70 rounded-2xl p-3.5 sm:p-4 shadow-2xs hover:shadow-xs transition-all duration-200 flex flex-col justify-between group">
+              <div className="flex items-center gap-3">
+                <div className="size-10 rounded-full bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400 border border-blue-100 dark:border-blue-900/40 flex items-center justify-center shrink-0">
+                  <ClockIcon size={18} />
                 </div>
                 <div className="min-w-0">
                   <div className="text-xl sm:text-2xl font-black text-foreground tracking-tight leading-none tabular-nums">
                     {renderedHours.toFixed(1)} <span className="text-xs font-semibold text-muted-foreground">/ {totalHours}h</span>
                   </div>
-                  <p className="text-xs font-medium text-muted-foreground mt-1 truncate">
+                  <p className="text-xs font-medium text-muted-foreground mt-0.5 truncate">
                     Total Hours Logged
                   </p>
                 </div>
               </div>
 
-              <div className="pt-3 mt-3 border-t border-border/50">
+              <div className="pt-2 mt-2 border-t border-border/50">
                 <Link
                   to="/student/documents?phase=in_ojt"
                   className="flex items-center justify-between text-xs font-semibold text-muted-foreground group-hover:text-primary transition-colors cursor-pointer"
                 >
                   <span>View DTR log</span>
-                  <ArrowRightIcon size={13} className="group-hover:translate-x-1 transition-transform" />
+                  <ArrowRightIcon size={12} className="group-hover:translate-x-1 transition-transform" />
                 </Link>
               </div>
             </div>
 
             {/* Card 2B: Pending Evaluations */}
-            <div className="bg-card border border-border/70 rounded-2xl p-5 shadow-2xs hover:shadow-xs transition-all duration-200 flex flex-col justify-between group">
-              <div className="flex items-center gap-3.5">
-                <div className="size-11 rounded-full bg-orange-50 text-orange-600 dark:bg-orange-950/50 dark:text-orange-400 border border-orange-100 dark:border-orange-900/40 flex items-center justify-center shrink-0">
-                  <AlertCircle size={20} />
+            <div className="bg-card border border-border/70 rounded-2xl p-3.5 sm:p-4 shadow-2xs hover:shadow-xs transition-all duration-200 flex flex-col justify-between group">
+              <div className="flex items-center gap-3">
+                <div className="size-10 rounded-full bg-orange-50 text-orange-600 dark:bg-orange-950/50 dark:text-orange-400 border border-orange-100 dark:border-orange-900/40 flex items-center justify-center shrink-0">
+                  <AlertCircle size={18} />
                 </div>
                 <div className="min-w-0">
                   <div className="text-xl sm:text-2xl font-black text-foreground tracking-tight leading-none tabular-nums">
                     {activePendingCount} <span className="text-xs font-semibold text-muted-foreground">/ {activeSubmissions.length} active</span>
                   </div>
-                  <p className="text-xs font-medium text-muted-foreground mt-1 truncate">
+                  <p className="text-xs font-medium text-muted-foreground mt-0.5 truncate">
                     Pending Evaluations
                   </p>
                 </div>
               </div>
 
-              <div className="pt-3 mt-3 border-t border-border/50">
+              <div className="pt-2 mt-2 border-t border-border/50">
                 <Link
                   to="/student/reviews"
                   className="flex items-center justify-between text-xs font-semibold text-muted-foreground group-hover:text-primary transition-colors cursor-pointer"
                 >
                   <span>Open Review Center</span>
-                  <ArrowRightIcon size={13} className="group-hover:translate-x-1 transition-transform" />
+                  <ArrowRightIcon size={12} className="group-hover:translate-x-1 transition-transform" />
                 </Link>
               </div>
             </div>
 
             {/* Card 2C: Host Placement */}
-            <div className="bg-card border border-border/70 rounded-2xl p-5 shadow-2xs hover:shadow-xs transition-all duration-200 flex flex-col justify-between group">
-              <div className="flex items-center gap-3.5">
-                <div className="size-11 rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/40 flex items-center justify-center shrink-0">
-                  <BuildingIcon size={20} />
+            <div className="bg-card border border-border/70 rounded-2xl p-3.5 sm:p-4 shadow-2xs hover:shadow-xs transition-all duration-200 flex flex-col justify-between group">
+              <div className="flex items-center gap-3">
+                <div className="size-10 rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/40 flex items-center justify-center shrink-0">
+                  <BuildingIcon size={18} />
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="text-base sm:text-lg font-black text-foreground tracking-tight leading-tight truncate" title={isAssignedCompany ? companyName : 'Awaiting Match'}>
                     {isAssignedCompany ? companyName : 'Awaiting Match'}
                   </div>
                   <p className="text-xs font-medium text-muted-foreground mt-0.5 truncate">
-                    {isAssignedCompany ? `Supervisor: ${supervisorName}` : 'Company matching in progress'}
+                    {isAssignedCompany ? `Supervisor: ${supervisorName}` : 'Matching in progress'}
                   </p>
                 </div>
               </div>
 
-              <div className="pt-3 mt-3 border-t border-border/50">
+              <div className="pt-2 mt-2 border-t border-border/50">
                 <Link
                   to="/student/profile"
                   className="flex items-center justify-between text-xs font-semibold text-muted-foreground group-hover:text-primary transition-colors cursor-pointer"
                 >
                   <span>View placement</span>
-                  <ArrowRightIcon size={13} className="group-hover:translate-x-1 transition-transform" />
+                  <ArrowRightIcon size={12} className="group-hover:translate-x-1 transition-transform" />
                 </Link>
               </div>
             </div>
           </div>
 
           {/* Card 3: Total Hours Overview Chart Card */}
-          <div className="bg-card border border-border/70 rounded-2xl p-5 sm:p-6 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between space-y-4">
-            <div className="flex items-center justify-between pb-1">
+          <div className="bg-card border border-border/70 rounded-2xl p-4 sm:p-4.5 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between space-y-2.5">
+            <div className="flex items-center justify-between pb-0.5">
               <div>
                 <h2 className="text-base font-bold text-foreground tracking-tight">Total Hours Overview</h2>
                 <p className="text-xs text-muted-foreground font-medium">Practicum hours completion rates</p>
@@ -1097,7 +1098,7 @@ export const StudentDashboard: React.FC = () => {
                     type="button"
                     onClick={() => setChartView('monthly')}
                     className={cn(
-                      "px-2.5 py-1 rounded-md font-bold text-xs transition-colors cursor-pointer",
+                      "px-2 py-0.5 rounded-md font-bold text-[11px] transition-colors cursor-pointer",
                       chartView === 'monthly' ? "bg-card text-foreground shadow-2xs" : "text-muted-foreground hover:text-foreground"
                     )}
                   >
@@ -1107,7 +1108,7 @@ export const StudentDashboard: React.FC = () => {
                     type="button"
                     onClick={() => setChartView('weekly')}
                     className={cn(
-                      "px-2.5 py-1 rounded-md font-bold text-xs transition-colors cursor-pointer",
+                      "px-2 py-0.5 rounded-md font-bold text-[11px] transition-colors cursor-pointer",
                       chartView === 'weekly' ? "bg-card text-foreground shadow-2xs" : "text-muted-foreground hover:text-foreground"
                     )}
                   >
@@ -1117,24 +1118,24 @@ export const StudentDashboard: React.FC = () => {
               </div>
             </div>
 
-            <div className="w-full h-56 min-w-0 min-h-[224px]">
+            <div className="w-full h-40 min-w-0 min-h-[160px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
                   data={chartView === 'monthly' ? monthlyChartData : weeklyBarData}
-                  margin={{ top: 20, right: 10, left: -20, bottom: 0 }}
+                  margin={{ top: 12, right: 10, left: -22, bottom: 0 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#88888820" />
                   <XAxis
                     dataKey="label"
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fill: 'currentColor', fontSize: 11, fontWeight: 600 }}
+                    tick={{ fill: 'currentColor', fontSize: 10, fontWeight: 600 }}
                     className="text-muted-foreground"
                   />
                   <YAxis
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fill: 'currentColor', fontSize: 10, fontWeight: 600 }}
+                    tick={{ fill: 'currentColor', fontSize: 9, fontWeight: 600 }}
                     className="text-muted-foreground"
                     tickFormatter={(v) => `${v}${chartView === 'monthly' ? '%' : 'h'}`}
                   />
@@ -1142,7 +1143,7 @@ export const StudentDashboard: React.FC = () => {
                     content={({ active, payload, label }) => {
                       if (active && payload && payload.length) {
                         return (
-                          <div className="bg-popover/95 backdrop-blur-md border border-border px-3 py-2 rounded-xl shadow-lg text-xs">
+                          <div className="bg-popover/95 backdrop-blur-md border border-border px-2.5 py-1.5 rounded-xl shadow-lg text-xs">
                             <p className="font-bold text-foreground">
                               {label}: <span className="text-primary font-extrabold">{payload[0].value}{chartView === 'monthly' ? '% complete' : ' hrs'}</span>
                             </p>
@@ -1152,7 +1153,7 @@ export const StudentDashboard: React.FC = () => {
                       return null;
                     }}
                   />
-                  <Bar dataKey="value" radius={[6, 6, 0, 0]}>
+                  <Bar dataKey="value" radius={[5, 5, 0, 0]}>
                     {(chartView === 'monthly' ? monthlyChartData : weeklyBarData).map((entry, index) => (
                       <Cell
                         key={`bar-${index}`}
@@ -1165,21 +1166,21 @@ export const StudentDashboard: React.FC = () => {
               </ResponsiveContainer>
             </div>
 
-            <div className="pt-3 border-t border-border/60 flex items-center justify-between text-xs text-muted-foreground">
+            <div className="pt-2 border-t border-border/60 flex items-center justify-between text-xs text-muted-foreground">
               <span>Daily target: <strong className="text-foreground font-semibold">8.0 hrs/day</strong></span>
               <span className="text-emerald-600 dark:text-emerald-400 font-bold">40.0 hrs / week</span>
             </div>
           </div>
 
           {/* Card 4: My Document Submissions & Reviews Active Tracker */}
-          <div className="bg-card border border-border/70 rounded-2xl p-5 sm:p-6 shadow-2xs hover:shadow-xs transition-all space-y-5">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/70 pb-4">
-              <div className="flex items-start gap-3.5">
-                <div className="size-11 rounded-xl bg-primary/10 text-primary border border-primary/20 flex items-center justify-center shrink-0 mt-0.5">
-                  <FileCheck2 size={22} />
+          <div className="bg-card border border-border/70 rounded-2xl p-4 sm:p-5 shadow-2xs hover:shadow-xs transition-all space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/70 pb-3">
+              <div className="flex items-start gap-3">
+                <div className="size-10 rounded-xl bg-primary/10 text-primary border border-primary/20 flex items-center justify-center shrink-0 mt-0.5">
+                  <FileCheck2 size={20} />
                 </div>
                 <div>
-                  <h2 className="text-base sm:text-lg font-bold text-foreground tracking-tight flex items-center gap-2">
+                  <h2 className="text-base font-bold text-foreground tracking-tight flex items-center gap-2">
                     <span>My Document Submissions & Reviews</span>
                   </h2>
                   <p className="text-xs text-muted-foreground font-medium mt-0.5 max-w-xl">
@@ -1192,69 +1193,69 @@ export const StudentDashboard: React.FC = () => {
                 <Button
                   variant="primary"
                   size="sm"
-                  className="font-bold text-xs h-9 px-4 rounded-xl cursor-pointer active:scale-95 shadow-2xs flex items-center gap-2"
+                  className="font-bold text-xs h-8 px-3.5 rounded-xl cursor-pointer active:scale-95 shadow-2xs flex items-center gap-1.5"
                 >
-                  <FolderOpen size={14} />
-                  <span>Open Document Repository</span>
-                  <ArrowRightIcon size={13} />
+                  <FolderOpen size={13} />
+                  <span>Open Repository</span>
+                  <ArrowRightIcon size={12} />
                 </Button>
               </Link>
             </div>
 
             {/* Active Submissions Summary Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
               {/* Card 1: Approved */}
-              <div className="p-4 rounded-xl bg-muted/20 border border-border/70 space-y-1">
+              <div className="p-3 rounded-xl bg-muted/20 border border-border/70 space-y-0.5">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold text-muted-foreground">Approved</span>
                   <span className="size-2 rounded-full bg-emerald-500"></span>
                 </div>
                 <div className="flex items-baseline gap-1.5 pt-0.5">
-                  <span className="text-2xl font-black text-foreground tracking-tight leading-none tabular-nums">
+                  <span className="text-xl sm:text-2xl font-black text-foreground tracking-tight leading-none tabular-nums">
                     {activeApprovedCount}
                   </span>
                   <span className="text-xs font-semibold text-muted-foreground">verified</span>
                 </div>
-                <p className="text-[11px] text-muted-foreground">Approved by practicum adviser</p>
+                <p className="text-[10.5px] text-muted-foreground">Approved by practicum adviser</p>
               </div>
 
               {/* Card 2: Under Review */}
-              <div className="p-4 rounded-xl bg-muted/20 border border-border/70 space-y-1">
+              <div className="p-3 rounded-xl bg-muted/20 border border-border/70 space-y-0.5">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold text-muted-foreground">Under Review</span>
                   <span className={cn("size-2 rounded-full", activePendingCount > 0 ? "bg-amber-500 animate-pulse" : "bg-muted-foreground/40")}></span>
                 </div>
                 <div className="flex items-baseline gap-1.5 pt-0.5">
-                  <span className="text-2xl font-black text-foreground tracking-tight leading-none tabular-nums">
+                  <span className="text-xl sm:text-2xl font-black text-foreground tracking-tight leading-none tabular-nums">
                     {activePendingCount}
                   </span>
                   <span className="text-xs font-semibold text-muted-foreground">pending</span>
                 </div>
-                <p className="text-[11px] text-muted-foreground">Currently awaiting evaluation</p>
+                <p className="text-[10.5px] text-muted-foreground">Currently awaiting evaluation</p>
               </div>
 
               {/* Card 3: Action Needed */}
-              <div className="p-4 rounded-xl bg-muted/20 border border-border/70 space-y-1">
+              <div className="p-3 rounded-xl bg-muted/20 border border-border/70 space-y-0.5">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold text-muted-foreground">Action Needed</span>
                   <span className={cn("size-2 rounded-full", activeRevisionCount > 0 ? "bg-rose-500" : "bg-emerald-500")}></span>
                 </div>
                 <div className="flex items-baseline gap-1.5 pt-0.5">
-                  <span className="text-2xl font-black text-foreground tracking-tight leading-none tabular-nums">
+                  <span className="text-xl sm:text-2xl font-black text-foreground tracking-tight leading-none tabular-nums">
                     {activeRevisionCount}
                   </span>
                   <span className="text-xs font-semibold text-muted-foreground">
                     {activeRevisionCount === 1 ? 'requires action' : activeRevisionCount > 1 ? 'require action' : 'all clear'}
                   </span>
                 </div>
-                <p className="text-[11px] text-muted-foreground">
+                <p className="text-[10.5px] text-muted-foreground">
                   {activeRevisionCount > 0 ? 'Document returned for revisions' : 'No revisions required'}
                 </p>
               </div>
             </div>
 
             {/* Submissions Section Header & Table */}
-            <div className="pt-2 border-t border-border/60 space-y-3.5">
+            <div className="pt-2 border-t border-border/60 space-y-3">
               <div className="flex items-center justify-between gap-2 text-xs">
                 <div className="flex items-center gap-2">
                   <span className="font-bold text-foreground text-sm">Submitted Documents</span>
@@ -1278,21 +1279,21 @@ export const StudentDashboard: React.FC = () => {
                   <table className="w-full text-left border-collapse text-xs">
                     <thead>
                       <tr className="bg-muted/30 border-b border-border/70 text-muted-foreground font-bold">
-                        <th scope="col" className="py-2.5 px-4 font-bold text-foreground">Document Name</th>
+                        <th scope="col" className="py-2.5 px-3.5 font-bold text-foreground">Document Name</th>
                         <th scope="col" className="py-2.5 px-3 font-bold text-foreground">Submitted / Updated</th>
                         <th scope="col" className="py-2.5 px-3 font-bold text-foreground">Status</th>
-                        <th scope="col" className="py-2.5 px-4 font-bold text-foreground text-right">Action</th>
+                        <th scope="col" className="py-2.5 px-3.5 font-bold text-foreground text-right">Action</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border/50">
                       {activeSubmissions.length === 0 ? (
                         <tr>
-                          <td colSpan={4} className="py-12 px-4 text-center">
-                            <div className="space-y-3 max-w-sm mx-auto">
-                              <div className="size-11 rounded-xl bg-muted/60 text-muted-foreground border border-border/70 flex items-center justify-center mx-auto">
-                                <FolderOpen size={20} className="text-muted-foreground" />
+                          <td colSpan={4} className="py-10 px-4 text-center">
+                            <div className="space-y-2.5 max-w-sm mx-auto">
+                              <div className="size-10 rounded-xl bg-muted/60 text-muted-foreground border border-border/70 flex items-center justify-center mx-auto">
+                                <FolderOpen size={18} className="text-muted-foreground" />
                               </div>
-                              <div className="space-y-1">
+                              <div className="space-y-0.5">
                                 <p className="font-bold text-foreground text-sm">No Document Submissions Yet</p>
                                 <p className="text-xs text-muted-foreground">
                                   Browse the institutional repository to find your practicum templates, draft requirements, and submit them for review.
@@ -1303,11 +1304,11 @@ export const StudentDashboard: React.FC = () => {
                                   <Button
                                     variant="primary"
                                     size="sm"
-                                    className="h-8 px-3.5 text-xs font-bold rounded-xl shadow-xs active:scale-95 inline-flex items-center gap-1.5 cursor-pointer"
+                                    className="h-7.5 px-3 text-xs font-bold rounded-xl shadow-xs active:scale-95 inline-flex items-center gap-1.5 cursor-pointer"
                                   >
-                                    <FolderOpen size={13} />
+                                    <FolderOpen size={12} />
                                     <span>Open Document Repository</span>
-                                    <ArrowRightIcon size={12} />
+                                    <ArrowRightIcon size={11} />
                                   </Button>
                                 </Link>
                               </div>
@@ -1321,10 +1322,10 @@ export const StudentDashboard: React.FC = () => {
                             className="hover:bg-muted/20 transition-colors group"
                           >
                             {/* Document Info */}
-                            <td className="py-3 px-4">
-                              <div className="flex items-center gap-3">
+                            <td className="py-2.5 px-3.5">
+                              <div className="flex items-center gap-2.5">
                                 <div className={cn(
-                                  "size-8 rounded-lg flex items-center justify-center shrink-0 border",
+                                  "size-7.5 rounded-lg flex items-center justify-center shrink-0 border",
                                   item.status === 'done'
                                     ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
                                     : item.status === 'revision' || item.status === 'returned'
@@ -1333,13 +1334,13 @@ export const StudentDashboard: React.FC = () => {
                                     ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
                                     : "bg-muted/80 text-muted-foreground border-border/60"
                                 )}>
-                                  <item.icon size={15} />
+                                  <item.icon size={14} />
                                 </div>
                                 <div className="min-w-0">
-                                  <p className="font-bold text-foreground text-xs leading-snug truncate max-w-[240px] sm:max-w-md">
+                                  <p className="font-bold text-foreground text-xs leading-snug truncate max-w-[220px] sm:max-w-sm">
                                     {item.name}
                                   </p>
-                                  <p className="text-[11px] text-muted-foreground truncate max-w-[240px] sm:max-w-md">
+                                  <p className="text-[10.5px] text-muted-foreground truncate max-w-[220px] sm:max-w-sm">
                                     {item.description}
                                   </p>
                                 </div>
@@ -1347,12 +1348,12 @@ export const StudentDashboard: React.FC = () => {
                             </td>
 
                             {/* Submitted / Updated Date */}
-                            <td className="py-3 px-3 whitespace-nowrap text-muted-foreground font-medium text-xs">
+                            <td className="py-2.5 px-3 whitespace-nowrap text-muted-foreground font-medium text-xs">
                               {item.submissionDate || (item.status === 'draft' ? 'Draft saved' : 'Recently')}
                             </td>
 
                             {/* Status */}
-                            <td className="py-3 px-3 whitespace-nowrap">
+                            <td className="py-2.5 px-3 whitespace-nowrap">
                               <span className={cn(
                                 "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10.5px] font-bold border",
                                 item.status === 'done'
@@ -1382,15 +1383,15 @@ export const StudentDashboard: React.FC = () => {
                             </td>
 
                             {/* Action */}
-                            <td className="py-3 px-4 text-right whitespace-nowrap">
+                            <td className="py-2.5 px-3.5 text-right whitespace-nowrap">
                               <Link to={item.link}>
                                 <Button
                                   variant={item.status === 'revision' || item.status === 'returned' ? 'danger' : item.status === 'done' ? 'outline' : 'primary'}
                                   size="sm"
-                                  className="h-7 text-[11px] font-bold rounded-lg px-2.5 cursor-pointer inline-flex items-center gap-1 shadow-2xs active:scale-95"
+                                  className="h-6.5 text-[10.5px] font-bold rounded-lg px-2.5 cursor-pointer inline-flex items-center gap-1 shadow-2xs active:scale-95"
                                 >
                                   <span>{item.actionText}</span>
-                                  <ArrowRightIcon size={11} />
+                                  <ArrowRightIcon size={10} />
                                 </Button>
                               </Link>
                             </td>
@@ -1406,29 +1407,29 @@ export const StudentDashboard: React.FC = () => {
         </div>
 
         {/* ─── RIGHT COLUMN: Companion Track (4 cols / ~33% width) ─────────── */}
-        <div className="lg:col-span-4 space-y-5">
+        <div className="lg:col-span-4 space-y-4">
           {/* Card 5: Practicum Progress Donut Card (Top Performers equivalent) */}
-          <div className="bg-card border border-border/70 rounded-2xl p-5 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between space-y-4">
-            <div className="flex items-center justify-between pb-1">
+          <div className="bg-card border border-border/70 rounded-2xl p-4 sm:p-4.5 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between space-y-2.5">
+            <div className="flex items-center justify-between pb-0.5">
               <h2 className="text-base font-bold text-foreground tracking-tight">Practicum Progress</h2>
               <button
                 type="button"
                 className="p-1 hover:bg-muted rounded-md text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                 title="Options"
               >
-                <MoreHorizontal size={16} />
+                <MoreHorizontal size={15} />
               </button>
             </div>
 
-            <div className="relative flex items-center justify-center my-1 h-44">
+            <div className="relative flex items-center justify-center my-0.5 h-36">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={donutData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={55}
-                    outerRadius={75}
+                    innerRadius={46}
+                    outerRadius={66}
                     paddingAngle={4}
                     dataKey="value"
                     stroke="none"
@@ -1440,29 +1441,29 @@ export const StudentDashboard: React.FC = () => {
                 </PieChart>
               </ResponsiveContainer>
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Total</span>
+                <span className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Total</span>
                 <span className="text-2xl font-black text-foreground tracking-tight">{hoursPercent}%</span>
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-2 pt-3 border-t border-border/60 text-center">
+            <div className="grid grid-cols-3 gap-2 pt-2 border-t border-border/60 text-center">
               <div>
-                <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
-                  <span className="size-2 rounded-full bg-blue-600 shrink-0" />
+                <div className="flex items-center justify-center gap-1 text-[11px] text-muted-foreground">
+                  <span className="size-1.5 rounded-full bg-blue-600 shrink-0" />
                   <span className="truncate">Progress</span>
                 </div>
                 <span className="text-sm font-bold text-foreground mt-0.5 block">{hoursPercent}%</span>
               </div>
               <div>
-                <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
-                  <span className="size-2 rounded-full bg-orange-500 shrink-0" />
+                <div className="flex items-center justify-center gap-1 text-[11px] text-muted-foreground">
+                  <span className="size-1.5 rounded-full bg-orange-500 shrink-0" />
                   <span className="truncate">In Review</span>
                 </div>
                 <span className="text-sm font-bold text-foreground mt-0.5 block">{activePendingCount} docs</span>
               </div>
               <div>
-                <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
-                  <span className="size-2 rounded-full bg-emerald-500 shrink-0" />
+                <div className="flex items-center justify-center gap-1 text-[11px] text-muted-foreground">
+                  <span className="size-1.5 rounded-full bg-emerald-500 shrink-0" />
                   <span className="truncate">Target</span>
                 </div>
                 <span className="text-sm font-bold text-foreground mt-0.5 block">{totalHours}h</span>
@@ -1471,8 +1472,8 @@ export const StudentDashboard: React.FC = () => {
           </div>
 
           {/* Card 6: Assignments & Tasks Checklist Card (Assignments equivalent) */}
-          <div className="bg-card border border-border/70 rounded-2xl p-5 shadow-2xs hover:shadow-xs transition-all space-y-3.5">
-            <div className="flex items-center justify-between pb-1 border-b border-border/60">
+          <div className="bg-card border border-border/70 rounded-2xl p-4 sm:p-4.5 shadow-2xs hover:shadow-xs transition-all space-y-2.5">
+            <div className="flex items-center justify-between pb-0.5 border-b border-border/60">
               <h2 className="text-base font-bold text-foreground tracking-tight">Assignments</h2>
               <div className="flex items-center gap-1">
                 <button
@@ -1481,28 +1482,28 @@ export const StudentDashboard: React.FC = () => {
                   title={isAddingTodo ? "Cancel" : "Add task"}
                   className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer active:scale-95"
                 >
-                  {isAddingTodo ? <X size={15} /> : <Plus size={15} />}
+                  {isAddingTodo ? <X size={14} /> : <Plus size={14} />}
                 </button>
                 <button
                   type="button"
                   className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
                   title="More options"
                 >
-                  <MoreHorizontal size={15} />
+                  <MoreHorizontal size={14} />
                 </button>
               </div>
             </div>
 
             {/* Quick Add Input */}
             {isAddingTodo && (
-              <form onSubmit={handleAddTodo} className="space-y-2 py-1 animate-in fade-in duration-200 border-b border-border/60">
+              <form onSubmit={handleAddTodo} className="space-y-1.5 py-1 animate-in fade-in duration-200 border-b border-border/60">
                 <input
                   type="text"
                   value={newTodoText}
                   onChange={e => setNewTodoText(e.target.value)}
                   placeholder="Type new assignment..."
                   autoFocus
-                  className="w-full text-xs px-3 py-1.5 rounded-xl bg-muted/30 border border-border focus:outline-none focus:border-primary text-foreground"
+                  className="w-full text-xs px-2.5 py-1.5 rounded-lg bg-muted/30 border border-border focus:outline-none focus:border-primary text-foreground"
                 />
                 <div className="flex justify-end gap-1.5">
                   <Button
@@ -1531,26 +1532,26 @@ export const StudentDashboard: React.FC = () => {
             )}
 
             {/* Task List styled like Reference screenshot */}
-            <div className="space-y-2.5 max-h-[280px] overflow-y-auto pr-0.5">
+            <div className="space-y-2 max-h-[160px] overflow-y-auto pr-0.5">
               {todos.length === 0 ? (
-                <div className="py-6 text-center text-xs text-muted-foreground">
+                <div className="py-4 text-center text-xs text-muted-foreground">
                   <p className="font-semibold text-foreground">All caught up!</p>
-                  <p className="text-[11px] mt-0.5">No pending assignments to complete.</p>
+                  <p className="text-[11px] mt-0.5">No pending assignments.</p>
                 </div>
               ) : (
                 todos.map((item, idx) => (
                   <div
                     key={item.id}
                     onClick={() => toggleTodo(item.id)}
-                    className="flex items-start gap-3 p-1.5 rounded-xl hover:bg-muted/40 transition-colors cursor-pointer group text-xs"
+                    className="flex items-start gap-2.5 p-1 rounded-xl hover:bg-muted/40 transition-colors cursor-pointer group text-xs"
                   >
                     {/* Round check indicator matching reference screenshot */}
                     {item.done ? (
-                      <div className="size-5 rounded-full bg-blue-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
-                        <Check size={12} strokeWidth={3.5} />
+                      <div className="size-4.5 rounded-full bg-blue-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
+                        <Check size={11} strokeWidth={3.5} />
                       </div>
                     ) : (
-                      <div className="size-5 rounded-full border-2 border-slate-300 dark:border-zinc-600 group-hover:border-blue-500 shrink-0 mt-0.5 transition-colors" />
+                      <div className="size-4.5 rounded-full border-2 border-slate-300 dark:border-zinc-600 group-hover:border-blue-500 shrink-0 mt-0.5 transition-colors" />
                     )}
 
                     <div className="min-w-0 flex-1">
@@ -1573,17 +1574,17 @@ export const StudentDashboard: React.FC = () => {
                       title="Delete task"
                       className="opacity-0 group-hover:opacity-100 p-1 text-muted-foreground hover:text-rose-500 transition-opacity cursor-pointer shrink-0"
                     >
-                      <Trash2 size={12} />
+                      <Trash2 size={11} />
                     </button>
                   </div>
                 ))
               )}
             </div>
 
-            {/* Footer Pill: e.g. 3/6 Complete */}
+            {/* Footer Pill */}
             <div className="pt-2 border-t border-border/60 flex items-center justify-between text-xs">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                <Check size={12} strokeWidth={3} />
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                <Check size={11} strokeWidth={3} />
                 <span>{todos.filter(t => t.done).length}/{todos.length} Complete</span>
               </div>
 
@@ -1592,15 +1593,15 @@ export const StudentDashboard: React.FC = () => {
                 onClick={() => setIsAddingTodo(true)}
                 className="text-xs font-bold text-primary hover:underline cursor-pointer inline-flex items-center gap-1"
               >
-                <Plus size={13} />
+                <Plus size={12} />
                 <span>Add Task</span>
               </button>
             </div>
           </div>
 
           {/* Card 7: Interactive Practicum Calendar Card */}
-          <div className="bg-card border border-border/70 rounded-2xl p-5 shadow-2xs hover:shadow-xs transition-all space-y-3">
-            <div className="flex items-center justify-between pb-1">
+          <div className="bg-card border border-border/70 rounded-2xl p-4 sm:p-4.5 shadow-2xs hover:shadow-xs transition-all space-y-2.5">
+            <div className="flex items-center justify-between pb-0.5">
               <div>
                 <h2 className="text-base font-bold text-foreground tracking-tight flex items-center gap-2">
                   <CalendarDays className="size-4 text-primary" />
@@ -1615,16 +1616,16 @@ export const StudentDashboard: React.FC = () => {
                   className="p-1 hover:bg-muted rounded-md cursor-pointer transition-colors text-muted-foreground hover:text-foreground active:scale-95"
                   title="Previous month"
                 >
-                  <ChevronLeft size={14} />
+                  <ChevronLeft size={13} />
                 </button>
-                <span className="tracking-tight text-xs font-bold min-w-[70px] text-center">{monthName}</span>
+                <span className="tracking-tight text-xs font-bold min-w-[65px] text-center">{monthName}</span>
                 <button
                   type="button"
                   onClick={() => setCalendarMonth(new Date(calYear, calMonth + 1, 1))}
                   className="p-1 hover:bg-muted rounded-md cursor-pointer transition-colors text-muted-foreground hover:text-foreground active:scale-95"
                   title="Next month"
                 >
-                  <ChevronRight size={14} />
+                  <ChevronRight size={13} />
                 </button>
               </div>
             </div>
@@ -1641,12 +1642,12 @@ export const StudentDashboard: React.FC = () => {
             </div>
 
             {/* Days cells */}
-            <div className="grid grid-cols-7 gap-y-1 text-center text-xs py-1">
+            <div className="grid grid-cols-7 gap-y-0.5 text-center text-xs py-0.5">
               {miniDays.map((d, i) => (
-                <div key={i} className="flex flex-col items-center justify-center h-7">
+                <div key={i} className="flex flex-col items-center justify-center h-6.5">
                   <span
                     className={cn(
-                      "size-6.5 flex items-center justify-center rounded-full text-xs font-semibold select-none transition-colors",
+                      "size-6 flex items-center justify-center rounded-full text-[11px] font-semibold select-none transition-colors",
                       d.isToday
                         ? "bg-primary text-primary-foreground font-bold shadow-xs"
                         : d.currentMonth
@@ -1664,7 +1665,7 @@ export const StudentDashboard: React.FC = () => {
             </div>
 
             {/* Footer Links: Full calendar & Reset/Today */}
-            <div className="flex items-center justify-between pt-3 border-t border-border/60 text-xs font-semibold px-0.5">
+            <div className="flex items-center justify-between pt-2 border-t border-border/60 text-xs font-semibold px-0.5">
               <Link
                 to="/student/calendar"
                 className="text-primary hover:underline cursor-pointer flex items-center gap-1 font-bold text-xs"

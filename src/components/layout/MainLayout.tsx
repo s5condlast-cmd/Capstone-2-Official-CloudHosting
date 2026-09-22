@@ -78,7 +78,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ user, onLogout }) => {
               "px-4 md:px-6 w-full max-w-[1720px] mx-auto",
               isFullHeightPage
                 ? "flex-1 flex flex-col min-h-0 h-full py-4 md:py-5"
-                : "py-5 md:py-6"
+                : "py-3.5 sm:py-4 md:py-5"
             )}
           >
             <Outlet />
