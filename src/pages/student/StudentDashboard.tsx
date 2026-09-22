@@ -794,23 +794,22 @@ export const StudentDashboard: React.FC = () => {
   if (loading) {
     return (
       <div className="space-y-4 pb-10 animate-in fade-in duration-300">
-        {/* ─── ROW 1 SKELETON: Hero & Stats (1fr) + Donut (316px) ────────────── */}
-        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_316px] gap-4 items-stretch">
+        {/* ─── ROW 1 SKELETON: Hero & Stats (1fr) + Donut (300px) ────────────── */}
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_300px] gap-4 items-stretch">
           {/* Left: Hero Banner + 3 Stat Cards */}
           <div className="flex flex-col justify-between gap-3.5 sm:gap-4 min-w-0">
             {/* Hero Banner Skeleton */}
-            <div className="rounded-2xl sm:rounded-3xl p-4 sm:p-5 bg-card border border-border/70 h-[140px] flex items-center justify-between gap-4">
-              <div className="space-y-2 flex-1">
+            <div className="rounded-2xl sm:rounded-3xl p-4 sm:p-5 bg-card border border-border/70 h-[112px] sm:h-[118px] flex items-center justify-between gap-4">
+              <div className="space-y-3 flex-1">
                 <Skeleton className="h-6 w-48 rounded-lg" />
-                <Skeleton className="h-3.5 w-64 rounded-md" />
-                <div className="flex gap-1.5 pt-1.5 flex-wrap">
+                <div className="flex gap-2 flex-wrap">
                   <Skeleton className="h-5 w-24 rounded-full" />
                   <Skeleton className="h-5 w-28 rounded-full" />
                   <Skeleton className="h-5 w-32 rounded-full" />
                   <Skeleton className="h-5 w-24 rounded-full" />
                 </div>
               </div>
-              <Skeleton className="w-28 h-20 sm:w-36 sm:h-24 rounded-xl shrink-0 hidden sm:block" />
+              <Skeleton className="w-24 h-18 sm:w-28 sm:h-20 rounded-xl shrink-0 hidden sm:block" />
             </div>
 
             {/* 3 Metric Stat Cards Skeleton */}
@@ -847,8 +846,8 @@ export const StudentDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* ─── ROW 2 SKELETON: Total Hours (1fr) + To-do List (316px) ──────────── */}
-        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_316px] gap-4 items-stretch">
+        {/* ─── ROW 2 SKELETON: Total Hours (1fr) + To-do List (300px) ──────────── */}
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_300px] gap-4 items-stretch">
           <div className="min-w-0 flex flex-col">
             <div className="p-4 sm:p-4.5 bg-card border border-border/70 rounded-2xl h-full flex flex-col justify-between min-h-[308px]">
               <div className="flex justify-between items-center">
@@ -881,7 +880,7 @@ export const StudentDashboard: React.FC = () => {
         </div>
 
         {/* ─── ROW 3 SKELETON: Submissions Tracker ─────────────────────────── */}
-        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_316px] gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_300px] gap-4">
           <div className="min-w-0">
             <div className="p-4 sm:p-5 bg-card border border-border/70 rounded-2xl space-y-3.5">
               <div className="flex justify-between items-center">
@@ -905,42 +904,39 @@ export const StudentDashboard: React.FC = () => {
 
   return (
     <div className="space-y-4 pb-10 animate-in fade-in duration-300">
-      {/* ─── ROW 1: Hero & Quick Stats (1fr) + Practicum Progress Donut (316px) ─── */}
-      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_316px] gap-4 items-stretch">
+      {/* ─── ROW 1: Hero & Quick Stats (1fr) + Practicum Progress Donut (300px) ─── */}
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_300px] gap-4 items-stretch">
         {/* Left: Hero Banner + 3 Stat Cards */}
         <div className="flex flex-col justify-between gap-3.5 sm:gap-4 min-w-0">
           {/* Card 1: Compact Hero Greeting Banner (Theme-Aware, High-Contrast & Readable) */}
-          <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-card border border-border/80 p-4 sm:p-5 shadow-2xs hover:shadow-xs transition-all">
+          <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-card border border-border/80 p-4.5 sm:p-5 shadow-2xs hover:shadow-xs transition-all">
             {/* Ambient Lighting Gradients */}
             <div className="absolute -top-16 -right-16 size-48 rounded-full bg-primary/[0.07] blur-3xl pointer-events-none" />
             <div className="absolute -bottom-16 -left-16 size-48 rounded-full bg-blue-500/[0.04] blur-3xl pointer-events-none" />
 
             <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
-              <div className="space-y-1.5 min-w-0 flex-1">
+              <div className="space-y-3 sm:space-y-3.5 min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
                   <h1 className="text-xl sm:text-2xl font-black tracking-tight text-foreground leading-tight">
                     Welcome back, {user?.name ? user.name.split(' ')[0] : 'Darrel'} 👋
                   </h1>
                 </div>
-                <p className="text-xs sm:text-[13px] text-muted-foreground font-medium max-w-xl leading-relaxed">
-                  You've completed <strong className="font-extrabold text-primary">{hoursPercent}%</strong> of your practicum goal this term! Keep submitting your records to reach completion.
-                </p>
 
-                {/* Trainee Information Badges (Crisp, High-Contrast & Tactile) */}
-                <div className="flex items-center gap-1.5 flex-wrap pt-1">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-muted/60 dark:bg-muted/40 border border-border/70 text-foreground shadow-2xs hover:bg-muted transition-colors">
+                {/* Trainee Information Badges (Crisp, High-Contrast & Tactile with generous spacing) */}
+                <div className="flex items-center gap-2 flex-wrap pt-0.5">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-muted/60 dark:bg-muted/40 border border-border/70 text-foreground shadow-2xs hover:bg-muted transition-colors">
                     <UserIcon size={11} className="text-primary shrink-0" />
                     <span>ID: {studentId || user?.studentId || '2023-010482'}</span>
                   </span>
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-muted/60 dark:bg-muted/40 border border-border/70 text-foreground shadow-2xs hover:bg-muted transition-colors">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-muted/60 dark:bg-muted/40 border border-border/70 text-foreground shadow-2xs hover:bg-muted transition-colors">
                     <GraduationCapIcon size={11} className="text-blue-500 dark:text-blue-400 shrink-0" />
                     <span>{displayProgram} • {sectionName || user?.section || 'BSIT 402'}</span>
                   </span>
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-muted/60 dark:bg-muted/40 border border-border/70 text-foreground shadow-2xs hover:bg-muted transition-colors">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-muted/60 dark:bg-muted/40 border border-border/70 text-foreground shadow-2xs hover:bg-muted transition-colors">
                     <UserCheckIcon size={11} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
                     <span>Mentor: {adviserName}</span>
                   </span>
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-muted/60 dark:bg-muted/40 border border-border/70 text-foreground shadow-2xs hover:bg-muted transition-colors">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-muted/60 dark:bg-muted/40 border border-border/70 text-foreground shadow-2xs hover:bg-muted transition-colors">
                     <Briefcase size={11} className="text-amber-600 dark:text-amber-400 shrink-0" />
                     <span>{isAssignedCompany ? companyName : 'Awaiting Match'}</span>
                   </span>
@@ -948,7 +944,7 @@ export const StudentDashboard: React.FC = () => {
               </div>
 
               {/* Trainee Avatar Illustration */}
-              <div className="w-28 h-20 sm:w-36 sm:h-24 shrink-0 hidden sm:flex items-center justify-center pointer-events-none self-end sm:self-center">
+              <div className="w-24 h-18 sm:w-32 sm:h-22 shrink-0 hidden sm:flex items-center justify-center pointer-events-none self-end sm:self-center">
                 <img
                   src="/images/Dashboard Icons/undraw_focused-dev_gqoa.svg"
                   alt="Trainee Avatar"
@@ -1109,8 +1105,8 @@ export const StudentDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* ─── ROW 2: Total Hours Overview (1fr) + To-do List (316px) ─────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_316px] gap-4 items-stretch">
+      {/* ─── ROW 2: Total Hours Overview (1fr) + To-do List (300px) ─────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_300px] gap-4 items-stretch">
         {/* Left: Total Hours Overview Chart Card */}
         <div className="min-w-0 flex flex-col">
           <div className="bg-card border border-border/70 rounded-2xl p-4 sm:p-4.5 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between h-full min-h-[308px] space-y-2.5">
@@ -1390,7 +1386,7 @@ export const StudentDashboard: React.FC = () => {
       </div>
 
       {/* ─── ROW 3: My Document Submissions & Reviews Active Tracker ─────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_316px] gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_300px] gap-4">
         <div className="min-w-0">
           {/* Card 4: My Document Submissions & Reviews Active Tracker */}
           <div className="bg-card border border-border/70 rounded-2xl p-4 sm:p-5 shadow-2xs hover:shadow-xs transition-all space-y-4">
