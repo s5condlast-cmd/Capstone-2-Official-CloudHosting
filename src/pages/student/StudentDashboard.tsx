@@ -966,7 +966,7 @@ export const StudentDashboard: React.FC = () => {
         <div className="space-y-4 min-w-0 flex-1">
           {/* Hero Banner + 3 Stat Cards */}
           <div className="flex flex-col gap-3.5 sm:gap-4 min-w-0">
-            <div className="rounded-2xl sm:rounded-3xl p-4.5 sm:p-5 bg-card border border-border/70 min-h-[118px] flex items-center justify-between gap-4">
+            <div className="rounded-2xl sm:rounded-3xl p-4.5 sm:p-5 bg-card border border-border/60 dark:border-border/40 shadow-sm min-h-[118px] flex items-center justify-between gap-4">
               <div className="flex flex-col justify-between gap-3 sm:gap-3.5 min-w-0 flex-1">
                 <div className="flex items-center gap-3">
                   <Skeleton className="size-11 sm:size-12 rounded-full shrink-0" />
@@ -987,7 +987,7 @@ export const StudentDashboard: React.FC = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-3.5">
               {[...Array(3)].map((_, i) => (
-                <div key={i} className="bg-card border border-border/35 rounded-2xl flex flex-col justify-between overflow-hidden">
+                <div key={i} className="bg-card border border-border/60 dark:border-border/40 shadow-sm rounded-2xl flex flex-col justify-between overflow-hidden">
                   <div className="flex items-center gap-3 px-3.5 pt-3.5 sm:px-4 sm:pt-4">
                     <Skeleton className="size-11 rounded-full shrink-0" />
                     <div className="space-y-1.5 flex-1 min-w-0">
@@ -995,7 +995,7 @@ export const StudentDashboard: React.FC = () => {
                       <Skeleton className="h-3 w-20 rounded-md" />
                     </div>
                   </div>
-                  <div className="mt-3 border-t border-border/35 px-3.5 py-2 sm:px-4 sm:py-2.5 flex justify-end">
+                  <div className="mt-3 border-t border-border/60 dark:border-border/40 px-3.5 py-2 sm:px-4 sm:py-2.5 flex justify-end">
                     <Skeleton className="h-3.5 w-24 rounded-md" />
                   </div>
                 </div>
@@ -1006,7 +1006,7 @@ export const StudentDashboard: React.FC = () => {
           {/* Row 2: Total Hours & Practicum Progress Dual Grid Skeleton */}
           <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_300px] gap-4 items-stretch">
             {/* Total Hours Skeleton */}
-            <div className="p-4 sm:p-4.5 bg-card border border-border/70 rounded-2xl min-h-[310px] flex flex-col justify-between">
+            <div className="p-4 sm:p-4.5 bg-card border border-border/60 dark:border-border/40 shadow-sm rounded-2xl min-h-[310px] flex flex-col justify-between">
               <div className="flex justify-between items-center">
                 <Skeleton className="h-5 w-44 rounded-md" />
                 <Skeleton className="h-7 w-28 rounded-lg" />
@@ -1015,7 +1015,7 @@ export const StudentDashboard: React.FC = () => {
             </div>
 
             {/* Practicum Progress Skeleton */}
-            <div className="p-4 sm:p-4.5 bg-card border border-border/70 rounded-2xl min-h-[310px] flex flex-col justify-between">
+            <div className="p-4 sm:p-4.5 bg-card border border-border/60 dark:border-border/40 shadow-sm rounded-2xl min-h-[310px] flex flex-col justify-between">
               <div className="flex justify-between items-center">
                 <Skeleton className="h-5 w-36 rounded-md" />
                 <Skeleton className="size-5 rounded-md" />
@@ -1025,7 +1025,7 @@ export const StudentDashboard: React.FC = () => {
           </div>
 
           {/* Submissions Tracker Skeleton */}
-          <div className="p-4 sm:p-5 bg-card border border-border/35 rounded-2xl space-y-3.5">
+          <div className="p-4 sm:p-5 bg-card border border-border/60 dark:border-border/40 shadow-sm rounded-2xl space-y-3.5">
             <div className="flex justify-between items-center">
               <Skeleton className="h-5 w-44 rounded-md" />
               <Skeleton className="h-7 w-36 rounded-xl" />
@@ -1037,7 +1037,7 @@ export const StudentDashboard: React.FC = () => {
         {/* Right Column (Sidebar) Skeletons */}
         <div className="space-y-4 min-w-0 w-full lg:w-[300px] shrink-0">
           {/* Calendar Skeleton */}
-          <div className="p-3.5 sm:p-4 bg-card border border-border/70 rounded-2xl space-y-2.5">
+          <div className="p-3.5 sm:p-4 bg-card border border-border/60 dark:border-border/40 shadow-sm rounded-2xl space-y-2.5">
             <div className="flex justify-between items-center">
               <Skeleton className="h-4.5 w-24 rounded-md" />
               <Skeleton className="h-4 w-20 rounded-md" />
@@ -1046,7 +1046,7 @@ export const StudentDashboard: React.FC = () => {
           </div>
 
           {/* To-do Skeleton */}
-          <div className="p-3.5 sm:p-4 bg-card border border-border/70 rounded-2xl space-y-2.5">
+          <div className="p-3.5 sm:p-4 bg-card border border-border/60 dark:border-border/40 shadow-sm rounded-2xl space-y-2.5">
             <div className="flex justify-between items-center">
               <Skeleton className="h-4.5 w-20 rounded-md" />
               <Skeleton className="size-5 rounded-md" />
@@ -1056,7 +1056,7 @@ export const StudentDashboard: React.FC = () => {
           </div>
 
           {/* Announcements Skeleton */}
-          <div className="p-3 sm:p-3.5 bg-card border border-border/70 rounded-2xl space-y-2">
+          <div className="p-3 sm:p-3.5 bg-card border border-border/60 dark:border-border/40 shadow-sm rounded-2xl space-y-2">
             <Skeleton className="h-4 w-28 rounded-md" />
             <Skeleton className="h-4.5 w-16 rounded-md" />
           </div>
@@ -1074,7 +1074,7 @@ export const StudentDashboard: React.FC = () => {
         {/* Section 1: Hero Banner + 3 Stat Cards */}
         <div className="flex flex-col gap-3.5 sm:gap-4 min-w-0">
           {/* Card 1: Compact Hero Greeting Banner (Theme-Aware, High-Contrast & Readable) */}
-          <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-card border border-border/80 p-4.5 sm:p-5 shadow-2xs hover:shadow-xs transition-all">
+          <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-card border border-border/60 dark:border-border/40 p-4.5 sm:p-5 shadow-sm hover:shadow-md transition-all duration-200">
             {/* Ambient Lighting Gradients */}
             <div className="absolute -top-16 -right-16 size-48 rounded-full bg-primary/[0.07] blur-3xl pointer-events-none" />
             <div className="absolute -bottom-16 -left-16 size-48 rounded-full bg-blue-500/[0.04] blur-3xl pointer-events-none" />
@@ -1140,7 +1140,7 @@ export const StudentDashboard: React.FC = () => {
           {/* Card 2: 3 Metric Stat Cards in a row (Approved, In Progress, Grade) */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-3.5">
             {/* Card 2A: Approved Documents */}
-            <div className="bg-card border border-border/35 rounded-2xl shadow-2xs hover:shadow-xs transition-all duration-200 flex flex-col justify-between overflow-hidden group">
+            <div className="bg-card border border-border/60 dark:border-border/40 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between overflow-hidden group">
               <div className="flex items-center gap-3 px-3.5 pt-3.5 sm:px-4 sm:pt-4">
                 <ProgressCircle
                   value={approvedPercent}
@@ -1163,7 +1163,7 @@ export const StudentDashboard: React.FC = () => {
                 </div>
               </div>
 
-              <div className="mt-3 border-t border-border/35 px-3.5 py-2 sm:px-4 sm:py-2.5">
+              <div className="mt-3 border-t border-border/60 dark:border-border/40 px-3.5 py-2 sm:px-4 sm:py-2.5">
                 <Link
                   to="/student/documents"
                   className="flex items-center justify-end gap-1.5 text-xs sm:text-[13px] font-semibold text-muted-foreground hover:text-foreground transition-colors group/link cursor-pointer"
@@ -1175,7 +1175,7 @@ export const StudentDashboard: React.FC = () => {
             </div>
 
             {/* Card 2B: In Progress Documents */}
-            <div className="bg-card border border-border/35 rounded-2xl shadow-2xs hover:shadow-xs transition-all duration-200 flex flex-col justify-between overflow-hidden group">
+            <div className="bg-card border border-border/60 dark:border-border/40 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between overflow-hidden group">
               <div className="flex items-center gap-3 px-3.5 pt-3.5 sm:px-4 sm:pt-4">
                 <ProgressCircle
                   value={inReviewPercent}
@@ -1198,7 +1198,7 @@ export const StudentDashboard: React.FC = () => {
                 </div>
               </div>
 
-              <div className="mt-3 border-t border-border/35 px-3.5 py-2 sm:px-4 sm:py-2.5">
+              <div className="mt-3 border-t border-border/60 dark:border-border/40 px-3.5 py-2 sm:px-4 sm:py-2.5">
                 <Link
                   to="/student/reviews"
                   className="flex items-center justify-end gap-1.5 text-xs sm:text-[13px] font-semibold text-muted-foreground hover:text-foreground transition-colors group/link cursor-pointer"
@@ -1210,7 +1210,7 @@ export const StudentDashboard: React.FC = () => {
             </div>
 
             {/* Card 2C: Practicum Grade */}
-            <div className="bg-card border border-border/35 rounded-2xl shadow-2xs hover:shadow-xs transition-all duration-200 flex flex-col justify-between overflow-hidden group">
+            <div className="bg-card border border-border/60 dark:border-border/40 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between overflow-hidden group">
               <div className="flex items-center gap-3 px-3.5 pt-3.5 sm:px-4 sm:pt-4">
                 <ProgressCircle
                   value={gradePercent}
@@ -1233,7 +1233,7 @@ export const StudentDashboard: React.FC = () => {
                 </div>
               </div>
 
-              <div className="mt-3 border-t border-border/35 px-3.5 py-2 sm:px-4 sm:py-2.5">
+              <div className="mt-3 border-t border-border/60 dark:border-border/40 px-3.5 py-2 sm:px-4 sm:py-2.5">
                 <Link
                   to="/student/documents?phase=final"
                   className="flex items-center justify-end gap-1.5 text-xs sm:text-[13px] font-semibold text-muted-foreground hover:text-foreground transition-colors group/link cursor-pointer"
@@ -1250,7 +1250,7 @@ export const StudentDashboard: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_300px] gap-4 items-stretch">
           {/* Total Hours Overview Chart Card */}
           <div className="min-w-0 flex flex-col h-full">
-            <div className="bg-card border border-border/35 rounded-2xl p-4 sm:p-4.5 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between h-full min-h-[310px] space-y-2.5">
+            <div className="bg-card border border-border/60 dark:border-border/40 rounded-2xl p-4 sm:p-4.5 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between h-full min-h-[310px] space-y-2.5">
               <div className="flex items-center justify-between pb-0.5">
                 <div>
                   <h2 className="text-base font-bold text-foreground tracking-tight">Total Hours Overview</h2>
@@ -1400,7 +1400,7 @@ export const StudentDashboard: React.FC = () => {
 
           {/* Practicum Progress Card */}
           <div className="min-w-0 flex flex-col h-full">
-            <div className="bg-card border border-border/35 rounded-2xl p-4 sm:p-4.5 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between h-full min-h-[310px] space-y-3">
+            <div className="bg-card border border-border/60 dark:border-border/40 rounded-2xl p-4 sm:p-4.5 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between h-full min-h-[310px] space-y-3">
               <div className="flex items-center justify-between pb-0.5">
                 <div>
                   <h2 className="text-base font-bold text-foreground tracking-tight">Practicum Progress</h2>
@@ -1447,8 +1447,8 @@ export const StudentDashboard: React.FC = () => {
         {/* Section 3: My Document Submissions & Reviews Active Tracker */}
         <div className="min-w-0">
           {/* Card 4: My Document Submissions & Reviews Active Tracker */}
-          <div className="bg-card border border-border/35 rounded-2xl p-4 sm:p-5 shadow-2xs hover:shadow-xs transition-all space-y-3.5">
-            <div className="flex items-center justify-between gap-3 border-b border-border/35 pb-3">
+          <div className="bg-card border border-border/60 dark:border-border/40 rounded-2xl p-4 sm:p-5 shadow-sm hover:shadow-md transition-all duration-200 space-y-3.5">
+            <div className="flex items-center justify-between gap-3 border-b border-border/60 dark:border-border/40 pb-3">
               <div className="flex items-center gap-2.5">
                 <h2 className="text-base font-bold text-foreground tracking-tight">
                   Submitted Documents
@@ -1585,7 +1585,7 @@ export const StudentDashboard: React.FC = () => {
       {/* ─── RIGHT COLUMN: Dedicated Sidebar (Calendar, To-do, Announcements) ─── */}
       <div className="space-y-3.5 min-w-0 w-full lg:w-[300px] shrink-0">
         {/* 1. Calendar Widget (Compact & Theme-Aware) */}
-        <div className="bg-card border border-border/70 rounded-2xl p-3.5 sm:p-4 shadow-2xs hover:shadow-xs transition-all space-y-2.5">
+        <div className="bg-card border border-border/60 dark:border-border/40 rounded-2xl p-3.5 sm:p-4 shadow-sm hover:shadow-md transition-all duration-200 space-y-2.5">
           {/* Header */}
           <div className="flex items-center gap-2 pb-0.5 border-b border-border/60">
             <CalendarIcon size={15} className="text-muted-foreground shrink-0" />
@@ -1666,7 +1666,7 @@ export const StudentDashboard: React.FC = () => {
         </div>
 
         {/* 2. To-do Widget (Compact & Theme-Aware) */}
-        <div className="bg-card border border-border/70 rounded-2xl p-3.5 sm:p-4 shadow-2xs hover:shadow-xs transition-all space-y-2.5">
+        <div className="bg-card border border-border/60 dark:border-border/40 rounded-2xl p-3.5 sm:p-4 shadow-sm hover:shadow-md transition-all duration-200 space-y-2.5">
           <div className="flex items-center justify-between pb-0.5 border-b border-border/60">
             <div className="flex items-center gap-2">
               <CheckCircle2 size={15} className="text-muted-foreground shrink-0" />
@@ -1831,7 +1831,7 @@ export const StudentDashboard: React.FC = () => {
         </div>
 
         {/* 3. Announcements Widget (Compact & Theme-Aware) */}
-        <div className="bg-card border border-border/70 rounded-2xl p-3 sm:p-3.5 shadow-2xs hover:shadow-xs transition-all space-y-2">
+        <div className="bg-card border border-border/60 dark:border-border/40 rounded-2xl p-3 sm:p-3.5 shadow-sm hover:shadow-md transition-all duration-200 space-y-2">
           <div className="flex items-center gap-2 pb-0.5 border-b border-border/60">
             <Megaphone size={15} className="text-muted-foreground shrink-0" />
             <h2 className="text-sm sm:text-base font-bold text-foreground tracking-tight">Announcements</h2>
