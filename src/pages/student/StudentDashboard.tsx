@@ -918,12 +918,7 @@ export const StudentDashboard: React.FC = () => {
                 <Skeleton className="h-5 w-36 rounded-md" />
                 <Skeleton className="size-5 rounded-md" />
               </div>
-              <Skeleton className="size-32 rounded-full mx-auto" />
-              <div className="grid grid-cols-3 gap-1.5 pt-1">
-                <Skeleton className="h-7 rounded-lg" />
-                <Skeleton className="h-7 rounded-lg" />
-                <Skeleton className="h-7 rounded-lg" />
-              </div>
+              <Skeleton className="size-40 rounded-full mx-auto my-auto" />
             </div>
           </div>
 
@@ -1272,15 +1267,15 @@ export const StudentDashboard: React.FC = () => {
                 </button>
               </div>
 
-              <div className="relative flex items-center justify-center my-auto min-h-[140px]">
-                <ResponsiveContainer width="100%" height={145}>
+              <div className="relative flex items-center justify-center my-auto min-h-[190px]">
+                <ResponsiveContainer width="100%" height={190}>
                   <PieChart>
                     <Pie
                       data={donutData}
                       cx="50%"
                       cy="50%"
-                      innerRadius={48}
-                      outerRadius={68}
+                      innerRadius={54}
+                      outerRadius={76}
                       paddingAngle={4}
                       dataKey="value"
                       stroke="none"
@@ -1296,31 +1291,6 @@ export const StudentDashboard: React.FC = () => {
                   <span className="text-lg sm:text-xl font-black text-foreground tracking-tight leading-tight mt-0.5">
                     {renderedHours.toFixed(1)} <span className="text-xs font-bold text-muted-foreground">/ {totalHours}h</span>
                   </span>
-                </div>
-              </div>
-
-              {/* 3 Metrics: Approved, In Progress, Grade */}
-              <div className="grid grid-cols-3 gap-1.5 pt-2 border-t border-border/60 text-center">
-                <div className="p-1 rounded-lg bg-muted/20">
-                  <div className="flex items-center justify-center gap-1 text-[10.5px] text-muted-foreground">
-                    <span className="size-1.5 rounded-full bg-[#10b981] shrink-0" />
-                    <span className="truncate">Approved</span>
-                  </div>
-                  <span className="text-xs font-bold text-foreground mt-0.5 block tabular-nums">{activeApprovedCount}</span>
-                </div>
-                <div className="p-1 rounded-lg bg-muted/20">
-                  <div className="flex items-center justify-center gap-1 text-[10.5px] text-muted-foreground">
-                    <span className="size-1.5 rounded-full bg-[#f97316] shrink-0" />
-                    <span className="truncate">In Progress</span>
-                  </div>
-                  <span className="text-xs font-bold text-foreground mt-0.5 block tabular-nums">{activePendingCount}</span>
-                </div>
-                <div className="p-1 rounded-lg bg-muted/20">
-                  <div className="flex items-center justify-center gap-1 text-[10.5px] text-muted-foreground">
-                    <span className="size-1.5 rounded-full bg-[#0066f5] shrink-0" />
-                    <span className="truncate">Grade</span>
-                  </div>
-                  <span className="text-xs font-bold text-foreground mt-0.5 block tabular-nums">Pending</span>
                 </div>
               </div>
             </div>
