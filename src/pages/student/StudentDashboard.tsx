@@ -807,16 +807,28 @@ export const StudentDashboard: React.FC = () => {
   }, [renderedHours]);
 
   // Donut Segments for Practicum Progress (Top Performers card equivalent)
+  // Strictly renders supervisor-validated logged hours vs remaining target hours
   const donutData = useMemo(() => {
-    const verified = Math.max(renderedHours, 0.1);
-    const inReview = Math.max(activePendingCount * 15, activeSubmissions.length > 0 ? 10 : 0.1);
-    const remaining = Math.max(totalHours - renderedHours, 1);
+    const verified = Math.max(0, renderedHours);
+    const remaining = Math.max(0, totalHours - renderedHours);
+
+    if (verified <= 0) {
+      return [
+        { name: 'Remaining', value: totalHours, color: '#10b981' },
+      ];
+    }
+
+    if (remaining <= 0) {
+      return [
+        { name: 'Logged', value: verified, color: '#0066f5' },
+      ];
+    }
+
     return [
       { name: 'Logged', value: verified, color: '#0066f5' },
-      { name: 'In Review', value: inReview, color: '#f97316' },
       { name: 'Remaining', value: remaining, color: '#10b981' },
     ];
-  }, [renderedHours, activePendingCount, activeSubmissions.length, totalHours]);
+  }, [renderedHours, totalHours]);
 
   // ─── Mini Calendar State & Grid ─────────────────────────────────────────────
   const [calendarDate, setCalendarDate] = useState<Date>(() => new Date());
@@ -1320,7 +1332,7 @@ export const StudentDashboard: React.FC = () => {
                       cy="50%"
                       innerRadius={54}
                       outerRadius={76}
-                      paddingAngle={4}
+                      paddingAngle={donutData.length > 1 ? 4 : 0}
                       dataKey="value"
                       stroke="none"
                     >
