@@ -24,9 +24,6 @@ import {
   CheckCheck,
   Plus,
   Megaphone,
-  ChevronLeft,
-  ChevronRight,
-  ExternalLink,
   Check,
   Briefcase,
   X,
@@ -35,7 +32,6 @@ import {
   RotateCw,
   Trash2,
   ShieldCheck,
-  CalendarDays,
   FileCheck2,
   FolderOpen,
   MoreHorizontal,
@@ -418,9 +414,6 @@ export const StudentDashboard: React.FC = () => {
   const [newTodoText, setNewTodoText] = useState('');
   const [isAddingTodo, setIsAddingTodo] = useState(false);
 
-  // Mini Calendar State
-  const [calendarMonth, setCalendarMonth] = useState<Date>(() => new Date());
-
   // Save todos to localStorage
   const saveTodos = useCallback((updated: TodoItem[]) => {
     setTodos(updated);
@@ -707,7 +700,7 @@ export const StudentDashboard: React.FC = () => {
     saveTodos([newTodo, ...todos]);
     setNewTodoText('');
     setIsAddingTodo(false);
-    toast.success('Task added to checklist.');
+    toast.success('Task added to to-do list.');
   };
 
   const deleteTodo = (id: string, e: React.MouseEvent) => {
@@ -715,42 +708,6 @@ export const StudentDashboard: React.FC = () => {
     const updated = todos.filter(t => t.id !== id);
     saveTodos(updated);
   };
-
-  // ─── Mini Calendar Helpers ──────────────────────────────────────────────────
-
-  const calYear = calendarMonth.getFullYear();
-  const calMonth = calendarMonth.getMonth();
-  const monthName = calendarMonth.toLocaleString('default', { month: 'short', year: 'numeric' });
-  const firstDayOfWeek = new Date(calYear, calMonth, 1).getDay(); // 0 = Sun
-  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
-  const prevMonthDays = new Date(calYear, calMonth, 0).getDate();
-
-  const miniDays: { day: number; currentMonth: boolean; isToday: boolean; hasEvent?: boolean }[] = [];
-  // Trailing previous month days
-  for (let i = firstDayOfWeek - 1; i >= 0; i--) {
-    miniDays.push({ day: prevMonthDays - i, currentMonth: false, isToday: false, hasEvent: false });
-  }
-
-  // Current month days with correct date bounds
-  const now = new Date();
-  const isCurrentYear = calYear === now.getFullYear();
-  const isCurrentMonth = isCurrentYear && calMonth === now.getMonth();
-  const isPastMonth = calYear < now.getFullYear() || (isCurrentYear && calMonth < now.getMonth());
-
-  for (let d = 1; d <= daysInMonth; d++) {
-    const isToday = isCurrentMonth && now.getDate() === d;
-    const dayOfWeek = new Date(calYear, calMonth, d).getDay();
-    const isWeekday = dayOfWeek >= 1 && dayOfWeek <= 5;
-    const hasEvent = isWeekday && (isPastMonth || (isCurrentMonth && d <= now.getDate()));
-    miniDays.push({ day: d, currentMonth: true, isToday, hasEvent });
-  }
-
-  // Remaining cells to fill 35 or 42 grid
-  const targetCells = miniDays.length > 35 ? 42 : 35;
-  const remainingCells = targetCells - miniDays.length;
-  for (let d = 1; d <= remainingCells; d++) {
-    miniDays.push({ day: d, currentMonth: false, isToday: false, hasEvent: false });
-  }
 
   // Hours calculation
   const hoursRemaining = Math.max(0, totalHours - renderedHours);
@@ -918,7 +875,7 @@ export const StudentDashboard: React.FC = () => {
               </div>
             </div>
 
-            {/* Assignments Skeleton */}
+            {/* To-do List Skeleton */}
             <div className="p-4 sm:p-4.5 bg-card border border-border/70 rounded-2xl h-[250px] space-y-2.5">
               <div className="flex justify-between items-center">
                 <Skeleton className="h-4.5 w-24 rounded-md" />
@@ -928,15 +885,6 @@ export const StudentDashboard: React.FC = () => {
               <Skeleton className="h-8 w-full rounded-xl" />
               <Skeleton className="h-8 w-full rounded-xl" />
               <Skeleton className="h-5 w-20 rounded-full" />
-            </div>
-
-            {/* Calendar Skeleton */}
-            <div className="p-4 sm:p-4.5 bg-card border border-border/70 rounded-2xl h-[250px] space-y-2.5">
-              <div className="flex justify-between items-center">
-                <Skeleton className="h-4.5 w-24 rounded-md" />
-                <Skeleton className="h-5 w-16 rounded-md" />
-              </div>
-              <Skeleton className="h-36 w-full rounded-xl" />
             </div>
           </div>
         </div>
@@ -1471,15 +1419,15 @@ export const StudentDashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Card 6: Assignments & Tasks Checklist Card (Assignments equivalent) */}
+          {/* Card 6: To-do List Card */}
           <div className="bg-card border border-border/70 rounded-2xl p-4 sm:p-4.5 shadow-2xs hover:shadow-xs transition-all space-y-2.5">
             <div className="flex items-center justify-between pb-0.5 border-b border-border/60">
-              <h2 className="text-base font-bold text-foreground tracking-tight">Assignments</h2>
+              <h2 className="text-base font-bold text-foreground tracking-tight">To do list</h2>
               <div className="flex items-center gap-1">
                 <button
                   type="button"
                   onClick={() => setIsAddingTodo(prev => !prev)}
-                  title={isAddingTodo ? "Cancel" : "Add task"}
+                  title={isAddingTodo ? "Cancel" : "Add to-do"}
                   className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer active:scale-95"
                 >
                   {isAddingTodo ? <X size={14} /> : <Plus size={14} />}
@@ -1501,7 +1449,7 @@ export const StudentDashboard: React.FC = () => {
                   type="text"
                   value={newTodoText}
                   onChange={e => setNewTodoText(e.target.value)}
-                  placeholder="Type new assignment..."
+                  placeholder="Type new to-do..."
                   autoFocus
                   className="w-full text-xs px-2.5 py-1.5 rounded-lg bg-muted/30 border border-border focus:outline-none focus:border-primary text-foreground"
                 />
@@ -1525,18 +1473,18 @@ export const StudentDashboard: React.FC = () => {
                     disabled={!newTodoText.trim()}
                     className="h-6 text-[11px] px-2.5 rounded-lg font-bold"
                   >
-                    Add Task
+                    Add To-do
                   </Button>
                 </div>
               </form>
             )}
 
             {/* Task List styled like Reference screenshot */}
-            <div className="space-y-2 max-h-[160px] overflow-y-auto pr-0.5">
+            <div className="space-y-2 max-h-[220px] overflow-y-auto pr-0.5">
               {todos.length === 0 ? (
                 <div className="py-4 text-center text-xs text-muted-foreground">
                   <p className="font-semibold text-foreground">All caught up!</p>
-                  <p className="text-[11px] mt-0.5">No pending assignments.</p>
+                  <p className="text-[11px] mt-0.5">No pending to-dos.</p>
                 </div>
               ) : (
                 todos.map((item, idx) => (
@@ -1594,96 +1542,8 @@ export const StudentDashboard: React.FC = () => {
                 className="text-xs font-bold text-primary hover:underline cursor-pointer inline-flex items-center gap-1"
               >
                 <Plus size={12} />
-                <span>Add Task</span>
+                <span>Add To-do</span>
               </button>
-            </div>
-          </div>
-
-          {/* Card 7: Interactive Practicum Calendar Card */}
-          <div className="bg-card border border-border/70 rounded-2xl p-4 sm:p-4.5 shadow-2xs hover:shadow-xs transition-all space-y-2.5">
-            <div className="flex items-center justify-between pb-0.5">
-              <div>
-                <h2 className="text-base font-bold text-foreground tracking-tight flex items-center gap-2">
-                  <CalendarDays className="size-4 text-primary" />
-                  <span>Calendar</span>
-                </h2>
-                <p className="text-xs text-muted-foreground font-medium">Practicum schedule</p>
-              </div>
-              <div className="flex items-center gap-1 text-xs font-bold text-foreground">
-                <button
-                  type="button"
-                  onClick={() => setCalendarMonth(new Date(calYear, calMonth - 1, 1))}
-                  className="p-1 hover:bg-muted rounded-md cursor-pointer transition-colors text-muted-foreground hover:text-foreground active:scale-95"
-                  title="Previous month"
-                >
-                  <ChevronLeft size={13} />
-                </button>
-                <span className="tracking-tight text-xs font-bold min-w-[65px] text-center">{monthName}</span>
-                <button
-                  type="button"
-                  onClick={() => setCalendarMonth(new Date(calYear, calMonth + 1, 1))}
-                  className="p-1 hover:bg-muted rounded-md cursor-pointer transition-colors text-muted-foreground hover:text-foreground active:scale-95"
-                  title="Next month"
-                >
-                  <ChevronRight size={13} />
-                </button>
-              </div>
-            </div>
-
-            {/* Day headers: Su Mo Tu We Th Fr Sa */}
-            <div className="grid grid-cols-7 text-center text-[10px] font-bold text-muted-foreground select-none py-1 border-b border-border/70">
-              <span>Su</span>
-              <span>Mo</span>
-              <span>Tu</span>
-              <span>We</span>
-              <span>Th</span>
-              <span>Fr</span>
-              <span>Sa</span>
-            </div>
-
-            {/* Days cells */}
-            <div className="grid grid-cols-7 gap-y-0.5 text-center text-xs py-0.5">
-              {miniDays.map((d, i) => (
-                <div key={i} className="flex flex-col items-center justify-center h-6.5">
-                  <span
-                    className={cn(
-                      "size-6 flex items-center justify-center rounded-full text-[11px] font-semibold select-none transition-colors",
-                      d.isToday
-                        ? "bg-primary text-primary-foreground font-bold shadow-xs"
-                        : d.currentMonth
-                        ? "text-foreground hover:bg-muted cursor-pointer"
-                        : "text-muted-foreground/30"
-                    )}
-                  >
-                    {d.day}
-                  </span>
-                  {d.hasEvent && !d.isToday && (
-                    <span className="size-1 bg-primary rounded-full -mt-0.5" />
-                  )}
-                </div>
-              ))}
-            </div>
-
-            {/* Footer Links: Full calendar & Reset/Today */}
-            <div className="flex items-center justify-between pt-2 border-t border-border/60 text-xs font-semibold px-0.5">
-              <Link
-                to="/student/calendar"
-                className="text-primary hover:underline cursor-pointer flex items-center gap-1 font-bold text-xs"
-              >
-                <span>Full calendar</span>
-                <ExternalLink size={11} />
-              </Link>
-              {!isCurrentMonth ? (
-                <button
-                  type="button"
-                  onClick={() => setCalendarMonth(new Date())}
-                  className="text-xs font-bold text-primary hover:underline cursor-pointer"
-                >
-                  Today
-                </button>
-              ) : (
-                <span className="text-[11px] text-muted-foreground font-medium">Current Month</span>
-              )}
             </div>
           </div>
         </div>
