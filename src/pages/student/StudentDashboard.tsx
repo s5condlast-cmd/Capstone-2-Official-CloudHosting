@@ -1076,8 +1076,9 @@ export const StudentDashboard: React.FC = () => {
           {/* Card 1: Compact Hero Greeting Banner (Theme-Aware, High-Contrast & Readable) */}
           <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-card border border-border/60 dark:border-border/40 p-4.5 sm:p-5 shadow-sm hover:shadow-md transition-all duration-200">
             {/* Ambient Lighting Gradients */}
-            <div className="absolute -top-16 -right-16 size-48 rounded-full bg-primary/[0.07] blur-3xl pointer-events-none" />
-            <div className="absolute -bottom-16 -left-16 size-48 rounded-full bg-blue-500/[0.04] blur-3xl pointer-events-none" />
+            <div className="absolute -top-16 -right-16 size-52 rounded-full bg-blue-500/[0.12] dark:bg-blue-500/[0.15] blur-3xl pointer-events-none" />
+            <div className="absolute top-4 right-12 size-36 rounded-full bg-[#FBBF24]/[0.08] blur-2xl pointer-events-none" />
+            <div className="absolute -bottom-16 -left-16 size-48 rounded-full bg-emerald-500/[0.06] blur-3xl pointer-events-none" />
 
             <div className="relative z-10 flex items-center justify-between gap-4">
               {/* Left Column: Greeting & Badges */}
@@ -1107,20 +1108,20 @@ export const StudentDashboard: React.FC = () => {
 
                 {/* Trainee Information Badges (Single Row, Aligned next to ID & Section) */}
                 <div className="flex items-center gap-2 overflow-x-auto scrollbar-none pt-0.5 w-full">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[11px] font-semibold bg-muted/60 dark:bg-muted/40 border border-border/40 text-foreground shadow-2xs hover:bg-muted transition-colors shrink-0 whitespace-nowrap">
-                    <UserIcon size={11} className="text-muted-foreground shrink-0" />
+                  <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[11px] font-semibold bg-blue-500/10 dark:bg-blue-500/15 border border-blue-500/25 text-foreground shadow-2xs hover:bg-blue-500/20 transition-colors shrink-0 whitespace-nowrap">
+                    <UserIcon size={11} className="text-blue-500 dark:text-blue-400 shrink-0" />
                     <span>ID: {studentId || user?.studentId || '2023-010482'}</span>
                   </span>
-                  <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[11px] font-semibold bg-muted/60 dark:bg-muted/40 border border-border/40 text-foreground shadow-2xs hover:bg-muted transition-colors shrink-0 whitespace-nowrap">
-                    <GraduationCapIcon size={11} className="text-muted-foreground shrink-0" />
+                  <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[11px] font-semibold bg-sky-500/10 dark:bg-sky-500/15 border border-sky-500/25 text-foreground shadow-2xs hover:bg-sky-500/20 transition-colors shrink-0 whitespace-nowrap">
+                    <GraduationCapIcon size={11} className="text-sky-500 dark:text-sky-400 shrink-0" />
                     <span>{displayProgram} • {sectionName || user?.section || 'BSIT 402'}</span>
                   </span>
-                  <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[11px] font-semibold bg-muted/60 dark:bg-muted/40 border border-border/40 text-foreground shadow-2xs hover:bg-muted transition-colors shrink-0 whitespace-nowrap">
-                    <UserCheckIcon size={11} className="text-muted-foreground shrink-0" />
+                  <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/10 dark:bg-emerald-500/15 border border-emerald-500/25 text-foreground shadow-2xs hover:bg-emerald-500/20 transition-colors shrink-0 whitespace-nowrap">
+                    <UserCheckIcon size={11} className="text-emerald-500 dark:text-emerald-400 shrink-0" />
                     <span>Mentor: {adviserName}</span>
                   </span>
-                  <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[11px] font-semibold bg-muted/60 dark:bg-muted/40 border border-border/40 text-foreground shadow-2xs hover:bg-muted transition-colors shrink-0 whitespace-nowrap">
-                    <Briefcase size={11} className="text-muted-foreground shrink-0" />
+                  <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[11px] font-semibold bg-[#FBBF24]/10 dark:bg-[#FBBF24]/15 border border-[#FBBF24]/30 text-foreground shadow-2xs hover:bg-[#FBBF24]/20 transition-colors shrink-0 whitespace-nowrap">
+                    <Briefcase size={11} className="text-amber-500 dark:text-[#FBBF24] shrink-0" />
                     <span>{isAssignedCompany ? companyName : 'Awaiting Match'}</span>
                   </span>
                 </div>
@@ -1146,8 +1147,8 @@ export const StudentDashboard: React.FC = () => {
                   value={approvedPercent}
                   size={46}
                   strokeWidth={4.5}
-                  colorClass="text-foreground"
-                  trackClass="text-muted/25 dark:text-muted/15"
+                  colorClass="text-emerald-500 dark:text-emerald-400"
+                  trackClass="text-emerald-500/15 dark:text-emerald-500/20"
                 >
                   <span className="text-sm font-bold text-foreground tabular-nums">
                     {approvedDocsCount}
@@ -1166,7 +1167,7 @@ export const StudentDashboard: React.FC = () => {
               <div className="mt-3 border-t border-border/60 dark:border-border/40 px-3.5 py-2 sm:px-4 sm:py-2.5">
                 <Link
                   to="/student/documents"
-                  className="flex items-center justify-end gap-1.5 text-xs sm:text-[13px] font-semibold text-muted-foreground hover:text-foreground transition-colors group/link cursor-pointer"
+                  className="flex items-center justify-end gap-1.5 text-xs sm:text-[13px] font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline transition-colors group/link cursor-pointer"
                 >
                   <span>View approved docs</span>
                   <ArrowRightIcon size={12} className="group-hover/link:translate-x-0.5 transition-transform" />
@@ -1181,8 +1182,8 @@ export const StudentDashboard: React.FC = () => {
                   value={inReviewPercent}
                   size={46}
                   strokeWidth={4.5}
-                  colorClass="text-foreground"
-                  trackClass="text-muted/25 dark:text-muted/15"
+                  colorClass="text-[#FBBF24]"
+                  trackClass="text-[#FBBF24]/20"
                 >
                   <span className="text-sm font-bold text-foreground tabular-nums">
                     {inReviewCount}
@@ -1201,7 +1202,7 @@ export const StudentDashboard: React.FC = () => {
               <div className="mt-3 border-t border-border/60 dark:border-border/40 px-3.5 py-2 sm:px-4 sm:py-2.5">
                 <Link
                   to="/student/reviews"
-                  className="flex items-center justify-end gap-1.5 text-xs sm:text-[13px] font-semibold text-muted-foreground hover:text-foreground transition-colors group/link cursor-pointer"
+                  className="flex items-center justify-end gap-1.5 text-xs sm:text-[13px] font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline transition-colors group/link cursor-pointer"
                 >
                   <span>Open Review Center</span>
                   <ArrowRightIcon size={12} className="group-hover/link:translate-x-0.5 transition-transform" />
@@ -1216,8 +1217,8 @@ export const StudentDashboard: React.FC = () => {
                   value={gradePercent}
                   size={46}
                   strokeWidth={4.5}
-                  colorClass="text-foreground"
-                  trackClass="text-muted/25 dark:text-muted/15"
+                  colorClass="text-blue-500 dark:text-blue-400"
+                  trackClass="text-blue-500/15 dark:text-blue-500/20"
                 >
                   <span className="text-sm font-bold text-foreground tabular-nums">
                     {studentPracticumScore !== null ? Math.round(studentPracticumScore) : '—'}
@@ -1236,7 +1237,7 @@ export const StudentDashboard: React.FC = () => {
               <div className="mt-3 border-t border-border/60 dark:border-border/40 px-3.5 py-2 sm:px-4 sm:py-2.5">
                 <Link
                   to="/student/documents?phase=final"
-                  className="flex items-center justify-end gap-1.5 text-xs sm:text-[13px] font-semibold text-muted-foreground hover:text-foreground transition-colors group/link cursor-pointer"
+                  className="flex items-center justify-end gap-1.5 text-xs sm:text-[13px] font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline transition-colors group/link cursor-pointer"
                 >
                   <span>View appraisal</span>
                   <ArrowRightIcon size={12} className="group-hover/link:translate-x-0.5 transition-transform" />
@@ -1461,7 +1462,7 @@ export const StudentDashboard: React.FC = () => {
               <div className="flex items-center gap-2 shrink-0">
                 <Link
                   to="/student/documents"
-                  className="text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1 transition-colors mr-1 cursor-pointer"
+                  className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline inline-flex items-center gap-1 transition-colors mr-1 cursor-pointer"
                 >
                   <span>Browse all templates</span>
                   <ArrowRightIcon size={12} />
@@ -1531,7 +1532,16 @@ export const StudentDashboard: React.FC = () => {
                             {/* Document Info */}
                             <td className="py-2.5 px-3.5">
                               <div className="flex items-center gap-2.5">
-                                <div className="size-7.5 rounded-lg flex items-center justify-center shrink-0 bg-muted/60 dark:bg-muted/40 border border-border/40 text-muted-foreground group-hover:text-foreground transition-colors">
+                                <div className={cn(
+                                  "size-7.5 rounded-lg flex items-center justify-center shrink-0 border transition-colors",
+                                  item.status === 'done'
+                                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25"
+                                    : item.status === 'revision' || item.status === 'returned'
+                                    ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/25"
+                                    : item.status === 'pending'
+                                    ? "bg-[#FBBF24]/10 text-amber-700 dark:text-[#FBBF24] border-[#FBBF24]/30"
+                                    : "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/25"
+                                )}>
                                   <item.icon size={14} />
                                 </div>
                                 <div className="min-w-0">
@@ -1552,8 +1562,30 @@ export const StudentDashboard: React.FC = () => {
 
                             {/* Status */}
                             <td className="py-2.5 px-3 whitespace-nowrap">
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10.5px] font-bold bg-muted/60 dark:bg-muted/40 text-foreground/90 border border-border/40">
-                                <span className="size-1.5 rounded-full bg-foreground/70" />
+                              <span className={cn(
+                                "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10.5px] font-bold border",
+                                item.status === 'done'
+                                  ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25"
+                                  : item.status === 'revision' || item.status === 'returned'
+                                  ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/25"
+                                  : item.status === 'pending'
+                                  ? "bg-[#FBBF24]/10 text-amber-700 dark:text-[#FBBF24] border-[#FBBF24]/30"
+                                  : item.status === 'draft'
+                                  ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/25"
+                                  : "bg-muted/70 text-muted-foreground border-border/70"
+                              )}>
+                                <span className={cn(
+                                  "size-1.5 rounded-full",
+                                  item.status === 'done'
+                                    ? "bg-emerald-500"
+                                    : item.status === 'revision' || item.status === 'returned'
+                                    ? "bg-rose-500"
+                                    : item.status === 'pending'
+                                    ? "bg-[#FBBF24]"
+                                    : item.status === 'draft'
+                                    ? "bg-blue-500"
+                                    : "bg-muted-foreground/60"
+                                )} />
                                 <span>{item.statusLabel}</span>
                               </span>
                             </td>
@@ -1651,14 +1683,14 @@ export const StudentDashboard: React.FC = () => {
           <div className="pt-1.5 border-t border-border/60 flex items-center justify-between text-[11px]">
             <Link
               to="/student/documents?phase=in_ojt"
-              className="text-muted-foreground hover:text-foreground font-bold hover:underline cursor-pointer transition-colors"
+              className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-bold hover:underline cursor-pointer transition-colors"
             >
               full calendar
             </Link>
             <button
               type="button"
               onClick={() => setIsCalendarHidden(prev => !prev)}
-              className="text-muted-foreground hover:text-foreground font-bold hover:underline cursor-pointer transition-colors"
+              className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-bold hover:underline cursor-pointer transition-colors"
             >
               {isCalendarHidden ? 'show' : 'hide'}
             </button>
@@ -1727,18 +1759,18 @@ export const StudentDashboard: React.FC = () => {
             <button
               type="button"
               onClick={() => setIsDueDocsExpanded(prev => !prev)}
-              className="flex items-center justify-between w-full py-1 text-foreground hover:text-foreground/80 transition-colors font-semibold group cursor-pointer text-xs"
+              className="flex items-center justify-between w-full py-1 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors font-semibold group cursor-pointer text-xs"
             >
               <div className="flex items-center gap-2 min-w-0">
-                <FileTextIcon size={14} className="text-muted-foreground group-hover:text-foreground shrink-0 group-hover:scale-110 transition-transform" />
-                <span className="truncate text-xs font-bold">
+                <FileTextIcon size={14} className="text-blue-600 dark:text-blue-400 shrink-0 group-hover:scale-110 transition-transform" />
+                <span className="truncate text-xs font-bold group-hover:underline">
                   {dueDocumentsList.length} assignments due
                 </span>
               </div>
               <ChevronDown
                 size={13}
                 className={cn(
-                  "text-muted-foreground transition-transform duration-200 shrink-0",
+                  "text-blue-600 dark:text-blue-400 transition-transform duration-200 shrink-0",
                   isDueDocsExpanded && "rotate-180"
                 )}
               />
@@ -1756,12 +1788,30 @@ export const StudentDashboard: React.FC = () => {
                         className="flex items-center justify-between gap-2 py-1.5 px-1 rounded-md text-xs hover:bg-muted/40 transition-colors group cursor-pointer"
                       >
                         <div className="flex items-center gap-2 min-w-0 flex-1">
-                          <span className="size-1 rounded-full bg-muted-foreground/60 shrink-0 group-hover:bg-foreground group-hover:scale-125 transition-transform" />
-                          <span className="truncate text-xs font-semibold text-foreground group-hover:text-foreground transition-colors">
+                          <span className={cn(
+                            "size-1.5 rounded-full shrink-0 transition-transform group-hover:scale-125",
+                            req.status === 'revision' || req.status === 'returned'
+                              ? "bg-rose-500"
+                              : req.status === 'pending'
+                              ? "bg-[#FBBF24]"
+                              : req.status === 'draft'
+                              ? "bg-blue-500"
+                              : "bg-muted-foreground/60"
+                          )} />
+                          <span className="truncate text-xs font-semibold text-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 group-hover:underline transition-colors">
                             {req.name}
                           </span>
                         </div>
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 tabular-nums bg-muted/80 dark:bg-muted/50 text-muted-foreground border border-border/40">
+                        <span className={cn(
+                          "text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 tabular-nums border",
+                          req.status === 'revision' || req.status === 'returned'
+                            ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/25"
+                            : req.status === 'pending'
+                            ? "bg-[#FBBF24]/10 text-amber-700 dark:text-[#FBBF24] border-[#FBBF24]/30"
+                            : req.status === 'draft'
+                            ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/25"
+                            : "bg-muted/80 dark:bg-muted/50 text-muted-foreground border-border/40"
+                        )}>
                           {req.status === 'revision' || req.status === 'returned'
                             ? 'Revise'
                             : req.status === 'draft'
