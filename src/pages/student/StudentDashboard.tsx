@@ -856,7 +856,7 @@ export const StudentDashboard: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_276px] gap-4 items-start pb-10 animate-in fade-in duration-300">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_300px] gap-4 items-start pb-10 animate-in fade-in duration-300">
         {/* Left Column Skeletons */}
         <div className="space-y-4 min-w-0 flex-1">
           {/* Hero Banner + 3 Stat Cards */}
@@ -890,19 +890,36 @@ export const StudentDashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Total Hours Skeleton */}
-          <div className="p-4 sm:p-4.5 bg-card border border-border/70 rounded-2xl min-h-[323px] flex flex-col justify-between">
-            <div className="flex justify-between items-center">
-              <div className="space-y-1">
-                <Skeleton className="h-4.5 w-40 rounded-md" />
-                <Skeleton className="h-3 w-52 rounded-md" />
+          {/* Row 2: Total Hours & Practicum Progress Dual Grid Skeleton */}
+          <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_300px] gap-4 items-stretch">
+            {/* Total Hours Skeleton */}
+            <div className="p-4 sm:p-4.5 bg-card border border-border/70 rounded-2xl min-h-[310px] flex flex-col justify-between">
+              <div className="flex justify-between items-center">
+                <div className="space-y-1">
+                  <Skeleton className="h-4.5 w-40 rounded-md" />
+                  <Skeleton className="h-3 w-52 rounded-md" />
+                </div>
+                <Skeleton className="h-7 w-28 rounded-lg" />
               </div>
-              <Skeleton className="h-7 w-28 rounded-lg" />
+              <Skeleton className="h-[168px] w-full rounded-xl" />
+              <div className="flex justify-between pt-1">
+                <Skeleton className="h-3 w-32 rounded-md" />
+                <Skeleton className="h-3 w-24 rounded-md" />
+              </div>
             </div>
-            <Skeleton className="h-[168px] w-full rounded-xl" />
-            <div className="flex justify-between pt-1">
-              <Skeleton className="h-3 w-32 rounded-md" />
-              <Skeleton className="h-3 w-24 rounded-md" />
+
+            {/* Practicum Progress Skeleton */}
+            <div className="p-4 sm:p-4.5 bg-card border border-border/70 rounded-2xl min-h-[310px] flex flex-col justify-between">
+              <div className="flex justify-between items-center">
+                <Skeleton className="h-5 w-36 rounded-md" />
+                <Skeleton className="size-5 rounded-md" />
+              </div>
+              <Skeleton className="size-32 rounded-full mx-auto" />
+              <div className="grid grid-cols-3 gap-1.5 pt-1">
+                <Skeleton className="h-7 rounded-lg" />
+                <Skeleton className="h-7 rounded-lg" />
+                <Skeleton className="h-7 rounded-lg" />
+              </div>
             </div>
           </div>
 
@@ -922,21 +939,7 @@ export const StudentDashboard: React.FC = () => {
         </div>
 
         {/* Right Column (Sidebar) Skeletons */}
-        <div className="space-y-4 min-w-0 w-full lg:w-[276px] shrink-0">
-          {/* Practicum Progress Skeleton */}
-          <div className="p-4 sm:p-4.5 bg-card border border-border/70 rounded-2xl min-h-[290px] flex flex-col justify-between">
-            <div className="flex justify-between items-center">
-              <Skeleton className="h-5 w-36 rounded-md" />
-              <Skeleton className="size-5 rounded-md" />
-            </div>
-            <Skeleton className="size-32 rounded-full mx-auto" />
-            <div className="grid grid-cols-3 gap-1.5 pt-1">
-              <Skeleton className="h-7 rounded-lg" />
-              <Skeleton className="h-7 rounded-lg" />
-              <Skeleton className="h-7 rounded-lg" />
-            </div>
-          </div>
-
+        <div className="space-y-4 min-w-0 w-full lg:w-[300px] shrink-0">
           {/* Calendar Skeleton */}
           <div className="p-4 bg-card border border-border/70 rounded-2xl space-y-3">
             <div className="flex justify-between items-center">
@@ -969,8 +972,8 @@ export const StudentDashboard: React.FC = () => {
   // ─── Main Render ────────────────────────────────────────────────────────────
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_276px] gap-4 items-start pb-10 animate-in fade-in duration-300">
-      {/* ─── LEFT COLUMN: Main Stream (Hero + Stats, Total Hours Chart, Submissions Tracker) ─── */}
+    <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_300px] gap-4 items-start pb-10 animate-in fade-in duration-300">
+      {/* ─── LEFT COLUMN: Main Stream (Hero + Stats, Total Hours & Progress Row, Submissions Tracker) ─── */}
       <div className="space-y-4 min-w-0 flex-1">
         {/* Section 1: Hero Banner + 3 Stat Cards */}
         <div className="flex flex-col gap-3.5 sm:gap-4 min-w-0">
@@ -1105,159 +1108,230 @@ export const StudentDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Section 2: Total Hours Overview Chart Card */}
-        <div className="min-w-0 flex flex-col">
-          <div className="bg-card border border-border/70 rounded-2xl p-4 sm:p-4.5 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between h-full min-h-[323px] space-y-2.5">
-            <div className="flex items-center justify-between pb-0.5">
-              <div>
-                <h2 className="text-base font-bold text-foreground tracking-tight">Total Hours Overview</h2>
-                <p className="text-xs text-muted-foreground font-medium">
-                  {chartView === 'monthly' ? 'Monthly practicum hours logged' : 'Weekly practicum hours logged'}
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold bg-primary/10 text-primary border border-primary/20">
-                  {renderedHours.toFixed(1)} / {totalHours}h
-                </span>
-                <div className="flex items-center bg-muted/70 p-0.5 rounded-lg border border-border/60 text-xs">
-                  <button
-                    type="button"
-                    onClick={() => setChartView('monthly')}
-                    className={cn(
-                      "px-2 py-0.5 rounded-md font-bold text-[11px] transition-colors cursor-pointer",
-                      chartView === 'monthly' ? "bg-card text-foreground shadow-2xs" : "text-muted-foreground hover:text-foreground"
-                    )}
-                  >
-                    Monthly
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setChartView('weekly')}
-                    className={cn(
-                      "px-2 py-0.5 rounded-md font-bold text-[11px] transition-colors cursor-pointer",
-                      chartView === 'weekly' ? "bg-card text-foreground shadow-2xs" : "text-muted-foreground hover:text-foreground"
-                    )}
-                  >
-                    Weekly
-                  </button>
+        {/* Section 2: Total Hours Overview & Practicum Progress Dual Grid Row */}
+        <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_300px] gap-4 items-stretch">
+          {/* Total Hours Overview Chart Card */}
+          <div className="min-w-0 flex flex-col h-full">
+            <div className="bg-card border border-border/70 rounded-2xl p-4 sm:p-4.5 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between h-full min-h-[310px] space-y-2.5">
+              <div className="flex items-center justify-between pb-0.5">
+                <div>
+                  <h2 className="text-base font-bold text-foreground tracking-tight">Total Hours Overview</h2>
+                  <p className="text-xs text-muted-foreground font-medium">
+                    {chartView === 'monthly' ? 'Monthly practicum hours logged' : 'Weekly practicum hours logged'}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold bg-primary/10 text-primary border border-primary/20">
+                    {renderedHours.toFixed(1)} / {totalHours}h
+                  </span>
+                  <div className="flex items-center bg-muted/70 p-0.5 rounded-lg border border-border/60 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => setChartView('monthly')}
+                      className={cn(
+                        "px-2 py-0.5 rounded-md font-bold text-[11px] transition-colors cursor-pointer",
+                        chartView === 'monthly' ? "bg-card text-foreground shadow-2xs" : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      Monthly
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setChartView('weekly')}
+                      className={cn(
+                        "px-2 py-0.5 rounded-md font-bold text-[11px] transition-colors cursor-pointer",
+                        chartView === 'weekly' ? "bg-card text-foreground shadow-2xs" : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      Weekly
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="w-full h-[168px] min-w-0 min-h-[168px]">
-              <ResponsiveContainer width="100%" height="100%">
-                {chartView === 'monthly' ? (
-                  <AreaChart
-                    data={monthlyChartData}
-                    margin={{ top: 12, right: 12, left: -22, bottom: 0 }}
-                  >
-                    <defs>
-                      <linearGradient id="hoursAreaGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#2563eb" stopOpacity={0.4} />
-                        <stop offset="100%" stopColor="#2563eb" stopOpacity={0.0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" className="text-border/40" />
-                    <XAxis
-                      dataKey="label"
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fill: 'currentColor', fontSize: 10, fontWeight: 600 }}
-                      className="text-muted-foreground"
-                    />
-                    <YAxis
-                      domain={[0, 160]}
-                      ticks={[0, 40, 80, 120, 160]}
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fill: 'currentColor', fontSize: 9, fontWeight: 600 }}
-                      className="text-muted-foreground"
-                      tickFormatter={(v) => `${v}h`}
-                    />
-                    <RechartsTooltip
-                      content={({ active, payload, label }) => {
-                        if (active && payload && payload.length) {
-                          return (
-                            <div className="bg-popover/95 backdrop-blur-md border border-border px-3 py-1.5 rounded-xl shadow-lg text-xs space-y-0.5">
-                              <p className="font-bold text-foreground">{label}</p>
-                              <p className="text-xs text-muted-foreground">
-                                Hours Logged: <span className="text-primary font-black">{payload[0].value} hrs</span>
-                              </p>
-                              <p className="text-[10px] text-muted-foreground font-medium">Monthly Target: 160 hrs</p>
-                            </div>
-                          );
-                        }
-                        return null;
-                      }}
-                    />
-                    <Area
-                      type="monotone"
+              <div className="w-full h-[168px] min-w-0 min-h-[168px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  {chartView === 'monthly' ? (
+                    <AreaChart
+                      data={monthlyChartData}
+                      margin={{ top: 12, right: 12, left: -22, bottom: 0 }}
+                    >
+                      <defs>
+                        <linearGradient id="hoursAreaGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#2563eb" stopOpacity={0.4} />
+                          <stop offset="100%" stopColor="#2563eb" stopOpacity={0.0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" className="text-border/40" />
+                      <XAxis
+                        dataKey="label"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: 'currentColor', fontSize: 10, fontWeight: 600 }}
+                        className="text-muted-foreground"
+                      />
+                      <YAxis
+                        domain={[0, 160]}
+                        ticks={[0, 40, 80, 120, 160]}
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: 'currentColor', fontSize: 9, fontWeight: 600 }}
+                        className="text-muted-foreground"
+                        tickFormatter={(v) => `${v}h`}
+                      />
+                      <RechartsTooltip
+                        content={({ active, payload, label }) => {
+                          if (active && payload && payload.length) {
+                            return (
+                              <div className="bg-popover/95 backdrop-blur-md border border-border px-3 py-1.5 rounded-xl shadow-lg text-xs space-y-0.5">
+                                <p className="font-bold text-foreground">{label}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  Hours Logged: <span className="text-primary font-black">{payload[0].value} hrs</span>
+                                </p>
+                                <p className="text-[10px] text-muted-foreground font-medium">Monthly Target: 160 hrs</p>
+                              </div>
+                            );
+                          }
+                          return null;
+                        }}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="value"
+                        stroke="#2563eb"
+                        strokeWidth={2.5}
+                        fillOpacity={1}
+                        fill="url(#hoursAreaGradient)"
+                        dot={{ r: 3.5, fill: '#2563eb', stroke: 'var(--color-card, #fff)', strokeWidth: 1.5 }}
+                        activeDot={{ r: 5.5, fill: '#1d4ed8', stroke: 'var(--color-card, #fff)', strokeWidth: 2 }}
+                      />
+                    </AreaChart>
+                  ) : (
+                    <BarChart
+                      data={weeklyBarData}
+                      margin={{ top: 12, right: 12, left: -22, bottom: 0 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" className="text-border/40" />
+                      <XAxis
+                        dataKey="label"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: 'currentColor', fontSize: 10, fontWeight: 600 }}
+                        className="text-muted-foreground"
+                      />
+                      <YAxis
+                        domain={[0, 8]}
+                        ticks={[0, 2, 4, 6, 8]}
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: 'currentColor', fontSize: 9, fontWeight: 600 }}
+                        className="text-muted-foreground"
+                        tickFormatter={(v) => `${v}h`}
+                      />
+                      <RechartsTooltip
+                        content={({ active, payload, label }) => {
+                          if (active && payload && payload.length) {
+                            return (
+                              <div className="bg-popover/95 backdrop-blur-md border border-border px-3 py-1.5 rounded-xl shadow-lg text-xs space-y-0.5">
+                                <p className="font-bold text-foreground">{label}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  Hours Logged: <span className="text-primary font-black">{payload[0].value} hrs</span>
+                                </p>
+                                <p className="text-[10px] text-muted-foreground font-medium">Daily Target: 8.0 hrs</p>
+                              </div>
+                            );
+                          }
+                          return null;
+                        }}
+                      />
+                      <Bar dataKey="value" radius={[6, 6, 0, 0]}>
+                        {weeklyBarData.map((entry, index) => (
+                          <Cell
+                            key={`bar-${index}`}
+                            fill={entry.isCurrent ? '#2563eb' : entry.value > 0 ? '#60a5fa' : '#94a3b840'}
+                            className={entry.isCurrent ? 'fill-blue-600 dark:fill-blue-500' : entry.value > 0 ? 'fill-blue-400 dark:fill-blue-400' : 'fill-muted-foreground/20 dark:fill-muted-foreground/15'}
+                          />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  )}
+                </ResponsiveContainer>
+              </div>
+
+              <div className="pt-2 border-t border-border/60 flex items-center justify-between text-xs text-muted-foreground">
+                <span>Daily target: <strong className="text-foreground font-semibold">8.0 hrs/day</strong></span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-bold">
+                  {chartView === 'monthly' ? '160.0 hrs / month' : '40.0 hrs / week'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Practicum Progress Card */}
+          <div className="min-w-0 flex flex-col h-full">
+            <div className="bg-card border border-border/70 rounded-2xl p-4 sm:p-4.5 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between h-full min-h-[310px] space-y-3">
+              <div className="flex items-center justify-between pb-0.5">
+                <div>
+                  <h2 className="text-base font-bold text-foreground tracking-tight">Practicum Progress</h2>
+                </div>
+                <button
+                  type="button"
+                  className="p-1 hover:bg-muted rounded-md text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                  title="Options"
+                >
+                  <MoreHorizontal size={15} />
+                </button>
+              </div>
+
+              <div className="relative flex items-center justify-center my-auto min-h-[140px]">
+                <ResponsiveContainer width="100%" height={145}>
+                  <PieChart>
+                    <Pie
+                      data={donutData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={48}
+                      outerRadius={68}
+                      paddingAngle={4}
                       dataKey="value"
-                      stroke="#2563eb"
-                      strokeWidth={2.5}
-                      fillOpacity={1}
-                      fill="url(#hoursAreaGradient)"
-                      dot={{ r: 3.5, fill: '#2563eb', stroke: 'var(--color-card, #fff)', strokeWidth: 1.5 }}
-                      activeDot={{ r: 5.5, fill: '#1d4ed8', stroke: 'var(--color-card, #fff)', strokeWidth: 2 }}
-                    />
-                  </AreaChart>
-                ) : (
-                  <BarChart
-                    data={weeklyBarData}
-                    margin={{ top: 12, right: 12, left: -22, bottom: 0 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" className="text-border/40" />
-                    <XAxis
-                      dataKey="label"
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fill: 'currentColor', fontSize: 10, fontWeight: 600 }}
-                      className="text-muted-foreground"
-                    />
-                    <YAxis
-                      domain={[0, 8]}
-                      ticks={[0, 2, 4, 6, 8]}
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fill: 'currentColor', fontSize: 9, fontWeight: 600 }}
-                      className="text-muted-foreground"
-                      tickFormatter={(v) => `${v}h`}
-                    />
-                    <RechartsTooltip
-                      content={({ active, payload, label }) => {
-                        if (active && payload && payload.length) {
-                          return (
-                            <div className="bg-popover/95 backdrop-blur-md border border-border px-3 py-1.5 rounded-xl shadow-lg text-xs space-y-0.5">
-                              <p className="font-bold text-foreground">{label}</p>
-                              <p className="text-xs text-muted-foreground">
-                                Hours Logged: <span className="text-primary font-black">{payload[0].value} hrs</span>
-                              </p>
-                              <p className="text-[10px] text-muted-foreground font-medium">Daily Target: 8.0 hrs</p>
-                            </div>
-                          );
-                        }
-                        return null;
-                      }}
-                    />
-                    <Bar dataKey="value" radius={[6, 6, 0, 0]}>
-                      {weeklyBarData.map((entry, index) => (
-                        <Cell
-                          key={`bar-${index}`}
-                          fill={entry.isCurrent ? '#2563eb' : entry.value > 0 ? '#60a5fa' : '#94a3b840'}
-                          className={entry.isCurrent ? 'fill-blue-600 dark:fill-blue-500' : entry.value > 0 ? 'fill-blue-400 dark:fill-blue-400' : 'fill-muted-foreground/20 dark:fill-muted-foreground/15'}
-                        />
+                      stroke="none"
+                    >
+                      {donutData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
-                    </Bar>
-                  </BarChart>
-                )}
-              </ResponsiveContainer>
-            </div>
+                    </Pie>
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Total</span>
+                  <span className="text-2xl font-black text-foreground tracking-tight">{hoursPercent}%</span>
+                </div>
+              </div>
 
-            <div className="pt-2 border-t border-border/60 flex items-center justify-between text-xs text-muted-foreground">
-              <span>Daily target: <strong className="text-foreground font-semibold">8.0 hrs/day</strong></span>
-              <span className="text-emerald-600 dark:text-emerald-400 font-bold">
-                {chartView === 'monthly' ? '160.0 hrs / month' : '40.0 hrs / week'}
-              </span>
+              {/* Legend 3-column Grid */}
+              <div className="grid grid-cols-3 gap-1.5 pt-2 border-t border-border/60 text-center">
+                <div className="p-1 rounded-lg bg-muted/20">
+                  <div className="flex items-center justify-center gap-1 text-[10.5px] text-muted-foreground">
+                    <span className="size-1.5 rounded-full bg-blue-600 shrink-0" />
+                    <span className="truncate">Progress</span>
+                  </div>
+                  <span className="text-xs font-bold text-foreground mt-0.5 block tabular-nums">{hoursPercent}%</span>
+                </div>
+                <div className="p-1 rounded-lg bg-muted/20">
+                  <div className="flex items-center justify-center gap-1 text-[10.5px] text-muted-foreground">
+                    <span className="size-1.5 rounded-full bg-orange-500 shrink-0" />
+                    <span className="truncate">In Review</span>
+                  </div>
+                  <span className="text-xs font-bold text-foreground mt-0.5 block tabular-nums">{activePendingCount}</span>
+                </div>
+                <div className="p-1 rounded-lg bg-muted/20">
+                  <div className="flex items-center justify-center gap-1 text-[10.5px] text-muted-foreground">
+                    <span className="size-1.5 rounded-full bg-emerald-500 shrink-0" />
+                    <span className="truncate">Target</span>
+                  </div>
+                  <span className="text-xs font-bold text-foreground mt-0.5 block tabular-nums">{totalHours}h</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -1493,75 +1567,9 @@ export const StudentDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* ─── RIGHT COLUMN: Dedicated Sidebar (Practicum Progress, Calendar, To-do, Announcements) ─── */}
-      <div className="space-y-4 min-w-0 w-full lg:w-[276px] shrink-0">
-        {/* 1. Practicum Progress Card (Clean & Focused) */}
-        <div className="bg-card border border-border/70 rounded-2xl p-4 sm:p-4.5 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between min-h-[290px] space-y-3">
-          <div className="flex items-center justify-between pb-0.5">
-            <div>
-              <h2 className="text-base font-bold text-foreground tracking-tight">Practicum Progress</h2>
-            </div>
-            <button
-              type="button"
-              className="p-1 hover:bg-muted rounded-md text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-              title="Options"
-            >
-              <MoreHorizontal size={15} />
-            </button>
-          </div>
-
-          <div className="relative flex items-center justify-center my-0.5 min-h-[140px]">
-            <ResponsiveContainer width="100%" height={140}>
-              <PieChart>
-                <Pie
-                  data={donutData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={48}
-                  outerRadius={68}
-                  paddingAngle={4}
-                  dataKey="value"
-                  stroke="none"
-                >
-                  {donutData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Total</span>
-              <span className="text-2xl font-black text-foreground tracking-tight">{hoursPercent}%</span>
-            </div>
-          </div>
-
-          {/* Legend 3-column Grid */}
-          <div className="grid grid-cols-3 gap-1.5 pt-2 border-t border-border/60 text-center">
-            <div className="p-1 rounded-lg bg-muted/20">
-              <div className="flex items-center justify-center gap-1 text-[10.5px] text-muted-foreground">
-                <span className="size-1.5 rounded-full bg-blue-600 shrink-0" />
-                <span className="truncate">Progress</span>
-              </div>
-              <span className="text-xs font-bold text-foreground mt-0.5 block tabular-nums">{hoursPercent}%</span>
-            </div>
-            <div className="p-1 rounded-lg bg-muted/20">
-              <div className="flex items-center justify-center gap-1 text-[10.5px] text-muted-foreground">
-                <span className="size-1.5 rounded-full bg-orange-500 shrink-0" />
-                <span className="truncate">In Review</span>
-              </div>
-              <span className="text-xs font-bold text-foreground mt-0.5 block tabular-nums">{activePendingCount}</span>
-            </div>
-            <div className="p-1 rounded-lg bg-muted/20">
-              <div className="flex items-center justify-center gap-1 text-[10.5px] text-muted-foreground">
-                <span className="size-1.5 rounded-full bg-emerald-500 shrink-0" />
-                <span className="truncate">Target</span>
-              </div>
-              <span className="text-xs font-bold text-foreground mt-0.5 block tabular-nums">{totalHours}h</span>
-            </div>
-          </div>
-        </div>
-
-        {/* 2. Calendar Widget */}
+      {/* ─── RIGHT COLUMN: Dedicated Sidebar (Calendar, To-do, Announcements) ─── */}
+      <div className="space-y-4 min-w-0 w-full lg:w-[300px] shrink-0">
+        {/* 1. Calendar Widget */}
         <div className="bg-card border border-border/70 rounded-2xl p-4 sm:p-4.5 shadow-2xs hover:shadow-xs transition-all space-y-3">
           {/* Header */}
           <div className="flex items-center gap-2 pb-0.5 border-b border-border/60">
@@ -1642,7 +1650,7 @@ export const StudentDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* 3. To-do Widget */}
+        {/* 2. To-do Widget */}
         <div className="bg-card border border-border/70 rounded-2xl p-4 sm:p-4.5 shadow-2xs hover:shadow-xs transition-all space-y-3">
           <div className="flex items-center justify-between pb-0.5 border-b border-border/60">
             <div className="flex items-center gap-2">
@@ -1768,7 +1776,7 @@ export const StudentDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* 4. Announcements Widget */}
+        {/* 3. Announcements Widget */}
         <div className="bg-card border border-border/70 rounded-2xl p-4 sm:p-4.5 shadow-2xs hover:shadow-xs transition-all space-y-2.5">
           <div className="flex items-center gap-2 pb-0.5 border-b border-border/60">
             <Megaphone size={16} className="text-sky-500 dark:text-sky-400 shrink-0" />
