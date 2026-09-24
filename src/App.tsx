@@ -7,52 +7,55 @@ import { ResetPassword } from './pages/public/ResetPassword';
 import { Login } from './pages/public/Login';
 import { MainLayout } from './components/layout/MainLayout';
 import { ProtectedRoute } from './components/layout/ProtectedRoute';
-import { AdminDashboard } from './pages/admin/AdminDashboard';
-import { Monitoring } from './pages/admin/Monitoring';
 import { PhaseGuard } from './components/layout/PhaseGuard';
-import { UserManagement } from './pages/admin/UserManagement';
-import { DocumentVerification } from './pages/admin/DocumentVerification';
-import { Templates } from './pages/admin/Templates';
-import { Reports } from './pages/admin/Reports';
-import { Settings } from './pages/admin/Settings';
-import { Announcements } from './pages/admin/Announcements';
-import { CompanyManagement } from './pages/admin/CompanyManagement';
-import { AdviserDashboard } from './pages/adviser/AdviserDashboard';
-import { StudentDashboard } from './pages/student/StudentDashboard';
-
-import { StudentDocumentRepository } from './pages/student/StudentDocumentRepository';
-import { StudentDocumentEditor } from './pages/student/StudentDocumentEditor';
-import { StudentReviewSession } from './pages/student/StudentReviewSession';
-import { ReviewDocs } from './pages/adviser/ReviewDocs';
-import { Endorsements } from './pages/adviser/Endorsements';
-import { ClassReports } from './pages/adviser/ClassReports';
-import { CompanyEvaluations } from './pages/adviser/CompanyEvaluations';
-import { AdviserComparison } from './pages/adviser/AdviserComparison';
-import { MOAReview } from './pages/adviser/MOAReview';
-import { DocumentReviewSession } from './pages/adviser/DocumentReviewSession';
-import { AdviserDocumentEditor } from './pages/adviser/AdviserDocumentEditor';
-import { AdminReviewSession } from './pages/admin/AdminReviewSession';
-import { AdminDocumentEditor } from './pages/admin/AdminDocumentEditor';
-import { MyStudents } from './pages/adviser/MyStudents';
-import { Notifications } from './pages/shared/Notifications';
-import { CalendarPage } from './pages/shared/CalendarPage';
-
-import { SupervisorDashboard } from './pages/supervisor/SupervisorDashboard';
-import { MyInterns } from './pages/supervisor/MyInterns';
-import { DTRApproval } from './pages/supervisor/DTRApproval';
-import { WeeklyJournalReview } from './pages/supervisor/WeeklyJournalReview';
-import { InternshipCompletion } from './pages/supervisor/InternshipCompletion';
-
-import { Profile } from './pages/shared/Profile';
-import { StudentReviewCenterPage } from './pages/student/StudentReviewCenterPage';
-import { SupervisorReviewCenterPage } from './pages/supervisor/SupervisorReviewCenterPage';
-import { AdviserReviewCenterPage } from './pages/adviser/AdviserReviewCenterPage';
-import { AdminReviewCenterPage } from './pages/admin/AdminReviewCenterPage';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { ErrorBoundary } from './components/ui/ErrorBoundary';
 import { User, Role } from './types';
+import { applyAccentTheme, getStoredAccentTheme } from './config/accentThemes';
 
-// Mock simple sub-pages for this prototype
-import { templateStorage } from './lib/templateStorage';
+// ─── Lazy-Loaded Portal, Review Center & Editor Routes ───────────────────────
+const AdminDashboard = React.lazy(() => import('./pages/admin/AdminDashboard').then((m: any) => ({ default: m.AdminDashboard || m.default })));
+const Monitoring = React.lazy(() => import('./pages/admin/Monitoring').then((m: any) => ({ default: m.Monitoring || m.default })));
+const UserManagement = React.lazy(() => import('./pages/admin/UserManagement').then((m: any) => ({ default: m.UserManagement || m.default })));
+const CompanyManagement = React.lazy(() => import('./pages/admin/CompanyManagement').then((m: any) => ({ default: m.CompanyManagement || m.default })));
+const DocumentVerification = React.lazy(() => import('./pages/admin/DocumentVerification').then((m: any) => ({ default: m.DocumentVerification || m.default })));
+const Templates = React.lazy(() => import('./pages/admin/Templates').then((m: any) => ({ default: m.Templates || m.default })));
+const Reports = React.lazy(() => import('./pages/admin/Reports').then((m: any) => ({ default: m.Reports || m.default })));
+const Settings = React.lazy(() => import('./pages/admin/Settings').then((m: any) => ({ default: m.Settings || m.default })));
+const Announcements = React.lazy(() => import('./pages/admin/Announcements').then((m: any) => ({ default: m.Announcements || m.default })));
+const AdminReviewSession = React.lazy(() => import('./pages/admin/AdminReviewSession').then((m: any) => ({ default: m.AdminReviewSession || m.default })));
+const AdminDocumentEditor = React.lazy(() => import('./pages/admin/AdminDocumentEditor').then((m: any) => ({ default: m.AdminDocumentEditor || m.default })));
+const AdminReviewCenterPage = React.lazy(() => import('./pages/admin/AdminReviewCenterPage').then((m: any) => ({ default: m.AdminReviewCenterPage || m.default })));
+
+const AdviserDashboard = React.lazy(() => import('./pages/adviser/AdviserDashboard').then((m: any) => ({ default: m.AdviserDashboard || m.default })));
+const MyStudents = React.lazy(() => import('./pages/adviser/MyStudents').then((m: any) => ({ default: m.MyStudents || m.default })));
+const Endorsements = React.lazy(() => import('./pages/adviser/Endorsements').then((m: any) => ({ default: m.Endorsements || m.default })));
+const MOAReview = React.lazy(() => import('./pages/adviser/MOAReview').then((m: any) => ({ default: m.MOAReview || m.default })));
+const ReviewDocs = React.lazy(() => import('./pages/adviser/ReviewDocs').then((m: any) => ({ default: m.ReviewDocs || m.default })));
+const DocumentReviewSession = React.lazy(() => import('./pages/adviser/DocumentReviewSession').then((m: any) => ({ default: m.DocumentReviewSession || m.default })));
+const AdviserDocumentEditor = React.lazy(() => import('./pages/adviser/AdviserDocumentEditor').then((m: any) => ({ default: m.AdviserDocumentEditor || m.default })));
+const AdviserReviewCenterPage = React.lazy(() => import('./pages/adviser/AdviserReviewCenterPage').then((m: any) => ({ default: m.AdviserReviewCenterPage || m.default })));
+const CompanyEvaluations = React.lazy(() => import('./pages/adviser/CompanyEvaluations').then((m: any) => ({ default: m.CompanyEvaluations || m.default })));
+const AdviserComparison = React.lazy(() => import('./pages/adviser/AdviserComparison').then((m: any) => ({ default: m.AdviserComparison || m.default })));
+const ClassReports = React.lazy(() => import('./pages/adviser/ClassReports').then((m: any) => ({ default: m.ClassReports || m.default })));
+
+const StudentDashboard = React.lazy(() => import('./pages/student/StudentDashboard').then((m: any) => ({ default: m.StudentDashboard || m.default })));
+const StudentDocumentRepository = React.lazy(() => import('./pages/student/StudentDocumentRepository').then((m: any) => ({ default: m.StudentDocumentRepository || m.default })));
+const StudentDocumentEditor = React.lazy(() => import('./pages/student/StudentDocumentEditor').then((m: any) => ({ default: m.StudentDocumentEditor || m.default })));
+const StudentReviewSession = React.lazy(() => import('./pages/student/StudentReviewSession').then((m: any) => ({ default: m.StudentReviewSession || m.default })));
+const StudentReviewCenterPage = React.lazy(() => import('./pages/student/StudentReviewCenterPage').then((m: any) => ({ default: m.StudentReviewCenterPage || m.default })));
+
+const SupervisorDashboard = React.lazy(() => import('./pages/supervisor/SupervisorDashboard').then((m: any) => ({ default: m.SupervisorDashboard || m.default })));
+const MyInterns = React.lazy(() => import('./pages/supervisor/MyInterns').then((m: any) => ({ default: m.MyInterns || m.default })));
+const DTRApproval = React.lazy(() => import('./pages/supervisor/DTRApproval').then((m: any) => ({ default: m.DTRApproval || m.default })));
+const WeeklyJournalReview = React.lazy(() => import('./pages/supervisor/WeeklyJournalReview').then((m: any) => ({ default: m.WeeklyJournalReview || m.default })));
+const InternshipCompletion = React.lazy(() => import('./pages/supervisor/InternshipCompletion').then((m: any) => ({ default: m.InternshipCompletion || m.default })));
+const SupervisorReviewCenterPage = React.lazy(() => import('./pages/supervisor/SupervisorReviewCenterPage').then((m: any) => ({ default: m.SupervisorReviewCenterPage || m.default })));
+
+const Notifications = React.lazy<React.ComponentType<{ user: any }>>(() => import('./pages/shared/Notifications').then((m: any) => ({ default: m.Notifications || m.default })));
+const CalendarPage = React.lazy<React.ComponentType<{ user: any }>>(() => import('./pages/shared/CalendarPage').then((m: any) => ({ default: m.CalendarPage || m.default })));
+const Profile = React.lazy<React.ComponentType<{ user: any }>>(() => import('./pages/shared/Profile').then((m: any) => ({ default: m.Profile || m.default })));
+const AttendancePage = React.lazy(() => import('./pages/shared/AttendancePage').then((m: any) => ({ default: m.AttendancePage || m.default })));
 
 const Placeholder = ({ name }: { name: string }) => (
   <div className="flex flex-col items-center justify-center h-full min-h-[400px] border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-2xl p-8 text-center bg-zinc-50/50 dark:bg-zinc-900/50">
@@ -67,14 +70,8 @@ function AppRoutes() {
   const location = useLocation();
 
   useEffect(() => {
-    // Initialize Theme - Default to Monochrome (Black & White)
-    const savedTheme = localStorage.getItem('app-theme') || 'default';
-    ['theme-blue', 'theme-indigo', 'theme-sti', 'theme-cyan'].forEach(cls => document.documentElement.classList.remove(cls));
-    if (savedTheme !== 'default') {
-      document.documentElement.classList.add(savedTheme);
-    } else {
-      localStorage.setItem('app-theme', 'default');
-    }
+    // Restore the saved accent and clear any stale theme classes.
+    applyAccentTheme(getStoredAccentTheme());
 
     // Clear any troll inputs/items saved in localStorage and purge legacy templates from IndexedDB
     try {
@@ -119,13 +116,22 @@ function AppRoutes() {
     );
   }
 
+const RouteLoadingFallback = () => (
+  <div className="flex items-center justify-center min-h-[50vh] w-full gap-3 text-muted-foreground">
+    <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+    <span className="text-xs font-medium">Loading view…</span>
+  </div>
+);
+
   return (
     <>
       <Toaster position="bottom-right" toastOptions={{
         className: 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 border-none font-sans font-medium',
         style: { borderRadius: '8px' }
       }} />
-      <Routes>
+      <ErrorBoundary>
+        <React.Suspense fallback={<RouteLoadingFallback />}>
+        <Routes>
         <Route path="/" element={<LandingPage userRole={user?.role} />} />
         <Route
           path="/login"
@@ -153,6 +159,7 @@ function AppRoutes() {
           <Route path="reports" element={<Reports />} />
           <Route path="settings" element={<Settings />} />
           <Route path="announcements" element={<Announcements />} />
+          <Route path="attendance" element={<AttendancePage />} />
           <Route path="calendar" element={<CalendarPage user={user} />} />
           <Route path="profile" element={<Profile user={user} />} />
         </Route>
@@ -175,6 +182,7 @@ function AppRoutes() {
           <Route path="evaluations" element={<CompanyEvaluations />} />
           <Route path="comparison" element={<AdviserComparison />} />
           <Route path="class-reports" element={<ClassReports />} />
+          <Route path="attendance" element={<AttendancePage />} />
           <Route path="calendar" element={<CalendarPage user={user} />} />
           <Route path="notifications" element={<Notifications user={user} />} />
           <Route path="profile" element={<Profile user={user} />} />
@@ -192,17 +200,19 @@ function AppRoutes() {
           <Route path="moa" element={<Navigate to="/student/documents" replace />} />
           <Route path="endorsement" element={<Navigate to="/student/documents" replace />} />
           <Route path="proposal" element={<Navigate to="/student/documents" replace />} />
-          <Route path="dtr" element={<Navigate to="/student/documents" replace />} />
+          <Route path="dtr" element={<Navigate to="/student/attendance" replace />} />
           <Route path="journal" element={<Navigate to="/student/documents" replace />} />
           <Route path="training-plan" element={<Navigate to="/student/documents" replace />} />
           <Route path="evaluation" element={<Navigate to="/student/documents" replace />} />
           <Route path="completion" element={<Navigate to="/student/documents" replace />} />
           <Route path="documents" element={<StudentDocumentRepository />} />
+          <Route path="repository" element={<Navigate to="/student/documents" replace />} />
           <Route path="documents/:id" element={<StudentReviewSession />} />
           <Route path="review/:id" element={<StudentReviewSession />} />
           <Route path="reviews" element={<StudentReviewCenterPage />} />
           <Route path="reviews/:id" element={<StudentReviewCenterPage />} />
           <Route path="editor" element={<StudentDocumentEditor />} />
+          <Route path="attendance" element={<AttendancePage />} />
           <Route path="progress" element={<Placeholder name="Progress Tracker" />} />
           <Route path="calendar" element={<CalendarPage user={user} />} />
           <Route path="notifications" element={<Notifications user={user} />} />
@@ -218,6 +228,7 @@ function AppRoutes() {
           <Route index element={<SupervisorDashboard />} />
           <Route path="interns" element={<MyInterns />} />
           <Route path="dtr" element={<DTRApproval />} />
+          <Route path="attendance" element={<AttendancePage />} />
           <Route path="journal" element={<WeeklyJournalReview />} />
           <Route path="reviews" element={<SupervisorReviewCenterPage />} />
           <Route path="reviews/:id" element={<SupervisorReviewCenterPage />} />
@@ -229,6 +240,8 @@ function AppRoutes() {
 
         <Route path="*" element={<Navigate to={user ? `/${user.role}` : "/"} replace />} />
       </Routes>
+      </React.Suspense>
+      </ErrorBoundary>
     </>
   );
 }

@@ -6,6 +6,7 @@ import { NavMain, NavGroup } from "@/components/nav-main"
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
@@ -32,9 +33,12 @@ import {
   Calendar as CalendarIcon,
   Award as AwardIcon,
   CheckCircle as CheckCircleIcon,
+  LogOut as LogOutIcon,
+  Clock3 as Clock3Icon,
 } from "lucide-react"
 import { User, Role } from "@/src/types"
 import { usePhaseLock } from "@/src/hooks/usePhaseLock"
+import { cn } from "@/src/lib/utils"
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   user: User | null
@@ -74,6 +78,7 @@ export function AppSidebar({ user, onLogout, onSearchClick, ...props }: AppSideb
               { title: 'Documents', url: '/admin/documents', icon: FileTextIcon, badge: 38 },
               { title: 'Review Center', url: '/admin/reviews', icon: ClipboardCheckIcon },
               { title: 'DTR Audit', url: '/admin/documents?filter=dtr', icon: FileSpreadsheetIcon },
+              { title: 'Attendance Audit', url: '/admin/attendance', icon: Clock3Icon },
               { title: 'Templates', url: '/admin/templates', icon: ClipboardListIcon },
               { title: 'Announcements', url: '/admin/announcements', icon: BellIcon },
               { title: 'Reports', url: '/admin/reports', icon: BarChartIcon },
@@ -109,6 +114,7 @@ export function AppSidebar({ user, onLogout, onSearchClick, ...props }: AppSideb
               { title: 'Document Review', url: '/adviser/review', icon: SearchIcon, badge: 4 },
               { title: 'Review Center', url: '/adviser/reviews', icon: ClipboardCheckIcon },
               { title: 'DTR Verification', url: '/adviser/review?type=dtr', icon: FileSpreadsheetIcon },
+              { title: 'Attendance Monitor', url: '/adviser/attendance', icon: Clock3Icon },
             ],
           },
           {
@@ -125,6 +131,7 @@ export function AppSidebar({ user, onLogout, onSearchClick, ...props }: AppSideb
             group: 'Overview',
             items: [
               { title: 'Dashboard', url: '/student', icon: LayoutDashboardIcon },
+              { title: 'Time In / Out', url: '/student/attendance', icon: Clock3Icon },
               { title: 'Document Repository', url: '/student/documents', icon: FileTextIcon },
               { title: 'Review Center', url: '/student/reviews', icon: ClipboardCheckIcon },
               { title: 'Document Editor', url: '/student/editor', icon: FilePlus2Icon },
@@ -151,6 +158,7 @@ export function AppSidebar({ user, onLogout, onSearchClick, ...props }: AppSideb
             group: 'Review Hub',
             items: [
               { title: 'DTR Approval', url: '/supervisor/dtr', icon: CalendarIcon, badge: 5 },
+              { title: 'Attendance Verification', url: '/supervisor/attendance', icon: Clock3Icon },
               { title: 'Weekly Journal Review', url: '/supervisor/journal', icon: BookOpenIcon, badge: 2 },
               { title: 'Review Center', url: '/supervisor/reviews', icon: ClipboardCheckIcon },
             ],
@@ -190,8 +198,26 @@ export function AppSidebar({ user, onLogout, onSearchClick, ...props }: AppSideb
         <NavMain groups={getNavGroups()} />
       </SidebarContent>
 
+      <SidebarFooter className="p-2 border-t border-sidebar-border/60">
+        <SidebarMenu className="gap-0.5">
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              onClick={onLogout}
+              tooltip="Log out"
+              className={cn(
+                "transition-all duration-150 group/logout text-[13.5px] font-medium cursor-pointer px-3 py-2 rounded-lg gap-3 w-full",
+                "text-sidebar-foreground/85 hover:text-sidebar-foreground hover:bg-sidebar-accent/80",
+                "active:scale-[0.98]"
+              )}
+            >
+              <LogOutIcon className="size-4.5 shrink-0 text-muted-foreground group-hover/logout:text-sidebar-foreground transition-all duration-150 group-hover/logout:translate-x-0.5" />
+              <span className="truncate group-data-[collapsible=icon]:hidden">Log out</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+
       <SidebarRail />
     </Sidebar>
   )
 }
-

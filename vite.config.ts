@@ -11,6 +11,40 @@ export default defineConfig(() => {
         '@': path.resolve(__dirname, '.'),
       },
     },
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes('node_modules')) {
+              if (id.includes('docx') && !id.includes('docx-preview')) {
+                return 'vendor-docx';
+              }
+              if (id.includes('exceljs') || id.includes('xlsx')) {
+                return 'vendor-excel';
+              }
+              if (id.includes('pdfjs-dist')) {
+                return 'vendor-pdfjs';
+              }
+              if (id.includes('@embedpdf')) {
+                return 'vendor-embedpdf';
+              }
+              if (
+                id.includes('@udecode') ||
+                id.includes('platejs') ||
+                id.includes('@platejs') ||
+                id.includes('/slate/') ||
+                id.includes('\\slate\\') ||
+                id.includes('/slate-') ||
+                id.includes('\\slate-')
+              ) {
+                return 'vendor-plate';
+              }
+            }
+          },
+        },
+      },
+      chunkSizeWarningLimit: 2500,
+    },
     server: {
       proxy: {
         '/api': {

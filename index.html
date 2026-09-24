@@ -7,13 +7,9 @@
     <title>Practicum Portal</title>
     <script>
       try {
-        const theme = localStorage.getItem('practicum_theme');
-        const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        if (theme === 'dark' || (!theme && systemDark)) {
-          document.documentElement.classList.add('dark');
-        } else {
-          document.documentElement.classList.remove('dark');
-        }
+        document.documentElement.classList.remove('dark');
+        document.documentElement.style.colorScheme = 'light';
+        localStorage.removeItem('practicum_theme');
       } catch (e) {}
     </script>
   </head>

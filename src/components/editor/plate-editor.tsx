@@ -12,6 +12,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom';
 import {
   Sparkles,
+  PenLine,
   Eye,
   Image as ImageIcon,
   ChevronDown,
@@ -26,7 +27,6 @@ import {
   Hash,
   Move,
   Crop,
-  PanelLeftOpen,
 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import {
@@ -45,7 +45,6 @@ import {
 } from '@/src/components/plate-ui/fixed-toolbar-buttons';
 import { FloatingToolbar } from '@/src/components/plate-ui/floating-toolbar';
 import { DocumentMenuBar } from './DocumentMenuBar';
-import { DocumentOutline } from './DocumentOutline';
 import { DocumentRuler } from './DocumentRuler';
 import { DocumentHeaderZone } from './DocumentHeaderZone';
 import { DocumentFooterZone } from './DocumentFooterZone';
@@ -155,6 +154,8 @@ export interface PlateEditorRef {
   getWordCount: () => number;
   getEditorInstance?: () => any;
   getHeaderFooter: () => DocumentHeaderFooterOptions;
+  insertText: (text: string) => void;
+  replaceText: (originalText: string, replacement: string) => boolean;
 }
 
 // ─── PlateEditor component ────────────────────────────────────────────────────
@@ -207,7 +208,6 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
     const [internalComments, setInternalComments] = useState<EditorComment[]>([]);
     const [showZoomIndicator, setShowZoomIndicator] = useState(false);
     const [showCommentsRail, setShowCommentsRail] = useState(() => (comments && comments.length > 0) || false);
-    const [showOutline, setShowOutline] = useState(false);
     const [showRuler, setShowRuler] = useState(initialShowRuler);
     const [drawerQuote, setDrawerQuote] = useState('');
     const [currentWordCount, setCurrentWordCount] = useState(() => countWordsInContent(initialContent));
@@ -429,6 +429,131 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [createEditorFn]);
 
+    // Helper to find and replace text across Slate node tree with multi-pass matching
+    const replaceInNodes = useCallback((nodes: any[], target: string, replacement: string): { replaced: boolean; newNodes: any[] } => {
+      let replaced = false;
+      const cleanTarget = target.trim();
+
+      // Pass 1: exact match
+      function walkExact(list: any[]): any[] {
+        return list.map((node) => {
+          if (replaced) return node;
+          if (typeof node.text === 'string' && node.text.includes(target)) {
+            replaced = true;
+            return {
+              ...node,
+              text: node.text.replace(target, replacement),
+            };
+          }
+          if (Array.isArray(node.children)) {
+            return {
+              ...node,
+              children: walkExact(node.children),
+            };
+          }
+          return node;
+        });
+      }
+
+      let res = walkExact(nodes);
+      if (replaced) return { replaced, newNodes: res };
+
+      // Pass 2: case-insensitive & trimmed match
+      if (cleanTarget) {
+        const lowerTarget = cleanTarget.toLowerCase();
+        function walkInsensitive(list: any[]): any[] {
+          return list.map((node) => {
+            if (replaced) return node;
+            if (typeof node.text === 'string') {
+              const lowerText = node.text.toLowerCase();
+              const idx = lowerText.indexOf(lowerTarget);
+              if (idx !== -1) {
+                replaced = true;
+                const before = node.text.slice(0, idx);
+                const after = node.text.slice(idx + cleanTarget.length);
+                return {
+                  ...node,
+                  text: before + replacement + after,
+                };
+              }
+            }
+            if (Array.isArray(node.children)) {
+              return {
+                ...node,
+                children: walkInsensitive(node.children),
+              };
+            }
+            return node;
+          });
+        }
+        res = walkInsensitive(nodes);
+        if (replaced) return { replaced, newNodes: res };
+      }
+
+      // Pass 3: flexible whitespace regex match
+      if (cleanTarget) {
+        try {
+          const escaped = cleanTarget.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+');
+          const regex = new RegExp(escaped, 'i');
+          function walkRegex(list: any[]): any[] {
+            return list.map((node) => {
+              if (replaced) return node;
+              if (typeof node.text === 'string' && regex.test(node.text)) {
+                replaced = true;
+                return {
+                  ...node,
+                  text: node.text.replace(regex, replacement),
+                };
+              }
+              if (Array.isArray(node.children)) {
+                return {
+                  ...node,
+                  children: walkRegex(node.children),
+                };
+              }
+              return node;
+            });
+          }
+          res = walkRegex(nodes);
+          if (replaced) return { replaced, newNodes: res };
+        } catch {
+          // ignore regex errors
+        }
+      }
+
+      // Pass 4: composite block-level text match across split spans
+      if (cleanTarget) {
+        function walkBlock(list: any[]): any[] {
+          return list.map((node) => {
+            if (replaced) return node;
+            if (Array.isArray(node.children) && node.children.length > 0 && node.children.every((c: any) => typeof c.text === 'string')) {
+              const fullText = node.children.map((c: any) => c.text).join('');
+              if (fullText.toLowerCase().includes(cleanTarget.toLowerCase())) {
+                replaced = true;
+                const escaped = cleanTarget.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+');
+                const regex = new RegExp(escaped, 'i');
+                const newText = fullText.replace(regex, replacement);
+                return {
+                  ...node,
+                  children: [{ text: newText }],
+                };
+              }
+            }
+            if (Array.isArray(node.children)) {
+              return {
+                ...node,
+                children: walkBlock(node.children),
+              };
+            }
+            return node;
+          });
+        }
+        res = walkBlock(nodes);
+      }
+
+      return { replaced, newNodes: res };
+    }, []);
+
     // Store editor reference on forwarded ref
     useEffect(() => {
       if (!ref) return;
@@ -437,13 +562,99 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
         getWordCount: () => countWordsInContent(contentRef.current),
         getEditorInstance: () => editorInstanceRef.current,
         getHeaderFooter: () => headerFooterRef.current,
+        insertText: (text: string) => {
+          const ed = editorInstanceRef.current;
+          if (!ed) return;
+          try {
+            if (typeof ed.tf?.focus === 'function') {
+              ed.tf.focus();
+            }
+
+            // Ensure valid selection in Slate
+            if (!ed.selection && Array.isArray(ed.children) && ed.children.length > 0) {
+              try {
+                if (typeof ed.api?.end === 'function') {
+                  const endPoint = ed.api.end([]);
+                  if (endPoint) {
+                    if (typeof ed.tf?.select === 'function') {
+                      ed.tf.select(endPoint);
+                    } else {
+                      ed.selection = { anchor: endPoint, focus: endPoint };
+                    }
+                  }
+                } else {
+                  const lastIdx = ed.children.length - 1;
+                  const lastChild = ed.children[lastIdx];
+                  const childIdx = Array.isArray(lastChild?.children) ? lastChild.children.length - 1 : 0;
+                  const lastLeaf = lastChild?.children?.[childIdx];
+                  const offset = typeof lastLeaf?.text === 'string' ? lastLeaf.text.length : 0;
+                  const point = { path: [lastIdx, childIdx], offset };
+                  if (typeof ed.tf?.select === 'function') {
+                    ed.tf.select(point);
+                  } else {
+                    ed.selection = { anchor: point, focus: point };
+                  }
+                }
+              } catch (selErr) {
+                console.warn('Auto-selection error in insertText:', selErr);
+              }
+            }
+
+            if (text) {
+              if (typeof ed.tf?.insertText === 'function') {
+                ed.tf.insertText(text);
+              } else if (typeof ed.insertText === 'function') {
+                ed.insertText(text);
+              }
+            }
+
+            if (ed.children) {
+              contentRef.current = ed.children;
+              const wc = countWordsInContent(ed.children);
+              setCurrentWordCount(wc);
+              onChange?.(ed.children, wc);
+            }
+          } catch (err) {
+            console.warn('insertText error:', err);
+          }
+        },
+        replaceText: (originalText: string, replacement: string): boolean => {
+          const ed = editorInstanceRef.current;
+          const currentNodes = (ed?.children && ed.children.length > 0) ? ed.children : contentRef.current;
+          const { replaced, newNodes } = replaceInNodes(currentNodes, originalText, replacement);
+          if (!replaced) return false;
+
+          try {
+            if (ed) {
+              if (typeof ed.tf?.setValue === 'function') {
+                ed.tf.setValue(newNodes);
+              } else {
+                ed.children = newNodes;
+                if (typeof ed.onChange === 'function') {
+                  ed.onChange();
+                }
+              }
+            }
+          } catch (err) {
+            console.warn('replaceText Plate sync error:', err);
+            if (ed) {
+              ed.children = newNodes;
+              ed.onChange?.();
+            }
+          }
+          contentRef.current = newNodes;
+          const wc = countWordsInContent(newNodes);
+          setCurrentWordCount(wc);
+          onChange?.(newNodes, wc);
+          return true;
+        },
       };
       if (typeof ref === 'function') {
         ref(handle);
       } else {
         (ref as React.MutableRefObject<typeof handle>).current = handle;
       }
-    }, [ref]);
+    }, [onChange, ref, replaceInNodes]);
 
     const handleKeyDown = useCallback(
       (e: React.KeyboardEvent) => {
@@ -750,8 +961,6 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                   setInternalMode(m);
                   onModeChange?.(m);
                 }}
-                showOutline={showOutline}
-                onToggleOutline={() => setShowOutline((prev) => !prev)}
                 showComments={showCommentsRail}
                 onToggleComments={() => setShowCommentsRail((prev) => !prev)}
                 showRuler={showRuler}
@@ -847,10 +1056,10 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
 
           {/* Mode banner indicator */}
           {(activeMode === 'suggesting' || activeMode === 'suggestion') && (
-            <div className="flex items-center justify-between px-4 py-1.5 bg-amber-500/10 border-b border-amber-500/20 text-amber-800 dark:text-amber-200 text-xs font-medium shrink-0">
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                <span>Suggestion Mode: Select text and click the comment icon to suggest changes or leave feedback notes.</span>
+            <div className="flex items-center justify-between gap-3 px-4 py-2 bg-emerald-50 dark:bg-emerald-950/40 border-b border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-100 text-xs font-medium shrink-0">
+              <div className="flex items-center gap-2 min-w-0">
+                <PenLine className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                <span className="truncate">Suggestion Mode: Select text and click the comment icon to suggest changes or leave feedback notes.</span>
               </div>
               <button
                 type="button"
@@ -858,7 +1067,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                   setInternalMode('editing');
                   onModeChange?.('editing');
                 }}
-                className="text-amber-600 dark:text-amber-400 hover:underline text-[11px] font-semibold"
+                className="px-2 py-0.5 rounded text-emerald-700 dark:text-emerald-300 hover:text-emerald-900 dark:hover:text-emerald-100 hover:bg-emerald-100/60 dark:hover:bg-emerald-900/40 text-xs font-semibold transition-colors cursor-pointer shrink-0"
               >
                 Exit to Editing
               </button>
@@ -886,29 +1095,8 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
             </div>
           )}
 
-          {/* ─── Google Docs Workspace (Outline + Paper Canvas + Comments Rail) ─── */}
+          {/* ─── Google Docs Workspace (Paper Canvas + Comments Rail) ─── */}
           <div className="flex-1 flex flex-row min-h-0 overflow-hidden relative">
-            {/* Left Collapsible Outline */}
-            <DocumentOutline
-              content={contentRef.current}
-              documentTitle={documentTitle || 'Untitled Document'}
-              isOpen={showOutline}
-              onClose={() => setShowOutline(false)}
-            />
-
-            {/* Subtle button to reopen outline if closed */}
-            {!showOutline && (
-              <button
-                type="button"
-                onClick={() => setShowOutline(true)}
-                title="Show document outline"
-                aria-label="Show document outline"
-                className="absolute top-3 left-3 z-30 p-1.5 rounded-full bg-card border border-border shadow-xs hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-              >
-                <PanelLeftOpen className="w-4 h-4" />
-              </button>
-            )}
-
             {/* Canvas Viewport (Physical Paper Sheet Container) */}
             <div
               ref={canvasRef}
@@ -949,7 +1137,7 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                 {/* ─── Authentic 8.5" × 11" Paper Sheet (US Letter Standard) ─── */}
                 <div
                   className={cn(
-                    'plate-paper-sheet w-[816px] max-w-[816px] min-h-[1056px] bg-card text-foreground border border-border/80 shadow-[0_1px_4px_rgba(0,0,0,0.08),0_8px_30px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_36px_rgba(0,0,0,0.7)] rounded-[2px] px-[96px] pt-0 pb-0 flex flex-col relative transition-all print:bg-white print:text-black print:border-none print:shadow-none',
+                    'plate-paper-sheet w-[816px] max-w-[816px] min-h-[1056px] bg-card text-foreground border border-border/80 shadow-[0_1px_4px_rgba(0,0,0,0.08),0_8px_30px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_36px_rgba(0,0,0,0.7)] rounded-[2px] px-[96px] pt-0 pb-0 flex flex-col relative transition-all print:bg-white print:text-black print:border-none print:shadow-none mb-16 sm:mb-24 print:mb-0',
                     activeHeaderFooter && 'ring-2 ring-primary/40 shadow-md'
                   )}
                 >
@@ -1018,6 +1206,15 @@ export const PlateEditor = React.forwardRef<PlateEditorRef, PlateEditorProps>(
                     footerInputRef={footerInputRef}
                     onSelectImage={setFooterImageSelected}
                   />
+                </div>
+
+                {/* Bottom scroll buffer for comfortable viewing of the paper bottom */}
+                <div
+                  data-editor-bottom-buffer="true"
+                  className="w-full h-20 sm:h-28 shrink-0 select-none print:hidden pointer-events-none flex items-center justify-center text-xs text-muted-foreground/40 font-medium"
+                  aria-hidden="true"
+                >
+                  <span>End of document</span>
                 </div>
               </div>
             </EditorContainer>

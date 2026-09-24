@@ -15,12 +15,15 @@ import {
   Building as BuildingIcon
 } from 'lucide-react';
 import { User as UserType } from '@/src/types';
+import { cn } from '@/src/lib/utils';
+import { useUserAvatar } from '@/src/lib/avatarHelper';
 
 interface ProfileProps {
   user: UserType | null;
 }
 
 export const Profile: React.FC<ProfileProps> = ({ user }) => {
+  const { avatarUrl, gender, setGender } = useUserAvatar(user);
   return (
     <div className="space-y-8 pb-12">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -28,12 +31,13 @@ export const Profile: React.FC<ProfileProps> = ({ user }) => {
         <div className="space-y-6">
           <Card className="text-center p-8">
             <div className="relative inline-block mb-3">
-              <div className="w-32 h-32 rounded-full bg-zinc-100 dark:bg-zinc-800 border-4 border-white shadow-xl flex items-center justify-center text-zinc-300">
-                <UserIcon size={64} strokeWidth={1} />
+              <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white dark:border-zinc-800 shadow-xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+                <img
+                  src={avatarUrl}
+                  alt={user?.name || "User Avatar"}
+                  className="size-full object-cover"
+                />
               </div>
-              <button className="absolute bottom-1 right-1 p-2 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-950 rounded-full border border-white shadow-lg hover:scale-110 transition-transform">
-                <CameraIcon size={16} />
-              </button>
             </div>
             <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">{user?.name}</h3>
             <p className="text-xs font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wide mt-1">{user?.role} PORTAL ACCESS</p>
@@ -57,6 +61,48 @@ export const Profile: React.FC<ProfileProps> = ({ user }) => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                <Input label="Full Legal Name" defaultValue={user?.role === 'student' ? 'John Dwayne B. Guaniso' : user?.name} />
                <Input label="Email Address" type="email" defaultValue={user?.email} />
+
+               {/* Avatar Gender Selector */}
+               <div className="md:col-span-2 space-y-1.5">
+                 <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 block">Avatar Selection</label>
+                 <div className="flex flex-wrap items-center gap-3">
+                   <label className={cn(
+                     "flex items-center gap-2.5 px-3.5 py-2 rounded-xl border text-xs font-bold cursor-pointer transition-all",
+                     gender === 'male'
+                       ? "border-primary bg-primary/10 text-primary shadow-2xs"
+                       : "border-border bg-card text-muted-foreground hover:bg-muted"
+                   )}>
+                     <input
+                       type="radio"
+                       name="gender"
+                       value="male"
+                       checked={gender === 'male'}
+                       onChange={() => setGender('male')}
+                       className="sr-only"
+                     />
+                     <img src="/images/avatars/undraw_indie-hacker-avatar_b3wy.svg" alt="Male" className="size-5 rounded-full" />
+                     <span>Male Avatar (Indie Hacker)</span>
+                   </label>
+                   <label className={cn(
+                     "flex items-center gap-2.5 px-3.5 py-2 rounded-xl border text-xs font-bold cursor-pointer transition-all",
+                     gender === 'female'
+                       ? "border-primary bg-primary/10 text-primary shadow-2xs"
+                       : "border-border bg-card text-muted-foreground hover:bg-muted"
+                   )}>
+                     <input
+                       type="radio"
+                       name="gender"
+                       value="female"
+                       checked={gender === 'female'}
+                       onChange={() => setGender('female')}
+                       className="sr-only"
+                     />
+                     <img src="/images/avatars/undraw_female-avatar_7t6k.svg" alt="Female" className="size-5 rounded-full" />
+                     <span>Female Avatar</span>
+                   </label>
+                 </div>
+               </div>
+
                <Input label="Contact Number" placeholder="+63 9XX XXX XXXX" />
                <Input label="Department/Major" defaultValue={user?.department || 'College of Computer Studies'} />
                

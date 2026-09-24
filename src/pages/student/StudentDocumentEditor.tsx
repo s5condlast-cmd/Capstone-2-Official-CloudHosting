@@ -15,7 +15,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ChevronLeft, ChevronDown, Save, Download, Clock, Send, Copy,
   AlertTriangle, CheckCircle, Wifi, WifiOff, Loader2,
-  History, FileText, Users, ShieldCheck, ArrowLeft
+  History, FileText, Users, ShieldCheck, ArrowLeft, RefreshCw,
+  FileSearch, Mic, MicOff
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -28,6 +29,16 @@ import { toast } from 'sonner';
 import { supabase } from '@/src/lib/supabase';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { DocumentHistoryDrawer } from '@/src/components/editor/DocumentHistoryDrawer';
+import { EditorAiProofreadDrawer } from '@/src/components/editor/EditorAiProofreadDrawer';
+import { EditorPreSubmitModal } from '@/src/components/editor/EditorPreSubmitModal';
+import { generateEditorReviewArtifacts } from '@/src/lib/editorReviewArtifacts';
+import {
+  submitReviewDocument,
+  fetchRequirementDefinitions,
+  FALLBACK_REQUIREMENT_DEFINITIONS,
+  type ReviewRequirementDefinition,
+} from '@/src/lib/reviewSubmissionService';
+import { speechToTextService, polishDictationWithGemini } from '@/src/lib/speechToTextService';
 import PlateEditor, { type PlateEditorRef } from '@/src/components/editor/plate-editor';
 import {
   type EditorMode,
@@ -112,6 +123,25 @@ export function StudentDocumentEditor() {
   const [submitting, setSubmitting] = useState(false);
   const [titleEditing, setTitleEditing] = useState(false);
   const [editorEpoch, setEditorEpoch] = useState(0);
+  const [remoteUpdate, setRemoteUpdate] = useState<{
+    content: object[];
+    revision: number;
+    title: string;
+    headerFooter?: DocumentHeaderFooterOptions;
+    wordCount?: number;
+  } | null>(null);
+
+  // ── Writing Studio & Review Submission State ─────────────────────────────
+  const [showProofread, setShowProofread] = useState(false);
+  const [isDictating, setIsDictating] = useState(false);
+  const [showPreSubmitModal, setShowPreSubmitModal] = useState(false);
+  const [requirementsList, setRequirementsList] = useState<ReviewRequirementDefinition[]>([]);
+  const [studentProfile, setStudentProfile] = useState<{
+    hasAdviser: boolean;
+    hasSupervisor: boolean;
+    adviserName?: string;
+    supervisorName?: string;
+  } | null>(null);
 
   // ── Fullscreen Tracking & Safe Navigation ────────────────────────────────
   const isFullscreenRef = useRef(false);
@@ -158,6 +188,7 @@ export function StudentDocumentEditor() {
 
   // ── Storage engine ───────────────────────────────────────────────────────
   const storageRef = useRef<DocumentHistoryStorage | null>(null);
+  const applyRemoteStateRef = useRef<((content: object[], revision: number, remoteTitle: string, headerFooter?: DocumentHeaderFooterOptions, remoteWC?: number, isSilent?: boolean) => void) | null>(null);
 
   // ── Initialize: load or create draft ─────────────────────────────────────
   useEffect(() => {
@@ -341,6 +372,7 @@ export function StudentDocumentEditor() {
             setShowConflictBanner(true);
           },
           onSaved: (saved) => {
+            isDirtyRef.current = false;
             setDraft((current) => current
               ? { ...current, revision: saved.revision, updatedAt: saved.updatedAt }
               : current
@@ -356,17 +388,22 @@ export function StudentDocumentEditor() {
             if (loadedDraft) void loadVersionCount(loadedDraft.id);
           },
           onRemoteUpdate: (remoteContent, remoteRevision, remoteTitle, remoteHF, remoteWC) => {
-            // Quietly update cloud revision and state in memory without triggering editor re-mount or retaliatory save loop
-            if (storageRef.current) {
-              storageRef.current.setCloudRevision(remoteRevision);
+            if (storageRef.current && storageRef.current.getCloudRevision() >= remoteRevision) {
+              return;
             }
-            setDraft((prev) => prev ? {
-              ...prev,
+            // If the current tab has NO unsaved changes, auto-sync silently without bothering user
+            if (!isDirtyRef.current) {
+              applyRemoteStateRef.current?.(remoteContent, remoteRevision, remoteTitle, remoteHF, remoteWC, true);
+              return;
+            }
+            // Document updated in another tab and current tab has unsaved edits. Guard against stale overwrites and prompt user
+            setRemoteUpdate({
+              content: remoteContent,
               revision: remoteRevision,
               title: remoteTitle,
-              headerFooter: remoteHF ?? prev.headerFooter,
-              wordCount: remoteWC ?? prev.wordCount,
-            } : prev);
+              headerFooter: remoteHF,
+              wordCount: remoteWC,
+            });
           },
         });
         await storage.load(loadedDraft.revision, loadedDraft.content);
@@ -390,6 +427,65 @@ export function StudentDocumentEditor() {
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, draftIdParam, templateParam]);
+
+  // ── Load Requirements Catalog & Reviewer Information ─────────────────────
+  useEffect(() => {
+    async function loadReviewerData() {
+      if (!user) return;
+      try {
+        const [reqs, profileRes] = await Promise.all([
+          fetchRequirementDefinitions().catch((err) => {
+            console.warn('[StudentDocumentEditor] Using fallback requirement definitions:', err);
+            return FALLBACK_REQUIREMENT_DEFINITIONS;
+          }),
+          Promise.resolve(
+            supabase
+              .from('profiles')
+              .select('id, full_name, adviser_id, supervisor_id')
+              .eq('id', user.id)
+              .maybeSingle()
+          ).catch((err) => {
+            console.warn('[StudentDocumentEditor] Failed to fetch student profile:', err);
+            return { data: null, error: err };
+          }),
+        ]);
+
+        const resolvedReqs = reqs && reqs.length > 0 ? reqs : FALLBACK_REQUIREMENT_DEFINITIONS;
+        setRequirementsList(resolvedReqs);
+
+        const profile = profileRes?.data;
+        let adviserName = '';
+        let supervisorName = '';
+        if (profile?.adviser_id) {
+          try {
+            const { data: adv } = await supabase.from('profiles').select('full_name').eq('id', profile.adviser_id).maybeSingle();
+            if (adv) adviserName = adv.full_name;
+          } catch (e) {
+            console.warn('[StudentDocumentEditor] Failed to fetch adviser name:', e);
+          }
+        }
+        if (profile?.supervisor_id) {
+          try {
+            const { data: sup } = await supabase.from('profiles').select('full_name').eq('id', profile.supervisor_id).maybeSingle();
+            if (sup) supervisorName = sup.full_name;
+          } catch (e) {
+            console.warn('[StudentDocumentEditor] Failed to fetch supervisor name:', e);
+          }
+        }
+
+        setStudentProfile({
+          hasAdviser: Boolean(profile?.adviser_id),
+          hasSupervisor: Boolean(profile?.supervisor_id),
+          adviserName,
+          supervisorName,
+        });
+      } catch (e) {
+        console.warn('Failed to load reviewer metadata:', e);
+        setRequirementsList(FALLBACK_REQUIREMENT_DEFINITIONS);
+      }
+    }
+    loadReviewerData();
+  }, [user]);
 
   const draftRef = useRef<LocalDraft | null>(null);
   draftRef.current = draft;
@@ -427,6 +523,72 @@ export function StudentDocumentEditor() {
     },
     [conflictRemote, navigate]
   );
+
+  const applyRemoteState = useCallback(
+    (
+      content: object[],
+      revision: number,
+      remoteTitle: string,
+      headerFooter?: DocumentHeaderFooterOptions,
+      remoteWC?: number,
+      isSilent: boolean = false
+    ) => {
+      if (!storageRef.current || !draftRef.current || !user) return;
+      const currentDraft = draftRef.current;
+
+      const nextDraft: LocalDraft = {
+        ...currentDraft,
+        content,
+        revision,
+        title: remoteTitle,
+        headerFooter: headerFooter ?? currentDraft.headerFooter,
+        wordCount: remoteWC ?? currentDraft.wordCount,
+        updatedAt: new Date().toISOString(),
+      };
+
+      const nextState: DraftState = {
+        id: currentDraft.id,
+        userId: user.id,
+        title: remoteTitle,
+        templateId: currentDraft.templateId ?? undefined,
+        templateName: currentDraft.templateName ?? undefined,
+        phase: currentDraft.phase ?? undefined,
+        content,
+        headerFooter: headerFooter ?? currentDraft.headerFooter,
+        wordCount: remoteWC ?? currentDraft.wordCount,
+        revision,
+        status: currentDraft.status,
+        submissionId: currentDraft.submissionId,
+        createdAt: currentDraft.createdAt,
+        updatedAt: new Date().toISOString(),
+      };
+
+      storageRef.current.applyRemoteUpdate(revision, content, nextState);
+
+      setDraft(nextDraft);
+      setTitle(remoteTitle);
+      if (remoteWC != null) setWordCount(remoteWC);
+
+      isDirtyRef.current = false;
+      setEditorEpoch((v) => v + 1);
+      setRemoteUpdate(null);
+
+      if (isSilent) {
+        toast.info('Document synced with updates from another tab.', { duration: 3000 });
+      } else {
+        toast.success('Document updated with latest changes from another tab.');
+      }
+    },
+    [user]
+  );
+  applyRemoteStateRef.current = applyRemoteState;
+
+  // ── Multi-Tab remote update apply ─────────────────────────────────────────
+  const handleApplyRemoteUpdate = useCallback(() => {
+    if (!remoteUpdate) return;
+    const { content, revision, title: remoteTitle, headerFooter, wordCount: remoteWC } = remoteUpdate;
+    applyRemoteState(content, revision, remoteTitle, headerFooter, remoteWC, false);
+  }, [applyRemoteState, remoteUpdate]);
 
   // ── Editor content change ────────────────────────────────────────────────
   const handleEditorChange = useCallback(
@@ -565,13 +727,79 @@ export function StudentDocumentEditor() {
     printToPdf();
   }, []);
 
+  // ── Voice Dictation (Streaming Word-by-Word into Plate Editor) ───────────
+  const dictatedWordCountRef = useRef<number>(0);
+
+  const handleToggleDictation = useCallback(() => {
+    if (isDictating) {
+      speechToTextService.stopListening();
+      setIsDictating(false);
+      dictatedWordCountRef.current = 0;
+      toast.info('Voice dictation stopped.');
+    } else {
+      dictatedWordCountRef.current = 0;
+      // Pre-focus editor so insertion cursor is established
+      editorRef.current?.insertText?.('');
+
+      const started = speechToTextService.startListening({
+        onResult: (transcript, isFinal) => {
+          if (!transcript || !transcript.trim()) return;
+
+          const words = transcript.trim().split(/\s+/).filter(Boolean);
+          if (words.length > dictatedWordCountRef.current) {
+            const newWords = words.slice(dictatedWordCountRef.current);
+            const chunk = newWords.join(' ') + ' ';
+            editorRef.current?.insertText(chunk);
+            dictatedWordCountRef.current = words.length;
+          }
+
+          if (isFinal) {
+            dictatedWordCountRef.current = 0;
+          }
+        },
+        onError: (err) => {
+          toast.error(err);
+          setIsDictating(false);
+          dictatedWordCountRef.current = 0;
+        },
+        onEnd: () => {
+          setIsDictating(false);
+          dictatedWordCountRef.current = 0;
+        },
+      });
+
+      if (started) {
+        setIsDictating(true);
+        toast.success('Voice dictation active. Speak clearly into your mic.');
+      }
+    }
+  }, [isDictating]);
+
+  // Clean up speech recognition if user navigates away while dictating
+  useEffect(() => {
+    return () => {
+      if (speechToTextService.isListening()) {
+        speechToTextService.stopListening();
+      }
+    };
+  }, []);
+
   // ── Submit ───────────────────────────────────────────────────────────────
-  const handleSubmit = useCallback(async () => {
+  const handleSubmit = useCallback(() => {
     if (!draft || !user || submitting) return;
     if (draft.status === 'locked') {
       toast.error('This document has already been submitted.');
       return;
     }
+    setShowPreSubmitModal(true);
+  }, [draft, submitting, user]);
+
+  const handleConfirmSubmit = useCallback(async (options: {
+    requirementId: string;
+    remarks?: string;
+    attachSourceDocx: boolean;
+  }) => {
+    if (!draft || !user || submitting) return;
 
     setSubmitting(true);
     try {
@@ -583,40 +811,48 @@ export function StudentDocumentEditor() {
         ?? storageRef.current?.getCloudRevision()
         ?? draft.revision;
 
-      // 2. Generate DOCX artifact with complete header/footer options
+      // 2. Generate PDF and source DOCX with consistent line & paragraph spacing
       const content = editorRef.current?.getContent() ?? draft.content;
       const headerFooter = editorRef.current?.getHeaderFooter?.() ?? draft.headerFooter;
-      const blob = await serializeToDocx(content as any, title, headerFooter);
-      const file = new File([blob], `${title}.docx`, { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+      const editorDom = document.querySelector('[data-slate-editor="true"]') as HTMLElement | null;
 
-      // 3. Upload to student_submissions and create student_documents row
-      const submissionDoc = await submissionStorage.uploadSubmission(file, '', '', draft.templateName ?? title);
-
-      // 4. Lock the draft using the trusted server function
-      const { error: lockError } = await supabase.rpc('lock_editor_draft_for_submission', {
-        p_draft_id: draft.id,
-        p_submission_id: submissionDoc.id,
-        p_expected_revision: expectedRevision,
+      const artifacts = await generateEditorReviewArtifacts({
+        content: content as any[],
+        title,
+        headerFooter,
+        editorElement: editorDom,
       });
 
-      if (lockError) {
-        toast.error('Document uploaded but could not lock draft. Retry or contact support.', { duration: 8000 });
-        return;
-      }
+      // 3. Submit PDF to trusted backend endpoint
+      const result = await submitReviewDocument({
+        requirementId: options.requirementId,
+        title,
+        pdfFile: artifacts.pdf,
+        filename: artifacts.pdf.name,
+        sourceDocxFile: options.attachSourceDocx ? artifacts.sourceDocx : undefined,
+        sourceFilename: options.attachSourceDocx ? artifacts.sourceDocx.name : undefined,
+        draftId: draft.id,
+        expectedDraftRevision: expectedRevision,
+        remarks: options.remarks,
+      });
 
-      setDraft(prev => prev ? {
+      // 4. Update local draft state
+      setDraft((prev) => prev ? {
         ...prev,
         revision: expectedRevision,
         status: 'locked',
-        submissionId: submissionDoc.id,
+        submissionId: result.case_id,
       } : prev);
-      toast.success('Document submitted successfully! Your adviser has been notified.');
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Submission failed. Please retry.');
+
+      setShowPreSubmitModal(false);
+      toast.success('Document submitted successfully for review!');
+      navigate(`/student/reviews?caseId=${result.case_id}`);
+    } catch (e: any) {
+      toast.error(e?.message || 'Submission failed. Please retry.');
     } finally {
       setSubmitting(false);
     }
-  }, [draft, submitting, title, user]);
+  }, [draft, navigate, submitting, title, user]);
 
   // ── Duplicate as new draft ───────────────────────────────────────────────
   const handleDuplicate = useCallback(async () => {
@@ -744,19 +980,53 @@ export function StudentDocumentEditor() {
               <div className="flex items-center gap-2 shrink-0 ml-4">
 
                 {!isLocked && (
-                  <button
-                    onClick={() => setShowHistory(true)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold border border-border bg-card text-foreground hover:bg-muted/80 shadow-2xs transition-all active:scale-95 cursor-pointer"
-                    title="Version history (Ctrl+Alt+H)"
-                  >
-                    <History className="w-4 h-4 text-primary" />
-                    <span className="hidden sm:inline">History</span>
-                    {versionCount > 0 && (
-                      <span className="ml-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary border border-primary/20 leading-none">
-                        {versionCount}
-                      </span>
+                  <>
+                    {speechToTextService.isSupported() && (
+                      <button
+                        type="button"
+                        onClick={handleToggleDictation}
+                        className={cn(
+                          'flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold border transition-all active:scale-95 cursor-pointer',
+                          isDictating
+                            ? 'bg-rose-50 text-rose-600 border-rose-300 dark:bg-rose-950/40 dark:border-rose-800 animate-pulse'
+                            : 'border-border bg-card text-foreground hover:bg-muted/80 shadow-2xs'
+                        )}
+                        title={isDictating ? 'Stop Voice Dictation' : 'Voice Dictation (Speech to Text)'}
+                      >
+                        {isDictating ? <MicOff className="w-4 h-4 text-rose-500" /> : <Mic className="w-4 h-4 text-muted-foreground" />}
+                        <span className="hidden md:inline">{isDictating ? 'Listening...' : 'Voice'}</span>
+                      </button>
                     )}
-                  </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setShowProofread(prev => !prev)}
+                      className={cn(
+                        'flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold border transition-all active:scale-95 cursor-pointer',
+                        showProofread
+                          ? 'bg-primary/10 text-primary border-primary/30 shadow-2xs'
+                          : 'border-border bg-card text-foreground hover:bg-muted/80 shadow-2xs'
+                      )}
+                      title="Analyze Document Writing"
+                    >
+                      <FileSearch className="w-4 h-4 text-primary" />
+                      <span className="hidden sm:inline">Analyze</span>
+                    </button>
+
+                    <button
+                      onClick={() => setShowHistory(true)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold border border-border bg-card text-foreground hover:bg-muted/80 shadow-2xs transition-all active:scale-95 cursor-pointer"
+                      title="Version history (Ctrl+Alt+H)"
+                    >
+                      <History className="w-4 h-4 text-primary" />
+                      <span className="hidden sm:inline">History</span>
+                      {versionCount > 0 && (
+                        <span className="ml-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary border border-primary/20 leading-none">
+                          {versionCount}
+                        </span>
+                      )}
+                    </button>
+                  </>
                 )}
 
                 {/* Consolidated Export Dropdown */}
@@ -835,6 +1105,37 @@ export function StudentDocumentEditor() {
                 />
               </div>
             )}
+
+            {/* Multi-Tab Remote Update Banner */}
+            {remoteUpdate && !showConflictBanner && (
+              <div
+                data-remote-update-banner
+                className="flex items-center justify-between gap-3 px-4 py-2.5 bg-sky-50 dark:bg-sky-950/60 border-b border-sky-200 dark:border-sky-800 text-xs text-sky-900 dark:text-sky-100 z-30 shrink-0"
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <RefreshCw className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400 shrink-0" />
+                  <span className="font-medium truncate">
+                    Document updated in another tab (Rev {remoteUpdate.revision}).
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={handleApplyRemoteUpdate}
+                    className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-sky-600 hover:bg-sky-700 text-white transition-colors cursor-pointer shadow-2xs"
+                  >
+                    Click to reload
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRemoteUpdate(null)}
+                    className="px-2 py-1 text-xs text-sky-700 dark:text-sky-300 hover:bg-sky-100 dark:hover:bg-sky-900/50 rounded-lg transition-colors cursor-pointer"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         );
 
@@ -872,6 +1173,60 @@ export function StudentDocumentEditor() {
           }}
           onClose={() => setShowHistory(false)}
           onRestoreComplete={handleRestoreComplete}
+        />
+      )}
+
+      {/* AI Proofread Drawer */}
+      <EditorAiProofreadDrawer
+        isOpen={showProofread}
+        onClose={() => setShowProofread(false)}
+        getContent={() => editorRef.current?.getContent() ?? draft?.content ?? []}
+        content={editorRef.current?.getContent() ?? draft?.content ?? []}
+        title={title}
+        requirementId={draft?.templateId || undefined}
+        onApplySuggestion={(s) => {
+          if (editorRef.current) {
+            const success = editorRef.current.replaceText(s.originalText, s.suggestion);
+            if (success) {
+              toast.success(`Applied fix: "${s.suggestion}"`);
+            } else {
+              editorRef.current.insertText(` ${s.suggestion} `);
+              toast.info(`Inserted: "${s.suggestion}"`);
+            }
+          }
+        }}
+      />
+
+      {/* Real-time Voice Dictation Floating Indicator */}
+      {isDictating && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2.5 px-4 py-2 bg-zinc-900/95 dark:bg-zinc-100/95 text-white dark:text-zinc-900 rounded-full shadow-2xl backdrop-blur-sm border border-white/10 dark:border-black/10 text-xs font-semibold animate-in fade-in slide-in-from-bottom-3 duration-200">
+          <span className="relative flex h-2.5 w-2.5">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500" />
+          </span>
+          <span>Listening... words appear live in editor</span>
+          <button
+            type="button"
+            onClick={handleToggleDictation}
+            className="ml-2 px-2.5 py-0.5 rounded-full bg-white/20 dark:bg-black/15 hover:bg-white/30 dark:hover:bg-black/25 text-[11px] font-bold transition-colors cursor-pointer"
+          >
+            Done
+          </button>
+        </div>
+      )}
+
+      {/* Pre-Submit Compliance Audit Dialog */}
+      {showPreSubmitModal && draft && (
+        <EditorPreSubmitModal
+          isOpen={showPreSubmitModal}
+          onClose={() => setShowPreSubmitModal(false)}
+          onConfirmSubmit={handleConfirmSubmit}
+          title={title}
+          content={editorRef.current?.getContent() ?? draft.content ?? []}
+          defaultRequirementId={draft.templateId || undefined}
+          requirements={requirementsList}
+          studentProfile={studentProfile}
+          submitting={submitting}
         />
       )}
     </div>

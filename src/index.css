@@ -84,19 +84,32 @@
   :root.theme-sti,
   :root.theme-cyan,
   :root.theme-deep-sky,
+  :root.theme-emerald,
+  :root.theme-amber,
+  :root.theme-rose,
+  :root.theme-plum,
   .dark.theme-blue,
   .dark.theme-indigo,
   .dark.theme-sti,
   .dark.theme-cyan,
-  .dark.theme-deep-sky {
+  .dark.theme-deep-sky,
+  .dark.theme-emerald,
+  .dark.theme-amber,
+  .dark.theme-rose,
+  .dark.theme-plum {
     --theme-primary-fg: #ffffff;
     --theme-accent-on-paper: var(--theme-primary);
+    --primary: var(--theme-primary);
+    --primary-foreground: var(--theme-primary-fg);
+    --ring: var(--theme-primary);
+    --sidebar-primary: var(--theme-primary);
+    --sidebar-primary-foreground: var(--theme-primary-fg);
   }
 
   /* Deep Sky Blue (Primary + Warm Amber Accent + Soft Slate) */
   .theme-deep-sky {
-    --theme-primary: #3B82C4;
-    --theme-primary-hover: #2C6CA8;
+    --theme-primary: #2F73AE;
+    --theme-primary-hover: #245D8F;
     --theme-accent: #E8A33D;
     --theme-accent-hover: #D4902A;
     --theme-slate: #4B5563;
@@ -126,8 +139,79 @@
     --theme-primary-hover: #0891b2;
   }
 
+  /* Additional accent choices */
+  .theme-emerald {
+    --theme-primary: #15803d;
+    --theme-primary-hover: #166534;
+  }
+
+  .theme-amber {
+    --theme-primary: #b45309;
+    --theme-primary-hover: #92400e;
+  }
+
+  .theme-rose {
+    --theme-primary: #be123c;
+    --theme-primary-hover: #9f1239;
+  }
+
+  .theme-plum {
+    --theme-primary: #7e22ce;
+    --theme-primary-hover: #6b21a8;
+  }
+
   body {
     @apply font-sans antialiased bg-background text-foreground;
+  }
+
+  /* Smooth Theme Transitions & View Transition Styles */
+  html.theme-transitioning,
+  html.theme-transitioning *,
+  html.theme-transitioning *::before,
+  html.theme-transitioning *::after {
+    transition-property: background-color, border-color, color, fill, stroke, box-shadow !important;
+    transition-duration: 400ms !important;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1) !important;
+    transition-delay: 0s !important;
+  }
+
+  /* View Transitions API: Expanding Circular Ripple Theme Animation */
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+    mix-blend-mode: normal;
+  }
+
+  ::view-transition-old(root) {
+    z-index: 1;
+  }
+
+  ::view-transition-new(root) {
+    z-index: 9999;
+    animation: reveal-theme 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  @keyframes reveal-theme {
+    from {
+      clip-path: circle(0px at var(--x, 50%) var(--y, 50%));
+    }
+    to {
+      clip-path: circle(150vmax at var(--x, 50%) var(--y, 50%));
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html.theme-transitioning,
+    html.theme-transitioning *,
+    html.theme-transitioning *::before,
+    html.theme-transitioning *::after {
+      transition: none !important;
+    }
+    ::view-transition-group(*),
+    ::view-transition-old(*),
+    ::view-transition-new(*) {
+      animation: none !important;
+    }
   }
 
   /* Seamless Browser Autofill (Eliminates detached background boxes & awkward gaps) */
@@ -538,8 +622,8 @@
   --accent: oklch(0.955 0.004 240);
   --accent-foreground: oklch(0.18 0.01 240);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.915 0.004 240);
-  --input: oklch(0.915 0.004 240);
+  --border: oklch(0.898 0.004 240);
+  --input: oklch(0.898 0.004 240);
   --ring: oklch(0.65 0.015 240);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
@@ -604,4 +688,72 @@
 
 .dark [data-slate-placeholder] {
   color: rgb(161 161 170 / 0.7) !important;
+}
+
+/* ─── Dynamic Sparkline Wave Animations ─────────────────────────────────────── */
+@keyframes sparkline-draw {
+  from {
+    stroke-dashoffset: 450;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes sparkline-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes sparkline-wave-float {
+  0%, 100% {
+    transform: translateY(0px) scaleY(1);
+  }
+  50% {
+    transform: translateY(-2px) scaleY(1.03);
+  }
+}
+
+@keyframes sparkline-wave-secondary {
+  0%, 100% {
+    transform: translateY(0px) scaleY(1);
+  }
+  50% {
+    transform: translateY(-1.5px) scaleY(0.97);
+  }
+}
+
+.animate-sparkline-draw {
+  stroke-dasharray: 450;
+  animation: sparkline-draw 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-sparkline-fade {
+  animation: sparkline-fade-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-sparkline-float {
+  animation: sparkline-wave-float 3.6s ease-in-out infinite;
+  transform-origin: center bottom;
+}
+
+.animate-sparkline-float-secondary {
+  animation: sparkline-wave-secondary 4.4s ease-in-out infinite alternate;
+  transform-origin: center bottom;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-sparkline-draw,
+  .animate-sparkline-fade,
+  .animate-sparkline-float,
+  .animate-sparkline-float-secondary {
+    animation: none !important;
+    stroke-dashoffset: 0 !important;
+  }
 }

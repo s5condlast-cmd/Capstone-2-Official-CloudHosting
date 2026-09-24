@@ -418,6 +418,29 @@ export const DTRApproval: React.FC = () => {
       return d;
     }));
 
+    // Synchronize supervisor-validated DTR hours and time in/out logs with Student Dashboard
+    try {
+      const storedValidated = JSON.parse(localStorage.getItem('supervisor_validated_dtrs') || '[]');
+      const updatedValidated = [
+        ...storedValidated.filter((item: any) => item.id !== id),
+        {
+          id: selectedDtr.id,
+          studentName: selectedDtr.studentName,
+          studentId: selectedDtr.studentId,
+          course: selectedDtr.course,
+          weekNumber: selectedDtr.weekNumber,
+          totalHours: selectedDtr.totalHours,
+          status: 'Approved',
+          validatedAt: new Date().toISOString(),
+          logs: selectedDtr.logs,
+        }
+      ];
+      localStorage.setItem('supervisor_validated_dtrs', JSON.stringify(updatedValidated));
+      window.dispatchEvent(new Event('dtr-validated'));
+    } catch (e) {
+      console.warn('Could not sync validated DTR', e);
+    }
+
     try {
       const dtrEntry: DTREntry = {
         studentName: selectedDtr.studentName,

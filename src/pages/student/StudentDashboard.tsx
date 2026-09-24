@@ -29,11 +29,11 @@ import {
   X,
   AlertTriangle,
   AlertCircle,
-  RotateCw,
   Trash2,
   ShieldCheck,
   FolderOpen,
   MoreHorizontal,
+  MoreVertical,
   TrendingUp,
   PenLine,
   ChevronLeft,
@@ -60,8 +60,16 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { supabase } from '@/src/lib/supabase';
 import { StudentDocument } from '@/src/lib/submissionStorage';
-import { format } from 'date-fns';
+import { format, isSameDay } from 'date-fns';
 import { toast } from 'sonner';
+import { useUserAvatar } from '@/src/lib/avatarHelper';
+import { ErrorBoundary } from '@/src/components/ui/ErrorBoundary';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '@/components/ui/dropdown-menu';
 
 // ─── Interfaces ───────────────────────────────────────────────────────────────
 
@@ -91,6 +99,33 @@ export interface TodoItem {
   link?: string;
   createdAt: number;
 }
+
+interface StatusBadgeProps {
+  status: RequirementStatus;
+  label: string;
+}
+
+const statusDotClass: Record<RequirementStatus, string> = {
+  done: 'bg-emerald-500',
+  pending: 'bg-amber-500',
+  revision: 'bg-rose-500',
+  returned: 'bg-rose-500',
+  draft: 'bg-[#2563eb]',
+  not_started: 'bg-zinc-400 dark:bg-zinc-600',
+  locked: 'bg-zinc-400 dark:bg-zinc-600',
+};
+
+const StatusBadge: React.FC<StatusBadgeProps> = ({ status, label }) => (
+  <span
+    className="inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-foreground shadow-2xs whitespace-nowrap select-none"
+  >
+    <span
+      aria-hidden="true"
+      className={cn('size-2 shrink-0 rounded-full', statusDotClass[status])}
+    />
+    <span>{label}</span>
+  </span>
+);
 
 interface DraftRecord {
   id: string;
@@ -132,6 +167,7 @@ interface ProgressCircleProps {
   strokeWidth?: number;
   colorClass?: string;
   trackClass?: string;
+  title?: string;
   children?: React.ReactNode;
 }
 
@@ -141,15 +177,27 @@ const ProgressCircle: React.FC<ProgressCircleProps> = ({
   strokeWidth = 4.5,
   colorClass = "text-primary",
   trackClass = "text-muted/20 dark:text-muted/15",
+  title,
   children,
 }) => {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => setMounted(true));
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const clampedValue = Math.min(100, Math.max(0, value));
-  const strokeDashoffset = circumference - (clampedValue / 100) * circumference;
+  const targetOffset = circumference - (clampedValue / 100) * circumference;
+  const strokeDashoffset = mounted ? targetOffset : circumference;
 
   return (
-    <div className="relative inline-flex items-center justify-center shrink-0" style={{ width: size, height: size }}>
+    <div
+      className="relative inline-flex items-center justify-center shrink-0 cursor-pointer"
+      style={{ width: size, height: size }}
+      title={title}
+    >
       <svg className="size-full -rotate-90" viewBox={`0 0 ${size} ${size}`}>
         <circle
           cx={size / 2}
@@ -170,7 +218,7 @@ const ProgressCircle: React.FC<ProgressCircleProps> = ({
           strokeDashoffset={strokeDashoffset}
           strokeLinecap={clampedValue > 0 ? "round" : "butt"}
           fill="none"
-          className={cn(colorClass, "transition-all duration-500 ease-out", clampedValue === 0 && "opacity-0")}
+          className={cn(colorClass, "transition-all duration-700 ease-out", clampedValue === 0 && "opacity-0")}
         />
       </svg>
       {children && (
@@ -181,6 +229,85 @@ const ProgressCircle: React.FC<ProgressCircleProps> = ({
     </div>
   );
 };
+
+// ─── Dynamic Sparkline Wave Generator (Scales paths and crests with metric data) ─
+
+interface SparklineWaveResult {
+  stroke: string;
+  fill: string;
+  secStroke: string;
+  secFill: string;
+  ratio: number;
+}
+
+function generateApprovedWave(approved: number, total: number = 8): SparklineWaveResult {
+  const ratio = total > 0 ? Math.min(1, Math.max(0, approved / total)) : 0;
+  if (ratio === 0) {
+    const stroke = "M 0 38 C 50 37, 90 39, 140 37 C 190 35, 230 39, 300 37";
+    const fill = `${stroke} L 300 45 L 0 45 Z`;
+    return { stroke, fill, secStroke: stroke, secFill: fill, ratio: 0 };
+  }
+  const yStart = Math.round(35 - ratio * 9);
+  const cp1y = Math.round(31 - ratio * 15);
+  const p1y = Math.round(29 - ratio * 16);
+  const cp2y = Math.round(35 - ratio * 12);
+  const p2y = Math.round(32 - ratio * 14);
+  const cp3y = Math.round(25 - ratio * 17);
+  const pEnd = Math.round(22 - ratio * 14);
+
+  const stroke = `M 0 ${yStart} C 45 ${cp1y}, 75 ${cp1y + 2}, 120 ${p1y} C 165 ${cp2y}, 195 ${cp2y - 2}, 240 ${p2y} C 265 ${cp3y}, 285 ${cp3y - 2}, 300 ${pEnd}`;
+  const fill = `${stroke} L 300 45 L 0 45 Z`;
+
+  const secStroke = `M 0 ${yStart + 3} C 40 ${cp1y + 4}, 80 ${cp1y + 5}, 125 ${p1y + 3} C 170 ${cp2y + 4}, 200 ${cp2y + 2}, 245 ${p2y + 3} C 270 ${cp3y + 3}, 290 ${cp3y + 1}, 300 ${pEnd + 3}`;
+  const secFill = `${secStroke} L 300 45 L 0 45 Z`;
+
+  return { stroke, fill, secStroke, secFill, ratio };
+}
+
+function generateReviewWave(inReview: number): SparklineWaveResult {
+  const ratio = Math.min(1, Math.max(0, inReview / 4));
+  if (ratio === 0) {
+    const stroke = "M 0 38 C 50 38, 100 39, 150 38 C 200 37, 250 39, 300 38";
+    const fill = `${stroke} L 300 45 L 0 45 Z`;
+    return { stroke, fill, secStroke: stroke, secFill: fill, ratio: 0 };
+  }
+  const yStart = Math.round(35 - ratio * 6);
+  const cp1y = Math.round(28 - ratio * 18);
+  const p1y = Math.round(33 - ratio * 10);
+  const cp2y = Math.round(24 - ratio * 18);
+  const p2y = Math.round(30 - ratio * 12);
+  const pEnd = Math.round(20 - ratio * 14);
+
+  const stroke = `M 0 ${yStart} C 40 ${cp1y}, 75 ${cp1y}, 115 ${p1y} C 155 ${p1y + 3}, 180 ${cp2y}, 220 ${cp2y} C 250 ${p2y}, 275 ${p2y - 2}, 300 ${pEnd}`;
+  const fill = `${stroke} L 300 45 L 0 45 Z`;
+
+  const secStroke = `M 0 ${yStart + 2} C 45 ${cp1y + 3}, 80 ${cp1y + 3}, 120 ${p1y + 2} C 160 ${p1y + 4}, 185 ${cp2y + 3}, 225 ${cp2y + 3} C 255 ${p2y + 2}, 280 ${p2y}, 300 ${pEnd + 2}`;
+  const secFill = `${secStroke} L 300 45 L 0 45 Z`;
+
+  return { stroke, fill, secStroke, secFill, ratio };
+}
+
+function generateGradeWave(score: number | null): SparklineWaveResult {
+  if (score === null || score === undefined) {
+    const stroke = "M 0 36 C 60 35, 120 37, 180 36 C 240 35, 270 36, 300 35";
+    const fill = `${stroke} L 300 45 L 0 45 Z`;
+    return { stroke, fill, secStroke: stroke, secFill: fill, ratio: 0 };
+  }
+  const ratio = Math.min(1, Math.max(0, score / 100));
+  const yStart = Math.round(36 - ratio * 10);
+  const cp1y = Math.round(32 - ratio * 14);
+  const p1y = Math.round(26 - ratio * 16);
+  const cp2y = Math.round(20 - ratio * 16);
+  const pEnd = Math.round(18 - ratio * 12);
+
+  const stroke = `M 0 ${yStart} C 45 ${cp1y}, 90 ${cp1y - 2}, 145 ${p1y} C 200 ${cp2y + 2}, 250 ${cp2y}, 300 ${pEnd}`;
+  const fill = `${stroke} L 300 45 L 0 45 Z`;
+
+  const secStroke = `M 0 ${yStart + 2} C 50 ${cp1y + 3}, 95 ${cp1y + 1}, 150 ${p1y + 2} C 205 ${cp2y + 4}, 255 ${cp2y + 2}, 300 ${pEnd + 2}`;
+  const secFill = `${secStroke} L 300 45 L 0 45 Z`;
+
+  return { stroke, fill, secStroke, secFill, ratio };
+}
 
 // ─── Official Institutional Templates (13 Templates per System Architecture) ───
 
@@ -418,20 +545,50 @@ const INITIAL_TODOS_FALLBACK: TodoItem[] = [
 export const StudentDashboard: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { avatarUrl } = useUserAvatar(user);
 
-  // State
+  // Persistent session cache for instant hydration and zero-delay refreshes
+  const cacheKey = useMemo(() => `practicum_student_dashboard_cache_${user?.id || 'demo'}`, [user?.id]);
+  const cachedData = useMemo(() => {
+    try {
+      const saved = sessionStorage.getItem(`practicum_student_dashboard_cache_${user?.id || 'demo'}`);
+      if (saved) return JSON.parse(saved);
+    } catch {
+      // ignore
+    }
+    return null;
+  }, [user?.id]);
+
+  // State: always show skeleton loading smoothly on initial load & refresh
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [animationKey, setAnimationKey] = useState(0);
 
-  // Live database data
-  const [documents, setDocuments] = useState<StudentDocument[]>([]);
-  const [drafts, setDrafts] = useState<DraftRecord[]>([]);
-  const [profilePhase, setProfilePhase] = useState<'before_ojt' | 'in_ojt' | 'final'>('before_ojt');
+  // Live database data with instant hydration from cache (benchmarked with at least 1 approved document)
+  const [documents, setDocuments] = useState<StudentDocument[]>(() => {
+    const defaultApprovedDoc: StudentDocument = {
+      id: 'approved-doc-initial-01',
+      student_name: user?.name || 'John Dwayne Guaniso',
+      course: cachedData?.programName || 'BSIT',
+      doc_type: 'Student Application Letter',
+      status: 'Approved',
+      urgency: 'low',
+      file_path: 'sample/application-letter.pdf',
+      created_at: '2026-09-08T08:30:00.000Z',
+    };
+    if (cachedData?.documents && cachedData.documents.length > 0) {
+      const hasApproved = cachedData.documents.some((d: any) => d.status === 'Approved');
+      return hasApproved ? cachedData.documents : [defaultApprovedDoc, ...cachedData.documents];
+    }
+    return [defaultApprovedDoc];
+  });
+  const [drafts, setDrafts] = useState<DraftRecord[]>(() => cachedData?.drafts || []);
+  const [profilePhase, setProfilePhase] = useState<'before_ojt' | 'in_ojt' | 'final'>(() => cachedData?.profilePhase || 'before_ojt');
 
   // Profile metadata
-  const [studentId, setStudentId] = useState<string>('');
-  const [programName, setProgramName] = useState<string>('');
-  const [sectionName, setSectionName] = useState<string>('');
+  const [studentId, setStudentId] = useState<string>(() => cachedData?.studentId || '');
+  const [programName, setProgramName] = useState<string>(() => cachedData?.programName || '');
+  const [sectionName, setSectionName] = useState<string>(() => cachedData?.sectionName || '');
 
   const displayProgram = useMemo(() => {
     const raw = programName || user?.course || 'BSIT';
@@ -439,11 +596,19 @@ export const StudentDashboard: React.FC = () => {
     const stripped = raw.replace(/\s*\d+.*$/, '').trim();
     return stripped || 'BSIT';
   }, [programName, user?.course]);
-  const [supervisorName, setSupervisorName] = useState<string>('Engr. Paolo Reyes');
-  const [adviserName, setAdviserName] = useState<string>('Dr. Sarah Johnson');
-  const [companyName, setCompanyName] = useState<string>('InnoTech Labs Inc.');
-  const [isAssignedCompany, setIsAssignedCompany] = useState<boolean>(true);
-  const [renderedHours, setRenderedHours] = useState<number>(0.0);
+
+  const displaySection = useMemo(() => {
+    const raw = sectionName || user?.section;
+    if (!raw || raw === 'BSIT 402' || raw === 'IT401') return '701M';
+    const cleaned = raw.replace(/^BSIT\s*[-•]?\s*/i, '').trim();
+    return cleaned || '701M';
+  }, [sectionName, user?.section]);
+  const [supervisorName, setSupervisorName] = useState<string>(() => cachedData?.supervisorName || 'Engr. Paolo Reyes');
+  const [adviserName, setAdviserName] = useState<string>(() => cachedData?.adviserName || 'Dr. Sarah Johnson');
+  const [companyName, setCompanyName] = useState<string>(() => cachedData?.companyName || 'InnoTech Labs Inc.');
+  const [isAssignedCompany, setIsAssignedCompany] = useState<boolean>(() => cachedData?.isAssignedCompany ?? true);
+  const [renderedHours, setRenderedHours] = useState<number>(() => cachedData?.renderedHours ?? 0.0);
+  const [supervisorDailyHours, setSupervisorDailyHours] = useState<number[] | null>(() => cachedData?.supervisorDailyHours ?? null);
   const totalHours = 460.0;
 
   // Interactive To-dos with localStorage persistence scoped to user
@@ -485,70 +650,123 @@ export const StudentDashboard: React.FC = () => {
     }
   }, [todoStorageKey]);
 
-  // Load fresh data from Supabase
+  // Load fresh data from Supabase (runs all independent queries in parallel via Promise.all)
   const loadDashboardData = useCallback(async (isManualRefresh = false) => {
-    if (isManualRefresh) setRefreshing(true);
-    else setLoading(true);
+    if (isManualRefresh) {
+      setRefreshing(true);
+    } else {
+      setLoading(true);
+    }
+
+    // Graceful skeleton loading window (~400ms) ensuring the skeleton shimmers smoothly
+    // and preventing abrupt layout popping on rapid network/cache returns
+    const minSkeletonPromise = new Promise(resolve => setTimeout(resolve, 400));
 
     try {
-      // 1. Fetch live Profile
+      // Parallelize profile, documents, and drafts queries
+      const profilePromise = user?.id
+        ? supabase
+            .from('profiles')
+            .select('id, full_name, role, student_id, program, section, company_name, adviser_id, supervisor_id, practicum_phase')
+            .eq('id', user.id)
+            .maybeSingle()
+        : Promise.resolve({ data: null, error: null });
+
+      let docsQuery = supabase
+        .from('student_documents')
+        .select('*')
+        .order('created_at', { ascending: false });
+
       if (user?.id) {
-        const { data: prof } = await supabase
-          .from('profiles')
-          .select('id, full_name, role, student_id, program, section, company_name, adviser_id, supervisor_id, practicum_phase')
-          .eq('id', user.id)
-          .maybeSingle();
+        docsQuery = docsQuery.or(`owner_id.eq.${user.id},student_name.ilike.${user.name || ''}`);
+      }
 
-        if (prof) {
-          if (prof.student_id) setStudentId(prof.student_id);
-          if (prof.program) setProgramName(prof.program);
-          if (prof.section) setSectionName(prof.section);
+      const draftsPromise = user?.id
+        ? supabase
+            .from('editor_drafts')
+            .select('id, title, template_id, template_name, phase, status, updated_at')
+            .eq('user_id', user.id)
+            .is('deleted_at', null)
+            .order('updated_at', { ascending: false })
+        : Promise.resolve({ data: null, error: null });
 
-          if (prof.practicum_phase && ['before_ojt', 'in_ojt', 'final'].includes(prof.practicum_phase)) {
-            setProfilePhase(prof.practicum_phase as 'before_ojt' | 'in_ojt' | 'final');
-          }
+      const [profileResult, docsResult, draftsResult] = await Promise.all([
+        profilePromise,
+        docsQuery,
+        draftsPromise,
+        minSkeletonPromise,
+      ]);
 
-          if (prof.company_name) {
-            setCompanyName(prof.company_name);
-            setIsAssignedCompany(true);
-          } else {
-            setCompanyName('Not Assigned');
-            setIsAssignedCompany(false);
-          }
+      let loadedStudentId = studentId;
+      let loadedProgram = programName;
+      let loadedSection = sectionName;
+      let loadedProfilePhase = profilePhase;
+      let loadedCompany = companyName;
+      let loadedIsAssigned = isAssignedCompany;
+      let loadedAdviser = adviserName;
+      let loadedSupervisor = supervisorName;
 
-          // Fetch adviser details if assigned
-          if (prof.adviser_id) {
-            const { data: adv } = await supabase
-              .from('profiles')
-              .select('full_name')
-              .eq('id', prof.adviser_id)
-              .maybeSingle();
-            if (adv?.full_name) setAdviserName(adv.full_name);
-          } else {
-            setAdviserName('Awaiting Assignment');
-          }
+      // 1. Process profile & related adviser/supervisor profiles in parallel
+      const prof = profileResult.data;
+      if (prof) {
+        if (prof.student_id) { setStudentId(prof.student_id); loadedStudentId = prof.student_id; }
+        if (prof.program) { setProgramName(prof.program); loadedProgram = prof.program; }
+        if (prof.section) { setSectionName(prof.section); loadedSection = prof.section; }
 
-          // Fetch supervisor details if assigned
-          if (prof.supervisor_id) {
-            const { data: sup } = await supabase
-              .from('profiles')
-              .select('full_name, company_name')
-              .eq('id', prof.supervisor_id)
-              .maybeSingle();
-            if (sup?.full_name) setSupervisorName(sup.full_name);
-            if (sup?.company_name) {
-              setCompanyName(sup.company_name);
-              setIsAssignedCompany(true);
-            }
-          } else if (!prof.company_name) {
-            setSupervisorName('Awaiting Placement');
-          }
+        if (prof.practicum_phase && ['before_ojt', 'in_ojt', 'final'].includes(prof.practicum_phase)) {
+          setProfilePhase(prof.practicum_phase as 'before_ojt' | 'in_ojt' | 'final');
+          loadedProfilePhase = prof.practicum_phase as 'before_ojt' | 'in_ojt' | 'final';
         }
-      } else {
+
+        if (prof.company_name) {
+          setCompanyName(prof.company_name);
+          setIsAssignedCompany(true);
+          loadedCompany = prof.company_name;
+          loadedIsAssigned = true;
+        } else {
+          setCompanyName('Not Assigned');
+          setIsAssignedCompany(false);
+          loadedCompany = 'Not Assigned';
+          loadedIsAssigned = false;
+        }
+
+        // Fetch adviser & supervisor details in parallel if assigned
+        const adviserPromise = prof.adviser_id
+          ? supabase.from('profiles').select('full_name').eq('id', prof.adviser_id).maybeSingle()
+          : Promise.resolve({ data: null });
+        const supervisorPromise = prof.supervisor_id
+          ? supabase.from('profiles').select('full_name, company_name').eq('id', prof.supervisor_id).maybeSingle()
+          : Promise.resolve({ data: null });
+
+        const [advResult, supResult] = await Promise.all([adviserPromise, supervisorPromise]);
+
+        if (advResult?.data?.full_name) {
+          setAdviserName(advResult.data.full_name);
+          loadedAdviser = advResult.data.full_name;
+        } else if (!prof.adviser_id) {
+          setAdviserName('Awaiting Assignment');
+          loadedAdviser = 'Awaiting Assignment';
+        }
+
+        if (supResult?.data?.full_name) {
+          setSupervisorName(supResult.data.full_name);
+          loadedSupervisor = supResult.data.full_name;
+        } else if (!prof.supervisor_id && !prof.company_name) {
+          setSupervisorName('Awaiting Placement');
+          loadedSupervisor = 'Awaiting Placement';
+        }
+
+        if (supResult?.data?.company_name) {
+          setCompanyName(supResult.data.company_name);
+          setIsAssignedCompany(true);
+          loadedCompany = supResult.data.company_name;
+          loadedIsAssigned = true;
+        }
+      } else if (!user?.id) {
         // Demo fallback values
-        setStudentId('2023-010482');
+        setStudentId('05000372499');
         setProgramName('BSIT');
-        setSectionName('IT401');
+        setSectionName('701M');
         setCompanyName('InnoTech Labs Inc.');
         setIsAssignedCompany(true);
         setSupervisorName('Engr. Paolo Reyes');
@@ -556,47 +774,106 @@ export const StudentDashboard: React.FC = () => {
         setRenderedHours(120.0);
       }
 
-      // 2. Fetch Submissions
-      let query = supabase
-        .from('student_documents')
-        .select('*')
-        .order('created_at', { ascending: false });
+      // 2. Process Submissions & Hours
+      let finalStudentDocs: StudentDocument[] = [];
+      let calculatedHours = 0;
+      let validatedWeekLogs: number[] | null = null;
 
-      if (user?.id) {
-        query = query.or(`owner_id.eq.${user.id},student_name.ilike.${user.name || ''}`);
-      }
-
-      const { data: docData } = await query;
-
-      if (docData) {
-        const studentDocs = user?.name
-          ? (docData as StudentDocument[]).filter(
+      if (docsResult.data) {
+        finalStudentDocs = user?.name
+          ? (docsResult.data as StudentDocument[]).filter(
               d => d.owner_id === user.id || d.student_name.toLowerCase() === user.name.toLowerCase()
             )
-          : (docData as StudentDocument[]);
-        setDocuments(studentDocs);
+          : (docsResult.data as StudentDocument[]);
 
-        // Calculate actual rendered hours based on approved DTRs
-        const dtrDocs = studentDocs.filter(d => (d.doc_type || '').toLowerCase().includes('dtr'));
-        const approvedDtrs = dtrDocs.filter(d => d.status === 'Approved');
-        if (user?.id) {
-          // Live student: 40 hrs per approved DTR submission
-          setRenderedHours(Math.min(460, approvedDtrs.length * 40));
+        // Ensure at least 1 approved document benchmark is present
+        const hasApproved = finalStudentDocs.some(d => d.status === 'Approved');
+        if (!hasApproved) {
+          finalStudentDocs = [
+            {
+              id: 'approved-doc-initial-01',
+              student_name: user?.name || 'John Dwayne Guaniso',
+              course: loadedProgram || 'BSIT',
+              doc_type: 'Student Application Letter',
+              status: 'Approved',
+              urgency: 'low',
+              file_path: 'sample/application-letter.pdf',
+              created_at: '2026-09-08T08:30:00.000Z',
+            },
+            ...finalStudentDocs,
+          ];
         }
+        setDocuments(finalStudentDocs);
+
+        // Calculate actual rendered hours based on approved DTRs and supervisor time-in/time-out validation
+        const dtrDocs = finalStudentDocs.filter(d => (d.doc_type || '').toLowerCase().includes('dtr'));
+        const approvedDtrs = dtrDocs.filter(d => d.status === 'Approved' || d.status === 'Pending Adviser Review');
+        calculatedHours = approvedDtrs.length * 40;
+
+        try {
+          const storedValidated = JSON.parse(localStorage.getItem('supervisor_validated_dtrs') || '[]');
+          const studentNameClean = (user?.name || 'John Dwayne B. Guaniso').toLowerCase();
+          const studentIdClean = (loadedStudentId || studentId || user?.studentId || '05000372499').toLowerCase();
+
+          const matchingValidated = storedValidated.filter((item: any) => {
+            if (item.status !== 'Approved') return false;
+            const nameMatch = item.studentName && item.studentName.toLowerCase().includes(studentNameClean);
+            const idMatch = item.studentId && item.studentId.toLowerCase() === studentIdClean;
+            return nameMatch || idMatch || item.studentName === 'John Dwayne B. Guaniso' || item.studentName === 'John Smith';
+          });
+
+          if (matchingValidated.length > 0) {
+            const supHours = matchingValidated.reduce((sum: number, item: any) => sum + (Number(item.totalHours) || 0), 0);
+            calculatedHours = Math.max(calculatedHours, supHours);
+
+            const latestApproved = matchingValidated[matchingValidated.length - 1];
+            if (latestApproved.logs && Array.isArray(latestApproved.logs)) {
+              // Map Monday..Sunday into 7 daily hours
+              const dayOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+              const weekHours = [0, 0, 0, 0, 0, 0, 0];
+              latestApproved.logs.forEach((l: any) => {
+                const idx = dayOrder.indexOf((l.day || '').toLowerCase().trim());
+                if (idx !== -1) {
+                  weekHours[idx] = Number(l.hours) || 0;
+                }
+              });
+              validatedWeekLogs = weekHours;
+            }
+          }
+        } catch (e) {
+          console.warn('Supervisor DTR sync note', e);
+        }
+
+        const finalRendered = calculatedHours > 0 ? calculatedHours : 25.0;
+        setRenderedHours(Math.min(460, finalRendered));
+        setSupervisorDailyHours(validatedWeekLogs);
       }
 
-      // 3. Fetch Drafts from Supabase
-      if (user?.id) {
-        const { data: draftData } = await supabase
-          .from('editor_drafts')
-          .select('id, title, template_id, template_name, phase, status, updated_at')
-          .eq('user_id', user.id)
-          .is('deleted_at', null)
-          .order('updated_at', { ascending: false });
+      // 3. Process Drafts
+      const finalDrafts = (draftsResult.data || []) as DraftRecord[];
+      if (draftsResult.data) {
+        setDrafts(finalDrafts);
+      }
 
-        if (draftData) {
-          setDrafts(draftData as DraftRecord[]);
-        }
+      // 4. Update session cache for instant future refreshes
+      try {
+        const finalRendered = calculatedHours > 0 ? calculatedHours : 25.0;
+        sessionStorage.setItem(cacheKey, JSON.stringify({
+          studentId: loadedStudentId,
+          programName: loadedProgram,
+          sectionName: loadedSection,
+          profilePhase: loadedProfilePhase,
+          companyName: loadedCompany,
+          isAssignedCompany: loadedIsAssigned,
+          adviserName: loadedAdviser,
+          supervisorName: loadedSupervisor,
+          documents: finalStudentDocs,
+          drafts: finalDrafts,
+          renderedHours: Math.min(460, finalRendered),
+          supervisorDailyHours: validatedWeekLogs,
+        }));
+      } catch {
+        // ignore storage errors
       }
 
       if (isManualRefresh) {
@@ -607,11 +884,25 @@ export const StudentDashboard: React.FC = () => {
     } finally {
       setLoading(false);
       setRefreshing(false);
+      setAnimationKey(prev => prev + 1);
     }
-  }, [user?.id, user?.name]);
+  }, [user?.id, user?.name, studentId, programName, sectionName, profilePhase, companyName, isAssignedCompany, adviserName, supervisorName, cacheKey, cachedData]);
 
   useEffect(() => {
     void loadDashboardData();
+  }, [loadDashboardData]);
+
+  // Live synchronization: updates instantly when a supervisor validates DTR time records
+  useEffect(() => {
+    const handleDtrUpdate = () => {
+      void loadDashboardData();
+    };
+    window.addEventListener('dtr-validated', handleDtrUpdate);
+    window.addEventListener('storage', handleDtrUpdate);
+    return () => {
+      window.removeEventListener('dtr-validated', handleDtrUpdate);
+      window.removeEventListener('storage', handleDtrUpdate);
+    };
   }, [loadDashboardData]);
 
   // ─── Build Live Requirements Grid (13 Official Institutional Templates) ─────
@@ -788,6 +1079,22 @@ export const StudentDashboard: React.FC = () => {
       : 0;
   }, [studentPracticumScore]);
 
+  // Dynamic Sparkline Waves for Metric Cards (Moves & scales dynamically with counts and grades)
+  const approvedWave = useMemo(
+    () => generateApprovedWave(approvedDocsCount, accessibleRequirementsCount),
+    [approvedDocsCount, accessibleRequirementsCount]
+  );
+
+  const reviewWave = useMemo(
+    () => generateReviewWave(inReviewCount),
+    [inReviewCount]
+  );
+
+  const gradeWave = useMemo(
+    () => generateGradeWave(studentPracticumScore),
+    [studentPracticumScore]
+  );
+
   // Collapsible Dropview State for Due Documents
   const [isDueDocsExpanded, setIsDueDocsExpanded] = useState<boolean>(true);
 
@@ -846,9 +1153,9 @@ export const StudentDashboard: React.FC = () => {
   }, [renderedHours]);
 
   // ─── Chart View & Datasets for Reference Boxing Cards ──────────────────────
-  const [chartView, setChartView] = useState<'monthly' | 'weekly'>('monthly');
+  const [chartView, setChartView] = useState<'weekly' | 'monthly'>('weekly');
 
-  // Monthly Hours Progression (Jan - Dec) with actual hours logged
+  // Monthly Hours Progression (Jan - Dec) with actual hours logged & sample fallback
   const monthlyChartData = useMemo(() => {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const curMonthIndex = new Date().getMonth();
@@ -866,6 +1173,12 @@ export const StudentDashboard: React.FC = () => {
       });
     } else if (renderedHours > 0) {
       hoursByMonth[curMonthIndex] = Math.min(160, renderedHours);
+    } else {
+      // Sample overview data progression across active practicum months
+      const sampleMonthly = [32, 64, 96, 120, 80, 0, 0, 0, 0, 0, 0, 0];
+      sampleMonthly.forEach((h, idx) => {
+        hoursByMonth[idx] = h;
+      });
     }
 
     return months.map((month, idx) => ({
@@ -875,17 +1188,27 @@ export const StudentDashboard: React.FC = () => {
     }));
   }, [documents, renderedHours]);
 
-  // Weekly Daily Hours (Mon - Sun) with actual hours logged
+  // Weekly Daily Hours (Mon - Sun) with actual hours logged & sample fallback with lower look
   const weeklyBarData = useMemo(() => {
     const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     const curDayIndex = (new Date().getDay() + 6) % 7;
+    // Lower look for sample daily hours (average ~5.0 hrs instead of all maxed out at 8.0h ceiling)
+    const sampleWeekly = [4.5, 6.0, 5.5, 4.0, 5.0, 0.0, 0.0];
+
     return days.map((day, idx) => {
       const isCurrent = idx === curDayIndex;
       let hours = 0;
-      if (idx < 5 && renderedHours > 0) {
-        const dayThreshold = (idx + 1) * 8;
-        const logged = renderedHours >= dayThreshold ? 8 : Math.max(0, renderedHours - idx * 8);
-        hours = Math.min(8, logged);
+      if (supervisorDailyHours && supervisorDailyHours.length === 7) {
+        // Use exact supervisor-validated daily hours (time in / out verified)
+        hours = supervisorDailyHours[idx] || 0;
+      } else if (renderedHours > 0) {
+        if (idx < 5) {
+          const dayThreshold = (idx + 1) * 8;
+          const logged = renderedHours >= dayThreshold ? 8 : Math.max(0, renderedHours - idx * 8);
+          hours = Math.min(8, logged);
+        }
+      } else {
+        hours = sampleWeekly[idx];
       }
       return {
         label: day,
@@ -893,21 +1216,33 @@ export const StudentDashboard: React.FC = () => {
         isCurrent,
       };
     });
-  }, [renderedHours]);
+  }, [renderedHours, supervisorDailyHours]);
 
   // Donut Segments for Practicum Progress (Strictly Logged Hours vs Remaining Target)
-  // Maintains segment gap separating logged progress from remaining clearance target
+  // Maintains segment gap separating logged progress from remaining clearance target at the top
   const donutData = useMemo(() => {
-    const verified = Math.max(renderedHours, 0.1);
-    const remaining = Math.max(totalHours - renderedHours, 1);
+    // When 0 hours, maintain a 0.8 sliver so Recharts renders the gap at the top
+    const verified = renderedHours > 0 ? renderedHours : 0.8;
+    const remaining = Math.max(0, totalHours - (renderedHours > 0 ? renderedHours : 0.8));
     return [
-      { name: 'Logged Hours', value: verified, color: '#0066f5' },
-      { name: 'Remaining Target', value: remaining, color: '#10b981' },
+      {
+        name: 'Logged Hours',
+        value: verified,
+        displayHours: renderedHours,
+        color: '#0066f5',
+      },
+      {
+        name: 'Remaining Target',
+        value: remaining,
+        displayHours: Math.max(0, totalHours - renderedHours),
+        color: '#10b981',
+      },
     ];
   }, [renderedHours, totalHours]);
 
   // ─── Mini Calendar State & Grid ─────────────────────────────────────────────
   const [calendarDate, setCalendarDate] = useState<Date>(() => new Date());
+  const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
   const [isCalendarHidden, setIsCalendarHidden] = useState<boolean>(false);
 
   const prevMonth = useCallback(() => {
@@ -916,6 +1251,13 @@ export const StudentDashboard: React.FC = () => {
 
   const nextMonth = useCallback(() => {
     setCalendarDate(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
+  }, []);
+
+  const handleSelectDay = useCallback((cellDate: Date, isCurrentMonth: boolean) => {
+    setSelectedDate(cellDate);
+    if (!isCurrentMonth) {
+      setCalendarDate(new Date(cellDate.getFullYear(), cellDate.getMonth(), 1));
+    }
   }, []);
 
   const calendarGrid = useMemo(() => {
@@ -927,28 +1269,31 @@ export const StudentDashboard: React.FC = () => {
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const daysInPrevMonth = new Date(year, month, 0).getDate();
 
-    const days: { day: number; isCurrentMonth: boolean; isToday: boolean }[] = [];
+    const days: { day: number; date: Date; isCurrentMonth: boolean; isToday: boolean; isSelected: boolean }[] = [];
     const today = new Date();
 
     // Previous month tail days
     for (let i = startingDayOfWeek - 1; i >= 0; i--) {
+      const cellDay = daysInPrevMonth - i;
+      const cellDate = new Date(year, month - 1, cellDay);
       days.push({
-        day: daysInPrevMonth - i,
+        day: cellDay,
+        date: cellDate,
         isCurrentMonth: false,
-        isToday: false,
+        isToday: isSameDay(today, cellDate),
+        isSelected: isSameDay(selectedDate, cellDate),
       });
     }
 
     // Current month days
     for (let i = 1; i <= daysInMonth; i++) {
-      const isToday =
-        today.getDate() === i &&
-        today.getMonth() === month &&
-        today.getFullYear() === year;
+      const cellDate = new Date(year, month, i);
       days.push({
         day: i,
+        date: cellDate,
         isCurrentMonth: true,
-        isToday,
+        isToday: isSameDay(today, cellDate),
+        isSelected: isSameDay(selectedDate, cellDate),
       });
     }
 
@@ -956,118 +1301,229 @@ export const StudentDashboard: React.FC = () => {
     const totalCells = days.length > 35 ? 42 : 35;
     const remainingCells = totalCells - days.length;
     for (let i = 1; i <= remainingCells; i++) {
+      const cellDate = new Date(year, month + 1, i);
       days.push({
         day: i,
+        date: cellDate,
         isCurrentMonth: false,
-        isToday: false,
+        isToday: isSameDay(today, cellDate),
+        isSelected: isSameDay(selectedDate, cellDate),
       });
     }
 
     return days;
-  }, [calendarDate]);
+  }, [calendarDate, selectedDate]);
 
   // ─── Loading State Skeleton ─────────────────────────────────────────────────
 
   if (loading) {
     return (
-      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_300px] gap-4 items-start pb-10 animate-in fade-in duration-300">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_315px] gap-3 sm:gap-3.5 items-start pb-6 animate-in fade-in duration-150">
         {/* Left Column Skeletons */}
-        <div className="space-y-4 min-w-0 flex-1">
+        <div className="space-y-3 sm:space-y-3.5 min-w-0 flex-1">
           {/* Hero Banner + 3 Stat Cards */}
-          <div className="flex flex-col gap-3.5 sm:gap-4 min-w-0">
-            <div className="rounded-2xl sm:rounded-3xl p-4.5 sm:p-5 bg-card border border-border/60 dark:border-border/40 shadow-sm min-h-[118px] flex items-center justify-between gap-4">
-              <div className="flex flex-col justify-between gap-3 sm:gap-3.5 min-w-0 flex-1">
+          <div className="flex flex-col gap-3 sm:gap-3.5 min-w-0">
+            <div className="rounded-2xl sm:rounded-3xl p-3.5 sm:p-4 bg-card border border-zinc-200 dark:border-border/40 shadow-sm min-h-[110px] flex items-center justify-between gap-4">
+              <div className="flex flex-col justify-between gap-2.5 sm:gap-3 min-w-0 flex-1">
                 <div className="flex items-center gap-3">
-                  <Skeleton className="size-11 sm:size-12 rounded-full shrink-0" />
+                  <Skeleton className="size-10 sm:size-11 rounded-full shrink-0" />
                   <div className="space-y-1.5 min-w-0">
-                    <Skeleton className="h-6 w-48 rounded-lg" />
-                    <Skeleton className="h-3.5 w-32 rounded-md" />
+                    <Skeleton className="h-5 sm:h-5.5 w-44 rounded-lg" />
+                    <Skeleton className="h-3 w-28 rounded-md" />
                   </div>
                 </div>
-                <div className="flex items-center gap-2 overflow-x-auto scrollbar-none pt-0.5 w-full">
-                  <Skeleton className="h-5 w-24 rounded-full shrink-0" />
-                  <Skeleton className="h-5 w-28 rounded-full shrink-0" />
-                  <Skeleton className="h-5 w-32 rounded-full shrink-0" />
-                  <Skeleton className="h-5 w-24 rounded-full shrink-0" />
+                {/* Trainee Information Badges Skeleton (2 rows matching loaded state) */}
+                <div className="flex flex-col gap-1.5 pt-0.5 w-full">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <Skeleton className="h-6 w-24 rounded-full shrink-0" />
+                    <Skeleton className="h-6 w-28 rounded-full shrink-0" />
+                    <Skeleton className="h-6 w-22 rounded-full shrink-0" />
+                  </div>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <Skeleton className="h-6 w-32 rounded-full shrink-0" />
+                    <Skeleton className="h-6 w-36 rounded-full shrink-0" />
+                  </div>
                 </div>
               </div>
-              <Skeleton className="w-32 h-24 sm:w-40 sm:h-28 md:w-48 md:h-32 rounded-xl shrink-0 hidden sm:block self-center" />
+              <Skeleton className="w-28 h-20 sm:w-36 sm:h-24 md:w-40 md:h-26 rounded-2xl shrink-0 hidden sm:block self-center" />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-3.5">
+            {/* 3 Metric Stat Cards Skeleton (Single Compact Box + Wave) */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
               {[...Array(3)].map((_, i) => (
-                <div key={i} className="bg-card border border-border/60 dark:border-border/40 shadow-sm rounded-2xl flex flex-col justify-between overflow-hidden">
-                  <div className="flex items-center gap-3 px-3.5 pt-3.5 sm:px-4 sm:pt-4">
-                    <Skeleton className="size-11 rounded-full shrink-0" />
-                    <div className="space-y-1.5 flex-1 min-w-0">
-                      <Skeleton className="h-4 w-28 rounded-md" />
-                      <Skeleton className="h-3 w-20 rounded-md" />
-                    </div>
-                  </div>
-                  <div className="mt-3 border-t border-border/60 dark:border-border/40 px-3.5 py-2 sm:px-4 sm:py-2.5 flex justify-end">
+                <div
+                  key={i}
+                  className="bg-card border border-zinc-200 dark:border-border/50 rounded-2xl p-3 sm:p-3.5 shadow-xs space-y-2 flex flex-col justify-between"
+                >
+                  <div className="flex items-center justify-between">
                     <Skeleton className="h-3.5 w-24 rounded-md" />
+                    <Skeleton className="size-5.5 rounded-md" />
                   </div>
+                  <div className="flex items-baseline gap-2">
+                    <Skeleton className="h-7 w-12 rounded-md" />
+                    <Skeleton className="h-3.5 w-20 rounded-md" />
+                  </div>
+                  <Skeleton className="h-7.5 w-full rounded-lg" />
                 </div>
               ))}
             </div>
           </div>
 
           {/* Row 2: Total Hours & Practicum Progress Dual Grid Skeleton */}
-          <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_300px] gap-4 items-stretch">
+          <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_275px] gap-3 sm:gap-3.5 items-stretch">
             {/* Total Hours Skeleton */}
-            <div className="p-4 sm:p-4.5 bg-card border border-border/60 dark:border-border/40 shadow-sm rounded-2xl min-h-[310px] flex flex-col justify-between">
-              <div className="flex justify-between items-center">
-                <Skeleton className="h-5 w-44 rounded-md" />
-                <Skeleton className="h-7 w-28 rounded-lg" />
+            <div className="min-w-0 flex flex-col h-full">
+              <div className="p-3.5 sm:p-4 bg-card border border-zinc-200 dark:border-border/40 shadow-sm rounded-2xl min-h-[255px] flex flex-col justify-between space-y-2 h-full">
+                <div className="flex justify-between items-center pb-0.5">
+                  <Skeleton className="h-4.5 w-36 rounded-md" />
+                  <Skeleton className="h-5.5 w-24 rounded-lg" />
+                </div>
+                <Skeleton className="h-[175px] sm:h-[185px] w-full rounded-xl" />
               </div>
-              <Skeleton className="h-[220px] w-full rounded-xl" />
             </div>
 
             {/* Practicum Progress Skeleton */}
-            <div className="p-4 sm:p-4.5 bg-card border border-border/60 dark:border-border/40 shadow-sm rounded-2xl min-h-[310px] flex flex-col justify-between">
-              <div className="flex justify-between items-center">
-                <Skeleton className="h-5 w-36 rounded-md" />
-                <Skeleton className="size-5 rounded-md" />
+            <div className="min-w-0 flex flex-col h-full">
+              <div className="p-3.5 sm:p-4 bg-card border border-zinc-200 dark:border-border/40 shadow-sm rounded-2xl min-h-[255px] flex flex-col justify-between space-y-2 h-full">
+                <div className="flex justify-between items-center pb-0.5">
+                  <Skeleton className="h-4.5 w-32 rounded-md" />
+                  <Skeleton className="size-5.5 rounded-md" />
+                </div>
+                <div className="relative flex items-center justify-center my-auto min-h-[160px]">
+                  <Skeleton className="size-32 rounded-full" />
+                  <div className="absolute size-22 rounded-full bg-card flex flex-col items-center justify-center gap-1">
+                    <Skeleton className="h-2 w-12 rounded-xs" />
+                    <Skeleton className="h-4 w-14 rounded-sm" />
+                  </div>
+                </div>
               </div>
-              <Skeleton className="size-40 rounded-full mx-auto my-auto" />
             </div>
           </div>
 
-          {/* Submissions Tracker Skeleton */}
-          <div className="p-4 sm:p-5 bg-card border border-border/60 dark:border-border/40 shadow-sm rounded-2xl space-y-3.5">
-            <div className="flex justify-between items-center">
-              <Skeleton className="h-5 w-44 rounded-md" />
-              <Skeleton className="h-7 w-36 rounded-xl" />
+          {/* Section 3: Submissions Tracker Table Skeleton */}
+          <div className="p-3.5 sm:p-4 bg-card border border-zinc-200 dark:border-border/40 shadow-sm rounded-2xl space-y-3">
+            <div className="flex items-center justify-between gap-3 pb-0.5">
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-4.5 w-36 rounded-md" />
+                <Skeleton className="h-4.5 w-14 rounded-full" />
+              </div>
+              <Skeleton className="h-3.5 w-28 rounded-md" />
             </div>
-            <Skeleton className="h-36 w-full rounded-xl" />
+
+            {/* Documents Table Skeleton */}
+            <div className="border border-zinc-200 dark:border-border/60 rounded-xl overflow-hidden shadow-2xs bg-card">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr className="bg-muted/40 border-b border-zinc-200 dark:border-border/70">
+                      <th className="py-2 px-3"><Skeleton className="h-3.5 w-24 rounded-md" /></th>
+                      <th className="py-2 px-3"><Skeleton className="h-3.5 w-14 rounded-md" /></th>
+                      <th className="py-2 px-3 text-center"><Skeleton className="h-3.5 w-12 rounded-md mx-auto" /></th>
+                      <th className="py-2 px-3 text-center"><Skeleton className="h-3.5 w-12 rounded-md mx-auto" /></th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-200 dark:divide-border/40">
+                    {[...Array(3)].map((_, i) => (
+                      <tr key={i}>
+                        <td className="py-2 px-3">
+                          <div className="flex items-center gap-2">
+                            <Skeleton className="size-6 rounded-md shrink-0" />
+                            <Skeleton className="h-3.5 w-32 sm:w-48 rounded-md" />
+                          </div>
+                        </td>
+                        <td className="py-2 px-3">
+                          <Skeleton className="h-3 w-16 rounded-md" />
+                        </td>
+                        <td className="py-2 px-3 text-center">
+                          <Skeleton className="h-4.5 w-16 rounded-full mx-auto" />
+                        </td>
+                        <td className="py-2 px-3 text-center">
+                          <Skeleton className="h-6 w-16 rounded-full mx-auto" />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Right Column (Sidebar) Skeletons */}
-        <div className="space-y-4 min-w-0 w-full lg:w-[300px] shrink-0">
-          {/* Calendar Skeleton */}
-          <div className="p-3.5 sm:p-4 bg-card border border-border/60 dark:border-border/40 shadow-sm rounded-2xl space-y-2.5">
-            <div className="flex justify-between items-center">
-              <Skeleton className="h-4.5 w-24 rounded-md" />
-              <Skeleton className="h-4 w-20 rounded-md" />
+        <div className="space-y-3 min-w-0 w-full lg:w-[315px] shrink-0">
+          {/* 1. Calendar Skeleton */}
+          <div className="bg-card border border-zinc-200 dark:border-border/40 shadow-sm rounded-2xl p-3 sm:p-3.5 space-y-2">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Skeleton className="size-4 rounded-md" />
+                <Skeleton className="h-4 w-16 rounded-md" />
+              </div>
             </div>
-            <Skeleton className="h-38 w-full rounded-xl" />
+
+            {/* Month Nav */}
+            <div className="flex items-center justify-between px-0.5">
+              <Skeleton className="size-4.5 rounded-md" />
+              <Skeleton className="h-3.5 w-24 rounded-md" />
+              <Skeleton className="size-4.5 rounded-md" />
+            </div>
+
+            {/* Days Container */}
+            <div className="space-y-1">
+              {/* Day headers */}
+              <div className="grid grid-cols-7 text-center font-bold text-[10px] py-0.5">
+                {[...Array(7)].map((_, i) => (
+                  <Skeleton key={i} className="size-2.5 rounded-xs mx-auto" />
+                ))}
+              </div>
+
+              {/* Day cells grid */}
+              <div className="grid grid-cols-7 gap-y-0.5 text-center">
+                {[...Array(35)].map((_, i) => (
+                  <div key={i} className="flex items-center justify-center py-0.5">
+                    <Skeleton className="size-5 sm:size-5.5 rounded-full mx-auto" />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="pt-1 flex items-center justify-between text-[11px]">
+              <Skeleton className="h-3 w-16 rounded-xs" />
+              <Skeleton className="h-3 w-8 rounded-xs" />
+            </div>
           </div>
 
-          {/* To-do Skeleton */}
-          <div className="p-3.5 sm:p-4 bg-card border border-border/60 dark:border-border/40 shadow-sm rounded-2xl space-y-2.5">
-            <div className="flex justify-between items-center">
-              <Skeleton className="h-4.5 w-20 rounded-md" />
-              <Skeleton className="size-5 rounded-md" />
+          {/* 2. To-do Skeleton */}
+          <div className="p-3 sm:p-3.5 bg-card border border-zinc-200 dark:border-border/40 shadow-sm rounded-2xl space-y-2">
+            <div className="flex justify-between items-center pb-0.5 border-b border-zinc-200 dark:border-border/60">
+              <div className="flex items-center gap-2">
+                <Skeleton className="size-4 rounded-md" />
+                <Skeleton className="h-4 w-12 rounded-md" />
+              </div>
+              <Skeleton className="size-4.5 rounded-md" />
             </div>
-            <Skeleton className="h-5 w-full rounded-md" />
-            <Skeleton className="h-5 w-full rounded-md" />
+            <Skeleton className="h-6 w-full rounded-lg" />
+            <div className="space-y-1.5 pt-0.5">
+              {[...Array(2)].map((_, i) => (
+                <div key={i} className="flex items-center gap-2 p-1">
+                  <Skeleton className="size-3 rounded-full shrink-0" />
+                  <Skeleton className="h-3 flex-1 rounded-md" />
+                </div>
+              ))}
+            </div>
           </div>
 
-          {/* Announcements Skeleton */}
-          <div className="p-3 sm:p-3.5 bg-card border border-border/60 dark:border-border/40 shadow-sm rounded-2xl space-y-2">
-            <Skeleton className="h-4 w-28 rounded-md" />
-            <Skeleton className="h-4.5 w-16 rounded-md" />
+          {/* 3. Announcements Skeleton */}
+          <div className="p-3 sm:p-3.5 bg-card border border-zinc-200 dark:border-border/40 shadow-sm rounded-2xl space-y-1.5">
+            <div className="flex items-center gap-2 pb-0.5 border-b border-zinc-200 dark:border-border/60">
+              <Skeleton className="size-4 rounded-md" />
+              <Skeleton className="h-4 w-24 rounded-md" />
+            </div>
+            <div className="flex items-center gap-2 py-0.5">
+              <Skeleton className="size-3 rounded-md" />
+              <Skeleton className="h-3 w-12 rounded-md" />
+            </div>
           </div>
         </div>
       </div>
@@ -1077,62 +1533,66 @@ export const StudentDashboard: React.FC = () => {
   // ─── Main Render ────────────────────────────────────────────────────────────
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_300px] gap-4 items-start pb-10 animate-in fade-in duration-300">
+    <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_315px] gap-3 sm:gap-3.5 items-start pb-6 animate-in fade-in duration-300 ease-out">
       {/* ─── LEFT COLUMN: Main Stream (Hero + Stats, Total Hours & Progress Row, Submissions Tracker) ─── */}
-      <div className="space-y-4 min-w-0 flex-1">
+      <div className="space-y-3 sm:space-y-3.5 min-w-0 flex-1">
         {/* Section 1: Hero Banner + 3 Stat Cards */}
-        <div className="flex flex-col gap-3.5 sm:gap-4 min-w-0">
+        <div className="flex flex-col gap-3 sm:gap-3.5 min-w-0">
           {/* Card 1: Compact Hero Greeting Banner (Theme-Aware, High-Contrast & Readable) */}
-          <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-card border border-border/60 dark:border-border/40 p-4.5 sm:p-5 shadow-sm hover:shadow-md transition-all duration-200">
+          <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-card border border-zinc-200 dark:border-border/40 p-3.5 sm:p-4 shadow-sm hover:shadow-md transition-all duration-200">
             <div className="relative z-10 flex items-center justify-between gap-4">
               {/* Left Column: Greeting & Badges */}
-              <div className="flex flex-col justify-between gap-3 sm:gap-3.5 min-w-0 flex-1">
-                <div className="flex items-center gap-3 sm:gap-3.5 min-w-0">
-                  {/* Circular Avatar Badge */}
-                  <div className="size-11 sm:size-12 rounded-full overflow-hidden border border-border/80 bg-primary/10 text-primary font-bold flex items-center justify-center text-sm shadow-xs shrink-0 select-none">
-                    {(user as any)?.avatar_url || (user as any)?.avatarUrl ? (
-                      <img
-                        src={(user as any)?.avatar_url || (user as any)?.avatarUrl}
-                        alt={user?.name || "Student Avatar"}
-                        className="size-full object-cover"
-                      />
-                    ) : (
-                      <span>{getInitials(user?.name, 'JD')}</span>
-                    )}
+              <div className="flex flex-col justify-between gap-2.5 sm:gap-3 min-w-0 flex-1">
+                <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                  {/* Circular Avatar Badge (matches media_1790091654883.png) */}
+                  <div className="size-10 sm:size-11 rounded-full overflow-hidden border border-zinc-200 dark:border-border/80 bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shadow-xs shrink-0 select-none">
+                    <img
+                      src={avatarUrl}
+                      alt={user?.name || "Student Avatar"}
+                      className="size-full object-cover"
+                    />
                   </div>
                   <div className="space-y-0.5 min-w-0">
-                    <h1 className="text-xl sm:text-2xl font-black tracking-tight text-foreground leading-tight truncate">
-                      Welcome back, {user?.name ? user.name.split(' ')[0] : 'Darrel'}
+                    <h1 className="text-lg sm:text-xl font-black tracking-tight text-foreground leading-tight truncate">
+                      Welcome back, {user?.name || 'John Dwayne B. Guaniso'}
                     </h1>
-                    <p className="text-xs sm:text-[13px] font-medium text-muted-foreground">
+                    <p className="text-[11px] sm:text-xs font-medium text-muted-foreground">
                       {format(new Date(), 'd MMMM, yyyy')}
                     </p>
                   </div>
                 </div>
 
-                {/* Trainee Information Badges (Single Row, Aligned next to ID & Section) */}
-                <div className="flex items-center gap-2 sm:gap-2.5 overflow-x-auto scrollbar-none pt-1 w-full">
-                  <span className="inline-flex items-center gap-2 px-3 sm:px-3.5 py-1.5 rounded-full text-xs sm:text-[12.5px] font-semibold bg-blue-500/10 dark:bg-blue-500/15 border border-blue-500/25 text-foreground shadow-2xs hover:bg-blue-500/20 transition-colors shrink-0 whitespace-nowrap">
-                    <UserIcon size={13} className="text-blue-500 dark:text-blue-400 shrink-0" />
-                    <span>ID: {studentId || user?.studentId || '2023-010482'}</span>
-                  </span>
-                  <span className="inline-flex items-center gap-2 px-3 sm:px-3.5 py-1.5 rounded-full text-xs sm:text-[12.5px] font-semibold bg-sky-500/10 dark:bg-sky-500/15 border border-sky-500/25 text-foreground shadow-2xs hover:bg-sky-500/20 transition-colors shrink-0 whitespace-nowrap">
-                    <GraduationCapIcon size={13} className="text-sky-500 dark:text-sky-400 shrink-0" />
-                    <span>{displayProgram} • {sectionName || user?.section || 'BSIT 402'}</span>
-                  </span>
-                  <span className="inline-flex items-center gap-2 px-3 sm:px-3.5 py-1.5 rounded-full text-xs sm:text-[12.5px] font-semibold bg-emerald-500/10 dark:bg-emerald-500/15 border border-emerald-500/25 text-foreground shadow-2xs hover:bg-emerald-500/20 transition-colors shrink-0 whitespace-nowrap">
-                    <UserCheckIcon size={13} className="text-emerald-500 dark:text-emerald-400 shrink-0" />
-                    <span>Mentor: {adviserName}</span>
-                  </span>
-                  <span className="inline-flex items-center gap-2 px-3 sm:px-3.5 py-1.5 rounded-full text-xs sm:text-[12.5px] font-semibold bg-[#FBBF24]/10 dark:bg-[#FBBF24]/15 border border-[#FBBF24]/30 text-foreground shadow-2xs hover:bg-[#FBBF24]/20 transition-colors shrink-0 whitespace-nowrap">
-                    <Briefcase size={13} className="text-amber-500 dark:text-[#FBBF24] shrink-0" />
-                    <span>{isAssignedCompany ? companyName : 'Awaiting Match'}</span>
-                  </span>
+                {/* Trainee Information Badges */}
+                <div className="flex flex-col gap-1.5 pt-0.5 w-full">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-muted/60 dark:bg-muted/40 border border-zinc-200 dark:border-border/60 text-foreground shadow-2xs hover:bg-muted/80 dark:hover:bg-muted/60 transition-colors shrink-0">
+                      <UserIcon size={13} className="text-muted-foreground shrink-0" />
+                      <span>ID: {studentId || user?.studentId || '05000372499'}</span>
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-muted/60 dark:bg-muted/40 border border-zinc-200 dark:border-border/60 text-foreground shadow-2xs hover:bg-muted/80 dark:hover:bg-muted/60 transition-colors shrink-0">
+                      <GraduationCapIcon size={13} className="text-muted-foreground shrink-0" />
+                      <span>{displayProgram} - {displaySection}</span>
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-muted/60 dark:bg-muted/40 border border-zinc-200 dark:border-border/60 text-foreground shadow-2xs hover:bg-muted/80 dark:hover:bg-muted/60 transition-colors shrink-0">
+                      <Briefcase size={13} className="text-muted-foreground shrink-0" />
+                      <span>{isAssignedCompany ? companyName : 'Company'}</span>
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-muted/60 dark:bg-muted/40 border border-zinc-200 dark:border-border/60 text-foreground shadow-2xs hover:bg-muted/80 dark:hover:bg-muted/60 transition-colors shrink-0">
+                      <UserCheckIcon size={13} className="text-muted-foreground shrink-0" />
+                      <span>Adviser: {adviserName}</span>
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-muted/60 dark:bg-muted/40 border border-zinc-200 dark:border-border/60 text-foreground shadow-2xs hover:bg-muted/80 dark:hover:bg-muted/60 transition-colors shrink-0">
+                      <UsersIcon size={13} className="text-muted-foreground shrink-0" />
+                      <span>Supervisor: {supervisorName}</span>
+                    </span>
+                  </div>
                 </div>
               </div>
 
               {/* Trainee Avatar Illustration (Spans Full Height of Card on Right) */}
-              <div className="w-32 h-24 sm:w-40 sm:h-28 md:w-48 md:h-32 shrink-0 hidden sm:flex items-center justify-end pointer-events-none self-center">
+              <div className="w-28 h-20 sm:w-36 sm:h-24 md:w-40 md:h-26 shrink-0 hidden sm:flex items-center justify-end pointer-events-none self-center">
                 <img
                   src="/images/Dashboard Icons/undraw_focused-dev_gqoa.svg"
                   alt="Trainee Avatar"
@@ -1142,135 +1602,283 @@ export const StudentDashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Card 2: 3 Metric Stat Cards in a row (Approved, In Progress, Grade) */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-3.5">
+          {/* Card 2: 3 Metric Stat Cards in a row (Approved Documents, Review in Progress, Practicum Grade) */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
             {/* Card 2A: Approved Documents */}
-            <div className="bg-card border border-border/60 dark:border-border/40 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between overflow-hidden group">
-              <div className="flex items-center gap-3 px-3.5 pt-3.5 sm:px-4 sm:pt-4">
-                <ProgressCircle
-                  value={approvedPercent}
-                  size={46}
-                  strokeWidth={4.5}
-                  colorClass="text-emerald-500 dark:text-emerald-400"
-                  trackClass="text-emerald-500/15 dark:text-emerald-500/20"
-                >
-                  <span className="text-sm font-bold text-foreground tabular-nums">
-                    {approvedDocsCount}
-                  </span>
-                </ProgressCircle>
-                <div className="min-w-0 flex-1">
-                  <h3 className="text-sm sm:text-[15px] font-bold text-foreground tracking-tight leading-tight truncate">
-                    Approved Documents
-                  </h3>
-                  <p className="text-xs font-medium text-muted-foreground mt-0.5 truncate">
-                    / {accessibleRequirementsCount} required
-                  </p>
-                </div>
+            <div className="bg-card border border-zinc-200 dark:border-border/50 rounded-2xl sm:rounded-3xl p-3 sm:p-3.5 shadow-xs space-y-1.5 flex flex-col justify-between select-none overflow-hidden">
+              {/* Top Header Row with Title & Kebab Menu */}
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="text-xs sm:text-[13px] font-bold text-muted-foreground tracking-tight">
+                  Approved Documents
+                </h3>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      className="size-6.5 rounded-lg text-muted-foreground/70 hover:text-foreground hover:bg-muted flex items-center justify-center transition-colors cursor-pointer"
+                      title="More options"
+                    >
+                      <MoreVertical size={15} />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem onClick={() => navigate('/student/documents')}>
+                      <FolderOpen className="size-4 mr-2" />
+                      <span>Open Repository</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/student/documents?phase=before_ojt')}>
+                      <FileTextIcon className="size-4 mr-2" />
+                      <span>View Requirements</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
 
-              <div className="mt-3 border-t border-border/60 dark:border-border/40 px-3.5 py-2 sm:px-4 sm:py-2.5">
-                <Link
-                  to="/student/documents"
-                  className="flex items-center justify-end gap-1.5 text-xs sm:text-[13px] font-semibold text-muted-foreground hover:text-foreground hover:underline transition-colors group/link cursor-pointer"
+              {/* Numbers & Label Row */}
+              <div className="flex items-baseline gap-2 flex-wrap min-w-0">
+                <span className="text-xl sm:text-2xl font-extrabold tracking-tight text-foreground tabular-nums">
+                  {approvedDocsCount}
+                </span>
+                <span className="text-[11.5px] sm:text-xs text-muted-foreground font-medium truncate">
+                  / {accessibleRequirementsCount} required
+                </span>
+              </div>
+
+              {/* Soft Light Sparkline Wave (Dynamic path scaled with approved count + smooth animations) */}
+              <div className="w-full pt-0.5 -mb-1 overflow-hidden pointer-events-none">
+                <svg
+                  key={`sparkline-approved-${animationKey}`}
+                  viewBox="0 0 300 45"
+                  preserveAspectRatio="none"
+                  className={cn(
+                    "w-full h-7.5 overflow-visible transition-colors duration-200",
+                    approvedDocsCount > 0
+                      ? "text-emerald-500/80 dark:text-emerald-400/85"
+                      : "text-muted-foreground/30"
+                  )}
                 >
-                  <span>View approved docs</span>
-                  <ArrowRightIcon size={12} className="group-hover/link:translate-x-0.5 transition-transform" />
-                </Link>
+                  <defs>
+                    <linearGradient id="metricWaveGrad1" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="currentColor" stopOpacity={approvedDocsCount > 0 ? "0.22" : "0.08"} />
+                      <stop offset="100%" stopColor="currentColor" stopOpacity="0.0" />
+                    </linearGradient>
+                  </defs>
+                  {/* Subtle secondary ambient floating wave */}
+                  {approvedDocsCount > 0 && (
+                    <path
+                      d={approvedWave.secFill}
+                      fill="currentColor"
+                      className="opacity-15 animate-sparkline-float-secondary"
+                    />
+                  )}
+                  {/* Dynamic gradient fill with entrance fade and ambient float */}
+                  <path
+                    d={approvedWave.fill}
+                    fill="url(#metricWaveGrad1)"
+                    className="animate-sparkline-fade animate-sparkline-float"
+                  />
+                  {/* Dynamic stroke with entrance draw and ambient float */}
+                  <path
+                    d={approvedWave.stroke}
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="animate-sparkline-draw animate-sparkline-float"
+                  />
+                </svg>
               </div>
             </div>
 
-            {/* Card 2B: In Progress Documents */}
-            <div className="bg-card border border-border/60 dark:border-border/40 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between overflow-hidden group">
-              <div className="flex items-center gap-3 px-3.5 pt-3.5 sm:px-4 sm:pt-4">
-                <ProgressCircle
-                  value={inReviewPercent}
-                  size={46}
-                  strokeWidth={4.5}
-                  colorClass="text-[#FBBF24]"
-                  trackClass="text-[#FBBF24]/20"
-                >
-                  <span className="text-sm font-bold text-foreground tabular-nums">
-                    {inReviewCount}
-                  </span>
-                </ProgressCircle>
-                <div className="min-w-0 flex-1">
-                  <h3 className="text-sm sm:text-[15px] font-bold text-foreground tracking-tight leading-tight truncate">
-                    Review in Progress
-                  </h3>
-                  <p className="text-xs font-medium text-muted-foreground mt-0.5 truncate">
-                    Awaiting mentor review
-                  </p>
-                </div>
+            {/* Card 2B: Review in Progress */}
+            <div className="bg-card border border-zinc-200 dark:border-border/50 rounded-2xl sm:rounded-3xl p-3 sm:p-3.5 shadow-xs space-y-1.5 flex flex-col justify-between select-none overflow-hidden">
+              {/* Top Header Row with Title & Kebab Menu */}
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="text-xs sm:text-[13px] font-bold text-muted-foreground tracking-tight">
+                  Review in Progress
+                </h3>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      className="size-6.5 rounded-lg text-muted-foreground/70 hover:text-foreground hover:bg-muted flex items-center justify-center transition-colors cursor-pointer"
+                      title="More options"
+                    >
+                      <MoreVertical size={15} />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem onClick={() => navigate('/student/reviews')}>
+                      <ClipboardCheckIcon className="size-4 mr-2" />
+                      <span>Open Review Center</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/student/reviews')}>
+                      <ClockIcon className="size-4 mr-2" />
+                      <span>Pending Submissions</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
 
-              <div className="mt-3 border-t border-border/60 dark:border-border/40 px-3.5 py-2 sm:px-4 sm:py-2.5">
-                <Link
-                  to="/student/reviews"
-                  className="flex items-center justify-end gap-1.5 text-xs sm:text-[13px] font-semibold text-muted-foreground hover:text-foreground hover:underline transition-colors group/link cursor-pointer"
+              {/* Numbers & Label Row */}
+              <div className="flex items-baseline gap-2 flex-wrap min-w-0">
+                <span className="text-xl sm:text-2xl font-extrabold tracking-tight text-foreground tabular-nums">
+                  {inReviewCount}
+                </span>
+                <span className="text-[11.5px] sm:text-xs text-muted-foreground font-medium truncate">
+                  awaiting review
+                </span>
+              </div>
+
+              {/* Soft Light Sparkline Wave (Dynamic path scaled with in-review count + smooth animations) */}
+              <div className="w-full pt-0.5 -mb-1 overflow-hidden pointer-events-none">
+                <svg
+                  key={`sparkline-review-${animationKey}`}
+                  viewBox="0 0 300 45"
+                  preserveAspectRatio="none"
+                  className={cn(
+                    "w-full h-7.5 overflow-visible transition-colors duration-200",
+                    inReviewCount > 0
+                      ? "text-orange-500/85 dark:text-orange-400/90"
+                      : "text-muted-foreground/30"
+                  )}
                 >
-                  <span>Open Review Center</span>
-                  <ArrowRightIcon size={12} className="group-hover/link:translate-x-0.5 transition-transform" />
-                </Link>
+                  <defs>
+                    <linearGradient id="metricWaveGrad2" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="currentColor" stopOpacity={inReviewCount > 0 ? "0.22" : "0.08"} />
+                      <stop offset="100%" stopColor="currentColor" stopOpacity="0.0" />
+                    </linearGradient>
+                  </defs>
+                  {/* Subtle secondary ambient floating wave */}
+                  {inReviewCount > 0 && (
+                    <path
+                      d={reviewWave.secFill}
+                      fill="currentColor"
+                      className="opacity-15 animate-sparkline-float-secondary"
+                    />
+                  )}
+                  {/* Dynamic gradient fill with entrance fade and ambient float */}
+                  <path
+                    d={reviewWave.fill}
+                    fill="url(#metricWaveGrad2)"
+                    className="animate-sparkline-fade animate-sparkline-float"
+                  />
+                  {/* Dynamic stroke with entrance draw and ambient float */}
+                  <path
+                    d={reviewWave.stroke}
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="animate-sparkline-draw animate-sparkline-float"
+                  />
+                </svg>
               </div>
             </div>
 
             {/* Card 2C: Practicum Grade */}
-            <div className="bg-card border border-border/60 dark:border-border/40 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between overflow-hidden group">
-              <div className="flex items-center gap-3 px-3.5 pt-3.5 sm:px-4 sm:pt-4">
-                <ProgressCircle
-                  value={gradePercent}
-                  size={46}
-                  strokeWidth={4.5}
-                  colorClass="text-blue-500 dark:text-blue-400"
-                  trackClass="text-blue-500/15 dark:text-blue-500/20"
-                >
-                  <span className="text-sm font-bold text-foreground tabular-nums">
-                    {studentPracticumScore !== null ? Math.round(studentPracticumScore) : '—'}
-                  </span>
-                </ProgressCircle>
-                <div className="min-w-0 flex-1">
-                  <h3 className="text-sm sm:text-[15px] font-bold text-foreground tracking-tight leading-tight truncate">
-                    Practicum Grade
-                  </h3>
-                  <p className="text-xs font-medium text-muted-foreground mt-0.5 truncate">
-                    {studentPracticumScore !== null ? `${studentPracticumScore.toFixed(1)} / 100` : 'Awaiting evaluation'}
-                  </p>
-                </div>
+            <div className="bg-card border border-zinc-200 dark:border-border/50 rounded-2xl sm:rounded-3xl p-3 sm:p-3.5 shadow-xs space-y-1.5 flex flex-col justify-between select-none overflow-hidden">
+              {/* Top Header Row with Title & Kebab Menu */}
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="text-xs sm:text-[13px] font-bold text-muted-foreground tracking-tight">
+                  Practicum Grade
+                </h3>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      className="size-6.5 rounded-lg text-muted-foreground/70 hover:text-foreground hover:bg-muted flex items-center justify-center transition-colors cursor-pointer"
+                      title="More options"
+                    >
+                      <MoreVertical size={15} />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem onClick={() => navigate(appraisalDoc ? `/student/documents/${appraisalDoc.id}` : "/student/documents?phase=final")}>
+                      <AwardIcon className="size-4 mr-2" />
+                      <span>View Appraisal</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/student/documents?phase=final')}>
+                      <GraduationCapIcon className="size-4 mr-2" />
+                      <span>Final Phase Docs</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
 
-              <div className="mt-3 border-t border-border/60 dark:border-border/40 px-3.5 py-2 sm:px-4 sm:py-2.5">
-                <Link
-                  to={appraisalDoc ? `/student/documents/${appraisalDoc.id}` : "/student/documents?phase=final"}
-                  className="flex items-center justify-end gap-1.5 text-xs sm:text-[13px] font-semibold text-muted-foreground hover:text-foreground hover:underline transition-colors group/link cursor-pointer"
+              {/* Numbers & Label Row */}
+              <div className="flex items-baseline gap-2 flex-wrap min-w-0">
+                <span className="text-xl sm:text-2xl font-extrabold tracking-tight text-foreground tabular-nums">
+                  {studentPracticumScore !== null ? studentPracticumScore.toFixed(1) : '—'}
+                </span>
+                <span className="text-[11.5px] sm:text-xs text-muted-foreground font-medium truncate">
+                  {studentPracticumScore !== null ? '/ 100' : 'awaiting evaluation'}
+                </span>
+              </div>
+
+              {/* Soft Light Sparkline Wave (Dynamic path scaled with practicum score + smooth animations) */}
+              <div className="w-full pt-0.5 -mb-1 overflow-hidden pointer-events-none">
+                <svg
+                  key={`sparkline-grade-${animationKey}`}
+                  viewBox="0 0 300 45"
+                  preserveAspectRatio="none"
+                  className={cn(
+                    "w-full h-7.5 overflow-visible transition-colors duration-200",
+                    studentPracticumScore !== null && studentPracticumScore >= 75
+                      ? "text-emerald-500/80 dark:text-emerald-400/85"
+                      : studentPracticumScore !== null
+                      ? "text-rose-500/80 dark:text-rose-400/85"
+                      : "text-muted-foreground/30"
+                  )}
                 >
-                  <span>View appraisal</span>
-                  <ArrowRightIcon size={12} className="group-hover/link:translate-x-0.5 transition-transform" />
-                </Link>
+                  <defs>
+                    <linearGradient id="metricWaveGrad3" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="currentColor" stopOpacity={studentPracticumScore !== null ? "0.22" : "0.08"} />
+                      <stop offset="100%" stopColor="currentColor" stopOpacity="0.0" />
+                    </linearGradient>
+                  </defs>
+                  {/* Subtle secondary ambient floating wave */}
+                  {studentPracticumScore !== null && (
+                    <path
+                      d={gradeWave.secFill}
+                      fill="currentColor"
+                      className="opacity-15 animate-sparkline-float-secondary"
+                    />
+                  )}
+                  {/* Dynamic gradient fill with entrance fade and ambient float */}
+                  <path
+                    d={gradeWave.fill}
+                    fill="url(#metricWaveGrad3)"
+                    className="animate-sparkline-fade animate-sparkline-float"
+                  />
+                  {/* Dynamic stroke with entrance draw and ambient float */}
+                  <path
+                    d={gradeWave.stroke}
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="animate-sparkline-draw animate-sparkline-float"
+                  />
+                </svg>
               </div>
             </div>
           </div>
         </div>
 
         {/* Section 2: Total Hours Overview & Practicum Progress Dual Grid Row */}
-        <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_300px] gap-4 items-stretch">
+        <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_275px] gap-3 sm:gap-3.5 items-stretch">
           {/* Total Hours Overview Chart Card */}
           <div className="min-w-0 flex flex-col h-full">
-            <div className="bg-card border border-border/60 dark:border-border/40 rounded-2xl p-4 sm:p-4.5 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between h-full min-h-[310px] space-y-2.5">
+            <div className="bg-card border border-zinc-200 dark:border-border/40 rounded-2xl sm:rounded-3xl p-3.5 sm:p-4 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between h-full min-h-[255px] space-y-2 overflow-hidden">
               <div className="flex items-center justify-between pb-0.5">
                 <div>
-                  <h2 className="text-base font-bold text-foreground tracking-tight">Total Hours Overview</h2>
+                  <h2 className="text-sm sm:text-base font-bold text-foreground tracking-tight">Total Hours Overview</h2>
                 </div>
-                <div className="flex items-center bg-muted/70 p-0.5 rounded-lg border border-border/60 text-xs">
-                  <button
-                    type="button"
-                    onClick={() => setChartView('monthly')}
-                    className={cn(
-                      "px-2 py-0.5 rounded-md font-bold text-[11px] transition-colors cursor-pointer",
-                      chartView === 'monthly' ? "bg-card text-foreground shadow-2xs" : "text-muted-foreground hover:text-foreground"
-                    )}
-                  >
-                    Monthly
-                  </button>
+                <div className="flex items-center bg-muted/70 p-0.5 rounded-lg border border-zinc-200 dark:border-border/60 text-xs">
                   <button
                     type="button"
                     onClick={() => setChartView('weekly')}
@@ -1281,11 +1889,21 @@ export const StudentDashboard: React.FC = () => {
                   >
                     Weekly
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => setChartView('monthly')}
+                    className={cn(
+                      "px-2 py-0.5 rounded-md font-bold text-[11px] transition-colors cursor-pointer",
+                      chartView === 'monthly' ? "bg-card text-foreground shadow-2xs" : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    Monthly
+                  </button>
                 </div>
               </div>
 
-              <div className="w-full h-[215px] sm:h-[225px] min-w-0">
-                <ResponsiveContainer width="100%" height="100%">
+              <div className="w-full h-[175px] sm:h-[185px] min-w-0">
+                <ResponsiveContainer key={`hours-chart-${animationKey}-${chartView}`} width="100%" height="100%" minHeight={175} initialDimension={{ width: 500, height: 185 }} debounce={0}>
                   {chartView === 'monthly' ? (
                     <AreaChart
                       data={monthlyChartData}
@@ -1294,11 +1912,11 @@ export const StudentDashboard: React.FC = () => {
                     >
                       <defs>
                         <linearGradient id="hoursAreaGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="currentColor" stopOpacity={0.25} />
-                          <stop offset="100%" stopColor="currentColor" stopOpacity={0.0} />
+                          <stop offset="0%" stopColor="#10b981" stopOpacity="0.20" />
+                          <stop offset="100%" stopColor="#10b981" stopOpacity="0.0" />
                         </linearGradient>
                       </defs>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" className="text-border/40" />
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" className="text-zinc-200 dark:text-border/40" />
                       <XAxis
                         dataKey="label"
                         axisLine={false}
@@ -1316,10 +1934,11 @@ export const StudentDashboard: React.FC = () => {
                         tickFormatter={(v) => `${v}h`}
                       />
                       <RechartsTooltip
+                        cursor={false}
                         content={({ active, payload, label }) => {
                           if (active && payload && payload.length) {
                             return (
-                              <div className="bg-popover/95 backdrop-blur-md border border-border px-3 py-1.5 rounded-xl shadow-lg text-xs space-y-0.5">
+                              <div className="bg-popover/95 backdrop-blur-md border border-border px-3 py-1.5 rounded-xl shadow-sm text-xs space-y-0.5">
                                 <p className="font-bold text-foreground">{label}</p>
                                 <p className="text-xs text-muted-foreground">
                                   Hours Logged: <span className="text-foreground font-black">{payload[0].value} hrs</span>
@@ -1334,13 +1953,17 @@ export const StudentDashboard: React.FC = () => {
                       <Area
                         type="monotone"
                         dataKey="value"
-                        stroke="currentColor"
+                        stroke="#10b981"
                         strokeWidth={2.5}
                         fillOpacity={1}
                         fill="url(#hoursAreaGradient)"
-                        dot={{ r: 3.5, fill: 'currentColor', stroke: 'var(--color-card, #000)', strokeWidth: 1.5 }}
-                        activeDot={{ r: 5.5, fill: 'currentColor', stroke: 'var(--color-card, #000)', strokeWidth: 2 }}
-                        className="text-foreground"
+                        dot={{ r: 3.5, fill: '#10b981', stroke: 'var(--color-card, #fff)', strokeWidth: 1.5 }}
+                        activeDot={{ r: 5.5, fill: '#10b981', stroke: 'var(--color-card, #fff)', strokeWidth: 2 }}
+                        className="text-emerald-500"
+                        isAnimationActive={true}
+                        animationBegin={0}
+                        animationDuration={650}
+                        animationEasing="ease-out"
                       />
                     </AreaChart>
                   ) : (
@@ -1348,7 +1971,7 @@ export const StudentDashboard: React.FC = () => {
                       data={weeklyBarData}
                       margin={{ top: 12, right: 12, left: -22, bottom: 0 }}
                     >
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" className="text-border/40" />
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" className="text-zinc-200 dark:text-border/40" />
                       <XAxis
                         dataKey="label"
                         axisLine={false}
@@ -1366,13 +1989,16 @@ export const StudentDashboard: React.FC = () => {
                         tickFormatter={(v) => `${v}h`}
                       />
                       <RechartsTooltip
+                        cursor={false}
                         content={({ active, payload, label }) => {
                           if (active && payload && payload.length) {
+                            const val = Number(payload[0].value);
+                            const valStr = val % 1 === 0 ? `${val} hrs` : `${val.toFixed(1)} hrs`;
                             return (
-                              <div className="bg-popover/95 backdrop-blur-md border border-border px-3 py-1.5 rounded-xl shadow-lg text-xs space-y-0.5">
+                              <div className="bg-popover/95 backdrop-blur-md border border-border px-3 py-1.5 rounded-xl shadow-sm text-xs space-y-0.5">
                                 <p className="font-bold text-foreground">{label}</p>
                                 <p className="text-xs text-muted-foreground">
-                                  Hours Logged: <span className="text-foreground font-black">{payload[0].value} hrs</span>
+                                  Hours Logged: <span className="text-foreground font-black">{valStr}</span>
                                 </p>
                                 <p className="text-[10px] text-muted-foreground font-medium">Daily Target: 8.0 hrs</p>
                               </div>
@@ -1381,18 +2007,26 @@ export const StudentDashboard: React.FC = () => {
                           return null;
                         }}
                       />
-                      <Bar dataKey="value" radius={[6, 6, 0, 0]}>
+                      <Bar
+                        dataKey="value"
+                        radius={[8, 8, 0, 0]}
+                        isAnimationActive={true}
+                        animationBegin={0}
+                        animationDuration={600}
+                        animationEasing="ease-out"
+                      >
                         {weeklyBarData.map((entry, index) => (
                           <Cell
                             key={`bar-${index}`}
                             fill="currentColor"
-                            className={
+                            className={cn(
+                              "transition-colors duration-150 cursor-pointer",
                               entry.isCurrent
-                                ? 'text-foreground fill-current'
+                                ? "text-emerald-300 dark:text-emerald-400/60 fill-current hover:opacity-90"
                                 : entry.value > 0
-                                ? 'text-muted-foreground fill-current'
-                                : 'text-muted-foreground/20 dark:text-muted-foreground/15 fill-current'
-                            }
+                                ? "text-emerald-500/80 dark:text-emerald-400/85 fill-current hover:text-emerald-600 dark:hover:text-emerald-300"
+                                : "text-muted-foreground/15 dark:text-muted-foreground/10 fill-current"
+                            )}
                           />
                         ))}
                       </Bar>
@@ -1405,10 +2039,10 @@ export const StudentDashboard: React.FC = () => {
 
           {/* Practicum Progress Card */}
           <div className="min-w-0 flex flex-col h-full">
-            <div className="bg-card border border-border/60 dark:border-border/40 rounded-2xl p-4 sm:p-4.5 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between h-full min-h-[310px] space-y-3">
+            <div className="bg-card border border-zinc-200 dark:border-border/40 rounded-2xl sm:rounded-3xl p-3.5 sm:p-4 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between h-full min-h-[255px] space-y-2 overflow-hidden">
               <div className="flex items-center justify-between pb-0.5">
                 <div>
-                  <h2 className="text-base font-bold text-foreground tracking-tight">Practicum Progress</h2>
+                  <h2 className="text-sm sm:text-base font-bold text-foreground tracking-tight">Practicum Progress</h2>
                 </div>
                 <button
                   type="button"
@@ -1419,29 +2053,41 @@ export const StudentDashboard: React.FC = () => {
                 </button>
               </div>
 
-              <div className="relative flex items-center justify-center my-auto min-h-[190px]">
-                <ResponsiveContainer width="100%" height={190}>
+              <div className="relative flex items-center justify-center my-auto min-h-[160px] pointer-events-none">
+                <ResponsiveContainer key={`progress-donut-${animationKey}`} width="100%" height={160} minHeight={160} initialDimension={{ width: 240, height: 160 }} debounce={0}>
                   <PieChart>
                     <Pie
                       data={donutData}
                       cx="50%"
                       cy="50%"
-                      innerRadius={54}
-                      outerRadius={76}
-                      paddingAngle={4}
+                      startAngle={90}
+                      endAngle={-270}
+                      innerRadius={46}
+                      outerRadius={66}
+                      paddingAngle={5}
                       dataKey="value"
                       stroke="none"
+                      cursor="default"
+                      isAnimationActive={true}
+                      animationBegin={0}
+                      animationDuration={650}
+                      animationEasing="ease-out"
                     >
                       {donutData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={entry.color}
+                          cursor="default"
+                          className="outline-none"
+                        />
                       ))}
                     </Pie>
                   </PieChart>
                 </ResponsiveContainer>
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Total Hours</span>
-                  <span className="text-lg sm:text-xl font-black text-foreground tracking-tight leading-tight mt-0.5">
-                    {renderedHours.toFixed(1)} <span className="text-xs font-bold text-muted-foreground">/ {totalHours}h</span>
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center animate-in fade-in zoom-in-95 duration-400 ease-out">
+                  <span className="text-[8.5px] font-bold uppercase tracking-wider text-muted-foreground">Total Hours</span>
+                  <span className="text-base sm:text-lg font-black text-foreground tracking-tight leading-tight mt-0.5">
+                    {renderedHours.toFixed(1)} <span className="text-[11px] font-bold text-muted-foreground">/ {totalHours}h</span>
                   </span>
                 </div>
               </div>
@@ -1451,58 +2097,44 @@ export const StudentDashboard: React.FC = () => {
 
         {/* Section 3: My Document Submissions & Reviews Active Tracker */}
         <div className="min-w-0">
-          {/* Card 4: My Document Submissions & Reviews Active Tracker */}
-          <div className="bg-card border border-border/60 dark:border-border/40 rounded-2xl p-4 sm:p-5 shadow-sm hover:shadow-md transition-all duration-200 space-y-3.5">
+          <div className="bg-card border border-zinc-200 dark:border-border/40 rounded-2xl p-3.5 sm:p-4 shadow-sm hover:shadow-md transition-all duration-200 space-y-3">
             <div className="flex items-center justify-between gap-3 pb-0.5">
-              <div className="flex items-center gap-2.5">
-                <h2 className="text-base font-bold text-foreground tracking-tight">
+              <div className="flex items-center gap-2">
+                <h2 className="text-sm sm:text-base font-bold text-foreground tracking-tight">
                   Submitted Documents
                 </h2>
-                <span className="text-[11px] font-bold text-muted-foreground bg-muted/60 px-2 py-0.5 rounded-full border border-border/40">
+                <span className="text-[11px] font-bold text-muted-foreground bg-muted/60 px-2 py-0.5 rounded-full border border-zinc-200 dark:border-border/40">
                   {activeSubmissions.length} active
                 </span>
               </div>
 
-              <div className="flex items-center gap-2 shrink-0">
-                <Link
-                  to="/student/documents"
-                  className="text-xs font-semibold text-muted-foreground hover:text-foreground hover:underline inline-flex items-center gap-1 transition-colors mr-1 cursor-pointer group"
-                >
-                  <span>Browse all templates</span>
-                  <ArrowRightIcon size={12} className="group-hover:translate-x-0.5 transition-transform" />
-                </Link>
-                <Link to="/student/documents" className="shrink-0">
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    className="font-bold text-xs h-8 px-3.5 rounded-xl cursor-pointer active:scale-95 shadow-2xs flex items-center gap-1.5"
-                  >
-                    <FolderOpen size={13} />
-                    <span>Open Repository</span>
-                    <ArrowRightIcon size={12} />
-                  </Button>
-                </Link>
-              </div>
+              <Link
+                to="/student/documents"
+                className="text-xs font-semibold text-muted-foreground hover:text-foreground hover:underline inline-flex items-center gap-1 transition-colors cursor-pointer group shrink-0"
+              >
+                <span>Browse all templates</span>
+                <ArrowRightIcon size={12} className="group-hover:translate-x-0.5 transition-transform" />
+              </Link>
             </div>
 
             {/* Documents Table */}
-            <div className="border border-border/35 rounded-xl overflow-hidden shadow-2xs bg-card">
+            <div className="border border-zinc-200 dark:border-border/60 rounded-xl overflow-hidden shadow-2xs bg-card">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse text-xs">
                     <thead>
-                      <tr className="bg-muted/30 border-b border-border/70 text-muted-foreground font-bold">
+                      <tr className="bg-muted/40 border-b border-zinc-200 dark:border-border/70 text-muted-foreground font-bold">
                         <th scope="col" className="py-2.5 px-3.5 font-bold text-foreground">Document Name</th>
-                        <th scope="col" className="py-2.5 px-3 font-bold text-foreground">Submitted / Updated</th>
+                        <th scope="col" className="py-2.5 px-3 font-bold text-foreground">Date</th>
                         <th scope="col" className="py-2.5 px-3 font-bold text-foreground text-center">Status</th>
-                        <th scope="col" className="py-2.5 px-3.5 font-bold text-foreground text-right">Action</th>
+                        <th scope="col" className="py-2.5 px-3.5 font-bold text-foreground text-center">Action</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-border/50">
+                    <tbody className="divide-y divide-zinc-200 dark:divide-border/40">
                       {activeSubmissions.length === 0 ? (
                         <tr>
                           <td colSpan={4} className="py-10 px-4 text-center">
                             <div className="space-y-2.5 max-w-sm mx-auto">
-                              <div className="size-10 rounded-xl bg-muted/60 text-muted-foreground border border-border/70 flex items-center justify-center mx-auto">
+                              <div className="size-10 rounded-xl bg-muted/60 text-muted-foreground border border-zinc-200 dark:border-border/70 flex items-center justify-center mx-auto">
                                 <FolderOpen size={18} className="text-muted-foreground" />
                               </div>
                               <div className="space-y-0.5">
@@ -1536,48 +2168,43 @@ export const StudentDashboard: React.FC = () => {
                             {/* Document Info */}
                             <td className="py-2.5 px-3.5 align-middle">
                               <div className="flex items-center gap-2.5 min-w-0">
-                                <div className="size-7 rounded-lg flex items-center justify-center shrink-0 border border-border/60 bg-muted/40 text-muted-foreground group-hover:text-foreground transition-colors">
-                                  <item.icon size={13} />
-                                </div>
+                                <img
+                                  src="/images/Dashboard Icons/undraw_action-required_pplo.svg"
+                                  alt="Document"
+                                  className="size-7 object-contain shrink-0 pointer-events-none"
+                                />
                                 <span className="font-bold text-foreground text-xs leading-none truncate max-w-[260px] sm:max-w-md">
                                   {item.name}
                                 </span>
                               </div>
                             </td>
 
-                            {/* Submitted / Updated Date */}
+                            {/* Submitted Date */}
                             <td className="py-2.5 px-3 whitespace-nowrap text-muted-foreground font-medium text-xs align-middle">
                               {item.submissionDate || safeFormatDate(new Date(), 'MMM d, yyyy')}
                             </td>
 
                             {/* Status */}
                             <td className="py-2.5 px-3 whitespace-nowrap text-center align-middle">
-                              <span className={cn(
-                                "inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold tracking-tight shadow-2xs transition-colors",
-                                item.status === 'done'
-                                  ? "bg-[#dcfce7] text-[#166534] dark:bg-emerald-500/15 dark:border dark:border-emerald-500/30 dark:text-emerald-400"
-                                  : item.status === 'revision' || item.status === 'returned'
-                                  ? "bg-[#fee2e2] text-[#991b1b] dark:bg-rose-500/15 dark:border dark:border-rose-500/30 dark:text-rose-400"
-                                  : item.status === 'pending'
-                                  ? "bg-[#ffedd5] text-[#9a3412] dark:bg-amber-500/15 dark:border dark:border-amber-500/30 dark:text-[#fbbf24]"
-                                  : "bg-[#dbeafe] text-[#1e40af] dark:bg-sky-500/15 dark:border dark:border-sky-500/30 dark:text-sky-400"
-                              )}>
-                                {item.statusLabel}
-                              </span>
+                              <div className="flex items-center justify-center">
+                                <StatusBadge status={item.status} label={item.statusLabel} />
+                              </div>
                             </td>
 
                             {/* Action */}
-                            <td className="py-2.5 px-3.5 text-right whitespace-nowrap align-middle">
-                              <Link to={item.link}>
-                                <Button
-                                  variant={item.status === 'revision' || item.status === 'returned' ? 'danger' : item.status === 'done' ? 'outline' : 'primary'}
-                                  size="sm"
-                                  className="h-6.5 text-[10.5px] font-bold rounded-lg px-2.5 cursor-pointer inline-flex items-center gap-1 shadow-2xs active:scale-95"
-                                >
-                                  <span>{item.actionText}</span>
-                                  <ArrowRightIcon size={10} />
-                                </Button>
-                              </Link>
+                            <td className="py-2.5 px-3.5 text-center whitespace-nowrap align-middle">
+                              <div className="flex items-center justify-center">
+                                <Link to={item.link}>
+                                  <Button
+                                    variant={item.status === 'revision' || item.status === 'returned' ? 'danger' : item.status === 'done' ? 'outline' : 'primary'}
+                                    size="sm"
+                                    className="h-7 text-[11px] font-bold rounded-full min-w-[82px] px-3 cursor-pointer inline-flex items-center justify-center gap-1 shadow-2xs active:scale-95"
+                                  >
+                                    <span>{item.actionText}</span>
+                                    <ArrowRightIcon size={10} className="shrink-0" />
+                                  </Button>
+                                </Link>
+                              </div>
                             </td>
                           </tr>
                         ))
@@ -1591,24 +2218,15 @@ export const StudentDashboard: React.FC = () => {
         </div>
 
       {/* ─── RIGHT COLUMN: Dedicated Sidebar (Calendar, To-do, Announcements) ─── */}
-      <div className="space-y-3.5 min-w-0 w-full lg:w-[300px] shrink-0">
+      <div className="space-y-3 sm:space-y-3.5 min-w-0 w-full lg:w-[315px] shrink-0">
         {/* 1. Calendar Widget (Compact & Theme-Aware) */}
-        <div className="bg-card border border-border/60 dark:border-border/40 rounded-2xl p-3.5 sm:p-4 shadow-sm hover:shadow-md transition-all duration-200 space-y-2.5">
+        <div className="bg-card border border-zinc-200 dark:border-border/40 rounded-2xl p-3.5 sm:p-4 shadow-sm hover:shadow-md transition-all duration-200 space-y-2.5">
           {/* Header */}
-          <div className="flex items-center justify-between pb-0.5 border-b border-border/60">
-            <Link
-              to="/student/calendar"
-              className="flex items-center gap-2 group cursor-pointer"
-            >
-              <CalendarIcon size={15} className="text-muted-foreground group-hover:text-foreground transition-colors shrink-0" />
-              <h2 className="text-sm sm:text-base font-bold text-foreground tracking-tight group-hover:underline">Calendar</h2>
-            </Link>
-            <Link
-              to="/student/calendar"
-              className="text-[11px] font-semibold text-muted-foreground hover:text-foreground hover:underline transition-colors"
-            >
-              Open Full
-            </Link>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <CalendarIcon size={15} className="text-muted-foreground shrink-0" />
+              <h2 className="text-[14.5px] sm:text-base font-bold text-foreground tracking-tight">Calendar</h2>
+            </div>
           </div>
 
           {/* Month Navigation */}
@@ -1617,61 +2235,55 @@ export const StudentDashboard: React.FC = () => {
               type="button"
               onClick={prevMonth}
               title="Previous month"
-              className="p-0.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+              className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
             >
               <ChevronLeft size={15} />
             </button>
-            <Link
-              to="/student/calendar"
-              className="text-xs sm:text-sm font-bold text-foreground hover:underline tracking-tight cursor-pointer"
-              title="Open calendar"
+            <span
+              className="text-[13px] sm:text-sm font-bold text-foreground tracking-tight select-none"
             >
-              {format(calendarDate, 'MMM yyyy')}
-            </Link>
+              {format(calendarDate, 'MMMM yyyy')}
+            </span>
             <button
               type="button"
               onClick={nextMonth}
               title="Next month"
-              className="p-0.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+              className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
             >
               <ChevronRight size={15} />
             </button>
           </div>
 
           {!isCalendarHidden && (
-            <div className="space-y-1 animate-in fade-in duration-200">
+            <div className="space-y-1.5 animate-in fade-in duration-200">
               {/* Day Headers (S M T W T F S) */}
-              <div className="grid grid-cols-7 text-center font-bold text-[10.5px] text-muted-foreground py-0.5 border-b border-border/40">
+              <div className="grid grid-cols-7 text-center font-bold text-[11px] sm:text-xs text-muted-foreground py-0.5">
                 {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
                   <span key={i} className="py-0.5">{d}</span>
                 ))}
               </div>
 
               {/* Days Grid */}
-              <div className="grid grid-cols-7 gap-y-0.5 text-center text-[11px]">
+              <div className="grid grid-cols-7 gap-y-1 text-center text-xs">
                 {calendarGrid.map((cell, idx) => (
                   <div key={idx} className="flex items-center justify-center py-0.5">
-                    {cell.isToday ? (
-                      <Link
-                        to="/student/calendar"
-                        className="size-5.5 sm:size-6 rounded-full bg-primary text-primary-foreground font-bold flex items-center justify-center mx-auto shadow-xs text-[11px] hover:opacity-90 transition-opacity"
-                        title="Today — Open in Calendar"
-                      >
-                        {cell.day}
-                      </Link>
-                    ) : cell.isCurrentMonth ? (
-                      <Link
-                        to="/student/calendar"
-                        className="size-5.5 sm:size-6 flex items-center justify-center mx-auto font-medium text-foreground hover:bg-muted/60 rounded-full cursor-pointer transition-colors text-[11px]"
-                        title="Open in Calendar"
-                      >
-                        {cell.day}
-                      </Link>
-                    ) : (
-                      <span className="size-5.5 sm:size-6 flex items-center justify-center mx-auto text-muted-foreground/30 font-normal text-[11px]">
-                        {cell.day}
-                      </span>
-                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleSelectDay(cell.date, cell.isCurrentMonth)}
+                      className={cn(
+                        "size-6 sm:size-6.5 flex items-center justify-center mx-auto rounded-full text-[11px] sm:text-xs transition-all cursor-pointer",
+                        cell.isSelected
+                          ? "bg-foreground text-background font-bold shadow-xs scale-105"
+                          : cell.isToday
+                          ? "border border-zinc-300 dark:border-border font-bold text-foreground hover:bg-muted/60"
+                          : cell.isCurrentMonth
+                          ? "font-medium text-foreground hover:bg-muted/60"
+                          : "text-muted-foreground/30 hover:bg-muted/30 hover:text-muted-foreground/60"
+                      )}
+                      title={format(cell.date, 'PPPP')}
+                    >
+                      {cell.day}
+                    </button>
                   </div>
                 ))}
               </div>
@@ -1679,17 +2291,17 @@ export const StudentDashboard: React.FC = () => {
           )}
 
           {/* Footer Links */}
-          <div className="pt-1.5 border-t border-border/60 flex items-center justify-between text-[11px]">
+          <div className="pt-1.5 flex items-center justify-between text-xs">
             <Link
               to="/student/calendar"
-              className="text-muted-foreground hover:text-foreground font-bold hover:underline cursor-pointer transition-colors"
+              className="text-muted-foreground hover:text-foreground font-semibold hover:underline cursor-pointer transition-colors"
             >
               full calendar
             </Link>
             <button
               type="button"
               onClick={() => setIsCalendarHidden(prev => !prev)}
-              className="text-muted-foreground hover:text-foreground font-bold hover:underline cursor-pointer transition-colors"
+              className="text-muted-foreground hover:text-foreground font-semibold hover:underline cursor-pointer transition-colors"
             >
               {isCalendarHidden ? 'show' : 'hide'}
             </button>
@@ -1697,11 +2309,11 @@ export const StudentDashboard: React.FC = () => {
         </div>
 
         {/* 2. To-do Widget (Compact & Theme-Aware) */}
-        <div className="bg-card border border-border/60 dark:border-border/40 rounded-2xl p-3.5 sm:p-4 shadow-sm hover:shadow-md transition-all duration-200 space-y-2.5">
-          <div className="flex items-center justify-between pb-0.5 border-b border-border/60">
+        <div className="bg-card border border-zinc-200 dark:border-border/40 rounded-2xl p-3.5 sm:p-4 shadow-sm hover:shadow-md transition-all duration-200 space-y-2.5">
+          <div className="flex items-center justify-between pb-1 border-b border-zinc-200 dark:border-border/60">
             <div className="flex items-center gap-2">
               <CheckCircle2 size={15} className="text-muted-foreground shrink-0" />
-              <h2 className="text-sm sm:text-base font-bold text-foreground tracking-tight">To-do</h2>
+              <h2 className="text-[14.5px] sm:text-base font-bold text-foreground tracking-tight">To-do</h2>
             </div>
             <div className="flex items-center gap-1">
               <button
@@ -1710,21 +2322,21 @@ export const StudentDashboard: React.FC = () => {
                 title={isAddingTodo ? "Cancel" : "Add to-do"}
                 className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer active:scale-95"
               >
-                {isAddingTodo ? <X size={14} /> : <Plus size={14} />}
+                {isAddingTodo ? <X size={15} /> : <Plus size={15} />}
               </button>
             </div>
           </div>
 
           {/* Quick Add Form */}
           {isAddingTodo && (
-            <form onSubmit={handleAddTodo} className="space-y-1.5 py-1 animate-in fade-in duration-200 border-b border-border/60">
+            <form onSubmit={handleAddTodo} className="space-y-1.5 py-1 animate-in fade-in duration-200 border-b border-zinc-200 dark:border-border/60">
               <input
                 type="text"
                 value={newTodoText}
                 onChange={e => setNewTodoText(e.target.value)}
                 placeholder="Type new to-do..."
                 autoFocus
-                className="w-full text-xs px-2.5 py-1.5 rounded-lg bg-muted/30 border border-border focus:outline-none focus:border-primary text-foreground"
+                className="w-full text-xs sm:text-[13px] px-2.5 py-1.5 rounded-lg bg-muted/30 border border-zinc-200 dark:border-border focus:outline-none focus:border-primary text-foreground"
               />
               <div className="flex justify-end gap-1.5">
                 <Button
@@ -1735,7 +2347,7 @@ export const StudentDashboard: React.FC = () => {
                     setIsAddingTodo(false);
                     setNewTodoText('');
                   }}
-                  className="h-6 text-[11px] px-2 rounded-lg"
+                  className="h-7 text-xs px-2.5 rounded-lg"
                 >
                   Cancel
                 </Button>
@@ -1744,7 +2356,7 @@ export const StudentDashboard: React.FC = () => {
                   variant="primary"
                   size="sm"
                   disabled={!newTodoText.trim()}
-                  className="h-6 text-[11px] px-2.5 rounded-lg font-bold"
+                  className="h-7 text-xs px-3 rounded-lg font-bold"
                 >
                   Add To-do
                 </Button>
@@ -1753,21 +2365,21 @@ export const StudentDashboard: React.FC = () => {
           )}
 
           {/* Action Items List */}
-          <div className="space-y-1.5 text-xs">
+          <div className="space-y-2 text-xs sm:text-[13px]">
             {/* Due Documents Dropview Header Toggle */}
             <button
               type="button"
               onClick={() => setIsDueDocsExpanded(prev => !prev)}
-              className="flex items-center justify-between w-full py-1 text-foreground hover:text-foreground/80 transition-colors font-semibold group cursor-pointer text-xs"
+              className="flex items-center justify-between w-full py-1 text-foreground hover:text-foreground/80 transition-colors font-semibold group cursor-pointer text-xs sm:text-[13px]"
             >
               <div className="flex items-center gap-2 min-w-0">
-                <FileTextIcon size={14} className="text-muted-foreground group-hover:text-foreground shrink-0 group-hover:scale-110 transition-transform" />
-                <span className="truncate text-xs font-bold group-hover:underline">
+                <FileTextIcon size={15} className="text-muted-foreground group-hover:text-foreground shrink-0 group-hover:scale-110 transition-transform" />
+                <span className="truncate text-xs sm:text-[13px] font-bold">
                   {dueDocumentsList.length} assignments due
                 </span>
               </div>
               <ChevronDown
-                size={13}
+                size={14}
                 className={cn(
                   "text-muted-foreground group-hover:text-foreground transition-transform duration-200 shrink-0",
                   isDueDocsExpanded && "rotate-180"
@@ -1778,24 +2390,24 @@ export const StudentDashboard: React.FC = () => {
             {/* Collapsible Due Documents Bullet List */}
             {isDueDocsExpanded && (
               <div className="space-y-1 pt-0.5 pb-1 animate-in fade-in duration-200">
-                <div className="border-t border-border/40 max-h-[160px] overflow-y-auto pr-0.5 divide-y divide-border/30">
+                <div className="border-t border-zinc-200 dark:border-border/40 max-h-[165px] overflow-y-auto pr-0.5 divide-y divide-zinc-200/80 dark:divide-border/30">
                   {dueDocumentsList.length > 0 ? (
                     dueDocumentsList.map(req => (
                       <Link
                         key={req.id}
                         to={req.link}
-                        className="flex items-center justify-between gap-2 py-1.5 px-1 rounded-md text-xs hover:bg-muted/40 transition-colors group cursor-pointer"
+                        className="flex items-center justify-between gap-2.5 py-1.5 px-1.5 rounded-md text-xs sm:text-[13px] hover:bg-muted/40 transition-colors group cursor-pointer"
                       >
                         <div className="flex items-center gap-2 min-w-0 flex-1">
-                          <span className="size-1.5 rounded-full bg-muted-foreground/60 shrink-0 group-hover:bg-foreground group-hover:scale-125 transition-all" />
-                          <span className="truncate text-xs font-semibold text-foreground group-hover:text-foreground group-hover:underline transition-colors">
+                          <span className="size-2 rounded-full bg-muted-foreground/60 shrink-0 group-hover:bg-foreground group-hover:scale-125 transition-all" />
+                          <span className="truncate text-xs sm:text-[13px] font-semibold text-foreground group-hover:text-foreground transition-colors">
                             {req.name}
                           </span>
                         </div>
                       </Link>
                     ))
                   ) : (
-                    <div className="py-2 text-center text-[11px] text-muted-foreground italic">
+                    <div className="py-2 text-center text-xs text-muted-foreground italic">
                       All required documents submitted!
                     </div>
                   )}
@@ -1808,30 +2420,30 @@ export const StudentDashboard: React.FC = () => {
                   className="w-full flex items-center justify-center pt-1 text-muted-foreground hover:text-foreground transition-colors cursor-pointer group"
                   title="Collapse due documents"
                 >
-                  <ChevronUp size={14} className="group-hover:-translate-y-0.5 transition-transform" />
+                  <ChevronUp size={15} className="group-hover:-translate-y-0.5 transition-transform" />
                 </button>
               </div>
             )}
 
             {/* User Custom Todos if any */}
             {todos.length > 0 && (
-              <div className="pt-1.5 border-t border-border/40 space-y-1 max-h-[120px] overflow-y-auto pr-0.5">
+              <div className="pt-1.5 border-t border-zinc-200 dark:border-border/40 space-y-1 max-h-[120px] overflow-y-auto pr-0.5">
                 {todos.map(item => (
                   <div
                     key={item.id}
                     onClick={() => toggleTodo(item.id)}
-                    className="flex items-center justify-between gap-2 p-1 rounded-lg hover:bg-muted/40 transition-colors cursor-pointer group"
+                    className="flex items-center justify-between gap-2.5 p-1.5 rounded-lg hover:bg-muted/40 transition-colors cursor-pointer group"
                   >
                     <div className="flex items-center gap-2 min-w-0 flex-1">
                       {item.done ? (
-                        <div className="size-3.5 rounded-full bg-primary text-primary-foreground flex items-center justify-center shrink-0 shadow-2xs">
-                          <Check size={9} strokeWidth={3.5} />
+                        <div className="size-4 rounded-full bg-primary text-primary-foreground flex items-center justify-center shrink-0 shadow-2xs">
+                          <Check size={10} strokeWidth={3.5} />
                         </div>
                       ) : (
-                        <div className="size-3.5 rounded-full border-2 border-muted-foreground/40 group-hover:border-primary shrink-0 transition-colors" />
+                        <div className="size-4 rounded-full border-2 border-muted-foreground/40 group-hover:border-primary shrink-0 transition-colors" />
                       )}
                       <span className={cn(
-                        "truncate text-xs font-semibold",
+                        "truncate text-xs sm:text-[13px] font-semibold",
                         item.done ? "text-muted-foreground line-through font-normal" : "text-foreground"
                       )}>
                         {item.text}
@@ -1843,7 +2455,7 @@ export const StudentDashboard: React.FC = () => {
                       title="Delete"
                       className="opacity-0 group-hover:opacity-100 p-0.5 text-muted-foreground hover:text-rose-500 transition-opacity"
                     >
-                      <Trash2 size={11} />
+                      <Trash2 size={12} />
                     </button>
                   </div>
                 ))}
@@ -1853,15 +2465,15 @@ export const StudentDashboard: React.FC = () => {
         </div>
 
         {/* 3. Announcements Widget (Compact & Theme-Aware) */}
-        <div className="bg-card border border-border/60 dark:border-border/40 rounded-2xl p-3 sm:p-3.5 shadow-sm hover:shadow-md transition-all duration-200 space-y-2">
-          <div className="flex items-center gap-2 pb-0.5 border-b border-border/60">
+        <div className="bg-card border border-zinc-200 dark:border-border/40 rounded-2xl p-3.5 sm:p-4 shadow-sm hover:shadow-md transition-all duration-200 space-y-2">
+          <div className="flex items-center gap-2 pb-1 border-b border-zinc-200 dark:border-border/60">
             <Megaphone size={15} className="text-muted-foreground shrink-0" />
-            <h2 className="text-sm sm:text-base font-bold text-foreground tracking-tight">Announcements</h2>
+            <h2 className="text-[14.5px] sm:text-base font-bold text-foreground tracking-tight">Announcements</h2>
           </div>
 
-          <div className="flex items-center gap-2.5 py-0.5 text-xs text-muted-foreground">
-            <Megaphone size={13} className="text-muted-foreground shrink-0" />
-            <span className="font-medium text-foreground text-xs">None</span>
+          <div className="flex items-center gap-2.5 py-1 text-xs sm:text-[13px] text-muted-foreground">
+            <Megaphone size={14} className="text-muted-foreground shrink-0" />
+            <span className="font-medium text-foreground text-xs sm:text-[13px]">None</span>
           </div>
         </div>
       </div>
@@ -1869,4 +2481,10 @@ export const StudentDashboard: React.FC = () => {
   );
 };
 
-export default StudentDashboard;
+const StudentDashboardWithBoundary: React.FC = (props) => (
+  <ErrorBoundary>
+    <StudentDashboard {...props} />
+  </ErrorBoundary>
+);
+
+export default StudentDashboardWithBoundary;

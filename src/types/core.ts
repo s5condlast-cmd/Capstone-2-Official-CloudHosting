@@ -14,7 +14,9 @@ export interface User {
   adviserId?: string;
   companyName?: string;
   companyId?: string;
-  supervisorId?: string;
+  gender?: 'male' | 'female';
+  avatarUrl?: string;
+  avatar_url?: string;
   isNewAccount?: boolean;
   mfaEnrolled?: boolean;
   requiresPasswordChange?: boolean;

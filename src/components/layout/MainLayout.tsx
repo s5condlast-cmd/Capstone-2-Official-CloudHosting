@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Outlet, useLocation, Navigate } from 'react-router-dom';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/app-sidebar';
@@ -6,6 +6,7 @@ import { SiteHeader } from '@/components/site-header';
 import { User } from '@/src/types';
 import { motion, AnimatePresence } from 'motion/react';
 import { CommandPalette } from '../ui/CommandPalette';
+import { ErrorBoundary } from '../ui/ErrorBoundary';
 import { cn } from '@/src/lib/utils';
 
 interface MainLayoutProps {
@@ -16,24 +17,6 @@ interface MainLayoutProps {
 export const MainLayout: React.FC<MainLayoutProps> = ({ user, onLogout }) => {
   const location = useLocation();
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
-
-  // Persist theme to localStorage
-  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
-    const saved = localStorage.getItem('practicum_theme');
-    if (saved === 'dark' || saved === 'light') return saved;
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-  });
-
-  useEffect(() => {
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-    localStorage.setItem('practicum_theme', theme);
-  }, [theme]);
-
-  const toggleTheme = () => setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
 
   if (!user) return <Navigate to="/login" replace />;
 
@@ -56,17 +39,15 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ user, onLogout }) => {
         onSearchClick={() => setIsCommandPaletteOpen(true)}
       />
 
-      <SidebarInset className="bg-background h-screen max-h-screen flex flex-col overflow-hidden transition-colors duration-200">
+      <SidebarInset className="bg-background h-screen max-h-screen flex flex-col overflow-hidden">
         <SiteHeader
           user={user}
-          theme={theme}
-          onToggleTheme={toggleTheme}
           onSearchClick={() => setIsCommandPaletteOpen(true)}
           onLogout={onLogout}
         />
 
         <div className={cn(
-          "flex-1 bg-background transition-colors duration-200",
+          "flex-1 bg-background",
           isFullHeightPage ? "overflow-hidden flex flex-col min-h-0" : "overflow-y-auto editor-scrollbar"
         )}>
           <motion.div
@@ -75,13 +56,15 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ user, onLogout }) => {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.1, ease: 'easeOut' }}
             className={cn(
-              "px-4 md:px-6 w-full max-w-[1720px] mx-auto",
+              "px-3 sm:px-4 md:px-5 w-full max-w-[1720px] mx-auto",
               isFullHeightPage
-                ? "flex-1 flex flex-col min-h-0 h-full py-4 md:py-5"
-                : "py-3.5 sm:py-4 md:py-5"
+                ? "flex-1 flex flex-col min-h-0 h-full py-3.5 md:py-4"
+                : "py-2.5 sm:py-3 md:py-3.5"
             )}
           >
-            <Outlet />
+            <ErrorBoundary>
+              <Outlet />
+            </ErrorBoundary>
           </motion.div>
         </div>
       </SidebarInset>

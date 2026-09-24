@@ -32,6 +32,7 @@ import {
   ExternalHyperlink,
 } from 'docx';
 import { titleToFilename } from '@/src/lib/sanitizeDocumentFilename';
+import { unwrapContentEnvelope } from '@/src/lib/documentHistoryStorage';
 
 // ─── Header & Footer Types ────────────────────────────────────────────────────
 
@@ -61,6 +62,9 @@ export interface HeaderFooterItem {
 export interface DocumentHeaderFooterOptions {
   header?: HeaderFooterItem | null;
   footer?: HeaderFooterItem | null;
+  lineSpacing?: number;
+  paragraphSpacingBefore?: number;
+  paragraphSpacingAfter?: number;
 }
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -368,13 +372,18 @@ export function collectRuns(children: PlateNode[]): TextRun[] {
 }
 
 /** Build a docx Paragraph from a block element */
-export function elementToParagraph(el: PlateElement): Paragraph {
+export function elementToParagraph(
+  el: PlateElement,
+  defaultLineHeight: number = DEFAULT_LINE_HEIGHT,
+  defaultSpaceAfter: number = DEFAULT_PARAGRAPH_AFTER_TWIPS,
+  defaultSpaceBefore: number = 0
+): Paragraph {
   const heading = toHeadingLevel(el.type);
   const alignment = toAlignmentType(el.align as string | undefined);
   const runs = collectParagraphChildren(el.children);
   const indent = Math.max(0, Number(el.indent) || 0);
   const headingLayout = HEADING_LAYOUT[el.type];
-  const lineHeight = Number(el.lineHeight) || headingLayout?.lineHeight || DEFAULT_LINE_HEIGHT;
+  const lineHeight = Number(el.lineHeight) || headingLayout?.lineHeight || defaultLineHeight;
   const spaceBefore = el.spaceBefore !== undefined ? Number(el.spaceBefore) : undefined;
   const customBeforeTwips = spaceBefore !== undefined ? Math.round(spaceBefore * 20) : undefined;
   const spaceAfter = el.spaceAfter !== undefined ? Number(el.spaceAfter) : undefined;
@@ -386,18 +395,24 @@ export function elementToParagraph(el: PlateElement): Paragraph {
     children: runs as any,
     indent: indent ? { left: indent * 720 } : undefined,
     spacing: {
-      before: customBeforeTwips ?? (headingLayout?.before ?? 0),
-      after: customAfterTwips ?? (headingLayout?.after ?? DEFAULT_PARAGRAPH_AFTER_TWIPS),
+      before: customBeforeTwips ?? (headingLayout?.before ?? defaultSpaceBefore),
+      after: customAfterTwips ?? (headingLayout?.after ?? defaultSpaceAfter),
       line: Math.round(lineHeight * 240),
     },
   });
 }
 
 /** Build a docx Table row */
-export function elementToTableRow(el: PlateElement, isHeader = false): TableRow {
+export function elementToTableRow(
+  el: PlateElement,
+  isHeader = false,
+  defaultLineHeight?: number,
+  defaultSpaceAfter?: number,
+  defaultSpaceBefore?: number
+): TableRow {
   const cells = (el.children as PlateElement[]).map((cell) => {
     const paras = (cell.children as PlateElement[]).map((child) => {
-      return elementToParagraph(child as PlateElement);
+      return elementToParagraph(child as PlateElement, defaultLineHeight, defaultSpaceAfter, defaultSpaceBefore);
     });
     const colSpan = Number((cell as any).colSpan || (cell as any).colspan || 1);
     const rowSpan = Number((cell as any).rowSpan || (cell as any).rowspan || 1);
@@ -415,10 +430,15 @@ export function elementToTableRow(el: PlateElement, isHeader = false): TableRow 
 }
 
 /** Build a docx Table from a Plate table element */
-export function elementToTable(el: PlateElement): Table {
+export function elementToTable(
+  el: PlateElement,
+  defaultLineHeight?: number,
+  defaultSpaceAfter?: number,
+  defaultSpaceBefore?: number
+): Table {
   const rows = (el.children as PlateElement[]).map((row, idx) => {
     const isHeaderRow = idx === 0 && (row as any).header === true;
-    return elementToTableRow(row, isHeaderRow);
+    return elementToTableRow(row, isHeaderRow, defaultLineHeight, defaultSpaceAfter, defaultSpaceBefore);
   });
   return new Table({
     rows,
@@ -532,7 +552,12 @@ async function serializeListNode(
 }
 
 /** Convert an array of Plate nodes to an array of docx block children */
-async function nodesToDocxChildren(nodes: PlateNode[]): Promise<(Paragraph | Table)[]> {
+async function nodesToDocxChildren(
+  nodes: PlateNode[],
+  defaultLineHeight: number = DEFAULT_LINE_HEIGHT,
+  defaultSpaceAfter: number = DEFAULT_PARAGRAPH_AFTER_TWIPS,
+  defaultSpaceBefore: number = 0
+): Promise<(Paragraph | Table)[]> {
   const result: (Paragraph | Table)[] = [];
 
   for (const node of nodes) {
@@ -541,7 +566,7 @@ async function nodesToDocxChildren(nodes: PlateNode[]): Promise<(Paragraph | Tab
     const el = node as PlateElement;
 
     if (el.type === 'table') {
-      result.push(elementToTable(el));
+      result.push(elementToTable(el, defaultLineHeight, defaultSpaceAfter, defaultSpaceBefore));
       continue;
     }
 
@@ -628,7 +653,7 @@ async function nodesToDocxChildren(nodes: PlateNode[]): Promise<(Paragraph | Tab
     }
 
     // Default: paragraph / heading
-    result.push(elementToParagraph(el));
+    result.push(elementToParagraph(el, defaultLineHeight, defaultSpaceAfter, defaultSpaceBefore));
   }
 
   return result;
@@ -645,7 +670,23 @@ export async function serializeToDocx(
   title: string,
   headerFooter?: DocumentHeaderFooterOptions
 ): Promise<Blob> {
-  const children = await nodesToDocxChildren(content);
+  if (!Array.isArray(content)) {
+    const unwrapped = unwrapContentEnvelope(content);
+    content = unwrapped.content as PlateNode[];
+    if (!headerFooter && unwrapped.headerFooter) {
+      headerFooter = unwrapped.headerFooter;
+    }
+  }
+
+  const docLineHeight = headerFooter?.lineSpacing ?? DEFAULT_LINE_HEIGHT;
+  const docParagraphAfterTwips = headerFooter?.paragraphSpacingAfter !== undefined
+    ? Math.round(headerFooter.paragraphSpacingAfter * 20)
+    : DEFAULT_PARAGRAPH_AFTER_TWIPS;
+  const docParagraphBeforeTwips = headerFooter?.paragraphSpacingBefore !== undefined
+    ? Math.round(headerFooter.paragraphSpacingBefore * 20)
+    : 0;
+
+  const children = await nodesToDocxChildren(content, docLineHeight, docParagraphAfterTwips, docParagraphBeforeTwips);
 
   // ── Build Native Word Header ───────────────────────────────────────────────
   const headerChildren: (Paragraph | Table)[] = [];
@@ -872,8 +913,9 @@ export async function serializeToDocx(
           run: { font: 'Calibri', size: 22 },
           paragraph: {
             spacing: {
-              after: DEFAULT_PARAGRAPH_AFTER_TWIPS,
-              line: Math.round(DEFAULT_LINE_HEIGHT * 240),
+              before: docParagraphBeforeTwips,
+              after: docParagraphAfterTwips,
+              line: Math.round(docLineHeight * 240),
             },
           },
         },

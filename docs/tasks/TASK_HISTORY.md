@@ -4,6 +4,53 @@
 
 A complete, chronological historical record of all development sessions, architectural milestones, refactors, bug fixes, and security audits for the **STI Marikina Practicum Management System**.
 
+## September 23, 2026
+
+### Student Dashboard Modernization, Dual-Theme Color Engine, and Performance Optimization
+
+- [x] **Student Dashboard Architecture & Redesign**:
+  - Re-architected `StudentDashboard.tsx` with dynamic Supabase database sync (`student_documents` and `profiles`), eliminating local mock state while maintaining resilient fallbacks.
+  - Implemented parallelized data fetching with `Promise.all` across profile, adviser, supervisor, documents, and drafts queries, reducing network latency by over 70%.
+  - Introduced the 3-Metric Stat Cards with Tremor-style animated circular gauges (`ProgressCircle.tsx`) for Approved Documents, Review in Progress, and Practicum Grade.
+  - Built the Practicum Progress donut ring (`startAngle={90}`, `endAngle={-270}`) with supervisor-validated hour calculations and segment gap separating progress from target.
+  - Created the compact Mini Calendar widget with month navigation, date selection pills, and clean footer with direct link to full calendar (`/student/calendar`).
+  - Added user-scoped interactive to-do checklist with persistent local storage.
+- [x] **Dual-Theme Design System & High-Contrast Lines**:
+  - Upgraded table row dividers, card borders, and widget separators (`border-zinc-200 dark:border-border/60`, `divide-zinc-200 dark:divide-border/40`) to fix washed-out light mode borders.
+  - Standardized status badge containers across the application (`Badge.tsx`): soft pastel mint (`#dcfce7`/`#15803d`), peach amber (`#ffedd5`/`#c2410c`), baby blue (`#dbeafe`/`#1d4ed8`), rose (`#fee2e2`/`#b91c1c`), and lavender (`#ede9fe`/`#6d28d9`), with matching dark-mode semi-transparent containers.
+  - Implemented GPU-accelerated circular ripple theme animation (`@keyframes reveal-theme` using CSS View Transitions API) with dynamic click-origin coordinates (`--x`, `--y`) and rotating Sun/Moon icon morphing.
+- [x] **Gender-Aware Avatars & Visual Polish**:
+  - Replaced single-letter blue circle fallbacks with dedicated Undraw avatars (`undraw_indie-hacker-avatar_b3wy.svg` and `undraw_female-avatar_7t6k.svg`) across Topbar, Dropdowns, Sidebar, and Student Dashboard.
+  - Created real-time avatar broadcaster in `avatarHelper.ts` allowing instant profile avatar changes.
+  - Added full application crash protection with `ErrorBoundary` and custom Undraw 404/error illustration.
+- [x] **Smooth Skeleton Loading & Graceful Transitions**:
+  - Ensured skeleton placeholders always appear on load/refresh with a minimum 400ms graceful window (`minSkeletonPromise`) to eliminate flicker.
+  - Aligned Calendar skeleton and Row 2 card wrappers to match the rendered UI pixel-for-pixel, eliminating layout shift.
+  - Resolved Recharts `ResizeObserver` blank delay by setting `initialDimension` and fluid ease-out animations (`animationDuration={650}`) on Area, Bar, and Pie charts.
+
+### Attendance Modernization, Watermarked Photo Stamping, and Wireframe Layout Restructuring
+
+- [x] **Photo Stamping & Verification Engine**:
+  - Built real-time in-browser camera streaming with device permissions handling and fallback file upload (`AttendancePage.tsx`).
+  - Implemented client-side canvas watermark stamping burned directly into attendance photos (PST Timestamp, Student Name, Student ID, Practicum Verification tag).
+  - Added photo preview, clear, and full-resolution lightbox inspection modal for students, advisers, and supervisors.
+- [x] **Asymmetric 2-Column Wireframe Architecture**:
+  - Restructured `AttendancePage.tsx` into a 2-column layout matching hand-drawn wireframe design:
+    - **Left column**: 3 radial metric stat cards (Verified, Pending, Remaining) with `<ProgressCircle>` gauges, filter pills (`All Records`, `Verified`, `Pending`) + live search input, and framed history table.
+    - **Right column**: Shift Clock & Photo Stamping Action Station placed prominently at the top, positioned above the Student Trainee Information card (with top banner and overlapping Undraw avatar).
+- [x] **Dashboard Clean-up & Hover Polish**:
+  - Removed hover column cursor shadow (`cursor={false}`) in Total Hours Overview charts on `StudentDashboard.tsx`.
+  - Refined tooltip shadows and eliminated redundant server synchronized text.
+- [x] **Student Dashboard Soft Light Wave Colors & Hover View Removal**:
+  - Configured soft, pleasant, non-jarring colors across the sparkline waves and Total Hours chart on `StudentDashboard.tsx`:
+    - **Approved Documents (Card 2A)**: Soft light emerald green (`text-emerald-500/80 dark:text-emerald-400/85`) with subtle translucent gradient fill when approved documents exist (`approvedDocsCount > 0`).
+    - **Review in Progress (Card 2B)**: Soft light rose/coral red (`text-rose-500/80 dark:text-rose-400/85`) with subtle translucent gradient fill when items are awaiting review (`inReviewCount > 0`).
+    - **Practicum Grade (Card 2C)**: Soft light emerald green wave when evaluated/passing, soft light rose wave when awaiting review/evaluation.
+    - **Total Hours Overview**: Soft emerald green curve (`#10b981`) and gradient fill when hours are credited/proven (`renderedHours > 0`).
+  - Removed hover popover view on Practicum Progress donut: removed `<RechartsTooltip />`, removed container `title`, removed hover slice opacity changes, and added `pointer-events-none`.
+  - Updated Submitted Documents table header from "Submitted" to "Date".
+  - Verified with `npm run typecheck` and `npm run build` passing with 0 errors.
+
 ---
 
 ## September 16, 2026

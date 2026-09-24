@@ -35,6 +35,7 @@ import {
 } from "lucide-react"
 import { User, Role } from "@/src/types"
 import { cn } from "@/lib/utils"
+import { useUserAvatar } from "@/src/lib/avatarHelper"
 
 interface NavUserProps {
   user: User | null
@@ -59,6 +60,7 @@ const getRoleBadge = (role?: Role) => {
 export function NavUser({ user, onLogout, onSearchClick }: NavUserProps) {
   const { isMobile } = useSidebar()
   const navigate = useNavigate()
+  const { avatarUrl } = useUserAvatar(user)
 
   if (!user) return null
 
@@ -83,7 +85,8 @@ export function NavUser({ user, onLogout, onSearchClick }: NavUserProps) {
               <SidebarMenuButton size="lg" className="aria-expanded:bg-sidebar-accent cursor-pointer group/user" />
             }
           >
-            <Avatar className="size-8 rounded-lg bg-primary/10 text-primary font-bold border border-border">
+            <Avatar className="size-8 rounded-lg bg-primary/10 text-primary font-bold border border-border overflow-hidden">
+              <AvatarImage src={avatarUrl} alt={user.name} className="size-full object-cover" />
               <AvatarFallback className="rounded-lg text-xs font-bold bg-primary/10 text-primary">
                 {initials}
               </AvatarFallback>
@@ -104,7 +107,8 @@ export function NavUser({ user, onLogout, onSearchClick }: NavUserProps) {
             <DropdownMenuGroup>
               <DropdownMenuLabel className="p-0 font-normal">
                 <div className="flex items-center gap-2.5 px-2 py-2 text-left text-sm bg-muted/40 rounded-lg">
-                  <Avatar className="size-9 rounded-lg bg-primary text-primary-foreground font-bold shrink-0">
+                  <Avatar className="size-9 rounded-lg bg-primary text-primary-foreground font-bold shrink-0 overflow-hidden">
+                    <AvatarImage src={avatarUrl} alt={user.name} className="size-full object-cover" />
                     <AvatarFallback className="rounded-lg text-xs font-bold bg-primary text-primary-foreground">
                       {initials}
                     </AvatarFallback>

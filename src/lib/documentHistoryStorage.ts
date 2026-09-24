@@ -55,6 +55,13 @@ export function unwrapContentEnvelope(raw: unknown): {
   content: object[];
   headerFooter?: DocumentHeaderFooterOptions;
 } {
+  if (typeof raw === 'string') {
+    try {
+      raw = JSON.parse(raw);
+    } catch {
+      // ignore parse failure and fall through
+    }
+  }
   if (Array.isArray(raw)) {
     return { content: raw };
   }
@@ -111,15 +118,30 @@ function idbKey(userId: string, draftId: string): string {
 }
 
 async function readCached(userId: string, draftId: string): Promise<DraftState | undefined> {
-  return get<DraftState>(idbKey(userId, draftId));
+  if (typeof indexedDB === 'undefined') return undefined;
+  try {
+    return await get<DraftState>(idbKey(userId, draftId));
+  } catch {
+    return undefined;
+  }
 }
 
 async function writeCached(state: DraftState): Promise<void> {
-  await set(idbKey(state.userId, state.id), state);
+  if (typeof indexedDB === 'undefined') return;
+  try {
+    await set(idbKey(state.userId, state.id), state);
+  } catch {
+    // ignore
+  }
 }
 
 async function clearCached(userId: string, draftId: string): Promise<void> {
-  await del(idbKey(userId, draftId));
+  if (typeof indexedDB === 'undefined') return;
+  try {
+    await del(idbKey(userId, draftId));
+  } catch {
+    // ignore
+  }
 }
 
 // ─── Word count ───────────────────────────────────────────────────────────────
@@ -253,6 +275,24 @@ export class DocumentHistoryStorage {
   /** Synchronize the OCC revision after a trusted restore response. */
   setCloudRevision(revision: number): void {
     this.cloudRevision = revision;
+  }
+
+  /**
+   * Apply an incoming remote update from another tab into the storage engine.
+   * Cancels any pending local timers/state and updates cloudRevision, snapshots, and cache.
+   */
+  applyRemoteUpdate(revision: number, content: object[], draftState?: DraftState): void {
+    if (this.cloudSaveTimer) {
+      clearTimeout(this.cloudSaveTimer);
+      this.cloudSaveTimer = null;
+    }
+    this.pendingState = null;
+    this.cloudRevision = revision;
+    this.lastSnapshotContentJson = JSON.stringify(content);
+    this.hasUnversionedChanges = false;
+    if (draftState) {
+      void writeCached(draftState);
+    }
   }
 
   /**
@@ -738,13 +778,6 @@ export class DocumentHistoryStorage {
         this.presenceMap.set(remoteTabId, Date.now());
         break;
       case 'DOC_SAVED':
-        if (typeof msg.revision === 'number' && msg.revision > this.cloudRevision) {
-          this.cloudRevision = msg.revision;
-        }
-        if (msg.content) {
-          this.lastSnapshotContentJson = JSON.stringify(msg.content);
-          this.hasUnversionedChanges = false;
-        }
         if (!this.pendingState && msg.content) {
           this.onRemoteUpdate?.(
             msg.content as object[],
@@ -769,23 +802,31 @@ export class DocumentHistoryStorage {
  * Call on logout to prevent another user from reading the previous user's data.
  */
 export async function clearAllDraftCacheForUser(userId: string): Promise<void> {
-  // idb-keyval doesn't support prefix scan; we iterate known keys by listing.
-  // For simplicity, we track open draft IDs in a user-scoped index key.
-  const indexKey = `user-draft-index:${userId}`;
-  const draftIds = await get<string[]>(indexKey) ?? [];
-  for (const id of draftIds) {
-    await del(idbKey(userId, id));
+  if (typeof indexedDB === 'undefined') return;
+  try {
+    const indexKey = `user-draft-index:${userId}`;
+    const draftIds = (await get<string[]>(indexKey)) ?? [];
+    for (const id of draftIds) {
+      await del(idbKey(userId, id));
+    }
+    await del(indexKey);
+  } catch {
+    // ignore
   }
-  await del(indexKey);
 }
 
 /**
  * Register a draft ID in the user's local draft index (for cache cleanup on logout).
  */
 export async function registerDraftInIndex(userId: string, draftId: string): Promise<void> {
-  const indexKey = `user-draft-index:${userId}`;
-  const existing = await get<string[]>(indexKey) ?? [];
-  if (!existing.includes(draftId)) {
-    await set(indexKey, [...existing, draftId]);
+  if (typeof indexedDB === 'undefined') return;
+  try {
+    const indexKey = `user-draft-index:${userId}`;
+    const existing = (await get<string[]>(indexKey)) ?? [];
+    if (!existing.includes(draftId)) {
+      await set(indexKey, [...existing, draftId]);
+    }
+  } catch {
+    // ignore
   }
 }

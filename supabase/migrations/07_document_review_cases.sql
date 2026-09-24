@@ -183,13 +183,13 @@ CREATE POLICY doc_cases_select_policy ON public.document_review_cases
     OR (public.portal_role() = 'supervisor' AND (
       assigned_supervisor_id = (SELECT auth.uid())
       OR student_id IN (
-        SELECT id FROM public.profiles WHERE supervisor_id = (SELECT auth.uid())
+        SELECT id FROM public.profiles WHERE supervisor_id = (SELECT auth.uid())::text
       )
     ))
     OR (public.portal_role() = 'adviser' AND (
       assigned_adviser_id = (SELECT auth.uid())
       OR student_id IN (
-        SELECT id FROM public.profiles WHERE adviser_id = (SELECT auth.uid())
+        SELECT id FROM public.profiles WHERE adviser_id = (SELECT auth.uid())::text
       )
     ))
   );
@@ -325,8 +325,16 @@ BEGIN
     p_title,
     v_route,
     v_initial_stage,
-    v_student_profile.supervisor_id,
-    v_student_profile.adviser_id,
+    CASE
+      WHEN v_student_profile.supervisor_id ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+      THEN v_student_profile.supervisor_id::uuid
+      ELSE NULL
+    END,
+    CASE
+      WHEN v_student_profile.adviser_id ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+      THEN v_student_profile.adviser_id::uuid
+      ELSE NULL
+    END,
     COALESCE(p_priority, 'medium')
   ) RETURNING id INTO v_new_case_id;
 
@@ -741,7 +749,9 @@ DECLARE
   v_rev_id uuid;
   v_route text;
   v_stage text;
-  v_student record;
+  v_student_id uuid;
+  v_supervisor_id text;
+  v_adviser_id text;
 BEGIN
   FOR v_doc IN
     SELECT sd.*
@@ -751,11 +761,34 @@ BEGIN
       WHERE r.legacy_student_document_id = sd.id
     )
   LOOP
+    -- Reset the scalar lookup values for each legacy document. Using an
+    -- untyped RECORD here fails when owner_id is NULL because its tuple
+    -- structure has never been assigned before v_student.id is inspected.
+    v_student_id := NULL;
+    v_supervisor_id := NULL;
+    v_adviser_id := NULL;
+
     -- Get student supervisor/adviser IDs
-    SELECT id, supervisor_id, adviser_id
-    INTO v_student
-    FROM public.profiles
-    WHERE id = v_doc.owner_id;
+    IF v_doc.owner_id IS NOT NULL THEN
+      SELECT id, supervisor_id, adviser_id
+      INTO v_student_id, v_supervisor_id, v_adviser_id
+      FROM public.profiles
+      WHERE id = v_doc.owner_id;
+    END IF;
+
+    -- If owner_id was not set or profile not found, try matching by student_name
+    IF v_student_id IS NULL AND v_doc.student_name IS NOT NULL THEN
+      SELECT id, supervisor_id, adviser_id
+      INTO v_student_id, v_supervisor_id, v_adviser_id
+      FROM public.profiles
+      WHERE full_name = v_doc.student_name
+      LIMIT 1;
+    END IF;
+
+    -- If still no valid student profile, skip this row to avoid foreign key violation
+    IF v_student_id IS NULL THEN
+      CONTINUE;
+    END IF;
 
     -- Determine route
     IF v_doc.doc_type ILIKE '%journal%' OR v_doc.doc_type ILIKE '%dtr%' THEN
@@ -790,13 +823,21 @@ BEGIN
       created_at,
       updated_at
     ) VALUES (
-      COALESCE(v_student.id, v_doc.owner_id),
+      v_student_id,
       v_doc.doc_type,
       COALESCE(v_doc.doc_type || ' - ' || v_doc.student_name, 'Practicum Document'),
       v_route,
       v_stage,
-      v_student.supervisor_id,
-      v_student.adviser_id,
+      CASE
+        WHEN v_supervisor_id ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+        THEN v_supervisor_id::uuid
+        ELSE NULL
+      END,
+      CASE
+        WHEN v_adviser_id ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+        THEN v_adviser_id::uuid
+        ELSE NULL
+      END,
       COALESCE(v_doc.urgency, 'medium'),
       v_doc.created_at,
       v_doc.created_at
@@ -818,10 +859,10 @@ BEGIN
       1,
       'upload',
       v_doc.id,
-      v_doc.file_path,
-      COALESCE(split_part(v_doc.file_path, '/', 2), 'document.pdf'),
+      COALESCE(v_doc.file_path, ''),
+      COALESCE(NULLIF(split_part(v_doc.file_path, '/', 2), ''), NULLIF(v_doc.file_path, ''), 'document.pdf'),
       (CASE WHEN v_doc.file_path ILIKE '%.docx' THEN 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ELSE 'application/pdf' END),
-      COALESCE(v_student.id, v_doc.owner_id),
+      v_student_id,
       v_doc.created_at
     ) RETURNING id INTO v_rev_id;
 
@@ -841,7 +882,14 @@ BEGIN
       ) VALUES (
         v_case_id,
         v_rev_id,
-        COALESCE(v_student.adviser_id, v_student.id, v_doc.owner_id),
+        COALESCE(
+          CASE
+            WHEN v_adviser_id ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+            THEN v_adviser_id::uuid
+            ELSE NULL
+          END,
+          v_student_id
+        ),
         v_doc.adviser_feedback,
         v_doc.created_at
       );
@@ -861,4 +909,3 @@ GRANT EXECUTE ON FUNCTION public.backfill_legacy_student_documents_to_cases() TO
 SELECT public.backfill_legacy_student_documents_to_cases();
 
 COMMIT;
-

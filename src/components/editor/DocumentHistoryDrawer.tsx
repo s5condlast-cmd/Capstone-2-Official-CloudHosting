@@ -7,7 +7,7 @@
  */
 import React, { useEffect, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { X, RotateCcw, Clock, Tag, AlertCircle, Loader2 } from 'lucide-react';
+import { X, RotateCcw, Clock, Tag, AlertCircle, Loader2, Trash2 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import { supabase } from '@/src/lib/supabase';
 import { toast } from 'sonner';
@@ -50,21 +50,39 @@ export function DocumentHistoryDrawer({
   const [error, setError] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [restoring, setRestoring] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  // ── Load versions ─────────────────────────────────────────────────────────
+  // ── Load versions (strictly capped at 5) ──────────────────────────────────
   const loadVersions = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
+      // 1. Trigger database-side version pruning if available
+      try {
+        await supabase.rpc('prune_editor_versions', { p_doc_id: draftId });
+      } catch {
+        // Fallback or ignore if RPC not yet deployed
+      }
+
+      // 2. Fetch versions from database
       const { data, error: err } = await supabase
         .from('document_versions')
         .select('*')
         .eq('doc_id', draftId)
         .order('saved_at', { ascending: false })
-        .limit(20);
+        .limit(25);
 
       if (err) throw new Error(err.message);
-      setVersions((data ?? []) as DocumentVersion[]);
+      const allVers = (data ?? []) as DocumentVersion[];
+
+      // 3. Keep strictly only 5 versions, prune any excess older versions
+      if (allVers.length > 5) {
+        const excess = allVers.slice(5);
+        const excessIds = excess.map((v) => v.version_id);
+        void supabase.from('document_versions').delete().in('version_id', excessIds);
+      }
+
+      setVersions(allVers.slice(0, 5));
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not load version history.');
     } finally {
@@ -75,6 +93,48 @@ export function DocumentHistoryDrawer({
   useEffect(() => {
     void loadVersions();
   }, [loadVersions]);
+
+  // ── Delete a version ──────────────────────────────────────────────────────
+  const handleDelete = useCallback(
+    async (version: DocumentVersion) => {
+      if (deletingId || restoring) return;
+      const confirmed = window.confirm(
+        `Are you sure you want to delete "${version.label ?? 'this version'}"?\n\nThis action cannot be undone.`
+      );
+      if (!confirmed) return;
+
+      setDeletingId(version.version_id);
+      try {
+        // Try RPC first for security definer verification
+        const { error: rpcErr } = await supabase.rpc('delete_editor_version', {
+          p_version_id: version.version_id,
+        });
+
+        if (rpcErr) {
+          // Fallback to direct DELETE query
+          const { error: delErr } = await supabase
+            .from('document_versions')
+            .delete()
+            .eq('version_id', version.version_id);
+
+          if (delErr) {
+            throw new Error(delErr.message || rpcErr.message);
+          }
+        }
+
+        setVersions((prev) => prev.filter((v) => v.version_id !== version.version_id));
+        if (selectedId === version.version_id) {
+          setSelectedId(null);
+        }
+        toast.success('Version deleted successfully.');
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : 'Could not delete version.');
+      } finally {
+        setDeletingId(null);
+      }
+    },
+    [deletingId, restoring, selectedId]
+  );
 
   // ── Restore a version ─────────────────────────────────────────────────────
   const handleRestore = useCallback(
@@ -221,14 +281,34 @@ export function DocumentHistoryDrawer({
                     {version.word_count.toLocaleString()} words · Rev {version.source_revision}
                   </p>
                 </div>
+
+                {/* Quick delete icon button */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    void handleDelete(version);
+                  }}
+                  disabled={deletingId === version.version_id || restoring}
+                  className="p-1.5 rounded-lg text-muted-foreground/70 hover:text-rose-600 hover:bg-rose-500/10 dark:hover:text-rose-400 dark:hover:bg-rose-500/20 transition-colors cursor-pointer shrink-0 disabled:opacity-50"
+                  title="Delete this version"
+                  aria-label="Delete this version"
+                >
+                  {deletingId === version.version_id ? (
+                    <Loader2 className="w-4 h-4 animate-spin text-rose-500" />
+                  ) : (
+                    <Trash2 className="w-4 h-4" />
+                  )}
+                </button>
               </div>
 
-              {/* Expanded restore button */}
+              {/* Expanded actions: Restore & Delete */}
               {isSelected && (
-                <div className="mt-3 flex gap-2">
+                <div className="mt-3 flex items-center gap-2 pt-2 border-t border-border/40">
                   <button
+                    type="button"
                     onClick={(e) => { e.stopPropagation(); void handleRestore(version); }}
-                    disabled={restoring}
+                    disabled={restoring || deletingId === version.version_id}
                     className={cn(
                       'flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold',
                       'bg-primary text-primary-fg hover:bg-primary-hover shadow-2xs transition-all cursor-pointer',
@@ -236,11 +316,28 @@ export function DocumentHistoryDrawer({
                     )}
                   >
                     {restoring ? (
-                      <Loader2 className="w-3 h-3 animate-spin" />
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
                     ) : (
-                      <RotateCcw className="w-3 h-3" />
+                      <RotateCcw className="w-3.5 h-3.5" />
                     )}
                     Restore this version
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); void handleDelete(version); }}
+                    disabled={deletingId === version.version_id || restoring}
+                    className={cn(
+                      'flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold',
+                      'border border-rose-200 text-rose-600 hover:bg-rose-50 dark:border-rose-900/50 dark:text-rose-400 dark:hover:bg-rose-950/30 transition-all cursor-pointer',
+                      'disabled:opacity-50 disabled:cursor-not-allowed'
+                    )}
+                  >
+                    {deletingId === version.version_id ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-rose-500" />
+                    ) : (
+                      <Trash2 className="w-3.5 h-3.5" />
+                    )}
+                    Delete
                   </button>
                 </div>
               )}
@@ -252,7 +349,7 @@ export function DocumentHistoryDrawer({
       {/* Footer info */}
       <div className="px-4 py-3 border-t border-border">
         <p className="text-xs text-muted-foreground">
-          Up to 20 versions are kept. Older versions are removed automatically.
+          Up to 5 versions are kept. Older versions are removed automatically.
         </p>
       </div>
     </aside>

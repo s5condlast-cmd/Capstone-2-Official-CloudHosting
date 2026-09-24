@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { FileText, Download, CheckCircle2, FileSpreadsheet, ExternalLink, Loader2 } from 'lucide-react';
 import { PDFViewer } from '@embedpdf/react-pdf-viewer';
+import { DocxViewer } from '@/src/components/review/DocxViewer';
 import { ErrorBoundary } from '@/src/components/ui/ErrorBoundary';
 import { Badge } from '@/src/components/ui/Badge';
 import { cn } from '@/src/lib/utils';
@@ -22,12 +23,51 @@ export const EmbedPdfWorkspace: React.FC<EmbedPdfWorkspaceProps> = ({
   originalDocxUrl,
 }) => {
   const isDtrDocument = docTitle.toLowerCase().includes('dtr') || (pdfUrl && pdfUrl.includes('.xlsx'));
+  const docxUrl = originalDocxUrl || (pdfUrl && (pdfUrl.toLowerCase().includes('.docx') || pdfUrl.toLowerCase().includes('.doc')) ? pdfUrl : null);
   const isDocxSubmission = Boolean(
-    originalDocxUrl ||
-    (pdfUrl && (pdfUrl.toLowerCase().includes('.docx') || pdfUrl.toLowerCase().includes('.doc'))) ||
+    docxUrl ||
     docTitle.toLowerCase().includes('.docx') ||
     docTitle.toLowerCase().includes('.doc')
   );
+
+  const [docxBuffer, setDocxBuffer] = useState<ArrayBuffer | null>(null);
+  const [isLoadingDocx, setIsLoadingDocx] = useState<boolean>(Boolean(docxUrl));
+  const [docxError, setDocxError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!docxUrl) {
+      setDocxBuffer(null);
+      setIsLoadingDocx(false);
+      return;
+    }
+
+    let isMounted = true;
+    setIsLoadingDocx(true);
+    setDocxError(null);
+
+    fetch(docxUrl)
+      .then(async (res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}: Failed to download document`);
+        return res.arrayBuffer();
+      })
+      .then((buf) => {
+        if (isMounted) {
+          setDocxBuffer(buf);
+          setIsLoadingDocx(false);
+        }
+      })
+      .catch((err) => {
+        if (isMounted) {
+          console.error('Error fetching DOCX buffer for preview:', err);
+          setDocxError(err?.message || 'Could not load Word document');
+          setIsLoadingDocx(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [docxUrl]);
 
   // Default DTR weekly logs matrix preview for Adviser & Admin inspection
   const dtrLogsPreview = [
@@ -139,7 +179,7 @@ export const EmbedPdfWorkspace: React.FC<EmbedPdfWorkspaceProps> = ({
               {docTitle || 'Word Document (.docx)'}
             </span>
             <Badge variant="neutral" className="text-[9px] px-2 py-0.5">DOCX</Badge>
-            <span className="text-[10px] text-zinc-400 hidden sm:inline">Rendered via EmbedPDF</span>
+            <span className="text-[10px] text-zinc-400 hidden sm:inline">{docxUrl ? 'Rendered via DocxPreview' : 'Rendered via EmbedPDF'}</span>
           </div>
 
           <div className="flex items-center gap-2">
@@ -181,7 +221,48 @@ export const EmbedPdfWorkspace: React.FC<EmbedPdfWorkspaceProps> = ({
         </div>
       )}
 
-      {pdfUrl ? (
+      {docxUrl ? (
+        isLoadingDocx ? (
+          <div className="flex-1 flex flex-col items-center justify-center text-zinc-400 bg-zinc-950 h-full w-full gap-3">
+            <Loader2 className="animate-spin text-primary" size={28} />
+            <p className="font-semibold text-zinc-300 text-xs">Loading Word Document Preview...</p>
+          </div>
+        ) : docxBuffer ? (
+          <ErrorBoundary fallback={
+            <div className="flex-1 flex flex-col items-center justify-center text-zinc-400 bg-[#F3F4F6] dark:bg-zinc-900 h-full w-full p-6 text-center space-y-4">
+              <FileText size={48} className="text-zinc-300 dark:text-zinc-700" />
+              <div>
+                <p className="font-bold text-zinc-800 dark:text-zinc-200">Unable to preview Word document</p>
+                <p className="text-xs text-zinc-500 mt-1 max-w-[280px]">The browser encountered an issue rendering the document. You can download the file to inspect it.</p>
+              </div>
+              <a 
+                href={docxUrl} 
+                download 
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 text-xs font-bold uppercase tracking-wider"
+              >
+                Download DOCX
+              </a>
+            </div>
+          }>
+            <div className="flex-1 w-full h-full min-h-0 overflow-y-auto bg-zinc-100 dark:bg-zinc-950/80 p-4 sm:p-6 flex justify-center [&_section]:!w-full [&_section]:!max-w-[850px] [&_section]:!box-border [&_section]:!shadow-md [&_section]:!bg-white [&_section]:!rounded-sm [&_.docx-document]:!flex [&_.docx-document]:!flex-col [&_.docx-document]:!items-center">
+              <DocxViewer buffer={docxBuffer} className="w-full flex justify-center" />
+            </div>
+          </ErrorBoundary>
+        ) : (
+          <div className="flex-1 flex flex-col items-center justify-center text-zinc-400 bg-zinc-950 h-full w-full gap-3 p-6 text-center">
+            <FileText size={40} className="text-zinc-600" />
+            <p className="text-xs text-zinc-300">{docxError || 'Word document could not be loaded.'}</p>
+            <a 
+              href={docxUrl} 
+              download 
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold transition-colors"
+            >
+              <Download size={14} />
+              <span>Download File</span>
+            </a>
+          </div>
+        )
+      ) : pdfUrl ? (
         <ErrorBoundary fallback={
           <div className="flex-1 flex flex-col items-center justify-center text-zinc-400 bg-[#F3F4F6] dark:bg-zinc-900 h-full w-full p-6 text-center space-y-4">
             <FileText size={48} className="text-zinc-300 dark:text-zinc-700" />
@@ -221,9 +302,9 @@ export const EmbedPdfWorkspace: React.FC<EmbedPdfWorkspaceProps> = ({
           </div>
         </ErrorBoundary>
       ) : (
-        <div className="flex-1 flex flex-col items-center justify-center text-zinc-400 bg-zinc-950 h-full w-full gap-3">
-          <Loader2 className="animate-spin text-primary" size={28} />
-          <p className="font-semibold text-zinc-300 text-xs">Preparing EmbedPDF Preview...</p>
+        <div className="flex-1 flex flex-col items-center justify-center text-zinc-400 bg-zinc-950 h-full w-full gap-3 p-6 text-center">
+          <FileText size={36} className="text-zinc-600" />
+          <p className="font-semibold text-zinc-300 text-xs">No preview file available for this submission.</p>
         </div>
       )}
     </div>

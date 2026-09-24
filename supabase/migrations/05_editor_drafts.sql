@@ -96,7 +96,7 @@ CREATE TRIGGER editor_drafts_updated_at
 REVOKE ALL ON public.editor_drafts FROM anon, authenticated;
 REVOKE ALL ON public.document_versions FROM anon, authenticated;
 GRANT SELECT ON public.editor_drafts TO authenticated;
-GRANT SELECT ON public.document_versions TO authenticated;
+GRANT SELECT, DELETE ON public.document_versions TO authenticated;
 
 -- Drop named policies before recreating (idempotency)
 DROP POLICY IF EXISTS editor_drafts_owner_read ON public.editor_drafts;
@@ -123,8 +123,22 @@ CREATE POLICY document_versions_owner_read ON public.document_versions
     )
   );
 
+DROP POLICY IF EXISTS document_versions_owner_delete ON public.document_versions;
+CREATE POLICY document_versions_owner_delete ON public.document_versions
+  FOR DELETE TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.editor_drafts d
+      WHERE d.id = doc_id
+        AND d.user_id = (SELECT auth.uid())
+        AND d.deleted_at IS NULL
+        AND public.portal_role() = 'student'
+        AND public.current_session_is_valid()
+    )
+  );
+
 -- ============================================================
--- 6. Internal version pruning (keeps newest 20 per draft)
+-- 6. Internal version pruning (keeps newest 5 per draft)
 -- ============================================================
 CREATE OR REPLACE FUNCTION public._prune_document_versions(p_doc_id uuid)
 RETURNS void
@@ -137,18 +151,42 @@ BEGIN
       SELECT version_id FROM public.document_versions
       WHERE doc_id = p_doc_id
       ORDER BY saved_at DESC, version_id DESC
-      LIMIT 20
+      LIMIT 5
     );
 END;
 $$;
 REVOKE ALL ON FUNCTION public._prune_document_versions(uuid) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public._prune_document_versions(uuid) TO service_role;
 
+DROP FUNCTION IF EXISTS public.prune_editor_versions(uuid);
+CREATE OR REPLACE FUNCTION public.prune_editor_versions(p_doc_id uuid)
+RETURNS void
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = ''
+AS $$
+BEGIN
+  IF public.portal_role() <> 'student' THEN
+    RAISE EXCEPTION 'Only students may manage document versions.';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM public.editor_drafts
+    WHERE id = p_doc_id AND user_id = (SELECT auth.uid()) AND deleted_at IS NULL
+  ) THEN
+    RAISE EXCEPTION 'Draft not found or access denied.';
+  END IF;
+
+  PERFORM public._prune_document_versions(p_doc_id);
+END;
+$$;
+REVOKE ALL ON FUNCTION public.prune_editor_versions(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.prune_editor_versions(uuid) TO authenticated;
+
 -- ============================================================
 -- 7. create_editor_draft
 -- ============================================================
+DROP FUNCTION IF EXISTS public.create_editor_draft(uuid,text,text,text,text,jsonb,integer);
 DROP FUNCTION IF EXISTS public.create_editor_draft(text,text,text,text,jsonb,integer);
-CREATE FUNCTION public.create_editor_draft(
+CREATE OR REPLACE FUNCTION public.create_editor_draft(
   p_id uuid,
   p_title text,
   p_template_id text,
@@ -180,7 +218,7 @@ GRANT EXECUTE ON FUNCTION public.create_editor_draft(uuid,text,text,text,text,js
 -- 8. save_editor_draft (OCC)
 -- ============================================================
 DROP FUNCTION IF EXISTS public.save_editor_draft(uuid,integer,text,jsonb,integer);
-CREATE FUNCTION public.save_editor_draft(
+CREATE OR REPLACE FUNCTION public.save_editor_draft(
   p_draft_id uuid,
   p_expected_revision integer,
   p_title text,
@@ -226,7 +264,7 @@ GRANT EXECUTE ON FUNCTION public.save_editor_draft(uuid,integer,text,jsonb,integ
 -- 9. create_editor_version
 -- ============================================================
 DROP FUNCTION IF EXISTS public.create_editor_version(uuid,text);
-CREATE FUNCTION public.create_editor_version(
+CREATE OR REPLACE FUNCTION public.create_editor_version(
   p_draft_id uuid,
   p_label text
 ) RETURNS public.document_versions
@@ -261,7 +299,7 @@ GRANT EXECUTE ON FUNCTION public.create_editor_version(uuid,text) TO authenticat
 -- 10. restore_editor_version
 -- ============================================================
 DROP FUNCTION IF EXISTS public.restore_editor_version(uuid,integer);
-CREATE FUNCTION public.restore_editor_version(
+CREATE OR REPLACE FUNCTION public.restore_editor_version(
   p_version_id uuid,
   p_expected_revision integer
 ) RETURNS public.editor_drafts
@@ -311,10 +349,44 @@ REVOKE ALL ON FUNCTION public.restore_editor_version(uuid,integer) FROM PUBLIC, 
 GRANT EXECUTE ON FUNCTION public.restore_editor_version(uuid,integer) TO authenticated;
 
 -- ============================================================
+-- 10b. delete_editor_version
+-- ============================================================
+DROP FUNCTION IF EXISTS public.delete_editor_version(uuid);
+CREATE OR REPLACE FUNCTION public.delete_editor_version(
+  p_version_id uuid
+) RETURNS void
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = ''
+AS $$
+DECLARE
+  v_doc_id uuid;
+BEGIN
+  IF public.portal_role() <> 'student' THEN
+    RAISE EXCEPTION 'Only students may delete document versions.';
+  END IF;
+
+  SELECT v.doc_id INTO v_doc_id
+  FROM public.document_versions v
+  JOIN public.editor_drafts d ON d.id = v.doc_id
+  WHERE v.version_id = p_version_id
+    AND d.user_id = (SELECT auth.uid())
+    AND d.deleted_at IS NULL;
+
+  IF v_doc_id IS NULL THEN
+    RAISE EXCEPTION 'Version not found or access denied.';
+  END IF;
+
+  DELETE FROM public.document_versions
+  WHERE version_id = p_version_id;
+END;
+$$;
+REVOKE ALL ON FUNCTION public.delete_editor_version(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.delete_editor_version(uuid) TO authenticated;
+
+-- ============================================================
 -- 11. soft_delete_editor_draft
 -- ============================================================
 DROP FUNCTION IF EXISTS public.soft_delete_editor_draft(uuid,integer);
-CREATE FUNCTION public.soft_delete_editor_draft(
+CREATE OR REPLACE FUNCTION public.soft_delete_editor_draft(
   p_draft_id uuid,
   p_expected_revision integer
 ) RETURNS void
@@ -343,7 +415,7 @@ GRANT EXECUTE ON FUNCTION public.soft_delete_editor_draft(uuid,integer) TO authe
 -- 12. restore_editor_draft (undo soft delete)
 -- ============================================================
 DROP FUNCTION IF EXISTS public.restore_editor_draft(uuid);
-CREATE FUNCTION public.restore_editor_draft(
+CREATE OR REPLACE FUNCTION public.restore_editor_draft(
   p_draft_id uuid
 ) RETURNS void
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = ''
@@ -369,7 +441,7 @@ GRANT EXECUTE ON FUNCTION public.restore_editor_draft(uuid) TO authenticated;
 -- 13. resolve_editor_conflict
 -- ============================================================
 DROP FUNCTION IF EXISTS public.resolve_editor_conflict(uuid,integer,text,jsonb,integer,boolean);
-CREATE FUNCTION public.resolve_editor_conflict(
+CREATE OR REPLACE FUNCTION public.resolve_editor_conflict(
   p_draft_id uuid,
   p_force_revision integer, -- the CURRENT server revision (override)
   p_title text,
@@ -414,7 +486,7 @@ GRANT EXECUTE ON FUNCTION public.resolve_editor_conflict(uuid,integer,text,jsonb
 -- 14. lock_editor_draft_for_submission
 -- ============================================================
 DROP FUNCTION IF EXISTS public.lock_editor_draft_for_submission(uuid,uuid,integer);
-CREATE FUNCTION public.lock_editor_draft_for_submission(
+CREATE OR REPLACE FUNCTION public.lock_editor_draft_for_submission(
   p_draft_id uuid,
   p_submission_id uuid,
   p_expected_revision integer

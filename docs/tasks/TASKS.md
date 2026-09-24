@@ -6,32 +6,20 @@ This roadmap tracks active priorities, ongoing implementation plans, and verific
 
 ---
 
-## 0. Current Priority: Review Workflow and Quality Remediation
+## 0. Current Priority: Attendance & Time In/Out Photo Evidence with Timestamp Verification
 
-Detailed plans:
-
-- [Centralized Document Review Center](DOCUMENT_REVIEW_CENTER_PLAN.md)
-- [Code Quality and Production Readiness Remediation](CODE_QUALITY_REMEDIATION_PLAN.md)
-
-- [ ] **P0 — Review case and revision integrity**:
-  - [ ] Add stable review cases with immutable linked revisions, files, comments, and audit events.
-  - [ ] Replace the current unrelated revision-upload behavior.
-  - [ ] Enforce Student/Supervisor/Adviser assignments and workflow stages through RLS/RPCs.
-- [ ] **P0 — Immediate security and contract fixes**:
-  - [ ] Remove the global `supervisor_saved_signature` browser record and implement user/approval-bound signature handling.
-  - [ ] Unify allowed upload types and size limits across UI, service, storage, and database validation.
-  - [ ] Move renewable OneDrive credentials out of plaintext token files for production.
-- [ ] **P1 — Central Review Center**:
-  - [ ] Build one shared inbox/detail workspace for all sent/received files, revisions, comments, decisions, and history.
-  - [ ] Add role adapters for Student, Supervisor, Adviser, and read-only Admin audit access.
-  - [ ] Replace Weekly Journal mock review state as the first three-role workflow.
-- [ ] **P1 — Verification and type-safety gate**:
-  - [ ] Add real workflow, RLS, component, and browser interaction tests.
-  - [ ] Separate `lint`, `typecheck`, and complete release `check` scripts.
-  - [ ] Enable strict TypeScript for all new workflow modules and prevent the `any` baseline from increasing.
-- [ ] **P2 — Maintainability refactor after behavior is protected**:
-  - [ ] Split the 3,506-line toolbar, 1,990-line Student Dashboard, and duplicated header/footer logic into capability modules.
-  - [ ] Remove mock arrays and page-local business rules from remaining production workflows.
+- [x] **Interactive Photo Proof & Watermark Engine** *(Completed Sep 23, 2026 — See [TASK_HISTORY.md](TASK_HISTORY.md))*:
+  - [x] Implemented in-browser camera streaming (`navigator.mediaDevices.getUserMedia`) and mobile file capture.
+  - [x] Generated client-side burned-in timestamp watermark via HTML5 Canvas (PST timestamp, Student Full Name, Student ID, Practicum Verification tag).
+  - [x] Integrated stamped photo preview, removal, and inspect actions in Time In / Time Out workflows.
+- [x] **Time In & Out UI Modernization** *(Completed Sep 23, 2026 — See [TASK_HISTORY.md](TASK_HISTORY.md))*:
+  - [x] Asymmetric 2-column wireframe layout with 3 radial metric cards (`ProgressCircle`), 3 status filter pills (`All Records`, `Verified`, `Pending`) + live search input.
+  - [x] Live digital clock display with Manila date and active shift state.
+  - [x] Live elapsed shift timer and start timestamp display during active shifts.
+  - [x] Shift Clock & Action Station positioned at top of sidebar dock, above the Trainee Information card (with cover banner and gender-aware Undraw avatar).
+- [x] **Inspection Modal & Verification Queue** *(Completed Sep 23, 2026 — See [TASK_HISTORY.md](TASK_HISTORY.md))*:
+  - [x] Photo evidence thumbnail column in attendance history table with high-resolution lightbox inspection modal.
+  - [x] Reviewer queue inspection workflow for supervisors and administrators.
 
 ---
 
@@ -54,26 +42,28 @@ Unified master specification: [Rich Document Editor Master Plan](RICH_DOCUMENT_E
 
 ---
 
-## 2. Dashboard Redesign & UI Polish
+## 2. Role-Specific Dashboards & UI Polish
 
-Student specification: [Simplified Student Dashboard Plan](STUDENT_DASHBOARD_SIMPLIFICATION_PLAN.md).
+Student specification: [Simplified Student Dashboard Plan](STUDENT_DASHBOARD_SIMPLIFICATION_PLAN.md). Completed milestones recorded in [`TASK_HISTORY.md`](TASK_HISTORY.md).
 
 - [ ] **Role-Specific Dashboards (shadcn `dashboard-01` baseline)**:
   - [ ] **Admin Dashboard**: Section metrics, interactive area chart, recent student activity table, and API key configuration card.
-  - [ ] **Student Dashboard**: Replace the dense widget grid with three status metrics, one authoritative Next Action, compact phase progress, Needs Attention, and Recent Activity.
   - [ ] **Adviser Dashboard**: Advisory section stats, pending review queue, and student roster table.
   - [ ] **Supervisor Dashboard**: Attendance metrics, DTR digital signature queue, and intern performance table.
 - [ ] **System-Wide UI Polish**:
-  - [ ] Maintain responsive spacing, consistent cards, and dark/light theme consistency using theme-aware tokens (`text-primary`, `bg-primary`).
+  - [ ] Maintain responsive spacing, consistent cards, and dark/light theme consistency using theme-aware tokens (`text-foreground`, `border-zinc-200`).
 
 ---
 
 ## 3. Student Experience & Portal Refinement
 
-- [ ] **Student Dashboard Dynamic Database Sync**:
-  - [ ] Derive requirements progress dynamically from Supabase `student_documents` and `user_profiles` rather than local mock state.
-  - [ ] Synchronize real-time completed tasks between To-do checklist, submissions table, and modal.
-  - [ ] Responsive testing across mobile (375px), tablet (768px), and desktop (1024px–1536px).
+- [x] **Document Performance Chart Deduplication & Zero-Stacking Layout** *(Completed Sep 24, 2026)*:
+  - [x] Added `matchInstitutionalRequirement` canonical mapping to eliminate duplicate requirement drafts and submissions on the SVG score chart and drafts table.
+  - [x] Consolidated scratch/untitled drafts to at most the latest active untitled draft, preventing multiple blank drafts from crowding the timeline.
+  - [x] Implemented dynamic chart SVG width with minimum 92px horizontal spacing and `overflow-x-auto`, completely eliminating horizontal collisions between status pills and two-line deliverable labels.
+  - [x] Ordered deliverables logically across practicum phases (Before OJT → In OJT → Final Phase → Custom/Drafts).
+  - [x] Added an interactive "Active Deliverables" vs "All Requirements" view mode toggle in the chart header.
+
 - [ ] **Document Workflow Component Standardization**:
   - [ ] Standardize all student document workflows via `StudentDocumentPage.tsx` (`src/components/compose/StudentDocumentPage.tsx`).
   - [ ] Ensure dynamic database state syncing on mount (`submissionStorage` status, remarks, comment history).

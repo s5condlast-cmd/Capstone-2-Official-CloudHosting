@@ -23,8 +23,6 @@ import {
 } from "@/components/ui/dropdown-menu"
 import {
   Search as SearchIcon,
-  Sun as SunIcon,
-  Moon as MoonIcon,
   Bell as BellIcon,
   BadgeCheck as BadgeCheckIcon,
   LogOut as LogOutIcon,
@@ -40,15 +38,21 @@ import {
   CheckCircle2 as CheckCircle2Icon,
   User as UserIcon,
   MessageSquare as MessageSquareIcon,
+  Sun as SunIcon,
+  Moon as MoonIcon,
 } from "lucide-react"
 import { User, Role } from "@/src/types"
 import { cn } from "@/lib/utils"
 import { NotificationDropdown } from "@/components/notification-dropdown"
+import { useUserAvatar } from "@/src/lib/avatarHelper"
+import {
+  ACCENT_THEMES,
+  applyAccentTheme,
+  getStoredAccentTheme,
+} from "@/src/config/accentThemes"
 
 interface SiteHeaderProps {
   user?: User | null
-  theme?: 'light' | 'dark'
-  onToggleTheme?: () => void
   onSearchClick?: () => void
   onLogout?: () => void
 }
@@ -110,8 +114,9 @@ const routeTitleMap: Record<string, string> = {
   profile: "Profile Settings",
 }
 
-export function SiteHeader({ user, theme, onToggleTheme, onSearchClick, onLogout }: SiteHeaderProps) {
+export function SiteHeader({ user, onSearchClick, onLogout }: SiteHeaderProps) {
   const location = useLocation()
+  const { avatarUrl } = useUserAvatar(user)
 
   // Generate breadcrumb items from URL path
   const pathSegments = location.pathname.split("/").filter(Boolean)
@@ -136,8 +141,58 @@ export function SiteHeader({ user, theme, onToggleTheme, onSearchClick, onLogout
   const roleInfo = getRoleBadge(user?.role)
   const RoleIcon = roleInfo.icon
 
+  // Theme toggle state with smooth view transition
+  const [isDark, setIsDark] = React.useState(() => {
+    if (typeof window !== "undefined") {
+      return document.documentElement.classList.contains("dark") || localStorage.getItem("app-mode") === "dark";
+    }
+    return false;
+  });
+  const [activeAccentTheme, setActiveAccentTheme] = React.useState(getStoredAccentTheme)
+
+  React.useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setIsDark(document.documentElement.classList.contains("dark"));
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+    return () => observer.disconnect();
+  }, []);
+
+  const toggleTheme = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (typeof window === "undefined" || typeof document === "undefined") return;
+
+    const doc: any = document;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = rect.left + rect.width / 2;
+    const y = rect.top + rect.height / 2;
+    doc.documentElement.style.setProperty("--x", `${x}px`);
+    doc.documentElement.style.setProperty("--y", `${y}px`);
+
+    const nextDark = !doc.documentElement.classList.contains("dark");
+    const updateTheme = () => {
+      if (nextDark) {
+        doc.documentElement.classList.add("dark");
+        localStorage.setItem("app-mode", "dark");
+      } else {
+        doc.documentElement.classList.remove("dark");
+        localStorage.setItem("app-mode", "light");
+      }
+      setIsDark(nextDark);
+    };
+
+    if ("startViewTransition" in doc) {
+      (doc as any).startViewTransition(updateTheme);
+    } else {
+      doc.documentElement.classList.add("theme-transitioning");
+      updateTheme();
+      setTimeout(() => {
+        doc.documentElement.classList.remove("theme-transitioning");
+      }, 450);
+    }
+  };
+
   return (
-    <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between gap-2 border-b border-border bg-background/95 backdrop-blur-md px-4 lg:px-6 transition-[width,height] ease-linear">
+    <header className="sticky top-0 z-30 flex h-12.5 sm:h-13 shrink-0 items-center justify-between gap-2 border-b border-border bg-background/95 backdrop-blur-md px-3.5 lg:px-5 transition-[width,height] ease-linear">
       {/* Left: Sidebar Trigger & Breadcrumbs */}
       <div className="flex items-center gap-2 min-w-0">
         <SidebarTrigger className="-ml-1 cursor-pointer" />
@@ -184,7 +239,7 @@ export function SiteHeader({ user, theme, onToggleTheme, onSearchClick, onLogout
             variant="outline"
             size="sm"
             onClick={onSearchClick}
-            className="hidden sm:inline-flex items-center justify-between text-xs text-muted-foreground hover:text-foreground h-8.5 w-48 md:w-56 lg:w-64 px-3 rounded-lg border-border/80 bg-muted/20 hover:bg-muted/60 transition-colors cursor-pointer"
+            className="hidden sm:inline-flex items-center justify-between text-xs text-muted-foreground hover:text-foreground h-8 w-48 md:w-56 lg:w-64 px-3 rounded-lg border-border/80 bg-muted/20 hover:bg-muted/60 transition-colors cursor-pointer"
           >
             <div className="flex items-center gap-2 min-w-0">
               <SearchIcon className="size-3.5 shrink-0" />
@@ -229,22 +284,21 @@ export function SiteHeader({ user, theme, onToggleTheme, onSearchClick, onLogout
           </Link>
         )}
 
-        {/* Theme Toggle */}
-        {onToggleTheme && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onToggleTheme}
-            className="size-8 text-muted-foreground hover:text-foreground cursor-pointer"
-          >
-            {theme === "dark" ? (
-              <SunIcon className="size-4" />
-            ) : (
-              <MoonIcon className="size-4" />
-            )}
-            <span className="sr-only">Toggle Theme</span>
-          </Button>
-        )}
+        {/* Theme Toggle Button */}
+        <button
+          type="button"
+          onClick={toggleTheme}
+          title={isDark ? "Switch to light theme" : "Switch to dark theme"}
+          aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
+          className="size-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted flex items-center justify-center cursor-pointer transition-all duration-200 active:scale-90"
+        >
+          {isDark ? (
+            <SunIcon className="size-4 rotate-0 scale-100 transition-all duration-300" />
+          ) : (
+            <MoonIcon className="size-4 rotate-0 scale-100 transition-all duration-300" />
+          )}
+          <span className="sr-only">Toggle theme</span>
+        </button>
 
         {/* User Profile on Topbar */}
         {user && (
@@ -264,8 +318,12 @@ export function SiteHeader({ user, theme, onToggleTheme, onSearchClick, onLogout
                   </span>
                 </div>
                 <div className="relative">
-                  <div className="size-10 rounded-full bg-sky-400 dark:bg-sky-500 text-white flex items-center justify-center text-base font-bold shrink-0 shadow-2xs group-hover/prof:scale-105 transition-transform">
-                    {initials[0]}
+                  <div className="size-10 rounded-full bg-sky-100 dark:bg-sky-950/60 border border-sky-200 dark:border-sky-800/60 overflow-hidden flex items-center justify-center shrink-0 shadow-2xs group-hover/prof:scale-105 transition-transform">
+                    <img
+                      src={avatarUrl}
+                      alt={user?.name || "User Avatar"}
+                      className="size-full object-cover pointer-events-none"
+                    />
                   </div>
                   <div className="absolute -bottom-0.5 -right-0.5 size-4 rounded-full bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-950 flex items-center justify-center shadow-xs">
                     <ChevronDownIcon className="size-3 stroke-[2.5]" />
@@ -273,11 +331,30 @@ export function SiteHeader({ user, theme, onToggleTheme, onSearchClick, onLogout
                 </div>
               </DropdownMenuTrigger>
               <DropdownMenuContent
-                className="w-52 rounded-xl p-1.5 shadow-xl border border-border bg-popover text-popover-foreground"
+                className="w-56 rounded-xl p-1.5 shadow-xl border border-border bg-popover text-popover-foreground"
                 side="bottom"
                 align="end"
                 sideOffset={8}
               >
+                {/* User Info Header with Avatar */}
+                <div className="flex items-center gap-2.5 px-2.5 py-2 mb-1 bg-muted/40 rounded-lg">
+                  <div className="size-8 rounded-full overflow-hidden bg-sky-100 dark:bg-sky-950/60 border border-sky-200 dark:border-sky-800/60 shrink-0">
+                    <img
+                      src={avatarUrl}
+                      alt={user?.name || "User Avatar"}
+                      className="size-full object-cover pointer-events-none"
+                    />
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-xs font-bold text-foreground truncate">
+                      {user?.role === 'student' ? 'John Dwayne Guaniso' : user.name}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground capitalize">
+                      {user?.role}
+                    </span>
+                  </div>
+                </div>
+                <DropdownMenuSeparator className="my-1" />
                 {/* Primary Nav Links */}
                 <DropdownMenuGroup className="flex flex-col gap-0.5">
                   <DropdownMenuItem
@@ -311,29 +388,23 @@ export function SiteHeader({ user, theme, onToggleTheme, onSearchClick, onLogout
                 <DropdownMenuSeparator className="my-1.5" />
                 <div className="px-2 py-1.5">
                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-1">Accent Color</p>
-                  <div className="flex items-center justify-between px-1">
-                    {[
-                      { id: 'default', color: 'bg-zinc-900 dark:bg-zinc-100', name: 'Monochrome' },
-                      { id: 'theme-deep-sky', color: 'bg-[#3B82C4]', name: 'Deep Sky Blue' },
-                      { id: 'theme-blue', color: 'bg-[#2563eb]', name: 'Modern Blue' },
-                      { id: 'theme-indigo', color: 'bg-[#4f46e5]', name: 'Indigo' },
-                      { id: 'theme-sti', color: 'bg-[#1d4ed8]', name: 'STI Inspired' }
-                    ].map(t => {
-                      const currentTheme = localStorage.getItem('app-theme') || 'default';
+                  <div className="grid grid-cols-5 gap-2.5 px-1">
+                    {ACCENT_THEMES.map(t => {
                       return (
                         <button
                           key={t.id}
                           title={t.name}
+                          aria-label={`Use ${t.name} accent color`}
+                          aria-pressed={activeAccentTheme === t.id}
                           type="button"
                           onClick={() => {
-                            ['theme-deep-sky', 'theme-blue', 'theme-indigo', 'theme-sti', 'theme-cyan'].forEach(cls => document.documentElement.classList.remove(cls));
-                            if (t.id !== 'default') document.documentElement.classList.add(t.id);
-                            localStorage.setItem('app-theme', t.id);
+                            applyAccentTheme(t.id)
+                            setActiveAccentTheme(t.id)
                           }}
                           className={cn(
-                            "size-5 rounded-full transition-transform hover:scale-110 shadow-xs cursor-pointer",
+                            "size-5 rounded-full transition-transform hover:scale-110 shadow-xs cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                             t.color,
-                            currentTheme === t.id && "ring-2 ring-offset-2 ring-primary ring-offset-background"
+                            activeAccentTheme === t.id && "ring-2 ring-offset-2 ring-primary ring-offset-background"
                           )}
                         />
                       );
