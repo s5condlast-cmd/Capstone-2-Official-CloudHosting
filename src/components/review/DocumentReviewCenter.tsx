@@ -17,6 +17,7 @@ import {
   Clock,
   AlertTriangle,
   FileText,
+  BookOpen,
   Download,
   Send,
   Upload,
@@ -52,8 +53,12 @@ import {
   ReviewStage,
 } from '@/src/types/documentReview';
 import { documentReviewService } from '@/src/lib/documentReviewService';
+import { resetExampleCases } from '@/src/data/exampleReviewCases';
 import { validateDocumentUpload, formatDocumentFileSize } from '@/src/config/documentUploadPolicy';
+import { validatePdfFileBytes } from '@/src/config/reviewPdfPolicy';
+import { submitReviewRevision } from '@/src/lib/reviewSubmissionService';
 import { getSupervisorSignature } from '@/src/lib/signatureStorage';
+import { getUserAvatar } from '@/src/lib/avatarHelper';
 import { cn } from '@/src/lib/utils';
 import { toast } from 'sonner';
 
@@ -260,21 +265,22 @@ export const DocumentReviewCenter: React.FC<DocumentReviewCenterProps> = ({ role
       return;
     }
 
-    const validation = validateDocumentUpload(file);
+    const validation = await validatePdfFileBytes(file);
     if (!validation.valid) {
-      toast.error(validation.error);
+      toast.error(validation.error || 'Revisions must be valid PDF documents (max 15 MB).');
       return;
     }
 
     setIsUploadingRevision(true);
     try {
       const currentRevNumber = caseDetails.caseRecord.current_revision_number || 1;
-      await documentReviewService.uploadRevision(
-        selectedCaseId,
-        currentRevNumber,
-        file,
-        revisionRemarks.trim() || undefined
-      );
+      await submitReviewRevision({
+        caseId: selectedCaseId,
+        expectedRevision: currentRevNumber,
+        pdfFile: file,
+        filename: file.name,
+        remarks: revisionRemarks.trim() || undefined,
+      });
 
       toast.success(`Revision ${currentRevNumber + 1} uploaded successfully!`);
       setShowRevisionModal(false);
@@ -291,42 +297,54 @@ export const DocumentReviewCenter: React.FC<DocumentReviewCenterProps> = ({ role
     }
   };
 
-  // Helper stage badges
+  // Helper stage badges aligned to system design tokens
   const getStageBadge = (stage: ReviewStage) => {
+    const badgeContainerClass = "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-white dark:bg-zinc-900 text-foreground border border-zinc-200 dark:border-zinc-700 shadow-2xs";
+
     switch (stage) {
       case 'approved':
         return (
-          <Badge variant="success" className="gap-1.5 py-0.5 text-[11px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-            <CheckCircle2 className="w-3.5 h-3.5" /> Approved
-          </Badge>
+          <span className={badgeContainerClass}>
+            <span className="size-1.5 rounded-full bg-emerald-500 shrink-0" />
+            Approved
+          </span>
         );
       case 'supervisor_approved':
         return (
-          <Badge variant="warning" className="gap-1.5 py-0.5 text-[11px] font-semibold bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20">
-            <ShieldCheck className="w-3.5 h-3.5" /> Supervisor Approved
-          </Badge>
+          <span className={badgeContainerClass}>
+            <span className="size-1.5 rounded-full bg-sky-500 shrink-0" />
+            Supervisor Approved
+          </span>
         );
       case 'submitted_to_supervisor':
         return (
-          <Badge variant="outline" className="gap-1.5 py-0.5 text-[11px] font-semibold border-amber-500/30 text-amber-600 dark:text-amber-400 bg-amber-500/10">
-            <Clock className="w-3.5 h-3.5" /> Needs Supervisor
-          </Badge>
+          <span className={badgeContainerClass}>
+            <span className="size-1.5 rounded-full bg-amber-500 shrink-0" />
+            Needs Supervisor
+          </span>
         );
       case 'submitted_to_adviser':
         return (
-          <Badge variant="outline" className="gap-1.5 py-0.5 text-[11px] font-semibold border-purple-500/30 text-purple-600 dark:text-purple-400 bg-purple-500/10">
-            <Clock className="w-3.5 h-3.5" /> Needs Adviser
-          </Badge>
+          <span className={badgeContainerClass}>
+            <span className="size-1.5 rounded-full bg-purple-500 shrink-0" />
+            Needs Adviser
+          </span>
         );
       case 'supervisor_revision_required':
       case 'adviser_revision_required':
         return (
-          <Badge variant="destructive" className="gap-1.5 py-0.5 text-[11px] font-semibold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
-            <AlertTriangle className="w-3.5 h-3.5" /> Revision Required
-          </Badge>
+          <span className={badgeContainerClass}>
+            <span className="size-1.5 rounded-full bg-rose-500 shrink-0" />
+            Revision Required
+          </span>
         );
       default:
-        return <Badge variant="secondary" className="text-[11px]">{stage}</Badge>;
+        return (
+          <span className={badgeContainerClass}>
+            <span className="size-1.5 rounded-full bg-zinc-400 shrink-0" />
+            {stage}
+          </span>
+        );
     }
   };
 
@@ -334,52 +352,6 @@ export const DocumentReviewCenter: React.FC<DocumentReviewCenterProps> = ({ role
 
   return (
     <div className="flex-1 flex flex-col min-h-0 h-full gap-4">
-      {/* ── Page Header ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0 pb-1">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 text-primary flex items-center justify-center shrink-0 shadow-2xs">
-            <FileCheck className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-xl font-bold tracking-tight text-foreground">
-                Document Review Center
-              </h1>
-              <span className="text-xs px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 capitalize font-semibold">
-                {role} Portal
-              </span>
-            </div>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Inspect submitted practicum documents, review remarks across revision cycles, and collaborate with reviewers.
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 self-start sm:self-auto">
-          {role === 'student' && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate('/student/documents')}
-              className="h-8 text-xs gap-1.5 cursor-pointer rounded-lg border-border hover:bg-muted/80"
-            >
-              <FolderOpen className="w-3.5 h-3.5 text-muted-foreground" />
-              <span>Document Repository</span>
-            </Button>
-          )}
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => { void loadInbox(); }}
-            className="h-8 text-xs gap-1.5 cursor-pointer rounded-lg border-border hover:bg-muted/80"
-          >
-            <RefreshCw className={cn("w-3.5 h-3.5", isLoadingCases && "animate-spin text-primary")} />
-            <span>Refresh</span>
-          </Button>
-        </div>
-      </div>
-
       {/* ── Mobile Tab Navigation (< lg) ── */}
       <div className="lg:hidden flex items-center bg-muted/70 p-1 rounded-xl border border-border shrink-0">
         <button
@@ -439,9 +411,20 @@ export const DocumentReviewCenter: React.FC<DocumentReviewCenterProps> = ({ role
                 <Inbox className="w-3.5 h-3.5 text-primary" />
                 Review Inbox
               </span>
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
-                {cases.length} {cases.length === 1 ? 'case' : 'cases'}
-              </span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                  {cases.length} {cases.length === 1 ? 'case' : 'cases'}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => { void loadInbox(); }}
+                  disabled={isLoadingCases}
+                  className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors disabled:opacity-50 cursor-pointer"
+                  title="Refresh inbox"
+                >
+                  <RefreshCw className={cn("w-3 h-3", isLoadingCases && "animate-spin text-primary")} />
+                </button>
+              </div>
             </div>
 
             {/* Search Input with Clear Button */}
@@ -492,7 +475,7 @@ export const DocumentReviewCenter: React.FC<DocumentReviewCenterProps> = ({ role
           </div>
 
           {/* Cases List */}
-          <div className="flex-1 overflow-y-auto divide-y divide-border/60 custom-scrollbar">
+          <div className="flex-1 overflow-y-auto p-2 space-y-1.5 custom-scrollbar">
             {isLoadingCases ? (
               <div className="p-10 flex flex-col items-center justify-center gap-2.5 text-center">
                 <Loader2 className="w-6 h-6 animate-spin text-primary" />
@@ -507,7 +490,7 @@ export const DocumentReviewCenter: React.FC<DocumentReviewCenterProps> = ({ role
                   <p className="text-xs font-bold text-foreground">No review cases found</p>
                   <p className="text-[11px] text-muted-foreground mt-1 max-w-[200px] mx-auto leading-relaxed">
                     {filter === 'all'
-                      ? 'Cases will appear here once official documents are submitted.'
+                      ? 'No review cases currently available.'
                       : `No cases currently match the "${filter.replace('_', ' ')}" filter.`}
                   </p>
                 </div>
@@ -516,7 +499,7 @@ export const DocumentReviewCenter: React.FC<DocumentReviewCenterProps> = ({ role
                     size="sm"
                     variant="outline"
                     onClick={() => navigate('/student/documents')}
-                    className="text-xs h-7 gap-1 mt-1 rounded-lg"
+                    className="text-xs h-7 gap-1 rounded-lg text-muted-foreground hover:text-foreground mt-1"
                   >
                     <FolderOpen className="w-3 h-3" />
                     <span>View Repository</span>
@@ -532,36 +515,56 @@ export const DocumentReviewCenter: React.FC<DocumentReviewCenterProps> = ({ role
                     type="button"
                     onClick={() => handleSelectCase(c.id)}
                     className={cn(
-                      "w-full text-left p-3.5 transition-all cursor-pointer flex flex-col gap-2 relative group",
+                      "w-full text-left p-3.5 rounded-xl transition-all duration-200 cursor-pointer flex flex-col gap-2 border overflow-hidden",
                       isSelected
-                        ? "bg-primary/5 dark:bg-primary/10 border-l-4 border-l-primary"
-                        : "hover:bg-muted/40 border-l-4 border-l-transparent"
+                        ? "bg-muted/60 dark:bg-muted/30 border-border shadow-xs"
+                        : "bg-card hover:bg-muted/40 border-border/60 hover:border-border hover:shadow-2xs"
                     )}
                   >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <FileText className={cn("w-4 h-4 shrink-0", isSelected ? "text-primary" : "text-muted-foreground")} />
-                        <span className={cn("text-xs font-semibold truncate", isSelected ? "text-primary" : "text-foreground")}>
+                    <div className="flex items-start justify-between gap-2.5">
+                      <div className="flex items-start gap-2.5 min-w-0">
+                        <BookOpen
+                          className={cn(
+                            "size-4 shrink-0 transition-colors mt-0.5",
+                            isSelected ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
+                          )}
+                        />
+                        <span
+                          className={cn(
+                            "text-xs sm:text-[13px] font-semibold line-clamp-1 leading-snug tracking-tight transition-colors",
+                            isSelected ? "text-primary font-bold" : "text-foreground group-hover:text-primary"
+                          )}
+                          title={c.title}
+                        >
                           {c.title}
                         </span>
                       </div>
-                      <span className="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground shrink-0 border border-border/80">
-                        Rev {c.current_revision_number || 1}
-                      </span>
+                      <div className="flex items-center gap-1.5 shrink-0 pt-0.5">
+                        <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded-md bg-muted text-muted-foreground border border-border/80">
+                          Rev {c.current_revision_number || 1}
+                        </span>
+                      </div>
                     </div>
 
-                    <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                      <User className="w-3 h-3 shrink-0 opacity-70" />
-                      <span className="truncate font-medium">{c.student_name}</span>
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground pl-6.5">
+                      <div className="size-4 rounded-full overflow-hidden border border-border/80 bg-muted flex items-center justify-center shrink-0 shadow-2xs select-none">
+                        <img
+                          src={getUserAvatar({ name: c.student_name, role: 'student' })}
+                          alt={c.student_name}
+                          className="size-full object-cover"
+                        />
+                      </div>
+                      <span className="truncate font-medium text-foreground/85">{c.student_name}</span>
                       <span className="opacity-40">•</span>
-                      <span className="truncate">{c.student_course}</span>
+                      <span className="truncate text-muted-foreground/80">{c.student_course}</span>
                     </div>
 
-                    <div className="flex items-center justify-between gap-2 pt-0.5">
+                    <div className="flex items-center justify-between gap-2 pt-0.5 pl-6.5">
                       {getStageBadge(c.stage)}
-                      <span className="text-[10px] text-muted-foreground font-mono">
-                        {new Date(c.updated_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                      </span>
+                      <div className="flex items-center gap-1 text-[11px] text-muted-foreground font-mono font-medium">
+                        <Calendar className="size-3 shrink-0 opacity-60" />
+                        <span>{new Date(c.updated_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
+                      </div>
                     </div>
                   </button>
                 );
@@ -687,43 +690,70 @@ export const DocumentReviewCenter: React.FC<DocumentReviewCenterProps> = ({ role
             ════════════════════════════════════════════════════════════════ */}
         <div
           className={cn(
-            "w-full lg:w-96 xl:w-[420px] shrink-0 bg-card flex flex-col overflow-hidden",
+            "w-full lg:w-80 xl:w-[340px] shrink-0 bg-card flex flex-col overflow-hidden",
             activeMobileTab !== 'conversation' && "hidden lg:flex"
           )}
         >
           {caseDetails ? (
             <>
               {/* Review Case Header */}
-              <div className="p-4 border-b border-border shrink-0 space-y-2.5 bg-muted/10">
+              <div className="p-4 border-b border-border shrink-0 space-y-2.5 bg-muted/10 font-sans">
                 <div className="flex items-start justify-between gap-2">
-                  <h2 className="text-sm font-bold text-foreground line-clamp-1 leading-snug">
+                  <h2 className="text-sm font-semibold tracking-tight text-foreground line-clamp-1 leading-snug">
                     {caseDetails.caseRecord.title}
                   </h2>
                 </div>
 
                 <div className="flex items-center gap-2 flex-wrap">
                   {getStageBadge(caseDetails.caseRecord.stage)}
-                  <span className="text-[11px] text-muted-foreground">
+                  <span className="text-[11px] text-muted-foreground font-sans">
                     Route: <span className="font-medium text-foreground">{caseDetails.caseRecord.review_route === 'supervisor_then_adviser' ? 'Supervisor → Adviser' : 'Adviser Only'}</span>
                   </span>
                 </div>
 
                 {/* Submitter details card */}
-                <div className="text-xs bg-muted/40 border border-border/80 p-2.5 rounded-xl space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Student:</span>
-                    <span className="font-semibold text-foreground">{caseDetails.caseRecord.student_name}</span>
+                <div className="text-xs bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-2.5 rounded-xl space-y-2 font-sans shadow-2xs">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 text-zinc-500 dark:text-zinc-400 font-medium">
+                      <div className="size-5 rounded-full overflow-hidden border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 flex items-center justify-center shrink-0 shadow-2xs select-none">
+                        <img
+                          src={getUserAvatar({ name: caseDetails.caseRecord.student_name, role: 'student' })}
+                          alt="Student"
+                          className="size-full object-cover"
+                        />
+                      </div>
+                      <span>Student:</span>
+                    </div>
+                    <span className="font-medium text-zinc-700 dark:text-zinc-300 tracking-tight truncate">{caseDetails.caseRecord.student_name}</span>
                   </div>
                   {caseDetails.caseRecord.assigned_supervisor_name && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Supervisor:</span>
-                      <span className="font-medium text-foreground">{caseDetails.caseRecord.assigned_supervisor_name}</span>
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 text-zinc-500 dark:text-zinc-400 font-medium">
+                        <div className="size-5 rounded-full overflow-hidden border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 flex items-center justify-center shrink-0 shadow-2xs select-none">
+                          <img
+                            src={getUserAvatar({ name: caseDetails.caseRecord.assigned_supervisor_name, role: 'supervisor' })}
+                            alt="Supervisor"
+                            className="size-full object-cover"
+                          />
+                        </div>
+                        <span>Supervisor:</span>
+                      </div>
+                      <span className="font-medium text-zinc-700 dark:text-zinc-300 tracking-tight truncate">{caseDetails.caseRecord.assigned_supervisor_name}</span>
                     </div>
                   )}
                   {caseDetails.caseRecord.assigned_adviser_name && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Adviser:</span>
-                      <span className="font-medium text-foreground">{caseDetails.caseRecord.assigned_adviser_name}</span>
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 text-zinc-500 dark:text-zinc-400 font-medium">
+                        <div className="size-5 rounded-full overflow-hidden border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 flex items-center justify-center shrink-0 shadow-2xs select-none">
+                          <img
+                            src={getUserAvatar({ name: caseDetails.caseRecord.assigned_adviser_name, role: 'adviser' })}
+                            alt="Adviser"
+                            className="size-full object-cover"
+                          />
+                        </div>
+                        <span>Adviser:</span>
+                      </div>
+                      <span className="font-medium text-zinc-700 dark:text-zinc-300 tracking-tight truncate">{caseDetails.caseRecord.assigned_adviser_name}</span>
                     </div>
                   )}
                 </div>
@@ -823,12 +853,12 @@ export const DocumentReviewCenter: React.FC<DocumentReviewCenterProps> = ({ role
               </div>
 
               {/* Tab Selector: Discussion vs Audit Trail */}
-              <div className="px-4 pt-3 pb-1 flex items-center gap-2 border-b border-border bg-card">
+              <div className="px-4 pt-3 pb-1 flex items-center gap-2 border-b border-border bg-card font-sans">
                 <button
                   type="button"
                   onClick={() => setActiveDetailsTab('comments')}
                   className={cn(
-                    "text-xs font-semibold pb-2 border-b-2 transition-all flex items-center gap-1.5 cursor-pointer",
+                    "text-xs font-semibold pb-2 border-b-2 transition-all flex items-center gap-1.5 cursor-pointer font-sans",
                     activeDetailsTab === 'comments'
                       ? "border-primary text-primary"
                       : "border-transparent text-muted-foreground hover:text-foreground"
@@ -836,7 +866,7 @@ export const DocumentReviewCenter: React.FC<DocumentReviewCenterProps> = ({ role
                 >
                   <MessageSquare className="w-3.5 h-3.5" />
                   <span>Discussion</span>
-                  <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-muted text-muted-foreground">
+                  <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-muted text-muted-foreground">
                     {caseDetails.comments.length}
                   </span>
                 </button>
@@ -844,7 +874,7 @@ export const DocumentReviewCenter: React.FC<DocumentReviewCenterProps> = ({ role
                   type="button"
                   onClick={() => setActiveDetailsTab('audit')}
                   className={cn(
-                    "text-xs font-semibold pb-2 border-b-2 transition-all flex items-center gap-1.5 cursor-pointer",
+                    "text-xs font-semibold pb-2 border-b-2 transition-all flex items-center gap-1.5 cursor-pointer font-sans",
                     activeDetailsTab === 'audit'
                       ? "border-primary text-primary"
                       : "border-transparent text-muted-foreground hover:text-foreground"
@@ -852,7 +882,7 @@ export const DocumentReviewCenter: React.FC<DocumentReviewCenterProps> = ({ role
                 >
                   <Clock className="w-3.5 h-3.5" />
                   <span>Audit Trail</span>
-                  <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-muted text-muted-foreground">
+                  <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-muted text-muted-foreground">
                     {caseDetails.events.length}
                   </span>
                 </button>
@@ -870,27 +900,53 @@ export const DocumentReviewCenter: React.FC<DocumentReviewCenterProps> = ({ role
                       </p>
                     </div>
                   ) : (
-                    caseDetails.comments.map((comment) => (
-                      <div
-                        key={comment.id}
-                        className="p-3 rounded-xl bg-muted/40 border border-border text-xs space-y-1.5 transition-colors"
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="font-semibold text-foreground flex items-center gap-1.5">
-                            {comment.author_name}
-                            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-primary/10 text-primary capitalize border border-primary/20">
-                              {comment.author_role}
+                    caseDetails.comments.map((comment) => {
+                      const isStudent = comment.author_role === 'student';
+                      const isAdviser = comment.author_role === 'adviser';
+                      const isSupervisor = comment.author_role === 'supervisor';
+                      return (
+                        <div
+                          key={comment.id}
+                          className="p-3.5 rounded-xl bg-card border border-border/80 hover:border-border text-xs space-y-2.5 transition-all shadow-2xs font-sans"
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              {/* Real User Avatar */}
+                              <div className="size-7 rounded-full overflow-hidden border border-border/80 bg-muted flex items-center justify-center shrink-0 shadow-2xs select-none">
+                                <img
+                                  src={getUserAvatar({ name: comment.author_name, role: comment.author_role })}
+                                  alt={comment.author_name}
+                                  className="size-full object-cover"
+                                />
+                              </div>
+                              <div className="flex items-center gap-2 min-w-0">
+                                <span className="font-sans font-medium text-zinc-800 dark:text-zinc-200 tracking-tight truncate text-xs sm:text-[13px]">
+                                  {comment.author_name}
+                                </span>
+                                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 shadow-2xs shrink-0 capitalize">
+                                  <span
+                                    className={cn(
+                                      "size-1.5 rounded-full shrink-0",
+                                      isStudent && "bg-emerald-500",
+                                      isAdviser && "bg-blue-500",
+                                      isSupervisor && "bg-amber-500",
+                                      !isStudent && !isAdviser && !isSupervisor && "bg-zinc-400"
+                                    )}
+                                  />
+                                  {comment.author_role}
+                                </span>
+                              </div>
+                            </div>
+                            <span className="text-[10px] text-muted-foreground font-mono font-medium shrink-0">
+                              {new Date(comment.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </span>
-                          </span>
-                          <span className="text-[10px] text-muted-foreground font-mono">
-                            {new Date(comment.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </span>
+                          </div>
+                          <p className="text-foreground/90 font-sans text-xs sm:text-[12.5px] leading-relaxed whitespace-pre-wrap pl-9.5">
+                            {comment.message}
+                          </p>
                         </div>
-                        <p className="text-foreground/90 leading-relaxed whitespace-pre-wrap">
-                          {comment.message}
-                        </p>
-                      </div>
-                    ))
+                      );
+                    })
                   )
                 ) : (
                   <div className="space-y-3">
@@ -926,19 +982,19 @@ export const DocumentReviewCenter: React.FC<DocumentReviewCenterProps> = ({ role
               </div>
 
               {/* Comment Input Footer */}
-              <form onSubmit={handlePostComment} className="p-3 border-t border-border bg-card flex items-center gap-2 shrink-0">
+              <form onSubmit={handlePostComment} className="p-3 border-t border-border bg-card flex items-center gap-2 shrink-0 font-sans">
                 <input
                   type="text"
                   placeholder="Type a note or reply…"
                   value={commentText}
                   onChange={(e) => setCommentText(e.target.value)}
-                  className="flex-1 text-xs px-3.5 py-2 rounded-xl bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                  className="flex-1 text-xs px-3.5 py-2 rounded-xl bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-sans"
                 />
                 <Button
                   type="submit"
                   size="sm"
                   disabled={!commentText.trim() || isPostingComment}
-                  className="h-8 px-3 text-xs gap-1.5 cursor-pointer bg-primary hover:bg-primary/90 text-primary-fg font-semibold rounded-lg shrink-0"
+                  className="h-8 px-3.5 text-xs gap-1.5 cursor-pointer bg-primary hover:bg-primary/90 text-primary-fg font-semibold rounded-lg shrink-0 font-sans shadow-2xs"
                 >
                   <Send className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline">Send</span>
@@ -986,12 +1042,12 @@ export const DocumentReviewCenter: React.FC<DocumentReviewCenterProps> = ({ role
             <form onSubmit={handleUploadRevisionSubmit} className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-foreground mb-1.5">
-                  Select File (PDF, DOCX, XLSX — max 10MB)
+                  Select PDF Revision File (max 15 MB)
                 </label>
                 <input
                   type="file"
                   ref={revisionFileInputRef}
-                  accept=".pdf,.docx,.xlsx"
+                  accept="application/pdf,.pdf"
                   required
                   className="w-full text-xs text-muted-foreground file:mr-2.5 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-primary-fg hover:file:bg-primary/90 cursor-pointer border border-border rounded-xl p-2 bg-background"
                 />

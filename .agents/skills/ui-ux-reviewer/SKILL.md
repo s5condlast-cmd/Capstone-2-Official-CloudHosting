@@ -1,7 +1,7 @@
 ---
 name: ui-ux-reviewer
 description: "Expert UI/UX reviewer and design auditor tailored specifically to this project's visual identity, monochrome & Deep Sky/Warm Amber palettes, theme-aware tokens, Geist/Inter typography, tactile micro-interactions, and zero-CLS standards."
-version: 1.0.0
+version: 1.0.1
 ---
 
 # UI / UX Reviewer & Design Auditor
@@ -72,8 +72,11 @@ The project supports dynamic theme switching rooted in `src/index.css`:
 - **8-Point / 4-Point Grid**: All paddings, margins, and gaps must follow standard increments (`gap-2`, `gap-3`, `gap-4`, `gap-6`, `gap-8`, `p-4`, `p-6`).
 - **Border Radii Hierarchy**:
   - Small pills & badges: `rounded-full` or `rounded-md` (`calc(var(--radius) * 0.8)`).
-  - Cards & Containers: `rounded-xl` (`1rem`) or `rounded-2xl` (`1.5rem`).
+  - Cards & Containers: Start with `rounded-xl` (`1rem`). Use `rounded-2xl` (`1.5rem`) only on large, spacious surfaces where the stronger curvature is intentional.
   - Base input & button radius: `--radius: 0.625rem` (10px).
+  - **Proportional Radius Check**: Judge corner radius relative to the component's height, density, border, and shadow—not as an isolated token. On short dashboard cards (roughly 140-180px tall), `20-24px` corners can feel inflated or capsule-like; prefer `14-16px` unless the design intentionally calls for a soft, playful surface.
+  - **Optical Edge Check**: Review the full silhouette at normal viewing scale. Pale borders and diffuse shadows visually amplify curvature, so reduce the radius when those treatments make the side edges appear overly bowed.
+  - Flag repeated cards whose large radii weaken alignment, structure, or information density, even when the radius technically matches an allowed design token.
 - **Tactile Shadows (Ambient, never harsh)**:
   - `.soft-shadow`: `0 1px 2px 0 rgba(0, 0, 0, 0.05)`
   - `.soft-shadow-md`: `0 4px 12px -2px rgba(0, 0, 0, 0.06)`

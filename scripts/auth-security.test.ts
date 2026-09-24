@@ -81,8 +81,9 @@ const { default: authRouter, generateTemporaryPassword } = await import('../back
 const { default: templatesRouter, isValidTemplateId } = await import('../backend/routes/templates');
 const { default: analyzeRouter } = await import('../backend/routes/analyze');
 const { default: oneDriveRouter } = await import('../backend/routes/onedrive');
+const { default: attendanceRouter } = await import('../backend/routes/attendance');
 const app=express(); app.use(express.json());
-app.use('/api',authRouter,templatesRouter,analyzeRouter,oneDriveRouter);
+app.use('/api',authRouter,templatesRouter,analyzeRouter,oneDriveRouter,attendanceRouter);
 const server=app.listen(0,'127.0.0.1');
 await new Promise<void>(resolve=>server.once('listening',resolve));
 const address=server.address();
@@ -102,7 +103,7 @@ for(const path of ['login','send-otp','verify-otp','verify-totp','enroll-mfa','r
   });
 }
 test('protected APIs reject anonymous access',async()=>{
-  for(const [path,method] of [['/users','GET'],['/users','POST'],['/templates/upload','POST'],['/analyze','POST'],['/onedrive/files','GET'],['/onedrive/auth/login','GET']])
+  for(const [path,method] of [['/users','GET'],['/users','POST'],['/templates/upload','POST'],['/analyze','POST'],['/onedrive/files','GET'],['/onedrive/auth/login','GET'],['/attendance','GET'],['/attendance/time-in','POST']])
     assert.equal((await call(path,method)).status,401,path);
 });
 test('invalid token cannot read account information',async()=>assert.equal((await call('/auth/me','GET','invalid')).status,401));

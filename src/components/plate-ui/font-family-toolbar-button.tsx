@@ -65,24 +65,31 @@ export function FontFamilyToolbarButton() {
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="start"
-        className="w-48 p-1 shadow-lg border border-zinc-200 dark:border-zinc-800"
+        className="w-48 p-1 shadow-xl border border-zinc-200/90 dark:border-zinc-800 rounded-xl bg-white dark:bg-zinc-900"
       >
-        {FONT_FAMILIES.map((font) => {
-          const isSelected = activeFont ? activeFont === font.value : font.value === FONT_FAMILIES[0].value;
-          return (
-            <DropdownMenuItem
-              key={font.label}
-              onClick={() => handleSelect(font.value)}
-              className={cn(
-                'flex items-center justify-between px-2.5 py-1.5 text-xs rounded-md cursor-pointer',
-                isSelected && 'bg-zinc-100 dark:bg-zinc-800 font-semibold'
-              )}
-            >
-              <span style={{ fontFamily: font.value }}>{font.label}</span>
-              {isSelected && <Check className="h-3.5 w-3.5 text-primary" />}
-            </DropdownMenuItem>
-          );
-        })}
+        <div className="px-2.5 pt-1 pb-1 text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider select-none">
+          Fonts
+        </div>
+        <div className="space-y-0.5">
+          {FONT_FAMILIES.map((font) => {
+            const isSelected = activeFont ? activeFont === font.value : font.value === FONT_FAMILIES[0].value;
+            return (
+              <DropdownMenuItem
+                key={font.label}
+                onClick={() => handleSelect(font.value)}
+                className={cn(
+                  'flex items-center justify-between px-2.5 py-1 text-[13px] font-medium rounded-md cursor-pointer transition-colors leading-tight',
+                  isSelected
+                    ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-950 dark:text-white font-semibold'
+                    : 'text-zinc-900 dark:text-zinc-100 hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80'
+                )}
+              >
+                <span style={{ fontFamily: font.value }} className="truncate">{font.label}</span>
+                {isSelected && <Check className="w-4 h-4 stroke-[2.5] text-zinc-900 dark:text-zinc-100 shrink-0 ml-2" />}
+              </DropdownMenuItem>
+            );
+          })}
+        </div>
       </DropdownMenuContent>
     </DropdownMenu>
   );

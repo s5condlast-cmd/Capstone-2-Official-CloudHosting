@@ -55,6 +55,13 @@ export function unwrapContentEnvelope(raw: unknown): {
   content: object[];
   headerFooter?: DocumentHeaderFooterOptions;
 } {
+  if (typeof raw === 'string') {
+    try {
+      raw = JSON.parse(raw);
+    } catch {
+      // ignore parse failure and fall through
+    }
+  }
   if (Array.isArray(raw)) {
     return { content: raw };
   }
@@ -97,7 +104,7 @@ export type ConflictResolution =
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const CLOUD_DEBOUNCE_MS = 2500;
+const CLOUD_DEBOUNCE_MS = 5000; // 5-second inactivity auto-save
 const VERSION_MIN_ACTIVE_MS = 10 * 60 * 1000; // 10 minutes
 const VERSION_MIN_WORD_DELTA = 50;
 const BROADCAST_CHANNEL_NAME = 'ojt-doc-editor';
@@ -111,15 +118,30 @@ function idbKey(userId: string, draftId: string): string {
 }
 
 async function readCached(userId: string, draftId: string): Promise<DraftState | undefined> {
-  return get<DraftState>(idbKey(userId, draftId));
+  if (typeof indexedDB === 'undefined') return undefined;
+  try {
+    return await get<DraftState>(idbKey(userId, draftId));
+  } catch {
+    return undefined;
+  }
 }
 
 async function writeCached(state: DraftState): Promise<void> {
-  await set(idbKey(state.userId, state.id), state);
+  if (typeof indexedDB === 'undefined') return;
+  try {
+    await set(idbKey(state.userId, state.id), state);
+  } catch {
+    // ignore
+  }
 }
 
 async function clearCached(userId: string, draftId: string): Promise<void> {
-  await del(idbKey(userId, draftId));
+  if (typeof indexedDB === 'undefined') return;
+  try {
+    await del(idbKey(userId, draftId));
+  } catch {
+    // ignore
+  }
 }
 
 // ─── Word count ───────────────────────────────────────────────────────────────
@@ -160,10 +182,14 @@ export class DocumentHistoryStorage {
   private idbPending: DraftState | null = null;
   private idbFlushPending = false;
 
+  private isFlushing = false;
+
   /** Version tracking */
   private sessionStartMs: number = Date.now();
   private wordCountAtVersionStart: number = 0;
   private lastVersionWordCount: number = 0;
+  private lastSnapshotContentJson: string = '';
+  private hasUnversionedChanges: boolean = false;
 
   /** BroadcastChannel for multi-tab presence */
   private channel: BroadcastChannel | null = null;
@@ -171,6 +197,7 @@ export class DocumentHistoryStorage {
   private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
   private onMultiTabConflict?: () => void;
   private beforeUnloadHandler: ((e: BeforeUnloadEvent) => void) | null = null;
+  private visibilityChangeHandler: (() => void) | null = null;
 
   /** Sync status change callback */
   private onStatusChange?: (status: SyncStatus) => void;
@@ -178,6 +205,18 @@ export class DocumentHistoryStorage {
   private onConflict?: (local: DraftState, remote: DraftState) => void;
   /** Cloud save acknowledgement callback */
   private onSaved?: (saved: DraftState) => void;
+  /** Version created callback */
+  private onVersionCreated?: () => void;
+  /** Auto-reconciliation callback */
+  private onAutoReconciled?: () => void;
+  /** Remote tab update callback */
+  private onRemoteUpdate?: (
+    content: object[],
+    revision: number,
+    title: string,
+    headerFooter?: DocumentHeaderFooterOptions,
+    wordCount?: number
+  ) => void;
 
   constructor(
     userId: string,
@@ -187,6 +226,15 @@ export class DocumentHistoryStorage {
       onConflict?: (local: DraftState, remote: DraftState) => void;
       onMultiTabConflict?: () => void;
       onSaved?: (saved: DraftState) => void;
+      onVersionCreated?: () => void;
+      onAutoReconciled?: () => void;
+      onRemoteUpdate?: (
+        content: object[],
+        revision: number,
+        title: string,
+        headerFooter?: DocumentHeaderFooterOptions,
+        wordCount?: number
+      ) => void;
     } = {}
   ) {
     this.userId = userId;
@@ -195,6 +243,9 @@ export class DocumentHistoryStorage {
     this.onConflict = opts.onConflict;
     this.onMultiTabConflict = opts.onMultiTabConflict;
     this.onSaved = opts.onSaved;
+    this.onVersionCreated = opts.onVersionCreated;
+    this.onAutoReconciled = opts.onAutoReconciled;
+    this.onRemoteUpdate = opts.onRemoteUpdate;
     this.initBroadcastChannel();
   }
 
@@ -204,9 +255,15 @@ export class DocumentHistoryStorage {
    * Load the initial draft state. Returns cached (IndexedDB) version first,
    * then reconciles with the authoritative cloud version.
    */
-  async load(initialRevision: number): Promise<DraftState | undefined> {
+  async load(initialRevision: number, initialContent?: object[]): Promise<DraftState | undefined> {
     this.cloudRevision = initialRevision;
     const cached = await readCached(this.userId, this.draftId);
+    if (initialContent) {
+      this.lastSnapshotContentJson = JSON.stringify(initialContent);
+    } else if (cached?.content) {
+      this.lastSnapshotContentJson = JSON.stringify(cached.content);
+    }
+    this.hasUnversionedChanges = false;
     return cached;
   }
 
@@ -221,11 +278,34 @@ export class DocumentHistoryStorage {
   }
 
   /**
+   * Apply an incoming remote update from another tab into the storage engine.
+   * Cancels any pending local timers/state and updates cloudRevision, snapshots, and cache.
+   */
+  applyRemoteUpdate(revision: number, content: object[], draftState?: DraftState): void {
+    if (this.cloudSaveTimer) {
+      clearTimeout(this.cloudSaveTimer);
+      this.cloudSaveTimer = null;
+    }
+    this.pendingState = null;
+    this.cloudRevision = revision;
+    this.lastSnapshotContentJson = JSON.stringify(content);
+    this.hasUnversionedChanges = false;
+    if (draftState) {
+      void writeCached(draftState);
+    }
+  }
+
+  /**
    * Called by the editor on every content change.
    * Queues IDB write and schedules debounced cloud save.
    */
   onChange(state: DraftState): void {
     this.pendingState = { ...state };
+    // Only flag unversioned changes if content has actually diverged from last snapshot
+    const currentJson = JSON.stringify(state.content);
+    if (currentJson !== this.lastSnapshotContentJson) {
+      this.hasUnversionedChanges = true;
+    }
     this.scheduleIdbFlush(state);
     this.scheduleCloudSave();
     this.onStatusChange?.('saving');
@@ -234,38 +314,66 @@ export class DocumentHistoryStorage {
   /**
    * Force an immediate cloud save (e.g., before navigating away).
    * Returns the updated draft revision or throws on conflict.
+   * Creates an exit snapshot in document_versions if there are unversioned changes.
    * Protects caller with a timeout against slow/offline network hangs while persisting to IDB immediately.
    */
-  async flushNow(timeoutMs: number = 1500): Promise<DraftState | null> {
-    if (this.cloudSaveTimer) {
-      clearTimeout(this.cloudSaveTimer);
-      this.cloudSaveTimer = null;
-    }
-
-    if (this.pendingState) {
-      try {
-        await writeCached(this.pendingState);
-      } catch {
-        /* non-fatal */
-      }
-    }
-
-    const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), timeoutMs));
-
-    let inFlightResult: DraftState | null = null;
-    if (this.cloudSavePromise) {
-      try {
-        inFlightResult = await Promise.race([this.cloudSavePromise, timeoutPromise]);
-      } catch {
-        /* let subsequent operations handle */
-      }
-    }
-    if (!this.pendingState) return inFlightResult;
+  async flushNow(exitLabel: string = 'Saved before exit', timeoutMs: number = 2000): Promise<DraftState | null> {
+    if (this.isFlushing) return null;
+    this.isFlushing = true;
 
     try {
-      return await Promise.race([this.doCloudSave(), timeoutPromise]);
-    } catch {
-      return null;
+      if (this.cloudSaveTimer) {
+        clearTimeout(this.cloudSaveTimer);
+        this.cloudSaveTimer = null;
+      }
+
+      if (this.pendingState) {
+        try {
+          await writeCached(this.pendingState);
+        } catch {
+          /* non-fatal */
+        }
+      }
+
+      const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), timeoutMs));
+
+      let inFlightResult: DraftState | null = null;
+      if (this.cloudSavePromise) {
+        try {
+          inFlightResult = await Promise.race([this.cloudSavePromise, timeoutPromise]);
+        } catch {
+          /* let subsequent operations handle */
+        }
+      }
+
+      let saveResult: DraftState | null = inFlightResult;
+      if (this.pendingState) {
+        try {
+          saveResult = await Promise.race([this.doCloudSave(), timeoutPromise]);
+        } catch {
+          saveResult = null;
+        }
+      }
+
+      if (this.hasUnversionedChanges) {
+        this.hasUnversionedChanges = false;
+        try {
+          await supabase.rpc('create_editor_version', {
+            p_draft_id: this.draftId,
+            p_label: exitLabel,
+          });
+          if (this.pendingState) {
+            this.lastSnapshotContentJson = JSON.stringify(this.pendingState.content);
+          }
+          this.onVersionCreated?.();
+        } catch {
+          /* non-fatal */
+        }
+      }
+
+      return saveResult;
+    } finally {
+      this.isFlushing = false;
     }
   }
 
@@ -273,31 +381,41 @@ export class DocumentHistoryStorage {
    * Create a named version snapshot manually.
    */
   async saveVersion(label: string): Promise<void> {
-    await this.flushNow();
+    await this.flushNow(label);
     const { error } = await supabase.rpc('create_editor_version', {
       p_draft_id: this.draftId,
       p_label: label,
     });
     if (error) throw new Error(`Could not save version: ${error.message}`);
     this.lastVersionWordCount = this.pendingState?.wordCount ?? 0;
+    if (this.pendingState) {
+      this.lastSnapshotContentJson = JSON.stringify(this.pendingState.content);
+    }
+    this.hasUnversionedChanges = false;
+    this.onVersionCreated?.();
   }
 
   /**
    * Check whether automatic version criteria are met and create one if so.
-   * Called internally after cloud saves.
+   * Triggered on session milestones (>= 10min active editing and >= 50 words changed).
    */
   private async maybeAutoVersion(state: DraftState): Promise<void> {
-    const activeMs = Date.now() - this.sessionStartMs;
+    const elapsedMs = Date.now() - this.sessionStartMs;
     const wordDelta = Math.abs(state.wordCount - this.lastVersionWordCount);
-    if (activeMs >= VERSION_MIN_ACTIVE_MS && wordDelta >= VERSION_MIN_WORD_DELTA) {
+
+    if (elapsedMs >= VERSION_MIN_ACTIVE_MS && wordDelta >= VERSION_MIN_WORD_DELTA) {
       try {
+        const timeStr = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
         const { error } = await supabase.rpc('create_editor_version', {
           p_draft_id: this.draftId,
-          p_label: 'Auto-save',
+          p_label: `Session checkpoint (${timeStr})`,
         });
         if (!error) {
+          this.lastSnapshotContentJson = JSON.stringify(state.content);
           this.lastVersionWordCount = state.wordCount;
-          this.sessionStartMs = Date.now(); // reset timer
+          this.sessionStartMs = Date.now();
+          this.hasUnversionedChanges = false;
+          this.onVersionCreated?.();
         }
       } catch {
         // Non-fatal — autosave version failure should not surface to user
@@ -382,6 +500,10 @@ export class DocumentHistoryStorage {
       window.removeEventListener('beforeunload', this.beforeUnloadHandler);
       this.beforeUnloadHandler = null;
     }
+    if (this.visibilityChangeHandler && typeof document !== 'undefined') {
+      document.removeEventListener('visibilitychange', this.visibilityChangeHandler);
+      this.visibilityChangeHandler = null;
+    }
     if (this.cloudSaveTimer) {
       clearTimeout(this.cloudSaveTimer);
       this.cloudSaveTimer = null;
@@ -392,7 +514,7 @@ export class DocumentHistoryStorage {
     }
     if (this.pendingState) {
       void writeCached(this.pendingState).catch(() => {});
-      void this.doCloudSave().catch(() => {});
+      void this.flushNow('Saved before exit').catch(() => {});
     }
     this.channel?.postMessage({ type: 'DOC_CLOSE', tabId: this.tabId, draftId: this.draftId });
     this.channel?.close();
@@ -491,6 +613,58 @@ export class DocumentHistoryStorage {
           return acknowledged;
         }
 
+        // Silent safe auto-reconciliation:
+        // Automatically snapshot remote version to history so zero work is ever lost
+        try {
+          await supabase.rpc('create_editor_version', {
+            p_draft_id: this.draftId,
+            p_label: `Cloud version backup (Rev ${remote.revision})`,
+          });
+          this.onVersionCreated?.();
+        } catch {
+          // Non-fatal backup snapshot attempt
+        }
+
+        // Force-save the local draft with remote.revision as expected revision
+        const { error: resolveErr } = await supabase.rpc('resolve_editor_conflict', {
+          p_draft_id: this.draftId,
+          p_force_revision: remote.revision,
+          p_title: state.title,
+          p_content: payloadContent,
+          p_word_count: state.wordCount,
+          p_snapshot_discarded: true,
+        });
+
+        if (!resolveErr) {
+          const newRevision = remote.revision + 1;
+          this.cloudRevision = newRevision;
+          if (this.pendingState === state) this.pendingState = null;
+          this.onStatusChange?.('saved');
+          const acknowledged: DraftState = {
+            ...state,
+            revision: newRevision,
+            updatedAt: new Date().toISOString(),
+          };
+          await writeCached(acknowledged);
+          this.onSaved?.(acknowledged);
+          this.onAutoReconciled?.();
+          try {
+            this.channel?.postMessage({
+              type: 'DOC_SAVED',
+              tabId: this.tabId,
+              draftId: this.draftId,
+              revision: newRevision,
+              title: state.title,
+              content: state.content,
+              headerFooter: state.headerFooter,
+              wordCount: state.wordCount,
+            });
+          } catch {
+            // BroadcastChannel send error non-fatal
+          }
+          return acknowledged;
+        }
+
         this.onStatusChange?.('conflict');
         this.onConflict?.(state, remote);
         throw new Error('CONFLICT');
@@ -507,6 +681,20 @@ export class DocumentHistoryStorage {
       };
       await writeCached(acknowledged);
       this.onSaved?.(acknowledged);
+      try {
+        this.channel?.postMessage({
+          type: 'DOC_SAVED',
+          tabId: this.tabId,
+          draftId: this.draftId,
+          revision: saved.revision,
+          title: state.title,
+          content: state.content,
+          headerFooter: state.headerFooter,
+          wordCount: state.wordCount,
+        });
+      } catch {
+        // non-fatal
+      }
       void this.maybeAutoVersion(state);
       return acknowledged;
     };
@@ -528,10 +716,7 @@ export class DocumentHistoryStorage {
   private initBroadcastChannel(): void {
     if (typeof window !== 'undefined' && !this.beforeUnloadHandler) {
       this.beforeUnloadHandler = () => {
-        if (this.pendingState) {
-          void writeCached(this.pendingState).catch(() => {});
-          void this.doCloudSave().catch(() => {});
-        }
+        void this.flushNow('Saved before exit');
         try {
           this.channel?.postMessage({ type: 'DOC_CLOSE', tabId: this.tabId, draftId: this.draftId });
         } catch {
@@ -539,6 +724,15 @@ export class DocumentHistoryStorage {
         }
       };
       window.addEventListener('beforeunload', this.beforeUnloadHandler);
+    }
+
+    if (typeof document !== 'undefined' && !this.visibilityChangeHandler) {
+      this.visibilityChangeHandler = () => {
+        if (document.visibilityState === 'hidden') {
+          void this.flushNow('Saved before exit');
+        }
+      };
+      document.addEventListener('visibilitychange', this.visibilityChangeHandler);
     }
 
     if (typeof BroadcastChannel === 'undefined') return;
@@ -583,6 +777,17 @@ export class DocumentHistoryStorage {
       case 'DOC_HEARTBEAT':
         this.presenceMap.set(remoteTabId, Date.now());
         break;
+      case 'DOC_SAVED':
+        if (!this.pendingState && msg.content) {
+          this.onRemoteUpdate?.(
+            msg.content as object[],
+            msg.revision as number,
+            msg.title as string,
+            msg.headerFooter as DocumentHeaderFooterOptions | undefined,
+            msg.wordCount as number | undefined
+          );
+        }
+        break;
       case 'DOC_CLOSE':
         this.presenceMap.delete(remoteTabId);
         break;
@@ -597,23 +802,31 @@ export class DocumentHistoryStorage {
  * Call on logout to prevent another user from reading the previous user's data.
  */
 export async function clearAllDraftCacheForUser(userId: string): Promise<void> {
-  // idb-keyval doesn't support prefix scan; we iterate known keys by listing.
-  // For simplicity, we track open draft IDs in a user-scoped index key.
-  const indexKey = `user-draft-index:${userId}`;
-  const draftIds = await get<string[]>(indexKey) ?? [];
-  for (const id of draftIds) {
-    await del(idbKey(userId, id));
+  if (typeof indexedDB === 'undefined') return;
+  try {
+    const indexKey = `user-draft-index:${userId}`;
+    const draftIds = (await get<string[]>(indexKey)) ?? [];
+    for (const id of draftIds) {
+      await del(idbKey(userId, id));
+    }
+    await del(indexKey);
+  } catch {
+    // ignore
   }
-  await del(indexKey);
 }
 
 /**
  * Register a draft ID in the user's local draft index (for cache cleanup on logout).
  */
 export async function registerDraftInIndex(userId: string, draftId: string): Promise<void> {
-  const indexKey = `user-draft-index:${userId}`;
-  const existing = await get<string[]>(indexKey) ?? [];
-  if (!existing.includes(draftId)) {
-    await set(indexKey, [...existing, draftId]);
+  if (typeof indexedDB === 'undefined') return;
+  try {
+    const indexKey = `user-draft-index:${userId}`;
+    const existing = (await get<string[]>(indexKey)) ?? [];
+    if (!existing.includes(draftId)) {
+      await set(indexKey, [...existing, draftId]);
+    }
+  } catch {
+    // ignore
   }
 }

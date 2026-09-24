@@ -301,7 +301,7 @@ function PortalPopover({
         zIndex: 99999,
       }}
       className={cn(
-        'rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xl py-1.5 text-zinc-800 dark:text-zinc-200 animate-in fade-in zoom-in-95 duration-100',
+        'rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-zinc-800 shadow-xl p-1 text-zinc-900 dark:text-zinc-100 animate-in fade-in-0 zoom-in-95 duration-100',
         className
       )}
     >
@@ -590,7 +590,7 @@ function ZoomToolbarButton({
         anchorRef={anchorRef}
         open={open}
         onClose={() => setOpen(false)}
-        className="w-36 p-1 shadow-lg"
+        className="w-36 p-1 shadow-xl"
       >
         <button
           type="button"
@@ -599,27 +599,42 @@ function ZoomToolbarButton({
             onZoomChange?.(100);
             setOpen(false);
           }}
-          className="w-full text-left px-2.5 py-1.5 rounded-md text-xs hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center justify-between"
+          className={cn(
+            'w-full text-left px-2.5 py-1 rounded-md text-[13px] font-medium transition-colors flex items-center justify-between cursor-pointer leading-tight',
+            zoomLevel === 100
+              ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-950 dark:text-white font-semibold'
+              : 'text-zinc-900 dark:text-zinc-100 hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80'
+          )}
         >
           <span>Fit (100%)</span>
-          {zoomLevel === 100 && <Check className="w-3.5 h-3.5 text-primary" />}
+          {zoomLevel === 100 && <Check className="w-4 h-4 stroke-[2.5] text-zinc-900 dark:text-zinc-100 shrink-0" />}
         </button>
-        <div className="h-px bg-zinc-100 dark:bg-zinc-800 my-1" />
-        {ZOOM_LEVELS.map((z) => (
-          <button
-            key={z}
-            type="button"
-            onMouseDown={(e) => {
-              e.preventDefault();
-              onZoomChange?.(z);
-              setOpen(false);
-            }}
-            className="w-full text-left px-2.5 py-1.5 rounded-md text-xs hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center justify-between"
-          >
-            <span>{z}%</span>
-            {zoomLevel === z && <Check className="w-3.5 h-3.5 text-primary" />}
-          </button>
-        ))}
+        <div className="h-px bg-zinc-200 dark:bg-zinc-800 my-1" />
+        <div className="space-y-0.5">
+          {ZOOM_LEVELS.map((z) => {
+            const isSelected = zoomLevel === z;
+            return (
+              <button
+                key={z}
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  onZoomChange?.(z);
+                  setOpen(false);
+                }}
+                className={cn(
+                  'w-full text-left px-2.5 py-1 rounded-md text-[13px] font-medium transition-colors flex items-center justify-between cursor-pointer leading-tight',
+                  isSelected
+                    ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-950 dark:text-white font-semibold'
+                    : 'text-zinc-900 dark:text-zinc-100 hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80'
+                )}
+              >
+                <span>{z}%</span>
+                {isSelected && <Check className="w-4 h-4 stroke-[2.5] text-zinc-900 dark:text-zinc-100 shrink-0" />}
+              </button>
+            );
+          })}
+        </div>
       </PortalPopover>
     </div>
   );
@@ -673,31 +688,43 @@ function FontFamilyToolbarButton({
         anchorRef={anchorRef}
         open={open}
         onClose={() => setOpen(false)}
-        className="w-48 max-h-72 overflow-y-auto p-1.5 shadow-lg"
+        className="w-48 max-h-72 overflow-y-auto p-1 shadow-xl"
       >
-        <div className="px-2.5 py-1 text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
+        <div className="px-2.5 pt-1 pb-1 text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider select-none">
           Fonts
         </div>
-        {FONT_OPTIONS.map((f) => (
-          <button
-            key={f.value}
-            type="button"
-            onMouseDown={(e) => {
-              e.preventDefault();
-              if (onSelectFont) {
-                onSelectFont(f.value);
-              } else {
-                addMark(editor, 'fontFamily', f.value);
-              }
-              setOpen(false);
-            }}
-            className="w-full text-left px-2.5 py-1.5 rounded-md text-[13px] hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center justify-between"
-            style={{ fontFamily: f.value }}
-          >
-            <span>{f.label}</span>
-            {activeOption.value === f.value && <Check className="w-3.5 h-3.5 text-primary shrink-0" />}
-          </button>
-        ))}
+        <div className="space-y-0.5">
+          {FONT_OPTIONS.map((f) => {
+            const isSelected = activeOption.value === f.value;
+            return (
+              <button
+                key={f.value}
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  if (onSelectFont) {
+                    onSelectFont(f.value);
+                  } else {
+                    addMark(editor, 'fontFamily', f.value);
+                  }
+                  setOpen(false);
+                }}
+                className={cn(
+                  'w-full text-left px-2.5 py-1 rounded-md text-[13px] font-medium transition-colors flex items-center justify-between cursor-pointer leading-tight',
+                  isSelected
+                    ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-950 dark:text-white font-semibold'
+                    : 'text-zinc-900 dark:text-zinc-100 hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80'
+                )}
+                style={{ fontFamily: f.value }}
+              >
+                <span className="truncate">{f.label}</span>
+                {isSelected && (
+                  <Check className="w-4 h-4 stroke-[2.5] text-zinc-900 dark:text-zinc-100 shrink-0 ml-2" />
+                )}
+              </button>
+            );
+          })}
+        </div>
       </PortalPopover>
     </div>
   );
@@ -771,39 +798,41 @@ function TurnIntoToolbarButton({ editor }: { editor: any }) {
         anchorRef={anchorRef}
         open={open}
         onClose={() => setOpen(false)}
-        className="w-52 max-h-80 overflow-y-auto p-1.5"
+        className="w-52 max-h-80 overflow-y-auto p-1 shadow-xl"
       >
-        <div className="px-3 py-1 text-[11px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
+        <div className="px-2.5 pt-1 pb-1 text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider select-none">
           Turn into
         </div>
-        {TURN_INTO_OPTIONS.map((opt) => {
-          const Icon = opt.icon;
-          const isSelected = activeType === opt.id;
-          return (
-            <button
-              key={opt.id}
-              type="button"
-              onMouseDown={(e) => {
-                e.preventDefault();
-                setBlockType(editor, opt.id);
-                setOpen(false);
-                editor?.tf?.focus?.();
-              }}
-              className={cn(
-                'flex items-center justify-between w-full px-3 py-2 text-xs font-medium rounded-lg text-left transition-colors',
-                isSelected
-                  ? 'bg-primary/15 text-primary font-semibold'
-                  : 'text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-              )}
-            >
-              <div className="flex items-center gap-2.5">
-                <Icon className="w-4 h-4" />
-                <span>{opt.label}</span>
-              </div>
-              {isSelected && <Check className="w-3.5 h-3.5 text-primary" />}
-            </button>
-          );
-        })}
+        <div className="space-y-0.5">
+          {TURN_INTO_OPTIONS.map((opt) => {
+            const Icon = opt.icon;
+            const isSelected = activeType === opt.id;
+            return (
+              <button
+                key={opt.id}
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  setBlockType(editor, opt.id);
+                  setOpen(false);
+                  editor?.tf?.focus?.();
+                }}
+                className={cn(
+                  'flex items-center justify-between w-full px-2.5 py-1 text-[13px] font-medium rounded-md text-left transition-colors cursor-pointer leading-tight',
+                  isSelected
+                    ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-950 dark:text-white font-semibold'
+                    : 'text-zinc-900 dark:text-zinc-100 hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80'
+                )}
+              >
+                <div className="flex items-center gap-2.5">
+                  <Icon className="w-4 h-4 shrink-0 text-zinc-700 dark:text-zinc-300" />
+                  <span>{opt.label}</span>
+                </div>
+                {isSelected && <Check className="w-4 h-4 stroke-[2.5] text-zinc-900 dark:text-zinc-100 shrink-0 ml-2" />}
+              </button>
+            );
+          })}
+        </div>
       </PortalPopover>
     </div>
   );
@@ -891,27 +920,32 @@ function FontSizeToolbarButton({
         anchorRef={containerRef}
         open={open}
         onClose={() => setOpen(false)}
-        className="w-24 max-h-64 overflow-y-auto p-1.5"
+        className="w-24 max-h-64 overflow-y-auto p-1 shadow-xl"
       >
-        {FONT_SIZES.map((size) => (
-          <button
-            key={size}
-            type="button"
-            onMouseDown={(e) => {
-              e.preventDefault();
-              applySize(size);
-              setOpen(false);
-            }}
-            className={cn(
-              'w-full py-1.5 text-center text-xs font-semibold rounded-md transition-colors',
-              currentSize === size
-                ? 'bg-primary/15 text-primary'
-                : 'text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-            )}
-          >
-            {size} pt
-          </button>
-        ))}
+        <div className="space-y-0.5">
+          {FONT_SIZES.map((size) => {
+            const isSelected = currentSize === size;
+            return (
+              <button
+                key={size}
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  applySize(size);
+                  setOpen(false);
+                }}
+                className={cn(
+                  'w-full py-1 text-center text-[13px] font-medium rounded-md transition-colors cursor-pointer leading-tight',
+                  isSelected
+                    ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-950 dark:text-white font-semibold'
+                    : 'text-zinc-900 dark:text-zinc-100 hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80'
+                )}
+              >
+                {size} pt
+              </button>
+            );
+          })}
+        </div>
       </PortalPopover>
     </div>
   );
@@ -1114,49 +1148,51 @@ function AlignToolbarButton({
         anchorRef={anchorRef}
         open={open}
         onClose={() => setOpen(false)}
-        className="w-40 p-1.5"
+        className="w-40 p-1 shadow-xl"
       >
-        {ALIGN_OPTIONS.map((opt) => {
-          const Icon = opt.icon;
-          const isSelected = currentAlign === opt.id;
-          return (
-            <button
-              key={opt.id}
-              type="button"
-              onMouseDown={(e) => {
-                e.preventDefault();
-                if (onSelectAlign) {
-                  onSelectAlign(opt.id as any);
-                } else if (imageNode || block?.type === 'img') {
-                  try {
-                    editor?.tf?.setNodes?.(
-                      { align: opt.id },
-                      { match: (n: any) => n.type === 'img' }
-                    );
-                  } catch {
+        <div className="space-y-0.5">
+          {ALIGN_OPTIONS.map((opt) => {
+            const Icon = opt.icon;
+            const isSelected = currentAlign === opt.id;
+            return (
+              <button
+                key={opt.id}
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  if (onSelectAlign) {
+                    onSelectAlign(opt.id as any);
+                  } else if (imageNode || block?.type === 'img') {
+                    try {
+                      editor?.tf?.setNodes?.(
+                        { align: opt.id },
+                        { match: (n: any) => n.type === 'img' }
+                      );
+                    } catch {
+                      setBlockProperty(editor, 'align', opt.id);
+                    }
+                  } else {
                     setBlockProperty(editor, 'align', opt.id);
                   }
-                } else {
-                  setBlockProperty(editor, 'align', opt.id);
-                }
-                setOpen(false);
-                editor?.tf?.focus?.();
-              }}
-              className={cn(
-                'flex items-center justify-between w-full px-3 py-2 text-xs font-medium rounded-lg text-left transition-colors cursor-pointer',
-                isSelected
-                  ? 'bg-primary/15 text-primary font-semibold'
-                  : 'text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-              )}
-            >
-              <div className="flex items-center gap-2.5">
-                <Icon className="w-4 h-4" />
-                <span>{opt.label}</span>
-              </div>
-              {isSelected && <Check className="w-3.5 h-3.5 text-primary" />}
-            </button>
-          );
-        })}
+                  setOpen(false);
+                  editor?.tf?.focus?.();
+                }}
+                className={cn(
+                  'flex items-center justify-between w-full px-2.5 py-1 text-[13px] font-medium rounded-md text-left transition-colors cursor-pointer leading-tight',
+                  isSelected
+                    ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-950 dark:text-white font-semibold'
+                    : 'text-zinc-900 dark:text-zinc-100 hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80'
+                )}
+              >
+                <div className="flex items-center gap-2.5">
+                  <Icon className="w-4 h-4 shrink-0 text-zinc-700 dark:text-zinc-300" />
+                  <span>{opt.label}</span>
+                </div>
+                {isSelected && <Check className="w-4 h-4 stroke-[2.5] text-zinc-900 dark:text-zinc-100 shrink-0 ml-2" />}
+              </button>
+            );
+          })}
+        </div>
       </PortalPopover>
     </div>
   );
@@ -1210,25 +1246,27 @@ function NumberedListToolbarButton({ editor }: { editor: any }) {
         anchorRef={containerRef}
         open={open}
         onClose={() => setOpen(false)}
-        className="w-48 p-1.5"
+        className="w-48 p-1 shadow-xl"
       >
-        <div className="px-3 py-1 text-[11px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
+        <div className="px-2.5 pt-1 pb-1 text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider select-none">
           Numbering Style
         </div>
-        {NUMBERED_STYLES.map((st) => (
-          <button
-            key={st.id}
-            type="button"
-            onMouseDown={(e) => {
-              e.preventDefault();
-              toggleList(st.id);
-              setOpen(false);
-            }}
-            className="flex items-center w-full px-3 py-2 text-xs font-medium rounded-lg text-left text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-          >
-            {st.label}
-          </button>
-        ))}
+        <div className="space-y-0.5">
+          {NUMBERED_STYLES.map((st) => (
+            <button
+              key={st.id}
+              type="button"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                toggleList(st.id);
+                setOpen(false);
+              }}
+              className="flex items-center w-full px-2.5 py-1 text-[13px] font-medium rounded-md text-left text-zinc-900 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer leading-tight"
+            >
+              {st.label}
+            </button>
+          ))}
+        </div>
       </PortalPopover>
     </div>
   );
@@ -1330,26 +1368,28 @@ function BulletedListToolbarButton({ editor }: { editor: any }) {
         anchorRef={containerRef}
         open={open}
         onClose={() => setOpen(false)}
-        className="w-48 p-1.5"
+        className="w-48 p-1 shadow-xl"
       >
-        <div className="px-3 py-1 text-[11px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
+        <div className="px-2.5 pt-1 pb-1 text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider select-none">
           Bullet Style
         </div>
-        {BULLET_STYLES.map((st) => (
-          <button
-            key={st.id}
-            type="button"
-            onMouseDown={(e) => {
-              e.preventDefault();
-              selectStyle(st.id);
-              setOpen(false);
-            }}
-            className="flex items-center gap-2.5 w-full px-2.5 py-1.5 text-xs font-medium rounded-lg text-left text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-          >
-            {st.icon}
-            <span>{st.label}</span>
-          </button>
-        ))}
+        <div className="space-y-0.5">
+          {BULLET_STYLES.map((st) => (
+            <button
+              key={st.id}
+              type="button"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                selectStyle(st.id);
+                setOpen(false);
+              }}
+              className="flex items-center gap-2.5 w-full px-2.5 py-1 text-[13px] font-medium rounded-md text-left text-zinc-900 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer leading-tight"
+            >
+              {st.icon}
+              <span>{st.label}</span>
+            </button>
+          ))}
+        </div>
       </PortalPopover>
     </div>
   );
@@ -2128,25 +2168,27 @@ function MediaToolbarButton({ editor }: { editor: any }) {
         anchorRef={anchorRef}
         open={open}
         onClose={() => setOpen(false)}
-        className="w-48 p-1 flex flex-col gap-0.5"
+        className="w-48 p-1 shadow-xl flex flex-col gap-0.5"
       >
-        {MEDIA_TYPES.map((media) => {
-          const Icon = media.icon;
-          return (
-            <button
-              key={media.type}
-              type="button"
-              onMouseDown={(e) => {
-                e.preventDefault();
-                handleTriggerUpload(media);
-              }}
-              className="flex items-center gap-2.5 w-full px-2.5 py-1.5 text-xs font-medium rounded-md text-left text-zinc-800 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-            >
-              <Icon className="w-4 h-4 text-zinc-600 dark:text-zinc-300" />
-              <span>{media.label}</span>
-            </button>
-          );
-        })}
+        <div className="space-y-0.5">
+          {MEDIA_TYPES.map((media) => {
+            const Icon = media.icon;
+            return (
+              <button
+                key={media.type}
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  handleTriggerUpload(media);
+                }}
+                className="flex items-center gap-2.5 w-full px-2.5 py-1 text-[13px] font-medium rounded-md text-left text-zinc-900 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer leading-tight"
+              >
+                <Icon className="w-4 h-4 text-zinc-700 dark:text-zinc-300 shrink-0" />
+                <span>{media.label}</span>
+              </button>
+            );
+          })}
+        </div>
 
         <div className="my-1 h-px bg-zinc-200 dark:bg-zinc-800" />
 
@@ -2157,9 +2199,9 @@ function MediaToolbarButton({ editor }: { editor: any }) {
             setOpen(false);
             setUrlDialogOpen(true);
           }}
-          className="flex items-center gap-2.5 w-full px-2.5 py-1.5 text-xs font-medium rounded-md text-left text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+          className="flex items-center gap-2.5 w-full px-2.5 py-1 text-[13px] font-medium rounded-md text-left text-zinc-900 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer leading-tight"
         >
-          <Link2 className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
+          <Link2 className="w-4 h-4 text-zinc-600 dark:text-zinc-300 shrink-0" />
           <span>Insert via URL</span>
         </button>
       </PortalPopover>
@@ -2368,32 +2410,37 @@ function LineHeightToolbarButton({ editor }: { editor: any }) {
         anchorRef={anchorRef}
         open={open}
         onClose={() => setOpen(false)}
-        className="w-44 p-1.5"
+        className="w-44 p-1 shadow-xl"
       >
-        <div className="px-3 py-1 text-[11px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
+        <div className="px-2.5 pt-1 pb-1 text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider select-none">
           Line Spacing
         </div>
-        {LINE_HEIGHT_OPTIONS.map((opt) => (
-          <button
-            key={opt.value}
-            type="button"
-            onMouseDown={(e) => {
-              e.preventDefault();
-              setBlockProperty(editor, 'lineHeight', opt.value);
-              setOpen(false);
-              editor?.tf?.focus?.();
-            }}
-            className={cn(
-              'flex items-center justify-between w-full px-3 py-2 text-xs font-medium rounded-lg text-left transition-colors',
-              currentHeight === opt.value
-                ? 'bg-primary/15 text-primary font-semibold'
-                : 'text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-            )}
-          >
-            <span>{opt.label}</span>
-            {currentHeight === opt.value && <Check className="w-3.5 h-3.5 text-primary" />}
-          </button>
-        ))}
+        <div className="space-y-0.5">
+          {LINE_HEIGHT_OPTIONS.map((opt) => {
+            const isSelected = currentHeight === opt.value;
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  setBlockProperty(editor, 'lineHeight', opt.value);
+                  setOpen(false);
+                  editor?.tf?.focus?.();
+                }}
+                className={cn(
+                  'flex items-center justify-between w-full px-2.5 py-1 text-[13px] font-medium rounded-md text-left transition-colors cursor-pointer leading-tight',
+                  isSelected
+                    ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-950 dark:text-white font-semibold'
+                    : 'text-zinc-900 dark:text-zinc-100 hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80'
+                )}
+              >
+                <span>{opt.label}</span>
+                {isSelected && <Check className="w-4 h-4 stroke-[2.5] text-zinc-900 dark:text-zinc-100 shrink-0 ml-2" />}
+              </button>
+            );
+          })}
+        </div>
       </PortalPopover>
     </div>
   );
@@ -2423,75 +2470,77 @@ function MoreToolbarButton({ editor }: { editor: any }) {
         anchorRef={anchorRef}
         open={open}
         onClose={() => setOpen(false)}
-        className="w-48 p-1.5"
+        className="w-48 p-1 shadow-xl"
       >
-        <button
-          type="button"
-          onMouseDown={(e) => {
-            e.preventDefault();
-            toggleMark(editor, 'superscript');
-            removeMark(editor, 'subscript');
-            setOpen(false);
-            editor?.tf?.focus?.();
-          }}
-          className={cn(
-            'flex items-center justify-between w-full px-3 py-2 text-xs font-medium rounded-lg text-left transition-colors',
-            isSup
-              ? 'bg-primary/15 text-primary font-semibold'
-              : 'text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-          )}
-        >
-          <div className="flex items-center gap-2.5">
-            <Superscript className="w-4 h-4" />
-            <span>Superscript</span>
-          </div>
-          {isSup && <Check className="w-3.5 h-3.5 text-primary" />}
-        </button>
+        <div className="space-y-0.5">
+          <button
+            type="button"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              toggleMark(editor, 'superscript');
+              removeMark(editor, 'subscript');
+              setOpen(false);
+              editor?.tf?.focus?.();
+            }}
+            className={cn(
+              'flex items-center justify-between w-full px-2.5 py-1 text-[13px] font-medium rounded-md text-left transition-colors cursor-pointer leading-tight',
+              isSup
+                ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-950 dark:text-white font-semibold'
+                : 'text-zinc-900 dark:text-zinc-100 hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80'
+            )}
+          >
+            <div className="flex items-center gap-2.5">
+              <Superscript className="w-4 h-4 shrink-0 text-zinc-700 dark:text-zinc-300" />
+              <span>Superscript</span>
+            </div>
+            {isSup && <Check className="w-4 h-4 stroke-[2.5] text-zinc-900 dark:text-zinc-100 shrink-0 ml-2" />}
+          </button>
 
-        <button
-          type="button"
-          onMouseDown={(e) => {
-            e.preventDefault();
-            toggleMark(editor, 'subscript');
-            removeMark(editor, 'superscript');
-            setOpen(false);
-            editor?.tf?.focus?.();
-          }}
-          className={cn(
-            'flex items-center justify-between w-full px-3 py-2 text-xs font-medium rounded-lg text-left transition-colors',
-            isSub
-              ? 'bg-primary/15 text-primary font-semibold'
-              : 'text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-          )}
-        >
-          <div className="flex items-center gap-2.5">
-            <Subscript className="w-4 h-4" />
-            <span>Subscript</span>
-          </div>
-          {isSub && <Check className="w-3.5 h-3.5 text-primary" />}
-        </button>
+          <button
+            type="button"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              toggleMark(editor, 'subscript');
+              removeMark(editor, 'superscript');
+              setOpen(false);
+              editor?.tf?.focus?.();
+            }}
+            className={cn(
+              'flex items-center justify-between w-full px-2.5 py-1 text-[13px] font-medium rounded-md text-left transition-colors cursor-pointer leading-tight',
+              isSub
+                ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-950 dark:text-white font-semibold'
+                : 'text-zinc-900 dark:text-zinc-100 hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80'
+            )}
+          >
+            <div className="flex items-center gap-2.5">
+              <Subscript className="w-4 h-4 shrink-0 text-zinc-700 dark:text-zinc-300" />
+              <span>Subscript</span>
+            </div>
+            {isSub && <Check className="w-4 h-4 stroke-[2.5] text-zinc-900 dark:text-zinc-100 shrink-0 ml-2" />}
+          </button>
 
-        <button
-          type="button"
-          onMouseDown={(e) => {
-            e.preventDefault();
-            toggleMark(editor, 'kbd');
-            setOpen(false);
-            editor?.tf?.focus?.();
-          }}
-          className={cn(
-            'flex items-center justify-between w-full px-3 py-2 text-xs font-medium rounded-lg text-left transition-colors',
-            isKbd
-              ? 'bg-primary/15 text-primary font-semibold'
-              : 'text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800'
-          )}
-        >
-          <div className="flex items-center gap-2.5">
-            <Keyboard className="w-4 h-4" />
-            <span>Keyboard input</span>
-          </div>
-          {isKbd && <Check className="w-3.5 h-3.5 text-primary" />}
-        </button>
+          <button
+            type="button"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              toggleMark(editor, 'kbd');
+              setOpen(false);
+              editor?.tf?.focus?.();
+            }}
+            className={cn(
+              'flex items-center justify-between w-full px-2.5 py-1 text-[13px] font-medium rounded-md text-left transition-colors cursor-pointer leading-tight',
+              isKbd
+                ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-950 dark:text-white font-semibold'
+                : 'text-zinc-900 dark:text-zinc-100 hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80'
+            )}
+          >
+            <div className="flex items-center gap-2.5">
+              <Keyboard className="w-4 h-4 shrink-0 text-zinc-700 dark:text-zinc-300" />
+              <span>Keyboard input</span>
+            </div>
+            {isKbd && <Check className="w-4 h-4 stroke-[2.5] text-zinc-900 dark:text-zinc-100 shrink-0 ml-2" />}
+          </button>
+        </div>
       </PortalPopover>
     </div>
   );
@@ -2735,14 +2784,15 @@ export function ModeToolbarButton({
         className={cn(
           'inline-flex h-8 items-center gap-1.5 px-2.5 rounded-md text-xs font-semibold',
           'border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 shadow-xs',
-          'text-zinc-800 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors'
+          'text-zinc-800 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors',
+          mode === 'suggestion' && 'border-emerald-300 dark:border-emerald-700 bg-emerald-50/60 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-200'
         )}
         title="Switch document editing mode"
       >
         <CurrentIcon className={cn(
           'w-4 h-4 shrink-0',
           mode === 'editing' && 'text-primary',
-          mode === 'suggestion' && 'text-zinc-700 dark:text-white',
+          mode === 'suggestion' && 'text-emerald-600 dark:text-emerald-400',
           mode === 'viewing' && 'text-zinc-400'
         )} />
         <span>{currentMode.label}</span>
@@ -2774,7 +2824,7 @@ export function ModeToolbarButton({
               <Icon className={cn(
                 'w-4 h-4 shrink-0 mt-0.5',
                 item.id === 'editing' && 'text-primary',
-                item.id === 'suggestion' && 'text-zinc-700 dark:text-white',
+                item.id === 'suggestion' && 'text-emerald-600 dark:text-emerald-400',
                 item.id === 'viewing' && 'text-zinc-400'
               )} />
               <div className="flex-1 flex flex-col">

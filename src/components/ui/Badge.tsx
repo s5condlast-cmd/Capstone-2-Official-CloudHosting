@@ -12,14 +12,14 @@ export const Badge: React.FC<BadgeProps> = ({
   ...props 
 }) => {
   const variants = {
-    success: 'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 border-zinc-200 dark:border-zinc-800',
-    warning: 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-800',
-    error: 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-950 border-zinc-900',
-    destructive: 'bg-red-100 dark:bg-red-950/50 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800',
-    neutral: 'bg-zinc-50 dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 border-zinc-100 dark:border-zinc-800/50',
+    success: 'bg-[#dcfce7] text-[#15803d] border-[#bbf7d0] dark:bg-emerald-500/20 dark:text-emerald-300 dark:border-emerald-500/35',
+    warning: 'bg-[#ffedd5] text-[#c2410c] border-[#fed7aa] dark:bg-amber-500/20 dark:text-amber-300 dark:border-amber-500/35',
+    error: 'bg-[#fee2e2] text-[#b91c1c] border-[#fecdd3] dark:bg-rose-500/20 dark:text-rose-300 dark:border-rose-500/35',
+    destructive: 'bg-[#fee2e2] text-[#b91c1c] border-[#fecdd3] dark:bg-rose-500/20 dark:text-rose-300 dark:border-rose-500/35',
+    neutral: 'bg-[#f4f4f5] text-[#3f3f46] border-[#e4e4e7] dark:bg-zinc-800/80 dark:text-zinc-300 dark:border-zinc-700/50',
     outline: 'bg-transparent text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-800',
-    default: 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-950 border-zinc-900 dark:border-zinc-100',
-    secondary: 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-800',
+    default: 'bg-[#dbeafe] text-[#1d4ed8] border-[#bfdbfe] dark:bg-sky-500/20 dark:text-sky-300 dark:border-sky-500/35',
+    secondary: 'bg-[#f4f4f5] text-[#3f3f46] border-[#e4e4e7] dark:bg-zinc-800/80 dark:text-zinc-300 dark:border-zinc-700/50',
     primary: 'bg-primary text-primary-fg border-primary'
   };
 

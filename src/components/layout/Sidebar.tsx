@@ -27,10 +27,12 @@ import {
   Lock as LockIcon,
   Building2 as BuildingIcon,
   Menu as MenuIcon,
-  Sparkles as SparklesIcon
+  Sparkles as SparklesIcon,
+  Clock3 as Clock3Icon,
 } from 'lucide-react';
 import { Role, User } from '@/src/types';
 import { usePhaseLock } from '@/src/hooks/usePhaseLock';
+import { useUserAvatar } from '@/src/lib/avatarHelper';
 
 interface SidebarProps {
   role: Role;
@@ -61,6 +63,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   user,
   onSearchClick
 }) => {
+  const { avatarUrl } = useUserAvatar(user);
   const [isPinnedCollapsed, setIsPinnedCollapsed] = useState(false);
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 768);
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
@@ -112,6 +115,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               { to: '/admin/documents', icon: FileTextIcon, label: 'Documents', badge: 38 },
               { to: '/admin/reviews', icon: ClipboardCheckIcon, label: 'Review Center' },
               { to: '/admin/documents?filter=dtr', icon: FileSpreadsheetIcon, label: 'DTR Audit' },
+              { to: '/admin/attendance', icon: Clock3Icon, label: 'Attendance Audit' },
               { to: '/admin/templates', icon: ClipboardListIcon, label: 'Templates' },
               { to: '/admin/announcements', icon: BellIcon, label: 'Announcements' },
               { to: '/admin/reports', icon: BarChartIcon, label: 'Reports' },
@@ -142,6 +146,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               { to: '/adviser/review', icon: SearchIcon, label: 'Document Review', badge: 4 },
               { to: '/adviser/reviews', icon: ClipboardCheckIcon, label: 'Review Center' },
               { to: '/adviser/review?type=dtr', icon: FileSpreadsheetIcon, label: 'DTR Verification' },
+              { to: '/adviser/attendance', icon: Clock3Icon, label: 'Attendance Monitor' },
             ],
           },
           {
@@ -155,6 +160,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             group: 'Overview',
             items: [
               { to: '/student', icon: LayoutDashboardIcon, label: 'Dashboard' },
+              { to: '/student/attendance', icon: Clock3Icon, label: 'Time In / Out' },
               { to: '/student/documents', icon: FileTextIcon, label: 'Document Repository' },
               { to: '/student/reviews', icon: ClipboardCheckIcon, label: 'Review Center' },
               { to: '/student/editor', icon: FilePlus2Icon, label: 'Document Editor' },
@@ -175,6 +181,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             group: 'Reviews',
             items: [
               { to: '/supervisor/dtr', icon: CalendarIcon, label: 'DTR Approval', badge: 5 },
+              { to: '/supervisor/attendance', icon: Clock3Icon, label: 'Attendance Verification' },
               { to: '/supervisor/journal', icon: BookOpenIcon, label: 'Weekly Journal Review', badge: 2 },
               { to: '/supervisor/reviews', icon: ClipboardCheckIcon, label: 'Review Center' },
             ],
@@ -388,8 +395,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {isExpanded ? (
             <div className="flex items-center justify-between gap-3 p-2 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800/50">
               <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-9 h-9 rounded-xl bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-950 flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
-                  {user?.name ? user.name.slice(0, 2).toUpperCase() : role.slice(0, 2).toUpperCase()}
+                <div className="size-9 rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shrink-0 shadow-2xs">
+                  <img
+                    src={avatarUrl}
+                    alt={user?.name || "User Avatar"}
+                    className="size-full object-cover"
+                  />
                 </div>
                 <div className="flex flex-col min-w-0">
                   <span className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 truncate">
@@ -413,9 +424,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div className="flex flex-col items-center gap-2 relative group">
               <button
                 onClick={onLogout}
-                className="w-10 h-10 rounded-xl bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-950 flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs hover:opacity-90 transition-opacity"
+                className="size-10 rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shrink-0 shadow-2xs hover:opacity-90 transition-opacity"
               >
-                {user?.name ? user.name.slice(0, 2).toUpperCase() : role.slice(0, 2).toUpperCase()}
+                <img
+                  src={avatarUrl}
+                  alt={user?.name || "User Avatar"}
+                  className="size-full object-cover"
+                />
               </button>
 
               {/* Tooltip on Collapsed Profile */}

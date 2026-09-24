@@ -31,6 +31,7 @@ These specifications define active systems, upcoming architectures, and producti
 | :--- | :---: | :--- |
 | [Rich document editor plan](tasks/RICH_DOCUMENT_EDITOR_PLAN.md) | Document Pipeline | Master specification: Google Docs layout, Plate v53 runtime baseline, and template fidelity |
 | [Bulk student roster import plan](tasks/BULK_ROSTER_IMPORT_PLAN.md) | Registrar / Admin | CSV/XLSX bulk account provisioning, chunking architecture, and security rules |
+| [PocketBase migration plan](tasks/POCKETBASE_MIGRATION_IMPLEMENTATION_PLAN.md) | Self-Hosting / BaaS | Dual-backend adapter pattern, schema translation, and build automation |
 | [Active tasks & roadmap](tasks/TASKS.md) | System-wide | Current sprint priorities, backlog, and verified acceptance items |
 | [Task history & changelog](tasks/TASK_HISTORY.md) | Milestones / Changelog | Complete chronological record of all sessions, refactors, audits, and learned rules |
 
@@ -49,6 +50,7 @@ docs/
 │   ├── ARCHITECTURE.md                  System topology & architecture overview
 │   ├── SYSTEM_MAP.md                    Routes, components, and code map
 │   ├── BACKEND_AND_DATABASE.md          Express APIs, Supabase PostgreSQL, and RLS
+│   ├── POCKETBASE_SELF_HOSTING_ARCHITECTURE.md PocketBase self-hosting, tunnel ingress & security
 │   ├── DOCUMENT_WORKFLOWS.md            Fillable templates & document lifecycle
 │   ├── DEPLOYMENT_AND_VERCEL.md         Vercel serverless deployment guide
 │   └── ONEDRIVE_INTEGRATION_SUMMARY.md  Microsoft Graph OneDrive sync & setup runbook

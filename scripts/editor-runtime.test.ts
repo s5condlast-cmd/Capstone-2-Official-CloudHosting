@@ -400,6 +400,19 @@ describe('Plate editor runtime wiring', () => {
     const legacyUnwrapped = unwrapContentEnvelope(sampleBody);
     assert.deepEqual(legacyUnwrapped.content, sampleBody);
     assert.equal(legacyUnwrapped.headerFooter, undefined);
+
+    // 4. Unwrap stringified JSON envelope
+    const stringifiedJson = JSON.stringify(envelope);
+    const fromStringUnwrapped = unwrapContentEnvelope(stringifiedJson);
+    assert.deepEqual(fromStringUnwrapped.content, sampleBody);
+    assert.deepEqual(fromStringUnwrapped.headerFooter, sampleHf);
+  });
+
+  it('serializes envelope-wrapped drafts directly without throwing TypeError: nodes is not iterable', async () => {
+    const envelope = wrapContentEnvelope([{ type: 'p', children: [{ text: 'Envelope body' }] }], undefined, 2);
+    const blob = await serializeToDocx(envelope as any, 'Test Envelope Docx');
+    assert.ok(blob instanceof Blob);
+    assert.ok(blob.size > 0);
   });
 
   it('serializes document with first_page_only header and nested lists without errors', async () => {
@@ -644,10 +657,22 @@ describe('Plate editor runtime wiring', () => {
       'Fullscreen CSS must enforce flex display for document header'
     );
 
-    // 2. EditorContainer must include generous bottom scrolling padding
+    // 2. EditorContainer must include generous bottom scrolling padding, sheet bottom margin, and end-of-document boundary buffer
     assert.ok(
       editorSrc.includes('pb-28 md:pb-36'),
       'EditorContainer must include generous bottom scrolling padding to prevent bottom edge collision'
+    );
+    assert.ok(
+      editorSrc.includes('mb-16 sm:mb-24 print:mb-0'),
+      'plate-paper-sheet must declare generous bottom margin so paper sheet ending is fully visible'
+    );
+    assert.ok(
+      editorSrc.includes('data-editor-bottom-buffer="true"'),
+      'Editor must include a bottom buffer element inside the zoom stage'
+    );
+    assert.ok(
+      editorSrc.includes('End of document'),
+      'Editor must provide a visible End of document boundary indicator'
     );
 
     // 3. App.tsx must not mount Agentation (removes floating star icon button)
@@ -907,6 +932,31 @@ describe('Plate editor runtime wiring', () => {
     // 4. Editor toolbars maintain clean presentation without comment buttons
     assert.ok(!floatingToolbarSrc.includes('MessageSquarePlus'), 'FloatingToolbar must not include comment button');
     assert.ok(!imageToolbarSrc.includes('MessageSquarePlus'), 'ImageFloatingToolbar must not include comment button');
+  });
+
+  it('enforces 5-version history limit and version deletion capability in DocumentHistoryDrawer', async () => {
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+    const drawerSrc = fs.readFileSync(path.resolve('src/components/editor/DocumentHistoryDrawer.tsx'), 'utf8');
+    const migrationSrc = fs.readFileSync(path.resolve('supabase/migrations/10_editor_versions_limit_5_and_delete.sql'), 'utf8');
+    const baseMigrationSrc = fs.readFileSync(path.resolve('supabase/migrations/05_editor_drafts.sql'), 'utf8');
+
+    // 1. Drawer enforces 5 version cap
+    assert.ok(drawerSrc.includes('.slice(0, 5)'), 'DocumentHistoryDrawer must cap loaded versions to 5');
+    assert.ok(drawerSrc.includes('Up to 5 versions are kept'), 'DocumentHistoryDrawer footer must indicate 5 versions are kept');
+    assert.ok(!drawerSrc.includes('Up to 20 versions are kept'), 'DocumentHistoryDrawer footer must not reference 20 versions');
+
+    // 2. Drawer includes delete button and handler
+    assert.ok(drawerSrc.includes('Trash2'), 'DocumentHistoryDrawer must import and render Trash2 delete icon');
+    assert.ok(drawerSrc.includes('handleDelete'), 'DocumentHistoryDrawer must provide handleDelete function');
+    assert.ok(drawerSrc.includes('delete_editor_version'), 'DocumentHistoryDrawer must call delete_editor_version RPC');
+    assert.ok(drawerSrc.includes('Delete this version'), 'DocumentHistoryDrawer must render quick delete action');
+
+    // 3. Database migrations enforce 5 version pruning and deletion
+    assert.ok(migrationSrc.includes('LIMIT 5'), 'Migration 10 must prune with LIMIT 5');
+    assert.ok(migrationSrc.includes('delete_editor_version'), 'Migration 10 must define delete_editor_version');
+    assert.ok(baseMigrationSrc.includes('LIMIT 5'), 'Base migration 05 must prune with LIMIT 5');
+    assert.ok(baseMigrationSrc.includes('delete_editor_version'), 'Base migration 05 must define delete_editor_version');
   });
 });
 

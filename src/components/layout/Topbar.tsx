@@ -14,12 +14,19 @@ import {
   User as UserIcon,
   Settings,
   CheckCheck,
-  CheckCircle2
+  CheckCircle2,
+  ChevronDown
 } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { User as UserType } from '@/src/types';
 import { cn } from '@/src/lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
+import { useUserAvatar } from '@/src/lib/avatarHelper';
+import {
+  ACCENT_THEMES,
+  applyAccentTheme,
+  getStoredAccentTheme,
+} from '@/src/config/accentThemes';
 
 interface TopbarProps {
   title: string;
@@ -27,7 +34,7 @@ interface TopbarProps {
   user: UserType | null;
   onMenuClick: () => void;
   theme?: 'light' | 'dark';
-  onToggleTheme?: () => void;
+  onToggleTheme?: (event?: React.MouseEvent) => void;
   onSearchClick?: () => void;
   onLogout?: () => void;
 }
@@ -38,6 +45,8 @@ export const Topbar: React.FC<TopbarProps> = ({ title, subtitle, user, onMenuCli
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [activeNotifTab, setActiveNotifTab] = useState<'all' | 'verified' | 'revisions'>('all');
+  const [activeAccentTheme, setActiveAccentTheme] = useState(getStoredAccentTheme);
+  const { avatarUrl } = useUserAvatar(user);
 
   const profileRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
@@ -373,10 +382,20 @@ export const Topbar: React.FC<TopbarProps> = ({ title, subtitle, user, onMenuCli
           <div className="relative" ref={profileRef}>
             <button
               onClick={() => setIsProfileOpen(!isProfileOpen)}
-              className="flex items-center gap-3 pl-3 border-l border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 rounded-lg py-1.5 px-2 transition-colors group"
+              className="flex items-center gap-2.5 sm:gap-3 pl-2.5 sm:pl-3 border-l border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 rounded-lg py-1.5 px-2 transition-colors group cursor-pointer"
             >
-              <div className="w-8 h-8 rounded-full bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-950 flex items-center justify-center text-xs font-bold shrink-0 group-hover:scale-105 transition-transform">
-                {user?.name?.[0] || 'U'}
+              {/* Circular Avatar with Dropdown Chevron Badge (matches media_1790091646135.png) */}
+              <div className="relative shrink-0 group-hover:scale-105 transition-transform">
+                <div className="size-8 sm:size-8.5 rounded-full overflow-hidden border border-border/80 bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shadow-xs">
+                  <img
+                    src={avatarUrl}
+                    alt={user?.name || "User Avatar"}
+                    className="size-full object-cover"
+                  />
+                </div>
+                <div className="absolute -bottom-1 -right-1 size-4 rounded-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 shadow-2xs flex items-center justify-center pointer-events-none">
+                  <ChevronDown size={10} className="text-zinc-700 dark:text-zinc-200 stroke-[2.5]" />
+                </div>
               </div>
               <div className="flex-col items-start hidden md:flex text-left">
                 <span className="text-[11px] font-bold text-zinc-900 dark:text-zinc-100 truncate max-w-[120px] leading-tight">
@@ -397,11 +416,20 @@ export const Topbar: React.FC<TopbarProps> = ({ title, subtitle, user, onMenuCli
                   transition={{ duration: 0.15 }}
                   className="absolute right-0 mt-2 w-56 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-xl overflow-hidden z-50 p-1.5"
                 >
-                  <div className="p-3 border-b border-zinc-100 dark:border-zinc-800 mb-1.5">
-                    <p className="text-xs font-bold text-zinc-900 dark:text-white truncate">
-                      {user?.role === 'student' ? 'John Dwayne B. Guaniso' : (user?.name || 'User')}
-                    </p>
-                    <p className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate">{user?.email}</p>
+                  <div className="p-3 border-b border-zinc-100 dark:border-zinc-800 mb-1.5 flex items-center gap-2.5">
+                    <div className="size-9 rounded-full overflow-hidden border border-border/80 bg-zinc-100 dark:bg-zinc-800 shrink-0 shadow-2xs">
+                      <img
+                        src={avatarUrl}
+                        alt="Profile Avatar"
+                        className="size-full object-cover"
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-bold text-zinc-900 dark:text-white truncate">
+                        {user?.role === 'student' ? 'John Dwayne B. Guaniso' : (user?.name || 'User')}
+                      </p>
+                      <p className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate">{user?.email}</p>
+                    </div>
                   </div>
 
                   <div className="flex flex-col gap-0.5">
@@ -426,29 +454,24 @@ export const Topbar: React.FC<TopbarProps> = ({ title, subtitle, user, onMenuCli
 
                     <div className="px-3 py-2 mt-1">
                       <p className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-2">Accent Color</p>
-                      <div className="flex items-center gap-2">
-                        {[
-                          { id: 'default', color: 'bg-zinc-900 dark:bg-zinc-100', name: 'Monochrome' },
-                          { id: 'theme-deep-sky', color: 'bg-[#3B82C4]', name: 'Deep Sky Blue' },
-                          { id: 'theme-blue', color: 'bg-[#2563eb]', name: 'Modern Blue' },
-                          { id: 'theme-indigo', color: 'bg-[#4f46e5]', name: 'Indigo' },
-                          { id: 'theme-sti', color: 'bg-[#1d4ed8]', name: 'STI Inspired' }
-                        ].map(t => {
-                          const currentTheme = localStorage.getItem('app-theme') || 'default';
+                      <div className="grid grid-cols-5 gap-2.5">
+                        {ACCENT_THEMES.map(t => {
                           return (
                             <button
                               key={t.id}
                               title={t.name}
+                              aria-label={`Use ${t.name} accent color`}
+                              aria-pressed={activeAccentTheme === t.id}
+                              type="button"
                               onClick={() => {
-                                ['theme-deep-sky', 'theme-blue', 'theme-indigo', 'theme-sti', 'theme-cyan'].forEach(cls => document.documentElement.classList.remove(cls));
-                                if (t.id !== 'default') document.documentElement.classList.add(t.id);
-                                localStorage.setItem('app-theme', t.id);
+                                applyAccentTheme(t.id);
+                                setActiveAccentTheme(t.id);
                                 setIsProfileOpen(false);
                               }}
                               className={cn(
-                                "w-6 h-6 rounded-full transition-transform hover:scale-110 shadow-sm",
+                                "w-6 h-6 rounded-full transition-transform hover:scale-110 shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                                 t.color,
-                                currentTheme === t.id && "ring-2 ring-offset-2 ring-zinc-400 dark:ring-zinc-500 dark:ring-offset-zinc-950"
+                                activeAccentTheme === t.id && "ring-2 ring-offset-2 ring-primary ring-offset-background"
                               )}
                             />
                           );
@@ -458,7 +481,7 @@ export const Topbar: React.FC<TopbarProps> = ({ title, subtitle, user, onMenuCli
 
                     {onToggleTheme && (
                       <button
-                        onClick={onToggleTheme}
+                        onClick={(e) => onToggleTheme(e)}
                         className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-900 hover:text-zinc-900 dark:hover:text-white transition-colors"
                       >
                         <div className="flex items-center gap-2">

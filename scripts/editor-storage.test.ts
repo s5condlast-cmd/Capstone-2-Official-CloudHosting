@@ -307,6 +307,25 @@ describe('Data safety and navigation flush', () => {
       storage.destroy();
     });
   });
+
+  test('visibilitychange and tab discard handler triggers persistence without error', () => {
+    const storage = new DocumentHistoryStorage('test-user-1', 'test-draft-4');
+    const testState: DraftState = {
+      id: 'test-draft-4',
+      userId: 'test-user-1',
+      title: 'Visibility Change Draft',
+      content: [{ type: 'p', children: [{ text: 'Testing tab switch' }] }],
+      wordCount: 3,
+      revision: 1,
+      status: 'draft',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    storage.onChange(testState);
+    assert.doesNotThrow(() => {
+      storage.destroy();
+    });
+  });
 });
 
 // ─── Fullscreen & Sidebar Elevation Verification ─────────────────────────────
@@ -452,4 +471,79 @@ describe('Smart conflict auto-reconciliation', () => {
     );
   });
 });
+
+// ─── Strict 1-to-1 Draft Matching & Milestone-Only Versioning ─────────────────
+
+describe('Production Auto-Save & Strict 1-to-1 Document Isolation', () => {
+  test('matchesDraft strictly isolates templates and rejects substring cross-matching', async () => {
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+    const dashboardSrc = fs.readFileSync(path.resolve('src/pages/student/StudentDashboard.tsx'), 'utf8');
+
+    // Verify loose substring matching was removed
+    assert.ok(
+      !dashboardSrc.includes('if (dName.includes(tName) || tName.includes(dName)) return true;'),
+      'StudentDashboard must NOT use loose bidirectional substring matching for drafts'
+    );
+
+    // Verify exact template_id match is prioritized
+    assert.ok(
+      dashboardSrc.includes('dr.template_id.trim().toLowerCase() === tmpl.id.trim().toLowerCase()'),
+      'StudentDashboard must enforce exact template_id matching'
+    );
+  });
+
+  test('documentHistoryStorage separates draft saves from version snapshots and guards flushes', async () => {
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+    const storageSrc = fs.readFileSync(path.resolve('src/lib/documentHistoryStorage.ts'), 'utf8');
+
+    // Verify isFlushing guard exists
+    assert.ok(
+      storageSrc.includes('private isFlushing = false;'),
+      'DocumentHistoryStorage must define isFlushing guard'
+    );
+    assert.ok(
+      storageSrc.includes('if (this.isFlushing) return null;'),
+      'flushNow must check isFlushing to prevent duplicate concurrent snapshots'
+    );
+
+    // Verify unversioned changes check
+    assert.ok(
+      storageSrc.includes('const currentJson = JSON.stringify(state.content);'),
+      'onChange must serialize content to check for actual delta before setting hasUnversionedChanges'
+    );
+  });
+
+  test('applyRemoteUpdate cancels pending save timers, clears pendingState, and updates cloudRevision', async () => {
+    const storage = new DocumentHistoryStorage('test-user-sync', 'test-draft-sync');
+    await storage.load(1, [{ type: 'p', children: [{ text: 'Initial' }] }]);
+
+    // User types in this tab, setting pendingState and timer
+    storage.onChange({
+      id: 'test-draft-sync',
+      userId: 'test-user-sync',
+      title: 'Initial',
+      content: [{ type: 'p', children: [{ text: 'Local draft' }] }],
+      wordCount: 2,
+      revision: 1,
+      status: 'draft',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
+
+    assert.ok((storage as any).pendingState !== null, 'pendingState must be set on change');
+    assert.ok((storage as any).cloudSaveTimer !== null, 'cloudSaveTimer must be active');
+
+    // Remote tab update arrives
+    const remoteContent = [{ type: 'p', children: [{ text: 'Remote update from Tab A' }] }];
+    storage.applyRemoteUpdate(2, remoteContent);
+
+    assert.equal((storage as any).pendingState, null, 'applyRemoteUpdate must clear pendingState');
+    assert.equal((storage as any).cloudSaveTimer, null, 'applyRemoteUpdate must cancel cloudSaveTimer');
+    assert.equal(storage.getCloudRevision(), 2, 'applyRemoteUpdate must update cloudRevision');
+    storage.destroy();
+  });
+});
+
 

@@ -52,7 +52,6 @@ import {
   Image as ImageIcon,
   Sparkles,
   ChevronRight,
-  PanelLeft,
   MessageSquare,
   Ruler,
 } from 'lucide-react';
@@ -95,8 +94,6 @@ export interface DocumentMenuBarProps {
   isReviewer?: boolean;
   mode: EditorMode;
   onModeChange: (mode: EditorMode) => void;
-  showOutline: boolean;
-  onToggleOutline: () => void;
   showComments: boolean;
   onToggleComments: () => void;
   showRuler: boolean;
@@ -123,8 +120,6 @@ export function DocumentMenuBar({
   isReviewer,
   mode,
   onModeChange,
-  showOutline,
-  onToggleOutline,
   showComments,
   onToggleComments,
   showRuler,
@@ -189,11 +184,11 @@ export function DocumentMenuBar({
   };
 
   const MENU_TRIGGER_CLASS =
-    'px-2.5 py-1 text-xs font-semibold rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-all active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 cursor-pointer antialiased';
+    'px-1.5 py-0.5 text-xs font-medium rounded-md hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/50 cursor-pointer antialiased';
 
   return (
     <>
-      <div className="flex items-center gap-1 select-none print:hidden flex-nowrap min-w-max text-foreground antialiased">
+      <div className="flex items-center gap-0.5 select-none print:hidden flex-nowrap min-w-max text-foreground antialiased">
         {/* 1. FILE MENU */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -386,14 +381,6 @@ export function DocumentMenuBar({
             </DropdownMenuSub>
 
             <DropdownMenuSeparator />
-
-            <DropdownMenuItem onClick={onToggleOutline} className="cursor-pointer flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <PanelLeft className="w-4 h-4 text-muted-foreground" />
-                <span>Show outline</span>
-              </div>
-              {showOutline && <Check className="w-4 h-4 text-primary" />}
-            </DropdownMenuItem>
 
             <DropdownMenuItem onClick={onToggleRuler} className="cursor-pointer flex items-center justify-between">
               <div className="flex items-center gap-2">

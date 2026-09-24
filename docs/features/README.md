@@ -14,6 +14,7 @@ Use these guides when you need the user workflow, main code locations, data flow
 | 6 | [Administration](06_ADMIN_MANAGEMENT.md) | Users, templates, clearance, and companies |
 | 7 | [Calendar and events](07_CALENDAR_AND_EVENTS.md) | Scheduling, views, and event management |
 | 8 | [Authentication, roles & security](08_AUTHENTICATION_AND_SECURITY.md) | Identity, two-step login, TOTP MFA, RLS policies, and admin provisioning |
+| 9 | [Time in/out and attendance verification](../Feature.md) | Server-timestamped shifts, role verification, and credited-hour targets |
 
 ## Common paths
 
@@ -24,4 +25,3 @@ Use these guides when you need the user workflow, main code locations, data flow
 - For current work, use [active tasks](../tasks/TASKS.md).
 
 Feature guides describe intended behavior. Confirm security-sensitive behavior against the test suites before deployment.
-

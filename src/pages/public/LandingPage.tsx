@@ -450,35 +450,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({ userRole }) => {
               transition={{ duration: 0.6, delay: 0.1 }}
               className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-[-0.03em] leading-[1.16] text-[#111827] flex flex-col items-center justify-center text-center gap-2.5 sm:gap-4 w-full mx-auto"
             >
-              {/* Line 1: Upload Your Documents. [Messedup Drawable Icon] */}
+              {/* Line 1: Upload Your Documents. */}
               <div className="relative inline-flex items-center justify-center text-center">
                 <span className="relative z-10">Upload Your Documents.</span>
-                <motion.img
-                  animate={{
-                    y: [0, -6, 0],
-                    rotate: [0, 5, 0]
-                  }}
-                  transition={{ repeat: Infinity, duration: 5.2, ease: "easeInOut" }}
-                  src="/images/Landing Page Icons/Messedup.svg"
-                  alt="Drawable Messedup"
-                  className="absolute left-full top-1/2 -translate-y-1/2 ml-1 sm:ml-2 md:ml-3 h-8 sm:h-12 md:h-16 lg:h-20 w-auto object-contain pointer-events-none select-none drop-shadow-sm transition-transform duration-300 hover:scale-110"
-                />
               </div>
 
-              {/* Line 2: [Isthisdoc Drawable Document Icon] Track Your Work Hours. */}
+              {/* Line 2: Track Your Work Hours. */}
               <div className="relative inline-flex items-center justify-center text-center">
-                {/* Drawable Document Sketch Icon beside first word 'Track' */}
-                <motion.img
-                  animate={{
-                    y: [0, 6, 0],
-                    rotate: [-12, -7, -12]
-                  }}
-                  transition={{ repeat: Infinity, duration: 4.5, ease: "easeInOut", delay: 0.3 }}
-                  src="/images/Landing Page Icons/Isthisdoc.svg"
-                  alt="Drawable Document"
-                  className="absolute right-full top-1/2 -translate-y-1/2 mr-1 sm:mr-2 md:mr-3 h-8 sm:h-12 md:h-16 lg:h-20 w-auto object-contain -rotate-12 pointer-events-none select-none drop-shadow-sm transition-transform duration-300 hover:-rotate-18 hover:scale-110"
-                />
-
                 <span ref={underlineRef} className="relative inline-block text-transparent bg-clip-text bg-gradient-to-r from-[#111827] via-[#374151] to-[#6B7280] pb-1.5 sm:pb-2.5 z-10">
                   Track Your Work Hours.
 

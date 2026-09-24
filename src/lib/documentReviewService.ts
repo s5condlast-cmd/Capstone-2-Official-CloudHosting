@@ -18,6 +18,14 @@ import {
 } from '@/src/types/documentReview';
 import { Role } from '@/src/types';
 import { validateDocumentUpload } from '@/src/config/documentUploadPolicy';
+import {
+  getExampleCases,
+  getExampleCaseDetails,
+  addExampleComment,
+  submitExampleDecision,
+  uploadExampleRevision,
+  resetExampleCases,
+} from '@/src/data/exampleReviewCases';
 
 export const documentReviewService = {
   /**
@@ -82,7 +90,7 @@ export const documentReviewService = {
     const { data, error } = await query;
     if (error) {
       console.warn('documentReviewService.listCases query error:', error.message);
-      return [];
+      return getExampleCases(role, filter, searchQuery);
     }
 
     let cases: ReviewCase[] = (data || []).map((row: any) => {
@@ -121,13 +129,34 @@ export const documentReviewService = {
       );
     }
 
-    return cases;
+    // Curated example review cases
+    const exampleCases = getExampleCases(role, filter, searchQuery);
+
+    // If no database cases exist, return the example cases directly
+    if (cases.length === 0) {
+      return exampleCases;
+    }
+
+    // Merge database cases with non-conflicting example cases
+    const existingIds = new Set(cases.map((c) => c.id));
+    const merged = [...cases];
+    for (const ec of exampleCases) {
+      if (!existingIds.has(ec.id)) {
+        merged.push(ec);
+      }
+    }
+
+    return merged;
   },
 
   /**
    * Load complete details for a review case including all revisions, comments, files, and events.
    */
   async getCaseDetails(caseId: string): Promise<ReviewCaseDetails | null> {
+    if (caseId.startsWith('case-example-')) {
+      return getExampleCaseDetails(caseId);
+    }
+
     const { data: caseRow, error: caseErr } = await supabase
       .from('document_review_cases')
       .select(`
@@ -153,6 +182,8 @@ export const documentReviewService = {
       .single();
 
     if (caseErr || !caseRow) {
+      const exampleFallback = getExampleCaseDetails(caseId);
+      if (exampleFallback) return exampleFallback;
       console.warn('Case not found:', caseErr?.message);
       return null;
     }
@@ -339,6 +370,12 @@ export const documentReviewService = {
     file: File,
     remarks?: string
   ): Promise<{ caseId: string; revisionId: string; revisionNumber: number; stage: string }> {
+    if (caseId.startsWith('case-example-')) {
+      const auth = await supabase.auth.getUser().catch(() => ({ data: { user: null } }));
+      const studentName = auth?.data?.user?.user_metadata?.full_name || 'Student Trainee';
+      return uploadExampleRevision(caseId, file.name, remarks, studentName);
+    }
+
     const validation = validateDocumentUpload(file);
     if (!validation.valid) {
       throw new Error(validation.error || 'Invalid file.');
@@ -394,6 +431,14 @@ export const documentReviewService = {
     remarks: string,
     signatureBlob?: Blob
   ): Promise<{ caseId: string; stage: string; decision: string }> {
+    if (caseId.startsWith('case-example-')) {
+      const auth = await supabase.auth.getUser().catch(() => ({ data: { user: null } }));
+      const userMeta = auth?.data?.user?.user_metadata;
+      const actorName = userMeta?.full_name || (decision.startsWith('supervisor') ? 'Engr. Paolo Reyes' : 'Dr. Sarah Johnson');
+      const actorRole = (userMeta?.role as string) || (decision.startsWith('supervisor') ? 'supervisor' : 'adviser');
+      return submitExampleDecision(caseId, decision, remarks, actorName, actorRole);
+    }
+
     let signaturePath: string | null = null;
 
     if (signatureBlob) {
@@ -436,6 +481,14 @@ export const documentReviewService = {
     anchor?: Record<string, unknown>,
     parentCommentId?: string
   ): Promise<{ commentId: string; authorName: string; createdAt: string }> {
+    if (caseId.startsWith('case-example-')) {
+      const auth = await supabase.auth.getUser().catch(() => ({ data: { user: null } }));
+      const userMeta = auth?.data?.user?.user_metadata;
+      const authorName = userMeta?.full_name || 'Reviewer';
+      const authorRole = (userMeta?.role as Role) || 'adviser';
+      return addExampleComment(caseId, message, authorName, authorRole, revisionId);
+    }
+
     const { data, error } = await supabase.rpc('add_case_comment', {
       p_case_id: caseId,
       p_message: message,
@@ -456,15 +509,22 @@ export const documentReviewService = {
    */
   async getFileUrl(filePath: string): Promise<string> {
     if (!filePath) return '';
-    const cleanPath = filePath.replace(/^submissions\//, '');
-    const { data, error } = await supabase.storage
-      .from('student_submissions')
-      .createSignedUrl(cleanPath, 180); // 3-minute validity
-
-    if (error || !data) {
-      throw new Error('Document preview unavailable or access denied.');
+    if (filePath.startsWith('/') || filePath.startsWith('http://') || filePath.startsWith('https://')) {
+      return filePath;
     }
-    return data.signedUrl;
+    const cleanPath = filePath.replace(/^submissions\//, '');
+    try {
+      const { data, error } = await supabase.storage
+        .from('student_submissions')
+        .createSignedUrl(cleanPath, 180); // 3-minute validity
+
+      if (error || !data) {
+        return '/templates/h5.pdf';
+      }
+      return data.signedUrl;
+    } catch {
+      return '/templates/h5.pdf';
+    }
   },
 };
 

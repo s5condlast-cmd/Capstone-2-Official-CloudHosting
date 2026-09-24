@@ -146,7 +146,7 @@ export const documentGenerator = {
             zip.file("word/document.xml", xmlString);
 
             // Generate intermediate buffer from JSZip
-            const intermediateBuffer = await zip.generateAsync({ type: "nodebuffer" });
+            const intermediateBuffer = await zip.generateAsync({ type: "arraybuffer" });
 
             // 3. Inject Angle Tags (<TAG>) via easy-template-x
             const handler = new TemplateHandler({
@@ -231,7 +231,7 @@ export const documentGenerator = {
                   }
 
                   postZip.file("word/document.xml", postXml);
-                  finalBuffer = await postZip.generateAsync({ type: "nodebuffer" });
+                  finalBuffer = await postZip.generateAsync({ type: "arraybuffer" });
                 }
               } catch (postErr) {
                 console.warn("Post-process signature spacing fix failed", postErr);

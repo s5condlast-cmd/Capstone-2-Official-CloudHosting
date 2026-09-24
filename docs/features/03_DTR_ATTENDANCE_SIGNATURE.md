@@ -4,6 +4,8 @@
 
 A technical guide on the **Daily Time Record (DTR)** tracking system, work hour computation toward 460 hours, supervisor digital canvas signing, and Excel spreadsheet signature embedding.
 
+For the live time-in/time-out page, role permissions, signed-in validation, verification states, and credited-hour rules, see [Time In / Time Out and Attendance Verification](../Feature.md).
+
 ---
 
 ## 🌟 Feature Overview
@@ -110,4 +112,3 @@ Embedding raw signature drawings into Excel spreadsheets often causes alignment 
 - [05. Adviser & Supervisor Review Rooms](05_ADVISER_SUPERVISOR_REVIEW.md) — Supervisor approval workflow and sign-offs
 - [Document Workflows Architecture](../architecture/DOCUMENT_WORKFLOWS.md) — Excel DTR signature fitting protocol
 - [OneDrive Integration Summary](../architecture/ONEDRIVE_INTEGRATION_SUMMARY.md) — Institutional Microsoft OneDrive cloud archival
-
